@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "hugo": "hugo",
-    "dev": "hugo server"
+    "dev": "hugo server",
+    "build": "hugo --minify",
   },
   "keywords": [],
   "author": "",
