@@ -19,6 +19,7 @@
   </div>
   {{ end }}
   <h1 class="site-branding-title">
-    {{ with .Site.Params.branding_title }}{{ . | safeHTML }}{{ else }}{{ .Site.Title | safeHTML }}{{ end }}
+    <a href="/">{{ with .Site.Params.branding_title }}{{ . | safeHTML }}{{ else }}{{ .Site.Title | safeHTML }}{{ end
+      }}</a>
   </h1>
 </div>

@@ -5,6 +5,11 @@
   box-sizing: border-box;
 }
 
+ul,
+ol {
+  margin-left: 1em;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
@@ -23,8 +28,13 @@ header {
   margin: auto;
 
   .site-branding-header h1 {
-    font-size: 4em; /* Larger for header */
+    font-size: 5em; /* Larger for header */
     font-family: Joan;
+
+    a {
+      color: #000000; /* Black text */
+      text-decoration: underline;
+    }
   }
 }
 
@@ -33,6 +43,7 @@ main {
   width: 100%;
   background-color: #fdfcf8; /* Light beige */
   margin: auto;
+  padding: 1em;
 }
 
 footer {
@@ -91,6 +102,17 @@ article {
   h1 {
     font-size: 2.5em; /* Large size */
     line-height: 1.2;
+  }
+
+  div.metadata {
+    margin-bottom: 1em;
+    font-size: 0.8em;
+  }
+
+  &.featured-post {
+    h1 {
+      margin-bottom: 0em;
+    }
   }
 
   h2 {

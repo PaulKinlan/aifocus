@@ -4,4 +4,4 @@ title = 'AI Focus'
 theme = 'aifocustheme'
 
 [params]
-  about = 'Hello, this is [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate and Web Developer who is seeing the change in the industry around AI and is developing his opinion through a collection of essays and projects.'
+  about = "Hello, I'm [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate on Chrome and Web Developer who is seeing a change in the industry around AI and is developing an opinion through a collection of essays and projects on how AI is changing the medium of the web and web development at large"

@@ -3,16 +3,19 @@
 <div class="about">{{ .Site.Params.about | markdownify }}</div>
 {{ end }}
 
-{{ range $idx, $page := site.RegularPages }}
+{{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
 {{ if eq $idx 0 }}
 {{/* Featured Post Section */}}
-<article>
-  <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-  <p>Reading time: {{ .ReadingTime }} minutes</p>
+<article class="featured-post">
+  <h1><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h1>
+  <div class="metadata">
+    <p>Reading time: {{ .ReadingTime }} minutes</p>
+    {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+    {{ $dateHuman := .Date | time.Format ":date_long" }}
+    <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}</time></p>
+  </div>
 
-  {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
-  {{ $dateHuman := .Date | time.Format ":date_long" }}
-  <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}</time></p>
+
   {{ .Content }}
 </article>
 {{ else }}
