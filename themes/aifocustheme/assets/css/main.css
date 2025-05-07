@@ -75,28 +75,42 @@ article {
   margin-bottom: 40px;
   padding-bottom: 30px;
   border-bottom: 1px solid #eee; /* Lighter border */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 0.5em;
+    margin-bottom: 0.7em;
+    font-weight: normal;
+    color: #000000; /* Black text */
+  }
+
+  h1 {
+    font-size: 2.5em; /* Large size */
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 2em; /* Medium size */
+    line-height: 1.3;
+  }
+  h3 {
+    font-size: 1.5em; /* Smaller size */
+    line-height: 1.4;
+  }
+  h4 {
+    font-size: 1.2em; /* Smaller size */
+    line-height: 1.5;
+  }
 }
 
 footer {
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid #eee; /* Lighter border */
-}
-
-.read-more {
-  display: inline-block;
-  font-size: 0.9em;
-  color: #000000;
-  text-decoration: underline;
-  font-weight: normal;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.read-more:hover {
-  color: #555;
 }
 
 /* New Site Branding Header Styles */
@@ -133,13 +147,6 @@ footer {
   text-align: left; /* As per image */
   color: #000000;
   margin: 0; /* Remove default h1 margin */
-}
-
-.featured-post {
-  display: flex;
-  flex-direction: row;
-  gap: 30px; /* Space between main content and large image */
-  margin-bottom: 30px;
 }
 
 .featured-post-main-content {
@@ -195,30 +202,4 @@ footer {
   color: #000000;
   text-transform: uppercase;
   margin: 0;
-}
-
-.homepage-secondary-content {
-  display: flex;
-  gap: 30px;
-  margin-bottom: 30px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  font-size: 0.85em;
-  line-height: 1.5;
-  color: #444;
-}
-
-.secondary-text-column {
-  flex: 1;
-}
-
-.homepage-footer-branding {
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  font-size: 0.9em;
-  color: #555;
-  margin-top: 40px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
 }
