@@ -17,7 +17,6 @@
   },
   "hugo-bin": {
     "buildTags": "extended",
-    "downloadRepo": "https://some.example.com/artifactory/github-releases",
     "version": "0.147.2"
   }
 }
