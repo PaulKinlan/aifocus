@@ -1,0 +1,52 @@
+{{ define "main" }}
+<div class="container homepage-container">
+  {{/* Featured Post Section */}}
+  {{ $featuredPost := first 1 (where .Site.RegularPages.ByDate.Reverse "Type" "posts") }}
+  {{ if $featuredPost }}
+  {{ range $featuredPost }}
+  <article class="featured-post">
+    <div class="featured-post-main-content">
+      <div class="featured-image-small-container">
+        <!-- Featured image (small) -->
+        <img
+          src='{{ .Params.featured_image | default "https://via.placeholder.com/300x200/eee/ccc?text=Featured+Image"}}'
+          alt='{{ .Params.featured_image_alt | default (printf "Featured image for %s" .Title) }}'
+          class="featured-image-small">
+      </div>
+      <div class="featured-text-content">
+        {{ .Content }}
+      </div>
+    </div>
+    <div class="featured-image-large-container">
+      <!-- Featured image (large) -->
+      <img src='{{ .Params.featured_image | default "https://via.placeholder.com/350x500/ddd/aaa?text=Side+Image" }}'
+        alt='{{ .Params.featured_image_alt | default (printf "Featured image for %s" .Title) }}'
+        class="featured-image-large">
+    </div>
+  </article>
+
+  <div class="featured-post-title-container">
+    <h2 class="featured-post-title">{{ .Title }}</h2>
+  </div>
+  {{ end }}{{/* End range $featuredPost */}}
+  {{ else }}
+  <p>No posts to feature yet.</p>
+  {{ end }}{{/* End if $featuredPost */}}
+
+  {{/* Homepage Content (from _index.md) and Footer Branding */}}
+  {{/* This section will now appear regardless of whether a featured post exists */}}
+  <div class="homepage-secondary-content">
+    <div class="secondary-text-column">
+      {{ .Page.Content }} <!-- Content from _index.md -->
+    </div>
+    <div class="secondary-text-column">
+      <!-- This column can be used for other content or removed if not needed -->
+      <p>Additional supporting content can go here.</p>
+    </div>
+  </div>
+  <div class="homepage-footer-branding">
+    <p>@paul_kinlan</p> <!-- Placeholder from image -->
+  </div>
+
+</div>{{/* End container homepage-container */}}
+{{ end }}{{/* End define "main" */}}

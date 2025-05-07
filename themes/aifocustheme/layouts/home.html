@@ -1,0 +1,25 @@
+{{ define "main" }}
+{{ if .Site.Params.about }}
+<div class="about">{{ .Site.Params.about | markdownify }}</div>
+{{ end }}
+
+{{ range $idx, $page := site.RegularPages }}
+{{ if eq $idx 0 }}
+{{/* Featured Post Section */}}
+<article>
+  <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+  <p>Reading time: {{ .ReadingTime }} minutes</p>
+
+  {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+  {{ $dateHuman := .Date | time.Format ":date_long" }}
+  <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}</time></p>
+  {{ .Content }}
+</article>
+{{ else }}
+<section>
+  <h2>More essays</h2>
+  <h3><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2006-01-02" }}</h3>
+</section>
+{{ end }}
+{{ end }}
+{{end}}

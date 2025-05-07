@@ -1,0 +1,7 @@
+baseURL = 'https://aifoc.us/'
+languageCode = 'en-us'
+title = 'AI Focus'
+theme = 'aifocustheme'
+
+[params]
+  about = 'Hello, this is [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate and Web Developer who is seeing the change in the industry around AI and is developing his opinion through a collection of essays and projects.'
