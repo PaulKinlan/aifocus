@@ -76,7 +76,7 @@ h6 {
 .about {
   font-family: Joan;
   color: #333; /* Darker text for readability */
-  font-size: 1.5em; /* Smaller for now */
+  font-size: 2em; /* Smaller for now */
   padding-bottom: 1em;
   margin-bottom: 1em;
   border-bottom: 1px solid #ddd; /* Lighter border */
@@ -90,8 +90,9 @@ article {
   p,
   ul {
     margin-block-end: 1em;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for paragraphs */
+
+    font-size: 1.2rem;
   }
 
   h1,
