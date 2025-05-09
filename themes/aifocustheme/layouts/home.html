@@ -21,7 +21,9 @@
 </article>
 {{ else }}
 <section>
+  {{ if eq $idx 1 }}
   <h2>More essays</h2>
+  {{ end }}
   <h3><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2006-01-02" }}</h3>
 </section>
 {{ end }}
