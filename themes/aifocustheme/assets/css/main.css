@@ -112,9 +112,25 @@ article {
     line-height: 1.2;
   }
 
+  blockquote {
+    font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
+    font-size: 1.2em;
+    line-height: 1.5;
+    margin: 1em 0;
+    padding: 1em;
+    border-left: 4px solid #829cc0; /* Lighter border */
+  }
+
   div.metadata {
     margin-bottom: 1em;
     font-size: 0.8em;
+  }
+
+  div.highlight pre {
+    overflow-x: auto;
+    padding: 1em;
+    border-radius: 1em;
+    margin-bottom: 1em;
   }
 
   &.featured-post {

@@ -5,7 +5,6 @@
 
 {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
 {{ if eq $idx 0 }}
-{{/* Featured Post Section */}}
 <article class="featured-post">
   <h1><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h1>
   <div class="metadata">
@@ -14,9 +13,6 @@
     <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}; Reading time: {{ .ReadingTime }}
         minutes</time></p>
   </div>
-
-
-
   {{ .Content }}
 </article>
 {{ else }}
@@ -28,4 +24,4 @@
 </section>
 {{ end }}
 {{ end }}
-{{end}}
+{{ end }}
