@@ -112,6 +112,20 @@ article {
     line-height: 1.2;
   }
 
+  aside {
+    float: right;
+    width: 50%;
+    margin: 0 0 0 1em;
+    padding: 1em;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgb(255, 230, 234) 2px,
+      rgb(255, 230, 234) 4px
+    );
+  }
+
   blockquote {
     font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
     font-size: 1.2em;
@@ -119,6 +133,31 @@ article {
     margin: 1em 0;
     padding: 1em;
     border-left: 4px solid #829cc0; /* Lighter border */
+  }
+
+  figure {
+    margin: 1em 0;
+    text-align: center;
+    width: 100%;
+    max-width: 100%;
+
+    img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px; /* Rounded corners */
+      box-shadow: #000000 0px 0px 10px; /* Shadow effect */
+      background-color: black;
+    }
+
+    figcaption {
+      color: #333; /* Lighter text */
+      margin-top: 0.5em;
+
+      p {
+        font-size: 1em;
+        font-family: "Courier New", Courier, monospace;
+      }
+    }
   }
 
   div.metadata {
