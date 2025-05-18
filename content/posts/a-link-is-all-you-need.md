@@ -44,8 +44,10 @@ The way that we, people, use links is as a way of saying "I think this is import
 
 What we know as a hyperlink, a thin blue line underneath some text made by wrapping it in an `<a>` tag connecting two documents together is a construct of the technology that renders web pages. I struggle to see how this works in a world where the answer is generated and the inference between two concepts, or many documents can just be included by the LLM. It feels like the 1:1 nature of a link is changing.
 
+The way that I see LLM's connecting concepts is to just merge them into the response.
+
 Unlike Page Rank which to my understanding has the link imply some level of authority, its also unclear to me if this is of any importance to a LLM. Is the link just a way to point a web-crawler to another page so it can be ingested? If so, then a way to not have a LLM tool not ingest your content is to not have it discoverable? Do you put all of your content behind a paywall?
 
 I'm still bullish on the web. The link is still something that will help every person or machine discover the new content and experiences. The link can still point to content in the open or content that is private behind a login and enable instant access to any experience. So we still have that for now, but in is a world where [LLMs become the super app](/super-apps/) because they can recall and generate content and functionality in an instant, then what next?
 
-Maybe the web needs a new way to think about the link that makes running in the browser even more compelling. That's certainly something that I want to explore more in the future.
+It feels to me that the web needs a new way to think about the link that makes running in the browser even more compelling. That's certainly something that I want to explore more in the future and I don't want to sit idly by and be react in 5 years like we did with mobile. I want to be proactive and help shape the future of the web.
