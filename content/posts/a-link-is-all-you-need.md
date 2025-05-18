@@ -22,9 +22,9 @@ Mobile and the rise of native apps was one of those challenges that I believe wa
 
 Yes, Safari introduced many technologies that would let the web work well on mobile (e.g viewports and media queries are probably the biggest innovations to save the web), but web developers just didn't shift to match the expectation people had from their mobile devices.
 
-From my own personal experience, it wasn't until a Google "mobile-first" push in 2015 that you started to see a change. Now, you can't prove a negative, but it certainly felt like the web was not going to win.
+From my own personal experience, it wasn't until a Google "mobile-first" push in 2015 that you really started to see a change in how the web was experienced on mobile. Now, you can't prove a negative, but it certainly felt like the web was not going to win.
 
-Now as I look at my own usage of LLMs, there is a change in how I use the web and I am uneasy and I've not been able to quite put my finger on it. Yes, as the cost of creating content drops because people use LLMs, it enables a lot more low-quality content to be created, but the only way that you will see this content is if you navigate to it.
+Now as I look at my own usage of LLMs, there is a change in how I use the web and I am uneasy and it wasn't until recently that I was able to put my finger on it. Yes, as the cost of creating content drops because people use LLMs, it enables a lot more low-quality content to be created, but it also enables a lot of good experiences to be easily created (the structure of this very blog was made using an LLM), but the only way you get to discover and experience content is if you navigate to it.
 
 It's the link that I am worried about.
 
