@@ -5,7 +5,7 @@ draft: true
 slug: dumping-ground
 ---
 
-If you are reading this, then know that this is just random thoughts that came in to my head and should not be taken as a definitive statement on the state of the web, my employer, or me either.
+**If you are reading this, then know that this is just random thoughts that came in to my head and should not be taken as a definitive statement on the state of the web, my employer, or me either.**
 
 For now at least its the best window on to the tools that LLM makers are building, and while there is still a lot of competition in the space, the web still has a chance to thrive.
 
