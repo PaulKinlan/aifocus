@@ -133,6 +133,10 @@ article {
     margin: 1em 0;
     padding: 1em;
     border-left: 4px solid #829cc0; /* Lighter border */
+
+    p:last-child {
+      margin-bottom: 0;
+    }
   }
 
   figure {
