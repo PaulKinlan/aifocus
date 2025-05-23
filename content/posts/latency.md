@@ -30,7 +30,7 @@ Ben Thompson has frequently noted that if there is to ba a future in VR/XR based
 >
 > Where this will really make a difference is with hardware like Orion. Smartphone UI’s will be clunky and annoying in augmented reality; the magic isn’t in being pixel perfect, but rather being able to do something with zero friction. Generative UI will make this possible: you’ll only see what you need to see, and be able to interact with it via neural interfaces like the Orion neural wristband. Oh, and this applies to ads as well: everything in the world will be potential inventory.
 
-[Ben Thompson - Stratechery - Meta's AI Abundance, October 2024](https://stratechery.com/2024/metas-ai-abundance/#:~:text=AI%2C%20however%2C%20will,be%20potential%20inventory.)
+&mdash; [Ben Thompson - Stratechery - Meta's AI Abundance, October 2024](https://stratechery.com/2024/metas-ai-abundance/#:~:text=AI%2C%20however%2C%20will,be%20potential%20inventory.)
 
 Last year, I wrote a little experiment for a goal-based UI generation using the [reactive-prompts](https://paul.kinlan.me/projects/reactive-prompts) library. Given a goal and the data that you already have to solve that goal it would create a user-interface that captures the rest of the information. I was surprised that even 12 months ago it was possible for simple data collection based goals to be generated.
 
