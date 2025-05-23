@@ -77,8 +77,6 @@ Naively, you have to generate HTML, CSS and JS and by [estimating the number of 
 </style>
 ```
 
-Using the current models as of May 2025, the average token generation speed is.
-
 I found this [LLM speed benchmark](https://github.com/coder543/llm-speed-benchmark/blob/main/results/README.md) to be a good indicative reference for the current state of play. Ranging from 50 tokens per second for the slower but higher quality models to 350 tokens per second for the faster models, potentially lower quality models. Obviously a lot has changed since 2024, but the order of magnitude is the same.
 
 My first reaction (and probably yours) is "Hey, it should only take 1 second to generate that form... what's the problem?"
