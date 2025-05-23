@@ -38,7 +38,7 @@ Data collection feels like a good first step in LLMs because we don't need full-
 
 Today, these UIs can take many seconds to create, and because of the progressive nature of HTML, you can see the UI incrementally load. This might be ok, given that people seem quite happy to wait while the models "think" or stream their response, but we will see a step-change in engagement and interaction when these UIs start getting to Jacob Nielsen's thresholds for interaction.
 
-Ben Thompson also noted in 'Sora, Groq and Virtual Reality' _"[which means the speed of token calculation is at an absolute premium.](https://stratechery.com/2024/sora-groq-and-virtual-reality/#:~:text=which%20means%20the%20speed%20of%20token%20calculation%20is%20at%20an%20absolute%20premium)"_, How far away are we from getting truly instant UIs generated?
+Ben Thompson also noted in 'Sora, Groq and Virtual Reality' _"[which means the speed of token calculation is at an absolute premium.](https://stratechery.com/2024/sora-groq-and-virtual-reality/#:~:text=which%20means%20the%20speed%20of%20token%20calculation%20is%20at%20an%20absolute%20premium)"_ 100%. How away are we from getting truly instant UIs generated?
 
 Naively, you have to generate HTML, CSS and JS and by [estimating the number of tokens generated via tcnt](https://npmjs.org/package/tcnt) the following form is 251 tokens.
 
