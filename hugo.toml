@@ -5,3 +5,10 @@ theme = 'aifocustheme'
 
 [params]
   about = "Hello, I'm [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate on Chrome and Web Developer who is seeing a change in the industry around AI and is developing an opinion through a collection of essays and projects on how AI is changing the medium of the web and web development at large."
+  defaultAuthor = "paulkinlan"
+[params.authors]
+[params.authors.paulkinlan]
+  name = "Paul Kinlan"
+
+[taxonomies]
+  author = 'authors'

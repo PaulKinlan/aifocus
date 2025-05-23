@@ -2,6 +2,8 @@
 title: A link is all you need
 date: 2025-05-17T19:59:06.193Z
 slug: a-link-is-all-you-need
+authors:
+  - paulkinlan
 ---
 
 > I'll keep playing here while the rest of you flirt with apps. I'll be here when you come back. I know it's going to happen. Here's why.

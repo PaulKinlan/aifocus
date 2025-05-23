@@ -4,7 +4,8 @@
   <div class="metadata">
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
-    <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}; Reading time: {{ .ReadingTime }}
+    <p>{{ partial "authors.html" . }} published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}; Reading time:
+        {{ .ReadingTime }}
         minutes</time></p>
   </div>
 

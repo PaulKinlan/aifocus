@@ -2,6 +2,8 @@
 title: latency
 date: 2025-05-22T19:59:06.193Z
 slug: latency
+authors:
+  - paulkinlan
 ---
 
 I spent an [evening in a fictitious web](https://paul.kinlan.me/fictitious-web/). The faux-browser window hosted at [WebSim.ai](https://websim.ai/) gave me a view into a virtual world that didn't exist, but one that felt like it did. Every page that I visited was created in the moment that I requested it, willed into existence by a generative AI model.

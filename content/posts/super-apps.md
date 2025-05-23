@@ -1,8 +1,9 @@
 ---
 title: super-apps
-description:
 date: 2025-05-12T12:05:38.727Z
 slug: super-apps
+authors:
+  - paulkinlan
 ---
 
 I’ve spent two weeks in April wandering around Japan with my wife, daughter and parents - it was incredible. I used a browser twice. Most of the time that I spent with my phone wasn’t on the web or in traditional apps, it was in a LLM.

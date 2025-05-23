@@ -1,0 +1,11 @@
+{{ $authorKeys := .Page.Params.authors | default (slice .Site.Params.defaultAuthor) }}
+{{ $configuredAuthors := .Site.Params.authors }}
+{{ $authorNames := slice }}
+{{ range $authorKeys }}
+{{ $authorKey := . }}
+{{ $author := index $configuredAuthors . }}
+{{ $authorPartialDict := dict "key" $authorKey "author" $author }}
+{{ $authorPartial := partial "author.html" $authorPartialDict }}
+{{ $authorNames = $authorNames | append $authorPartial }}
+{{ end }}
+{{ printf "%s" (delimit $authorNames ",") | safeHTML}}
