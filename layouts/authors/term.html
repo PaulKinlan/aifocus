@@ -1,6 +1,13 @@
 {{ define "main" }}
 <h1>{{ .Title }} </h1>
+{{ $name := split . "/" }}
+{{ $author := (len $name) | add -2 | index $name | index $.Site.Params.authors }}
+{{ with $author}}
+<p>Homepage: <a href="{{.homepage}}">{{.homepage}}</a></p>
+{{end}}
+<br>
 {{ .Content }}
+<br>
 {{ range .Pages }}
 <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
 {{ end }}
