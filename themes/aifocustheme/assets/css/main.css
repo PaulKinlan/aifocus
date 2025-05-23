@@ -126,6 +126,11 @@ article {
     );
   }
 
+  aside.left {
+    float: left;
+    margin: 0 1em 0 0;
+  }
+
   blockquote {
     font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
     font-size: 1.2em;
