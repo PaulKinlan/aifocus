@@ -6,7 +6,7 @@ authors:
   - andreban
 ---
 
-*[Paul Kinlan recently wrote][1] about how latency of AI models to generate UIs with HTML, CSS and JavaScript is decreasing significantly, and how that can lead to user UIs that are ephemeral, dynamically generated, and specialized to the user need at hand.
+[Paul Kinlan recently wrote][1] about how latency of AI models to generate UIs with HTML, CSS and JavaScript is decreasing significantly, and how that can lead to user UIs that are ephemeral, dynamically generated, and specialized to the user need at hand.
 
 > To me, the direction of travel is clear. UI generation to service user-goals is going to happen.
 
