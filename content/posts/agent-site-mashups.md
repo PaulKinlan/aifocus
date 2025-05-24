@@ -1,5 +1,5 @@
 ---
-title: AI-Powered Mashups: A New Era of Dynamic User Interfaces
+title: "AI-Powered Mashups: A New Era of Dynamic User Interfaces"
 date: 2025-05-24T16:00:06.193Z
 slug: ai-powered-site-mashups
 authors:
