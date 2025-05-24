@@ -10,6 +10,9 @@ theme = 'aifocustheme'
 [params.authors.paulkinlan]
   name = "Paul Kinlan"
   homepage = "https://paul.kinlan.me/"
+[params.authors.andreban]
+  name = "Andre Cipriani Bandarra"
+  homepage = "https://bandarra.me/"
 
 [taxonomies]
   author = 'authors'
