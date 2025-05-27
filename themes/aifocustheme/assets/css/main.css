@@ -135,6 +135,7 @@ article {
 
   blockquote {
     font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
+    clear: both;
     font-size: 1.2em;
     line-height: 1.5;
     margin: 1em 0;
@@ -203,15 +204,16 @@ article {
 
   div.metadata {
     margin-bottom: 1em;
-    p {
-      font-size: 0.9rem;
-      border-bottom: 1px solid #eee; /* Lighter border */
-    }
+    border-bottom: 1px solid #eee; /* Lighter border */
+    clear: both;
+  }
+
+  div.metadata:has(img.author-image) {
+    min-height: calc(64px + 1em); /* Ensure enough space for author image */
   }
 
   img.author-image {
-    width: 30vw; /* Fixed size for author image */
-    margin-top: 1em;
+    width: clamp(64px, 5vw, 10vw); /* Fixed size for author image */
     aspect-ratio: 1 / 1; /* Square aspect ratio */
     border-radius: 1em; /* Circular image */
     float: left;
