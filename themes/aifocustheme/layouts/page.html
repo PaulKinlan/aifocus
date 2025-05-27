@@ -1,4 +1,6 @@
 {{ define "main" }}
+{{ $authorKeys := .Page.Params.authors | default (slice .Site.Params.defaultAuthor) }}
+
 <article>
   <h1>{{ .Title }}</h1>
   <div class="metadata">
@@ -8,6 +10,10 @@
         {{ .ReadingTime }}
         minutes</time></p>
   </div>
+
+  {{ with index $authorKeys 0 | printf "images/%s.png" | resources.Get }}
+  <img src="{{ .RelPermalink }}" alt="Author image" class="author-image">
+  {{end}}
 
   {{ .Content }}
   {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
