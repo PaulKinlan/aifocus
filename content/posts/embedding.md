@@ -22,24 +22,25 @@ When I look at the extreme that is "the super-app", it feels like embedding and 
 
 And continuing on that thread, the designers of the web-platform, that is browser vendors and participants of the W3C should be imagining what the platform should look like and how it should act and provided a clear value.
 
-Now there is a natural reaction: Well, I don't want super apps or LLMs. The technology is now here and it's being used for good and for bad, and as I learnt from the desktop to mobile [transition](/transition/), the answer is to differentiate and not follow. So, how does the web differentiate then?
+Now there is a natural reaction: Well, I don't want super apps or LLMs. The technology is now here and it's being used for good and for bad, and as I learnt from the desktop to mobile [transition](/transition/), the answer is to differentiate and not follow. Lean in to the areas that other platforms can't compete on.
 
-We should look at the platform primitives. So for example, investigate a new platform-level feature that is a enables a boundary between functional components. By exposing them to the browser in a way that it understands that there is an island and more importantly what it can do, while ensuring there can be security and privacy boundaries between the islands if required, allows:
+So, how does the web differentiate then?
 
-1. the browser to load these islands across the current sites, and then render them in the page.
-2. the browser to load these islands from other sites, and then render them in the page.
-3. apps, or other agents to load these islands from other sites, and then render the users' current context.
+One area that is ripe for innovation is the act of hyper-linking. We should actively investigate hyper-embedding (also known as transclusions). That is, we need to go beyond just being able to embed a site in a page (`iframe`) or an API (`fetch()`), or just merely linking to something (`<a>`), but instead enable the seamless embedding of functionality that is useful and composable and secure.
 
-This might sound like Web Components, but we don't have clear contracts. It's something that I started to think about in [Custom Elements Ecosystem](https://paul.kinlan.me/custom-elements-ecosystem/).
+The boundary between functional components as described in islands offers so many opportunities for the web. By exposing islands/components/widgets to the browser in a way that it understands that a) there is something that is embeddable, b) what it can do, and c) how to talk to it, all while ensuring there can be security and privacy boundaries between the islands if required, could enable:
 
-It might also sound like an `iframe`, but these are too heavy. I might just want to embed a small bit of functionality like a checkout form, or a map that has all my own branding..
+1. A cleaner separation for site authors for use across their site. Islands and functionality across the current sites, and then render them in the page. Because the browser understands the intent of islands it enables page-level actions, automations, and chat-bots by the browser to help the user interact with the page.
+2. Deeper integrations across sites. Developers have a habit of injecting any and all 3P JS into the page. A new primitive could separate the pages, ensure memory safety, and data-leakage while enabling even more composability across sites.
+3. Native apps, or other agents to load these islands from other sites, and then render just the island inside their app.
+4. There could be a marketplace and discovery mechanism for functionality for any given island's intent and any given contract.
 
-It might also sound like the `<portal>` element which was meant as a more privacy-preserving `<iframe> element, but it's too high-level and doesn't allow for the embedding of functionality that is not just a page.
+This might sound like Web Components, but we don't have clear contracts or cross-platform embed-ability. It's something that I started to think about in [Custom Elements Ecosystem](https://paul.kinlan.me/custom-elements-ecosystem/) but at the time there wasn't a clear need for it. Now there is.
+
+It might also sound like an `<iframe>`, but these are too heavy. I might just want to embed a small bit of functionality like a checkout form, or a map that has all my own branding.
+
+It might also sound like the `<portal>` element which was meant as a more privacy-preserving `<iframe> element, but again it's too high-level and doesn't allow for the embedding of functionality at a level that smaller than a page.
 
 It might also look like [Web Intents](https://paul.kinlan.me/what-happened-to-web-intents/) but this was a page level and not at a component level (and it got pulled out of Chrome).
 
 We are in the start of an era where the [web will be headless](https://paul.kinlan.me/the-headless-web/) _and_ we don't have the correct primitives to enable the web to be composable in a way that is useful and for it to thrive.
-
-We need a way to define components as islands on the platform and enable them to be embedded across the site, in other sites and as a first class citizen in native apps. This might necessitate changes to system level WebViews and the browser itself.
-
-We need better ways to define intent of not just the page, but islands in teh page, and therefore we need a way to define intent or contracts between sites and components.
