@@ -32,6 +32,6 @@ While the performance of the current models is incredible, they are not instant 
 
 Another important blocker is figuring out the monetization model for applications providing content to AI Agents - while for a flight, restaurant, or hotel booking services the benefit is clear, since the AI Agent is directly generating business for them, services like review sites will need a good way to monetize the content they are providing. Maybe the AI Agent would pay for access to those services, on behalf of their user.
 
-[1]: https://aifoc.us/posts/latency/
+[1]: https://aifoc.us/latency/
 [3]: https://en.wikipedia.org/wiki/Model_Context_Protocol
 [4]: https://en.wikipedia.org/wiki/Mashup_(web_application_hybrid)
