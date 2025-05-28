@@ -22,13 +22,13 @@ When I look at the extreme that is "the super-app", it feels like embedding and 
 
 And continuing on that thread, the designers of the web-platform, that is browser vendors and participants of the W3C should be imagining what the platform should look like and how it should act and provided a clear value.
 
-Now there is a natural reaction: Well, I don't want super apps or LLMs. The technology is now here and it's being used for good and for bad, and as I learnt from the desktop to mobile [transition](/transition/) How does the web differentiate then?
+Now there is a natural reaction: Well, I don't want super apps or LLMs. The technology is now here and it's being used for good and for bad, and as I learnt from the desktop to mobile [transition](/transition/), the answer is to differentiate and not follow. So, how does the web differentiate then?
 
-a platform-level boundary between functional components of a page, this could be:
+We should look at the platform primitives. So for example, investigate a new platform-level feature that is a enables a boundary between functional components. By exposing them to the browser in a way that it understands that there is an island and more importantly what it can do, while ensuring there can be security and privacy boundaries between the islands if required, allows:
 
-1. exposing them to the browser in a way that it understands there is an island there and understands what it can do while ensuring there can be security and privacy boundaries between the islands if required.
-2. allowing the browser to load these islands from other sites, and then render them in the page
-3. allowing apps, or other agents to load these islands from other sites, and then render the users' current context.
+1. the browser to load these islands across the current sites, and then render them in the page.
+2. the browser to load these islands from other sites, and then render them in the page.
+3. apps, or other agents to load these islands from other sites, and then render the users' current context.
 
 This might sound like Web Components, but we don't have clear contracts. It's something that I started to think about in [Custom Elements Ecosystem](https://paul.kinlan.me/custom-elements-ecosystem/).
 
@@ -38,7 +38,7 @@ It might also sound like the `<portal>` element which was meant as a more privac
 
 It might also look like [Web Intents](https://paul.kinlan.me/what-happened-to-web-intents/) but this was a page level and not at a component level (and it got pulled out of Chrome).
 
-We are in the start of an era where the [web will be headless](https://paul.kinlan.me/the-headless-web/) _and_ I believe that we don't have the correct primitives to enable the web to be composable in a way that is useful and for it to thrive.
+We are in the start of an era where the [web will be headless](https://paul.kinlan.me/the-headless-web/) _and_ we don't have the correct primitives to enable the web to be composable in a way that is useful and for it to thrive.
 
 We need a way to define components as islands on the platform and enable them to be embedded across the site, in other sites and as a first class citizen in native apps. This might necessitate changes to system level WebViews and the browser itself.
 
