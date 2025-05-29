@@ -14,8 +14,19 @@
         {{ .ReadingTime }}
         minutes</time></p>
   </div>
-
   {{ .Content }}
   {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
 </article>
+
+<section>
+  {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
+  {{ if ne $page.RelPermalink page.RelPermalink }}
+  {{ if eq $idx 0 }}
+  <h2>More essays</h2>
+  {{ end }}
+  <h3><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2006-01-02" }}</h3>
+  {{ end }}
+  {{ end }}
+</section>
+
 {{ end }}
