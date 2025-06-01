@@ -48,7 +48,7 @@ document.body.appendChild(buildSpaceUI(spaceData));
 
 So why is Japan and ‘f’ in the same article?
 
-I had to work for two days on this vacation and I was relating my use of Gemini and ChatGPT to a friend about how every time I go to China show me how pervasive WeChat is across people's lives. Yes, on this trip I wasn’t ordering food, cars, laundry or anything else, but for my needs both Gemini and ChatGPT gave me everything I needed. Translations, background information, local-news, and even a bit of work that I needed to think about.
+I had to work for two days on this vacation and I was relating my use of Gemini and ChatGPT to a friend about how every time I go to China show me how pervasive WeChat is across people's lives. Gemini and ChatGPT were my super-app. Yes, on this trip I wasn’t ordering food, cars, laundry or anything else, but for my needs both Gemini and ChatGPT gave me everything I needed. Translations, background information, local-news, and even a bit of work that I needed to think about.
 
 In that conversation, I was describing the experience of how I took a photo of a nuclear reactor and ChatGPT built a little program that scanned and panned the image to find where I was and what I was looking at. It built a mini application to solve the problem (see below) and it hit me....
 
