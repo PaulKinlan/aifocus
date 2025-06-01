@@ -43,4 +43,8 @@ It might also sound like the `<portal>` element which was meant as a more privac
 
 It might also look like [Web Intents](https://paul.kinlan.me/what-happened-to-web-intents/) but this was a page level and not at a component level (and it got pulled out of Chrome).
 
-We are in the start of an era where the [web will be headless](https://paul.kinlan.me/the-headless-web/) _and_ we don't have the correct primitives to enable the web to be composable in a way that is useful and for it to thrive. The designers of the web-platform, that is browser vendors and participants of the W3C should be imagining what the platform should look like and how it should continue to differentiate itself in the future.
+We are in the start of an era where the [web will be headless](https://paul.kinlan.me/the-headless-web/) _and_ we don't have the correct primitives to enable the web to be composable in a way that is useful and for it to thrive.
+
+It's too early to prescribe solutions, but I do believe that a way to define 'islands' or web components as embeddable and a way embed sub-trees and components (islands) is needed and as we do that, I think it's time again to think about exposing intents and contracts on sites, pages and components and make them discoverable.
+
+My hope is that the designers of the web-platform, that is browser vendors and participants of the W3C, should be imagining what the platform could and should look like and how it should continue to differentiate itself in the future, and these are just a couple of early opportunities that I see.
