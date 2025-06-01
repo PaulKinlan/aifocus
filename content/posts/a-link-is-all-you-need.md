@@ -26,7 +26,7 @@ Yes, Apple through Safari introduced many technologies that would let the web wo
 
 We needed a change in how we thought about the web and how it should be used it for this new context. From my own personal experience, it wasn't until a Google "mobile-first" push in 2015 that you really started to see a change in how the web was experienced on mobile.
 
-As I look at my own usage of LLMs tody, there is a change in how I use the web and I am uneasy, but it wasn't until recently that I was able to put my finger on it. Yes, as the cost of creating content drops because people use LLMs it enables a lot more low-quality content to be created and at the same time it is also enabling a lot of good experiences to be easily created (the structure of this very blog was made using an LLM), but the only way you get to discover and experience content is if you can navigate to it.
+As I look at my own usage of LLMs today, there is a change in how I use the web and I am uneasy, but it wasn't until recently that I was able to put my finger on it. Yes, as the cost of creating content drops because people use LLMs it enables a lot more low-quality content to be created and at the same time it is also enabling a lot of good experiences to be easily created (the structure of this very blog was made using an LLM), but the only way you get to discover and experience content is if you can navigate to it.
 
 I was chatting with a colleague about the intersection of AI tooling and the web and the following thought popped into my mind "If you had a machine that could instantly recall or create any facet of information, do you need a link?"
 
@@ -38,7 +38,7 @@ What I am experiencing doesn't feel a million miles away from the original defin
 
 > In computer science, transclusion is the inclusion of part or all of an electronic document into one or more other documents by reference via hypertext. Transclusion is usually performed when the referencing document is displayed, and is normally automatic and transparent to the end user.[1] The result of transclusion is a single integrated document made of parts assembled dynamically from separate sources, possibly stored on different computers in disparate places. _The result of transclusion is a single integrated document made of parts assembled dynamically from separate sources, possibly stored on different computers in disparate places._
 
-Emphasis mine.
+Emphasis mine &mdash; [Transclusions](https://en.wikipedia.org/wiki/Transclusion)
 
 It feels like the directed edge that defines a link in this massive directed graph that we know as the web is changing as LLM's seem to be able to connect concepts across many documents and just merge them into the response.
 

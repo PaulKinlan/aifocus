@@ -39,7 +39,7 @@ This might sound like Web Components, but we don't have clear contracts or cross
 
 It might also sound like an `<iframe>`, but these are too heavy. I might just want to embed a small bit of functionality like a checkout form, or a map that has all my own branding.
 
-It might also sound like the `<portal>` element which was meant as a more privacy-preserving `<iframe> element, but again it's too high-level and doesn't allow for the embedding of functionality at a level that smaller than a page.
+It might also sound like the `<portal>` element which was meant as a more privacy-preserving `<iframe>` element, but again it's too high-level and doesn't allow for the embedding of functionality at a level that smaller than a page.
 
 It might also look like [Web Intents](https://paul.kinlan.me/what-happened-to-web-intents/) but this was a page level and not at a component level (and it got pulled out of Chrome).
 

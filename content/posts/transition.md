@@ -28,7 +28,7 @@ I remember thinking: "That's a neat trick". And then I got on with my life.
 
 Like many people, I think this changed when we first played with ChatGPT. It wasn't perfect, it was slow, but I got it building a simple web app in a few minutes and I could feel that this had the potential to change the way that I work and the way that people interact with computers. I remember clear as day, sitting next to my wife on the couch saying that everything is going to change.
 
-It feels clear that we are in the midst of another major transition, and I'm at a personal transition. I'm at a point where I was thinking about what I want to do next with what I think will be a huge shift for computing as a whole. I had been working on the web for 20 years for nearly 30 years and working at Google for 13 years (15 now) and my fundamental question is: What is going to happen to the web?
+It feels clear that we are in the midst of another major transition, and I'm at a personal transition. I'm at a point where I was thinking about what I want to do next with what I think will be the next huge shift for computing. I've been working on the web nearly 30 years and working at Google for 15 of those and my fundamental question is: What is going to happen to the web?
 
 What I do know is that I love the web, I think it's the best platform to write once and reach everyone. I love seeing that the web is the place where people are experimenting with the entire range of delivery of AI experiences to people, be it access to Large Language Models, Image Segmentation, Video analysis, or even new flavours of search.
 

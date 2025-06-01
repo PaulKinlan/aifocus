@@ -10,7 +10,7 @@ authors:
 
 > To me, the direction of travel is clear. UI generation to service user-goals is going to happen.
 
-Combining this with [Model Context Protocol(MCP)][3] has got me thinking about the good old [site mashups][4], and how AI agents can unleash a new, modernized version of them. If you haven't heard about mashups before, here's what Gemini has to say about them:
+Combining this with [Model Context Protocol (MCP)][3] has got me thinking about the good old [site mashups][4], and how AI agents can unleash a new, modernized version of them. If you haven't heard about mashups before, here's what Gemini has to say about them:
 
 > A site mashup combines data, functionalities, or applications from two or more distinct web sources into a single, integrated user experience. This is typically achieved by leveraging publicly available APIs (Application Programming Interfaces) or RSS feeds, allowing developers to extract and re-present content in a new and innovative way, often without owning the original data sources. For example, a real estate mashup might combine map data from Google Maps with property listings from a real estate website to visually display homes for sale in a specific area.
 

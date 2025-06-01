@@ -20,7 +20,7 @@ It wasn't until much later in my career that I learned about the importance of l
 
 &mdash; [Jakob Nielsen - 1993](https://www.nngroup.com/articles/response-times-3-important-limits/)
 
-This was written at the dawn of the web and was later [refined in 2014 for web applications](https://www.nngroup.com/articles/response-times-3-important-limits/#:~:text=Web%2DBased%20Application%20Response%20Time) and I think that it's interesting that streaming of responses has been used as a way to keep people engaged with LLMs. Yes, streaming of responses has been an interesting hack to improve the perception of speed, and yes, fundamentally these models are doing trillions upon trillions of calculations to get us an answer, but it doesn't change the fact that the underlying model is slow to generate the content,
+This was written at the dawn of the web and was later [refined in 2014 for web applications](https://www.nngroup.com/articles/response-times-3-important-limits/#:~:text=Web%2DBased%20Application%20Response%20Time) and I think that it's interesting that streaming of responses has been used as a way to keep people engaged with LLMs. Yes, streaming of responses has been an interesting hack to improve the perception of speed, and yes, fundamentally these models are doing trillions upon trillions of calculations to get us an answer, but it doesn't change the fact that the underlying model is slow to generate the content.
 
 We are at the early days of the web again. The content or the "apps" are currently slow to generate and sometimes the experiences like those created with the "Canvas" apps can feel a little low-fi too, but we are in a [transition](/transition/) and it's because these tools feel valuable we are happy to put up with the latency to get a complete response. Seeing these responses generate and stream in feels like the progressive loading of HTML on a slow-connection when you could see the page UI progressively load and JPEGs slowly unblur into full view. It seems to me that we are in the modem phase right now waiting for the broadband transition to happen.
 
@@ -384,7 +384,7 @@ const App = () => {
 export default App;
 ```
 
-**4982 token**. At 150 tokens per second just for the response we are looking at 33 seconds to generate the UI, and this is still a relatively simple UI.
+**4982 tokens**. At 150 tokens per second just for the response we are looking at 33 seconds to generate the UI, and this is still a relatively simple UI.
 
 Latency is across the full stack and we're going to need a step change in performance to get to the 0.1 second threshold.
 
