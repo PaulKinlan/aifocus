@@ -195,6 +195,25 @@ article {
     }
   }
 
+  &.summary {
+    border: none;
+    margin: 0;
+
+    padding: 0;
+    font-size: initial;
+
+    .metadata {
+      margin-bottom: 0;
+      padding: 0;
+      border-bottom: none; /* Lighter border */
+      clear: both;
+    }
+
+    h2 {
+      font-size: 1.5em; /* Smaller size for summary */
+      margin-bottom: 0; /* Smaller bottom margin */
+    }
+  }
   h1 {
     margin-bottom: 0em;
   }
