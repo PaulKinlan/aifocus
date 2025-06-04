@@ -3,7 +3,7 @@
 {{ $defaultAuthorKey := .Site.Params.defaultAuthor }}
 {{ $defaultAuthor := index .Site.Params.authors $defaultAuthorKey }}
 <div class="about h-card p-author"> <span class="visually-hidden"><span class="visually-hidden">Author: </span>
-    <a class="p-name u-url" href="{{ .Site.BaseURL }}">{{ $defaultAuthor.name | default .Site.Title }}</a>
+    <a class="p-name u-url u-uid" href="{{ .Site.BaseURL }}">{{ $defaultAuthor.name | default .Site.Title }}</a>
     {{ $authorImage := printf "images/%s.png" $defaultAuthorKey }}
     {{ with resources.Get $authorImage }}
     <img class="u-photo" src="{{ .RelPermalink }}" alt="{{ $defaultAuthor.name }}" style="display:none;">
