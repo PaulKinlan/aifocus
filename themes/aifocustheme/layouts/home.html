@@ -1,27 +1,55 @@
 {{ define "main" }}
 {{ if .Site.Params.about }}
-<div class="about">{{ .Site.Params.about | markdownify }}</div>
+{{ $defaultAuthorKey := .Site.Params.defaultAuthor }}
+{{ $defaultAuthor := index .Site.Params.authors $defaultAuthorKey }}
+<div class="about h-card p-author"> <span class="visually-hidden">Author: </span>
+  <a class="p-name u-url" href="{{ .Site.BaseURL }}">{{ $defaultAuthor.name | default .Site.Title }}</a>
+  {{ $authorImage := printf "images/%s.png" $defaultAuthorKey }}
+  {{ with resources.Get $authorImage }}
+  <img class="u-photo" src="{{ .RelPermalink }}" alt="{{ $defaultAuthor.name }}" style="display:none;">
+  {{ else }}
+  {{ with .Site.Params.images }}
+  {{ $siteImage := index . 0 }}
+  {{ with resources.Get $siteImage }}
+  <img class="u-photo" src="{{ .RelPermalink }}" alt="{{ $defaultAuthor.name | default $.Site.Title }}"
+    style="display:none;">
+  {{ end }}
+  {{ end }}
+  {{ end }}
+  <div class="p-note">
+    {{ .Site.Params.about | markdownify }}
+  </div>
+  <a class="u-url" href="{{ .Site.BaseURL }}" style="display:none;">{{ .Site.BaseURL }}</a>
+</div>
 {{ end }}
 
 {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
 {{ if eq $idx 0 }}
-<article class="featured-post">
-  <h1><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h1>
+<article class="featured-post h-entry">
+  <h1 class="p-name"><a class="u-url" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h1>
   <div class="metadata">
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
-    <p>Published on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}; Reading time: {{ .ReadingTime }}
+    <p>Published by {{ partial "authors.html" . }} on: <time class="dt-published" datetime="{{ $dateMachine }}">{{
+        $dateHuman }}; Reading time: {{ .ReadingTime }}
         minutes</time></p>
   </div>
-  {{ .Content }}
+  <div class="e-content">
+    {{ .Content }}
+  </div>
 </article>
 {{ else }}
-<section>
+<article class="h-entry">
   {{ if eq $idx 1 }}
   <h2>More essays</h2>
   {{ end }}
-  <h3><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a> - {{ .Date.Format "2006-01-02" }}</h3>
-</section>
+  <h3 class="p-name"><a class="u-url" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h3>
+  <div class="metadata">
+    {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+    <p>Published by {{ partial "authors.html" . }} on: <time class="dt-published" datetime="{{ $dateMachine }}">{{
+        .Date.Format "2006-01-02" }}</time></p>
+  </div>
+</article>
 {{ end }}
 {{ end }}
 {{ end }}

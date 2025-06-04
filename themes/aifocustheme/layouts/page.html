@@ -1,20 +1,23 @@
 {{ define "main" }}
 {{ $authorKeys := .Page.Params.authors | default (slice .Site.Params.defaultAuthor) }}
 
-<article>
-  <h1>{{ .Title }}</h1>
+<article class="h-entry">
+  <h1 class="p-name">{{ .Title }}</h1>
   <div class="metadata">
     {{ with index $authorKeys 0 | printf "images/%s.png" | resources.Get }}
     <img src="{{ .RelPermalink }}" alt="Author image" class="author-image">
     {{end}}
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
-    <p>Published by {{ partial "authors.html" . }} on: <time datetime="{{ $dateMachine }}">{{ $dateHuman }}; Reading
+    <p>Published by {{ partial "authors.html" . }} on: <time class="dt-published" datetime="{{ $dateMachine }}">{{
+        $dateHuman }}; Reading
         time:
         {{ .ReadingTime }}
         minutes</time></p>
   </div>
-  {{ .Content }}
+  <div class="e-content">
+    {{ .Content }}
+  </div>
   {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
 </article>
 

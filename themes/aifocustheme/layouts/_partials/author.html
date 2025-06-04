@@ -1,1 +1,8 @@
-<a href="/authors/{{.key}}">{{.author.name}}</a>
+<span class="p-author h-card">
+  <a class="p-name u-url" href="{{ .author.homepage | default (printf " /authors/%s" .key) }}" rel="author">{{
+    .author.name }}</a>
+  {{ $authorImage := printf "images/%s.png" .key }}
+  {{ with resources.Get $authorImage }}
+  <img class="u-photo" src="{{ .RelPermalink }}" alt="{{ $.author.name }}" style="display:none;">
+  {{ end }}
+</span>
