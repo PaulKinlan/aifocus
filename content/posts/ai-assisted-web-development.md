@@ -1,6 +1,6 @@
 ---
 title: "AI Assisted Web Development"
-date: 2025-05-24T16:00:06.193Z
+date: 2025-06-04T16:00:06.193Z
 slug: ai-assisted-webdev
 authors:
   - andreban
