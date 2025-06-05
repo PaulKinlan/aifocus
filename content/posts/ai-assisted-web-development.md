@@ -16,8 +16,6 @@ Maybe that's because the web has been around for such a long time and the open n
 
 Another point that makes the web a great platform to build with AI tooling is low-friction deployment. Because the web doesn't have review queues, or requirements, developers can easily deploy and their creations, iterate, and share them.
 
-## A new type of web developer
-
 The combination of AI models capabilities on web development with lack of friction for deploying them is spurring a new type of developer, one that is first and foremost a vibe coder and frequently doesn't know other types of development.
 
 This became clear to me when chatting with the founders of [usecurling.com][7], a Brazilian startup aiming at differentiating themselves by delivering products faster by using AI. The team there also hosts a closed vibe coding community where the vast majority of participants don't have a software development background, but are using tools like [Replit](https://replit.com/) and [Lovable](https://lovable.dev/) to build projects.
