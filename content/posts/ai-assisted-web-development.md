@@ -28,13 +28,9 @@ And that's where their community comes in, it's a forum where the Curling AI tea
 
 AI Tooling does indeed lower the barrier of entry for web development, allowing people who otherwise wouldn't have the time or resources to learn, to effective realize their ideas. It also doesn't mean there will be less work for traditional developers. In fact, my view is quite the opposite. With a lower barrier of entry, the need for developers who can take over when AI tooling hits a brick wall will only grow.
 
-## Activating "dormant" developers
-
 Another interesting trend are developers who moved into leadership or management position, like CTOs, VPs, directors and managers, starting to build again, because AI tooling gives them the opportunity to quickly put together projects within the time they have left after dealing with other responsibilities that comes with those roles.
 
 While, at one hand, this may be contributing to a [dissonance between leadership and developers on generative AI][9], it's also great to see AI bringing those developers back to building things, and excited about the future of web development.
-
-## Sharing and discovery of web applications
 
 An URL is a powerful tool that allows sharing web projects around. With more people becoming developers and publishing their creations on-line, I wonder if we will start seeing more directories where those developers can showcase their applications, and users can discover new ones - sort of an [itch.io][8], but for web applications.
 
