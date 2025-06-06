@@ -8,12 +8,11 @@
       {{ range $key, $author := .Site.Params.authors }}
       <li>
         <h2>
-          {{ if $author.homepage }}
-          <a href="{{ $author.homepage }}">{{ $author.name }}</a>
-          {{ else }}
-          <a href="{{ (printf " /authors/%s" $key) | relURL }}">{{ $author.name }}</a>
-          {{ end }}
+          <a href='{{ $key | printf "/authors/%s" | relURL }}'>{{ $author.name }}</a>
         </h2>
+        {{ if $author.homepage }}
+        <a href="{{ $author.homepage }}">{{ $author.homepage }}</a>
+        {{ end }}
         {{ if or $author.twitter $author.linkedin $author.bluesky }}
         <span class="social-links" style="margin-left: 10px;">
           {{ with $author.twitter }}

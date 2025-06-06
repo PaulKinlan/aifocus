@@ -1,10 +1,29 @@
 {{ define "main" }}
 <h1>{{ .Title }} </h1>
 {{ $name := split . "/" }}
-{{ $author := (len $name) | add -2 | index $name | index $.Site.Params.authors }}
-{{ with $author}}
-<p>Homepage: <a href="{{.homepage}}">{{.homepage}}</a></p>
-{{end}}
+{{ $authorKey := (len $name) | add -2 | index $name }}
+{{ $author := index $.Site.Params.authors $authorKey }}
+{{ with $author }}
+{{ if .homepage }}
+<p>Homepage: <a href="{{ .homepage }}">{{ .homepage }}</a></p>
+{{ end }}
+{{ if or .twitter .linkedin .bluesky }}
+<div class="social-links-author-page" style="margin-top: 5px; margin-bottom: 10px;">
+  {{ with .twitter }}
+  <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="Twitter"
+    style="text-decoration: none; margin-right: 8px;"><i class="fa-brands fa-x-twitter"></i></a>
+  {{ end }}
+  {{ with .linkedin }}
+  <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="LinkedIn"
+    style="text-decoration: none; margin-right: 8px;"><i class="fa-brands fa-linkedin"></i></a>
+  {{ end }}
+  {{ with .bluesky }}
+  <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="Bluesky" style="text-decoration: none;"><i
+      class="fa-solid fa-square"></i></a>
+  {{ end }}
+</div>
+{{ end }}
+{{ end }}
 <br>
 {{ .Content }}
 <br>
