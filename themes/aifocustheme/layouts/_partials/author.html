@@ -1,8 +1,24 @@
 <span class="p-author h-card">
-  <a class="p-name u-url" href="{{ .author.homepage | default (printf " /authors/%s" .key) }}" rel="author">{{
+  <a class="p-name u-url" href='{{printf "/authors/%s" .key}}' rel="author">{{
     .author.name }}</a>
   {{ $authorImage := printf "images/%s.png" .key }}
   {{ with resources.Get $authorImage }}
   <img class="u-photo" src="{{ .RelPermalink }}" alt="{{ $.author.name }}" style="display:none;">
+  {{ end }}
+
+  {{ if or .author.twitter .author.linkedin .author.bluesky }}
+  <span class="social-links">
+    {{ with .author.twitter }}
+    <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="Twitter"><i
+        class="fa-brands fa-x-twitter"></i></a>
+    {{ end }}
+    {{ with .author.linkedin }}
+    <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="LinkedIn"><i
+        class="fa-brands fa-linkedin"></i></a>
+    {{ end }}
+    {{ with .author.bluesky }}
+    <a href="{{ . }}" rel="me" class="u-url" target="_blank" aria-label="Bluesky"><i class="fa-solid fa-square"></i></a>
+    {{ end }}
+  </span>
   {{ end }}
 </span>
