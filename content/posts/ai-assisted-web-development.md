@@ -41,6 +41,6 @@ Maybe this won't make sense in today's world, but the concept of more people bei
 [5]: https://www.spacejam.com/1996/
 [6]: https://www.ft.com/content/f4f3def2-2858-4239-a5ef-a92645577145
 [7]: https://www.usecurling.com/
-[8]: https://itchy.io
+[8]: https://itch.io
 [9]: https://leaddev.com/technical-direction/why-developers-and-their-bosses-disagree-over-generative-ai
 [10]: https://futurism.com/problem-vibe-coding
