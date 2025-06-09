@@ -61,6 +61,29 @@ footer {
   background-color: #fdfcf8; /* Light beige */
 
   margin: auto;
+
+  font-family: Joan;
+
+  ul {
+    list-style: none; /* Remove default list style */
+    padding: 0; /* Remove default padding */
+    display: flex;
+    gap: 1em;
+
+    a {
+      color: #000000; /* Black text */
+      text-decoration: none; /* Remove underline */
+      font-weight: bold; /* Bold links */
+
+      span {
+        padding-left: 0.5em; /* Space between icon and text */
+      }
+
+      &:hover span {
+        text-decoration: underline; /* Underline on hover */
+      }
+    }
+  }
 }
 
 .container {
@@ -254,6 +277,8 @@ footer {
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid #eee; /* Lighter border */
+
+  font-family: ;
 }
 
 /* New Site Branding Header Styles */

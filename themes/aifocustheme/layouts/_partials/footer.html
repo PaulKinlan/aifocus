@@ -1,5 +1,10 @@
 <ul>
-  <li><a href="https://github.com/paulkinlan" rel="me">Github</a></li>
-  <li><a href="mailto:paul.kinlan@gmail.com" rel="me">paul.kinlan@gmail.com</a></li>
+  <li><a href="https://github.com/paulkinlan/aifocus" rel="me" title="Paul Kinlan on Github"><i
+        class="fa-brands fa-github"></i>
+      <span>Github</span></a></li>
+  <li><a href="mailto:paul.kinlan@gmail.com" rel="me" title="Email Paul Kinlan"><i class="fa-solid fa-envelope"></i>
+      <span>Email</span></a></li>
+  {{ with .OutputFormats.Get "rss" }}<li><a href="{{ .RelPermalink }}" rel="alternate" type="application/rss+xml"
+      title="RSS Feed"><i class="fa-solid fa-rss"></i><span>RSS</span></a></li>{{ end }}
 </ul>
 <p>Copyright {{ now.Year }}. All rights reserved.</p>
