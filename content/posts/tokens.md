@@ -49,18 +49,14 @@ I'm old enough to remember buying Visual Studio so that I could build windows ap
 
 Now we are seeing an explosion of token-slinging services that cost significant amounts of cash. Cursor costs $20 a month for 500 request (I think I get through 500 requests in a day sometimes.) Replit is per "goal". Cline is per-token based.
 
-It's a hard trade for web developers. You feel very productive, you can see the output, if it's going well then you don't want to stop. But at some point you will have to stop. So, do you trade cost for quality? I don't know a single developer that wants to produce a low-quality product or use a tool that outputs lower-quality code than another tool.
+It's a difficult trade-off for web developers. You can feel incredibly productive and can see the output; when things are going well, you don't want to stop. But at some point, you have to. So, do you trade cost for quality? I don't know a single developer who wants to produce a low-quality product or use a tool that outputs lower-quality code than another. It's a real challenge and one that will increase as more developers find value in these tools.
 
-It's very interesting that IDEs and tools are asking you to have a direct relationship with the LLM vendor. I can see why to some extent. The IDE doesn't assume the cost of the work the developer is doing. However now I get annoyed with the tools when there is an obvious mistake in the LLM generated code because it actually cost me real money.
+It's very interesting that IDEs and other tools are asking you to have a direct relationship with the LLM vendor. I can see the logic to some extent; the IDE doesn't assume the cost of the developer's work. However, I now get annoyed with the tools when there is an obvious mistake in the LLM-generated code because it actually cost me real money.
 
-I do believe that cost is going to be the next barrier that we have to overcome.I have a job that enables me to spend what I want to spend and see the benefits from it.
-
-For a small individual developer or a small software shop, even $10 a day is a lot of money, but that $10 could be less than an hour of LLM usage. It really adds up the more you use it.
+Cost is going to be the next barrier that we have to overcome. I have a job that enables me to spend what I want to spend and see the benefits from it, but for a small individual developer or a small software shop, even $10 a day is a lot of money, and can equate to less than an hour of LLM usage.
 
 How should we think about our more junior folk or people starting out in the industry how don't have access to the funds to use these tools?
 
-Tokens aren't priced to the market they are being used in, so if you are in a region that has lower salaries, lower revenues or has a currency that isn't as strong against the dollar, then you might struggle to be able to afford to use these tools.
+How do we think about emerging or weaker economies? Tokens aren't priced to the market they are being used in. If you're in a region that has lower salaries, lower revenues or has a currency that isn't as strong against the dollar, then you might struggle to be able to afford to use these tools even if the increase in productivity is significant.
 
-It feels like there might be an ever widening gap between those who can afford to use LLMs and those who can't.
-
-I'd like to think local on-device inference will help with this, but the models aren't anywhere near capable enough yet, and the hardware requirements too vast for the majority of devices out there.
+I worry that there might be an ever widening gap between those who can afford to use LLMs and those who can't.
