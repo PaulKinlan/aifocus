@@ -22,3 +22,13 @@ Then there is the other extreme. As people's time moved into Apps, you saw platf
 The adaptation of the web to mobile was a long process, and on reflection, it is unclear if the reaction and the subsequent copying of the functionality of these device platforms was the right thing to do, vs finding ways for the web to differentiate itself from the native platforms.
 
 I look at the fact that both Apple and Google tried to recreate the best of the web: Linking; with Instant Apps and App Clips. They are both trying to create a way to link to content that is not a web page, but a native experience. They are trying to recreate the web in their own image, but have they succeeded? No.
+
+====
+
+OpenRouter is very interesting as a business.
+
+Assuming OpenRouter can negotiate better rates and have a margin for their service, why would you as an app developer send tokens through it when they are more expensive that going direct? Say, I'm an app developer that sends 100's of millions of tokens to the LLM. Should I not get some sort of benefit for preferring their service? You do wonder if there was more competition then these middleware providers would be doing something for the developers of apps that sling tokens their way.
+
+I personally struggle to yet see how any of these services become anything other than an arbitrage of token costs. Kind of like how Vercel has historically sat on top of other services and charged a premium for the convenience of using their platform.
+
+Given how hard it was historically to get an API key from Google, I can totally see the value of a service like OpenRouter. I imagine they might be able to negotiate better rates given that they are chewing through 8.4 trillion tokens a month.
