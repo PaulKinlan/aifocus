@@ -11,12 +11,15 @@ theme = 'aifocustheme'
 [params.authors.paulkinlan]
   name = "Paul Kinlan"
   homepage = "https://paul.kinlan.me/"
-  twitter = "https://twitter.com/paul_kinlan"
+  twitter = "https://x.com/paul_kinlan"
   linkedin = "https://linkedin.com/in/paulkinlan"
   bluesky = "https://bsky.app/profile/paul.kinlan.me"
 [params.authors.andreban]
   name = "Andre Cipriani Bandarra"
   homepage = "https://bandarra.me/"
+  twitter = "https://x.com/andreban"
+  linkedin = "https://www.linkedin.com/in/andreban/"
+  bluesky = "https://bandarra.me/"
 
 [taxonomies]
   author = 'authors'
