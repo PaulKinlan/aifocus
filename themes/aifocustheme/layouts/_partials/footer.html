@@ -4,13 +4,7 @@
       <span>Github</span></a></li>
   <li><a href="mailto:paul.kinlan@gmail.com" rel="me" title="Email Paul Kinlan"><i class="fa-solid fa-envelope"></i>
       <span>Email me directly</span></a></li>
-  {{ with .OutputFormats.Get "rss" }}<li><a href="{{ .RelPermalink }}" rel="alternate" type="application/rss+xml"
+  {{ with .OutputFormats.Get "RSS" }}<li><a href="{{ .RelPermalink }}" rel="alternate" type="application/rss+xml"
       title="RSS Feed"><i class="fa-solid fa-rss"></i><span>RSS</span></a></li>{{ end }}
 </ul>
-<form action="https://buttondown.com/api/emails/embed-subscribe/ai-focus" method="post" target="popupwindow"
-  onsubmit="window.open('https://newsletter.aifoc.us', 'popupwindow')" class="embeddable-buttondown-form">
-  <input type="email" name="email" id="bd-email" placeholder="Enter your email" />
-  <input type="submit" value="Subscribe to our newsletter" />
-
-</form>
 <p>Copyright {{ now.Year }}. All rights reserved.</p>

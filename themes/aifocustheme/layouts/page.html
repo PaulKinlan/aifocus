@@ -20,7 +20,11 @@
   </div>
   {{ partial "terms.html" (dict "taxonomy" "tags" "page" .) }}
 </article>
-
+<section>
+  <h2>Subscribe</h2>
+  <p>You can keep up with this blog by subscribing to our newsletter.</p>
+  {{ partial "subscribe.html" . }}
+</section>
 <section>
   {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
   {{ if ne $page.RelPermalink page.RelPermalink }}
@@ -31,5 +35,4 @@
   {{ end }}
   {{ end }}
 </section>
-
 {{ end }}

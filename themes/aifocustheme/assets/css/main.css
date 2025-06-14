@@ -56,14 +56,16 @@ main {
   padding: 1em;
 }
 
+section {
+  margin-top: 1em;
+}
+
 footer {
   max-width: 700px;
   background-color: #fdfcf8; /* Light beige */
-
   margin: auto;
-
   font-family: Joan;
-
+  text-align: center;
   ul {
     list-style: none; /* Remove default list style */
     padding: 0; /* Remove default padding */
@@ -116,8 +118,8 @@ h6 {
 }
 
 article {
-  margin-bottom: 40px;
-  padding-bottom: 30px;
+  margin-bottom: 1em;
+  padding-bottom: 1em;
   border-bottom: 1px solid #eee; /* Lighter border */
 
   p,
@@ -277,8 +279,6 @@ footer {
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid #eee; /* Lighter border */
-
-  font-family: ;
 }
 
 /* New Site Branding Header Styles */
