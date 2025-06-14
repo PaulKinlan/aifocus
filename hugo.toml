@@ -7,6 +7,7 @@ theme = 'aifocustheme'
   about = "Hello, I'm [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate on Chrome and a Web Developer. There's a significant shift in the industry driven by AI, and I'm developing an opinion through a collection of essays and projects on how AI is changing the medium of the web and web development at large."
   defaultAuthor = "paulkinlan"
   images = ['/images/card.jpeg']
+  discord = "https://discord.gg/BWqTVtMgaW"
 [params.authors]
 [params.authors.paulkinlan]
   name = "Paul Kinlan"
