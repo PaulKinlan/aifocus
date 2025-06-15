@@ -12,15 +12,15 @@ authors:
 
 This may make it sound like the decision between running AI models on-device or in the cloud is a binary one, but in reality, it is more nuanced. There are scenarios where a hybrid approach, where some tasks are handled on the client side and others on the server, can be beneficial.
 
-One of the scenarios is a hybrid approach where the decision of running the a workload is based on the user's *device capabilities* - if the user has a device powerful enough device, the workload is executed on the client side and, if not, the task is delegate to Cloud AI.
+One of the scenarios is a hybrid approach where the decision of running the a workload is based on the user's *device capabilities* - if the user has a powerful enough device, the workload is executed on the client side and, if not, the task is delegate to Cloud AI.
 
-While, for some frameworks and models, the only way to find if the device is capable of running the model is to benchmark some workload on the user's device, the [Built-in AI API][3] provide affordances for this pattern by giving all the APIs an `availability()` method, which developers should check before trying to run inference on those APIs, and make a decision on where to run the workload dynamically. The [Firebase AI Logic][4] takes advantage of that to provide an LLM framework that dynamically switches between client and server.
+While, for some frameworks and models, the only way to find if the device is capable of running the model is to benchmark some workload on the user's device, the [Built-in AI API][3], a set of web platform APIs that gives developers access to AI models managed by the browser, provide affordances for this pattern by giving all the APIs an `availability()` method, which developers should check before trying to run inference on those APIs, and make a decision on where to run the workload dynamically. The [Firebase AI Logic][4] takes advantage of that to provide an LLM framework that dynamically switches between client and server.
 
 Another scenario for a hybrid approach is when the decision is made based on the on-device *model capabilities*. In this case, if the client side model is capable of handling the user's prompt, the prompt is handled locally. Otherwise, the request is delegated to a more powerful Cloud AI.
 
-[Ian Ballantyne][6], from the DeepMind team, recently [lunched a video][5] on this topic and, in summary, the approach consists on training a third model from a curated set of prompts that have been labeled with there they should run, and use this new model to classify new prompts for being handled by the local model or the remote one.
+[Ian Ballantyne][6], from the DeepMind team, recently [launched a video][5] on this topic and, in summary, the approach consists on training a third model from a curated set of prompts that have been labeled with there they should run, and use this new model to classify new prompts for being handled by the local model or the remote one.
 
-One important aspect to keep in mind is that a hybrid solution gives away some of the advantages of a client-side only solution. There's a compromise on privacy, as the application now may communicate data to a Cloud server, and a compromise on network latency introduce by communication to the Cloud server, there may network latency.
+One important aspect to keep in mind is that a hybrid solution gives away some of the advantages of a client-side only solution. There's a compromise on privacy, as the application now may communicate data to a Cloud server, and a compromise on network latency introduce by communication to the Cloud server.
 
 Another important compromise is cost. Paul wrote:
 
