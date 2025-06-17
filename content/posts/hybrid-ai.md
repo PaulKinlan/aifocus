@@ -26,7 +26,7 @@ Another important compromise is cost. Paul wrote:
 
 > Cost just hasn’t been a thing that I’ve seen really talked about when it comes to the web-experiences. Instead the narrative is about privacy, ownership of data and compute, resilience to the network, resilience to business failure, avoidance of big-tech etc. All of these are great reasons to build local-first, and cost being a factor for running models, and specifically LLMs, I think is a new vector worth looking at to see some of the challenges that we might face as an industry.
 
-With hybrid, rather reducing the cost to zero, the goal is to reduce costs by running models on the user's device when possible.
+With hybrid, rather reducing the cost to zero, the goal is to reduce costs by running models on the user's device when possible, potentially addressing [some of the concerns from enterprises][11], and accelerating the adoption of AI.
 
 We can expect that, over time, more user devices will capable of running client-side large language models. The addition of [Neural Processing Units (NPUs)][8], supported on the web by standards like [WebNN][9], may accelerate the shift, and enable those devices to run LLM workloads more efficiently. At the same time, smaller models, like the [recenty announced Gemma 3n][10] are becoming capable for running a more diverse set of tasks, with higher quality.
 
@@ -42,3 +42,4 @@ In the meantime, Hybrid AI can be a great option to optimize costs when running 
 [8]: https://en.wikipedia.org/wiki/Neural_processing_unit
 [9]: https://www.w3.org/TR/webnn/
 [10]: https://deepmind.google/models/gemma/gemma-3n/
+[11]: https://www.theregister.com/2025/06/13/cloud_costs_ai_inferencing/
