@@ -1,0 +1,11 @@
+{{ $authorKeys := .Page.Params.authors | default (slice .Site.Params.defaultAuthor) }}
+{{ $configuredAuthors := .Site.Params.authors }}
+{{ $authorNames := slice }}
+{{ range $authorKeys }}
+{{ $authorKey := . }}
+{{ $author := index $configuredAuthors . }}
+{{ $authorPartialDict := dict "key" $authorKey "author" $author }}
+{{ $authorPartial := $authorPartialDict }}
+{{ $authorNames = $authorNames | append (printf "%s (%s)" ($author.email | default "contact@aifoc.us") $author.name) }}
+{{ end }}
+{{ printf "%s" (delimit $authorNames ",") | safeHTML}}

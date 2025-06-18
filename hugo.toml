@@ -11,6 +11,7 @@ theme = 'aifocustheme'
 [params.authors]
 [params.authors.paulkinlan]
   name = "Paul Kinlan"
+  email = "paul@aifoc.us"
   homepage = "https://paul.kinlan.me/"
   twitter = "https://x.com/paul_kinlan"
   linkedin = "https://linkedin.com/in/paulkinlan"
