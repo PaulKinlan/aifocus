@@ -1,8 +1,7 @@
 ---
 title: token slinging
-date: 2025-06-18T19:59:06.193Z
+date: 2025-06-30T10:00:06.193Z
 slug: token-slinging
-draft: true
 authors:
   - paulkinlan
 ---
