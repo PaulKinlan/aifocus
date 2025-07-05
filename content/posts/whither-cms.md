@@ -5,7 +5,7 @@ date: 2025-07-05T21:47:22.638Z
 slug: whither-cms
 ---
 
-When I moved to North Wales I noticed how many of the local businesses were solely on Facebook and Instagram. I spoke to them to ask why they don't have a site and it came down to four common issues 1) cost, 2) built in network, 3) skill, and 4) time. It's hard to beat free, good enough, and access to a network of potential customers. At the same time nearly everyone that I spoke to knew it wasn't a perfect situation and they wouldn't say 'no' to their own independent presence.
+When I moved to North Wales I noticed how many of the local businesses were solely on Facebook and Instagram. I spoke to some of them to ask why they don't have a site and it came down to four common issues 1) cost, 2) built in network, 3) skill, and 4) time. It's hard to beat free, good enough, and access to a network of potential customers. At the same time nearly everyone that I spoke to knew it wasn't a perfect situation and they wouldn't say 'no' to their own independent presence.
 
 CMSs offer a path for people without the skill or the time to get their own place on the web, and this is amazing. Yet for many people I spoke to it's still a hurdle to think about what a domain name is (let alone paying for it), how sites should work, and the designs etc. They did know what they wanted their sites to say though (name, address, pictures, booking forms, contact details).
 
