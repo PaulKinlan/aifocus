@@ -209,6 +209,7 @@ article {
 
   pre:has(code) {
     margin-bottom: 1em;
+    overflow-x: auto;
   }
 
   div.highlight pre {
