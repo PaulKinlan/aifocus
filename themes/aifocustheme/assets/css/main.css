@@ -207,6 +207,10 @@ article {
     }
   }
 
+  pre:has(code) {
+    margin-bottom: 1em;
+  }
+
   div.highlight pre {
     overflow-x: auto;
     padding: 1em;
