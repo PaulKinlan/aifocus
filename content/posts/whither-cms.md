@@ -106,7 +106,9 @@ Now that we have some interesting data about how traffic flows around the web, l
 
 {{<aside>}}Interestingly, according to builtWith all CMSs have seen a decline in usage across the Top 1m sites since about 2021. Odd.{{</aside>}}
 
-Looking at Wordpress, the most popular site building tool, you do see usage increase in the top 10,000 sites and it clearly grows in popularity through the top 1,000,000, but at some point you have to question stats like "40% of all sites" and realise that it's certainly not 40% of traffic and time spent by people using the web. It's after the top 1,000,000 that you really start to see it's growth in the CMSs. My hunch broadly is that while many of the companies who build CMSes (I struggle with the plural here... CMSi?) will have a few very large sites as customers, the vast majority of customers are the tiny sites that get small amounts of traffic.
+Looking at Wordpress, the most popular site building tool, you do see usage increase in the top 10,000 sites and it clearly grows in popularity through the top 1,000,000, but at some point you have to question stats like "40% of all sites" and realise that it's certainly not 40% of traffic and time spent by people using the web.
+
+It's not until after the top 1,000,000 that you really start to see it's growth in the CMSs. My hunch broadly is that while many of the companies who build CMSes (I struggle with the plural here... CMSi?) will have a few very large sites as customers, the vast majority of customers are the tiny sites that get small amounts of traffic.
 
 {{<aside>}}I need to recognise a potential confirmation bias that I might have here. When I ran a small shared-hosting company we threw more sites on a single server than it could handle if they all got popular, that was because we knew that the vast majority of the customers would get almost 0 traffic. I see the same thinking in the industry today.{{</aside>}}
 
