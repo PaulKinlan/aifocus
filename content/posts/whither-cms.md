@@ -9,7 +9,7 @@ When I moved to North Wales I noticed how many of the local businesses were sole
 
 CMSs offer a path for people without the skill or the time to get their own place on the web, and this is amazing. Yet for many people I spoke to it's still a hurdle to think about what a domain name is (let alone paying for it), how sites should work, and the designs etc. They did know what they wanted their sites to say though (name, address, pictures, booking forms, contact details).
 
-I'm interested in the health of the web and I think that LLMs will help make it significantly easier to create and product content on the web (and the web is a perfect medium for people to be able to create and share ideas), but what does that mean for CMSs?
+I'm interested in the health of the web and I think that LLMs will help make it significantly easier to create and produce content on the web (and the web is a perfect medium for people to be able to create and share ideas), but what does that mean for CMSs?
 
 I decided to try and do some analysis on the usage of certain tools across the ecosystem and I wanted to see what the adoption is of certain technology stacks such as CMSes and framework mapped against how people use on the web.
 
@@ -128,7 +128,7 @@ So where do the current CMSs and hosting platforms innovate?
 
 I think it's tough. For a huge number of sites, where it's a person's local small business then people don't need the full suite of services that CMSs and hosted CMSs offer, but in a lot of cases that is what they have to pick.
 
-The new crop of tooling is showing that you can quickly iterate on designs that are custom and person to each individual, so I think there will need to be a move away from the cookie-cutter theme templates and enable people to personalise their own experiences instantly.
+The new crop of tooling is showing that you can quickly iterate on designs that are custom and personal to each individual, so I think there will need to be a move away from the cookie-cutter theme templates and enable people to personalise their own experiences instantly.
 
 I can also imagine improvements to instant iteration on entire site design and smoothing out the ability to experiment for free. I don't know the usage of [WordPress Playground](https://wordpress.org/playground/), but my own experience with it is that I can get a feel for how everything works in wordpress without having to subscribe to any service, or give my credit-card (or any of the other things companies do to try and get you to convert into a paying customer).
 
@@ -139,3 +139,7 @@ Domain names might also be another opportunity for improvement a the recurring a
 I'm not in the CMS business directly, so you can see that I'm short of specific ideas, other than I think we are going to see a lot more competition coming through and that I think this is good for the industry... mostly....
 
 I'd love to get your thoughts on the state of the CMS ecosystem and where you think the opportunities are. [Hit me up](mailto:paul@aifoc.us)! For a future edition of aifoc.us, I think there will be a knock-on effect to the agencies that service small businesses so I'm starting to think about how the Agency ecosystem be impacted and maybe where it needs to change.
+
+---
+
+_Thank you to Terry Pollard spotting a number of typos and errors in this post._
