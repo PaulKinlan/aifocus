@@ -1,6 +1,7 @@
 ---
 title: elements
 description:
+draft: true
 date: 2025-07-16T17:00:00.000Z
 slug: elements
 ---
@@ -31,7 +32,7 @@ With this in mind, I've [created three simple examples](https://github.com/PaulK
 
 The summarize element's goal is to act like the commit message generator in VS Code. You provide the ID of an element to watch for changes, and it will summarize the content. The best part is that it uses [InternalElements](https://developer.mozilla.org/en-US/docs/Web/API/ElementInternals) to enable the element to participate in `<form>` submissions.
 
-```
+```html
 <ai-summarize-component watch="longTextElement"></ai-summarize-component>
 
 <textarea id="longTextElement" name="text" rows="4" cols="50"></textarea>
