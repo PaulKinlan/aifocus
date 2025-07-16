@@ -1,6 +1,5 @@
 ---
 title: elements
-description:
 draft: true
 date: 2025-07-16T17:00:00.000Z
 slug: elements
@@ -51,54 +50,6 @@ The translate element is a `HTMLParagraphElement` that detects the language of i
 {{< figure src="/images/ai-translate-demo.gif" alt="AI Translate a paragraph Element" caption="AI Translate a paragraph Element" >}}
 
 Maybe we will finally get an answer to the bug I filed years [ago about Google Translate breaking React](https://bugs.chromium.org/p/chromium/issues/detail?id=872770) as developers will have a way to integrate translation into their apps exactly as they need it, versus the shotgun approach of the current Google Translate in Google Chrome.
-
-Of course. Here is a revised version of your text with improved grammar, punctuation, and style. I have also included a summary of the key changes.
-
-Cleaned-up Version
-Title: Elements
-Description:
-Date: 2025-07-10T23:00:00.000Z
-Slug: elements
-
-As much as I struggle with on-device processing and the quality of its output compared to server models, I am excited by some of the use-case-based APIs emerging that are backed by LLMs and other AI inference models.
-
-There is also a prompt API, along with a multi-modal version that can take any arbitrary combination of text, image, and audio and run prompts against them. These APIs are neat but not yet web-exposed. I still find that it's very hard for many developers to know what to do with a prompt.
-
-Prompting as a way to generate a solution isn't yet natural to many people.
-
-To solve this, Chrome introduced a host of use-case-based APIs into the browser. These APIs—such as Summarizer, Writer, Rewriter, Translate, and Language Detection—are designed to run within web content. An API designed to solve a particular problem is easier to standardize and build consensus around. It also makes it clearer for web developers and business owners to see how they might integrate it into their businesses.
-
-While building this blog (it's Hugo-based), I would checkpoint my work by committing it to my Git repo. I realized that many products are subtly integrating AI into their experiences. For example, when you check something into your repo, a small star icon generates a commit message based on the changes. I use this all the time now because it beats my "asdf" messages hands-down.
-
-{{< figure src="/images/github-summarize.gif" alt="AI summarizing a set of GitHub commits" caption="AI summarizing a set of GitHub commits." >}}
-
-While sharing a recent post, I saw a Tweet from my friend Eiji that was in Japanese, but I could still read it because a "Translate" link appeared within the text.
-
-This got me thinking. It's great that you can use JavaScript to wrangle these APIs, but it also made me consider higher-level abstractions, like HTML. It feels like there is a massive opportunity to either imbue existing elements and components with these capabilities or even to conceive of new elements altogether.
-
-With this in mind, I've created three simple examples using APIs that already exist in the browser (well, one of them has to use a server): Summarize, Translate, and Image Picking.
-
-The summarize element's goal is to act like the commit message generator in VS Code. You provide the ID of an element to watch for changes, and it will summarize the content. The best part is that it uses ElementInternals to enable the element to participate in <form> submissions.
-
-```html
-<ai-summarize-component watch="longTextElement"></ai-summarize-component>
-
-<textarea id="longTextElement" name="text" rows="4" cols="50"></textarea>
-```
-
-{{< figure src="/images/ai-summarize.gif" alt="AI summarizing the content of a textarea" caption="AI summarizing the content of a textarea." >}}
-
-The translate element is an HTMLParagraphElement that detects the language of its content and then offers to translate it into the user's preferred language. It uses both the Translate API and the Language Detection API to do this.
-
-```html
-<ai-translate-component
-  >私はティーポットです と とても幸せです</ai-translate-component
->
-```
-
-{{< figure src="/images/ai-translate-demo.gif" alt="AI translating a paragraph element" caption="AI translating a paragraph element." >}}
-
-Maybe we will finally get a resolution for the bug I filed years ago about Google Translate breaking React, as developers will have a way to integrate translation into their apps exactly as they need it, versus the shotgun approach of the current Google Translate extension.
 
 I also like to think about how form elements might integrate with technologies like generative LLMs. For example, consider the humble `<input type="file" accept="image/png" />`. If we assume image generation is here to stay, should we consider enabling deeper integration into the file and content pickers? This would mean you no longer have to generate an image in one app, download it, find it, and then upload it.
 
