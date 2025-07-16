@@ -83,7 +83,9 @@ There's a lot of other user interface features that I could imagine that would b
 **Update** After posting this, I also experimented with an `<ai-date-component>` that let's you write a date in natural language and it will parse it into a date object.
 
 {{< figure src="/images/ai-date.gif" alt="AI Date Component Demo" caption="AI
-Date Component Demo" >}} **End Update**
+Date Component Demo" >}}
+
+**End Update**
 
 Should the default elements be imbued with AI capabilities? Or should these all just live in user-land as custom-elements or Components in the framework of your choice? We certainly are starting to get more of the technology to do this all in the browser, whether it's the improvements to Web Components or the new AI-based APIs, but I don't actually know the answer.
 
