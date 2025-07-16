@@ -42,9 +42,9 @@ The summarize element's goal is to act like the commit message generator in VS C
 The translate element is a `HTMLParagraphElement` that detects the language of its content and then offers to translate it into the user's preferred language. It uses both the [Translate API](https://developer.chrome.com/docs/ai/translator-api) and [LanguageDetection API](https://developer.chrome.com/docs/ai/language-detection) to do this.
 
 ```html
-<ai-translate-component
-  >私はティーポットです と とても幸せです</ai-translate-component
->
+<ai-translate-component>
+  私はティーポットです と とても幸せです
+</ai-translate-component>
 ```
 
 {{< figure src="/images/ai-translate-demo.gif" alt="AI Translate a paragraph Element" caption="AI Translate a paragraph Element" >}}
