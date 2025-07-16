@@ -82,8 +82,7 @@ There's a lot of other user interface features that I could imagine that would b
 
 **Update** After posting this, I also experimented with an `<ai-date-component>` that let's you write a date in natural language and it will parse it into a date object.
 
-{{< figure src="/images/ai-date.gif" alt="AI Date Component Demo" caption="AI
-Date Component Demo" >}}
+{{< figure src="/images/ai-date.gif" alt="AI Date Component Demo" caption="AI Date Component Demo" >}}
 
 **End Update**
 
