@@ -1,15 +1,12 @@
 ---
 title: elements
-draft: true
 date: 2025-07-16T17:00:00.000Z
 slug: elements
 ---
 
-As much as struggle with [on-device processing](/on-device/) and the quality of its output compared to server models, I am excited by some of the use-case-based APIs emerging that are backed by LLMs and other AI inference models.
+As much as struggle with [on-device processing](/on-device/) and the quality of its output compared to server models, I am excited by some of the APIs that are being built into browsers that are backed by LLMs and other AI inference models.
 
-There is also a prompt API, along with a multi-modal version that can take any arbitrary combination of text, image, and audio and run prompts against them. These APIs are neat but not yet web-exposed. I still find that it's very hard for many developers to know what to do with a prompt.
-
-Prompting as a way to generate a solution isn't yet natural to many people.
+For example, the prompt API, along with a multi-modal version that can take any arbitrary combination of text, image, and audio and run prompts against them. These APIs are neat but not yet web-exposed and many developers struggle to know what to do with a generic prompt. It's not a solution that is natural to many people yet.
 
 To solve this, Chrome introduced a host of use-case-based APIs into the browser. These APIs, such as [Summarizer](https://developer.chrome.com/docs/ai/summarizer-api), [Writer](https://developer.chrome.com/docs/ai/writer-api) and [Rewriter](https://developer.chrome.com/docs/ai/rewriter-api), [Translate](https://developer.chrome.com/docs/ai/translator-api) and [Language Detection](https://developer.chrome.com/docs/ai/language-detection) are designed to run within web content. An API designed to solve a particular problem is easier to standardize and build consensus around. It also makes it clearer for web developers and business owners to see how they might integrate it into their businesses.
 
@@ -19,9 +16,11 @@ For example, while building this blog (it's Hugo-based), I would checkpoint my w
 
 This is a use-case that I think is easy for people to understand.
 
-While sharing a recent post, I saw a Tweet from my friend Eiji that was in Japanese, but I could still read it because a "Translate" link appeared within the text. Again, another use-case that is easy to understand.
+While sharing a recent post, I saw a Tweet from my friend Eiji that was in Japanese, but I could still read it because a "Translate" link appeared within the text.
 
 {{< figure src="/images/translate-tweet.gif" alt="Translate Tweet" caption="Translate Tweet" >}}
+
+Again, another use-case that is easy to understand.
 
 This got me thinking. It's great that you can use JavaScript to wrangle these high-level APIs, but it also made me consider if there are even higher-level abstractions that we should be thinking about, like HTML.
 
@@ -51,7 +50,7 @@ The translate element is a `HTMLParagraphElement` that detects the language of i
 
 Maybe we will finally get an answer to the bug I filed years [ago about Google Translate breaking React](https://bugs.chromium.org/p/chromium/issues/detail?id=872770) as developers will have a way to integrate translation into their apps exactly as they need it, versus the shotgun approach of the current Google Translate in Google Chrome.
 
-I also like to think about how form elements might integrate with technologies like generative LLMs. For example, consider the humble `<input type="file" accept="image/png" />`. If we assume image generation is here to stay, should we consider enabling deeper integration into the file and content pickers? This would mean you no longer have to generate an image in one app, download it, find it, and then upload it.
+I also like to think about how form elements might integrate with technologies like generative LLMs. For example, consider the humble `<input type="file" accept="image/png" />`. If we assume image generation is here to stay, should we consider enabling deeper integration into the file and content pickers? If so, this would mean you no longer have to generate an image in one app, download it, find it, and then upload it.
 
 Well, `<ai-image-input>` is a demo of an optimization for that.
 
@@ -84,3 +83,7 @@ There's a lot of other user interface features that I could imagine that would b
 Should the default elements be imbued with AI capabilities? Or should these all just live in user-land as custom-elements or Components in the framework of your choice? We certainly are starting to get more of the technology to do this all in the browser, whether it's the improvements to Web Components or the new AI-based APIs, but I don't actually know the answer.
 
 I do believe that this is an that we need a lot more discussion around and is something browser vendors and spec authors should really starting to think about it too.
+
+---
+
+The source to the demo web components is available on my github: https://github.com/PaulKinlan/ai-wc
