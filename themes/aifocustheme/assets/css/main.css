@@ -1,3 +1,8 @@
+:root {
+  --color: #000000;
+  --background: #fdfcf8;
+}
+
 /* Visually hidden class */
 .visually-hidden {
   position: absolute;
@@ -24,8 +29,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   line-height: 1.7;
-  color: #000000; /* Black text */
-  background-color: #fdfcf8; /* Light beige background */
+  color: var(--color); /* Black text */
+  background-color: var(--background); /* Light beige background */
   padding: 0; /* Remove default padding, will control with container */
   display: flex;
   justify-content: center;
@@ -52,7 +57,7 @@ header {
 main {
   max-width: 700px;
   width: 100%;
-  background-color: #fdfcf8; /* Light beige */
+  background-color: var(--background); /* Light beige */
   margin: auto;
   padding: 1em;
 }
@@ -63,7 +68,7 @@ section {
 
 footer {
   max-width: 700px;
-  background-color: #fdfcf8; /* Light beige */
+  background-color: var(--background); /* Light beige */
   margin: auto;
   font-family: Joan;
   text-align: center;
@@ -74,7 +79,7 @@ footer {
     gap: 1em;
 
     a {
-      color: #000000; /* Black text */
+      color: var(--color); /* Black text */
       text-decoration: none; /* Remove underline */
       font-weight: bold; /* Bold links */
 
@@ -130,6 +135,11 @@ article {
     font-family: "Georgia", "Times New Roman", Times, serif;
 
     font-size: 1.2rem;
+  }
+
+  code {
+    background-color: hsl(from var(--background) h s calc(l * 0.95));
+    outline: solid 2px hsl(from var(--background) h s calc(l * 0.95));
   }
 
   h1,
