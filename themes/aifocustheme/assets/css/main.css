@@ -40,6 +40,7 @@ header {
   .site-branding-header h1 {
     font-size: 5em; /* Larger for header */
     font-family: Joan;
+    font-display: swap;
 
     a {
       color: #000000; /* Black text */
