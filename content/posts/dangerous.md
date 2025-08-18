@@ -2,6 +2,7 @@
 title: dangerous
 date: 2025-08-10T00:00:00.000Z
 slug: dangerous
+draft: true
 ---
 
 The thing about the web is that you don't know what is on the end of a link, and yet we happily click and tab on these blue underlined pieces of text that could then run practically anything within the confines of the little tabbed rectangle. It's an incredible thing to be able to deliver and run code unknown and unseen by the user. Imagine a world where instead of links, you had to visit an store, look at reviews and screenshots and then install some software before it could be run, pffft. What are we? Mobile platforms?
