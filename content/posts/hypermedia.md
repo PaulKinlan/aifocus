@@ -26,7 +26,7 @@ Well, I built an extension that allows you to create and persist user-defined li
 
 {{< youtube id=BD_CWhJzGfQ class="youtube" >}}
 
-So far, this discussion hasn't focused much on AI's impact on the web... hopefully, I can help make that link (heh!).
+So far, this discussion hasn't focused much on AI's impact on the web... hopefully, I can help make that link (heh!). Large Language Models offers two distinct ways to think about the future of hypermedia: one as a philosophical successor to the original vision, and the other as the practical toolkit to upgrade the web we already have.
 
 As I was thinking about the Memex, I kept circling back to the idea that LLMs, not the web, are its modern embodiment. My usage of Large Language Models doesn't feel a million miles away from what Bush described. His vision was deeply personal: you build and navigate your own web of knowledge. While LLMs are grounded in their training data, your previous conversations and connections to personal data make the experience something more than what we get on the web. I tried to summarize the analogy as follows:
 
@@ -38,9 +38,11 @@ As I was thinking about the Memex, I kept circling back to the idea that LLMs, n
 - Multimodality corresponds to the photocells, microfiche, and tape.
 - Reasoning is analogous to the identification of compounds and their reactions.
 
-I find the concept of trails deeply interesting. To be clear, LLM tools have not solved creating a direct connection between two distinct pieces of information. Instead, they build on previous interactions as a conversation progresses. They don't create a hard link, but if you observe their "thinking traces," you can see the link being inferred.
+In this view, the concept of "trails" is deeply interesting. LLM tools don't create hard, permanent links between two distinct pieces of information. Instead, they build on previous interactions as a conversation progresses. If you observe their "thinking traces," you can see the link being _inferred_ rather than explicitly created.
 
-I think the web could evolve to further differentiate itself from applications _and_ LLMs, and it all comes down to linking.
+Beyond this philosophical parallel, LLMs also offer the practical _tools_ to finally realize the lost promise of hypertext _on the web itself_. They are the enabling technology that can upgrade the humble `<a>` tag and make it truly "hyper."
+
+For decades, ideas like summarizing a link's destination or merging content from another page were technically possible but practically impossible to implement at scale. With LLMs, these complex natural language tasks become trivial. This opens the door to evolving the web and differentiating it from both applications and the closed conversational interfaces of LLMs. And it all comes down to enhancing the link.
 
 While the `<a>` tag is part of the concept of hypertext, I don't think the humble `<a>` is actually "hyper." It's just a link. It points from Site A to Site B. It might have some `rel` properties to define the nature of the link, but fundamentally, it's just a pointer.
 
