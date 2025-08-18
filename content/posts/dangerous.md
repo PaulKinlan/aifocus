@@ -1,6 +1,6 @@
 ---
 title: dangerous
-date: 2025-08-10T00:00:00.000Z
+date: 2025-08-18T00:00:00.000Z
 slug: dangerous
 draft: true
 ---
@@ -39,4 +39,4 @@ By extension, I wonder if there is a concept of `Subscription` or `Session` at t
 
 I would love to see progress in this space. Building and running in the client has huge benefits. I would love RSS readers to be a viable client-side experience. I would love to call an LLM or many other
 
-There should be continued exploration into to the same-origin model. Alex Komoroske is doing a lot of work in this space and has interesting thesis that it's wrought centralisation of user-data that is hard, if not impossible to enable portability between services by having policies attached to the data vs the site.
+There should be continued exploration into to the same-origin model. [Alex Komoroske](https://x.com/komorama/status/1943637836030255495) is doing a lot of thinking in this space and has [interesting thesis that it's wrought centralisation of user-data that is hard](https://www.techdirt.com/2025/06/16/why-centralized-ai-is-not-our-inevitable-future/), if not impossible to enable portability between services with the current architecture of the web and that we might need a new model by having policies attached to the data vs the site ([you can also keep up with his Bits and Bobs]https://docs.google.com/document/d/1GrEFrdF_IzRVXbGH1lG0aQMlvsB71XihPPqQN-ONTuo/edit?tab=t.0).
