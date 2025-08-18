@@ -16,7 +16,7 @@ _A user would create the links._
 
 When the web was introduced, it had the concept of hyperlinks, but it wasn't until this past month that I realized its model is fundamentally different. Links are created by the **author** of a page using the static `<a>` tag. We, the readers, simply follow these pre-defined paths.
 
-This author-centric model has a frustrating side effect: sites acting like **"gravity wells."** An author can guide me to knowledge, but as sites try to capture as much of our time and attention as possible, they reduce the number of external links. I land on a page and find myself trapped, with fewer and fewer paths leading out. Every link is defined by the publisher, not my own curiosity.
+This author-centric model has a frustrating side effect that I feel everyday: sites acting like **"gravity wells."** An author can guide me to knowledge, but as sites try to capture as much of our time and attention as possible, they reduce the number of external links. I land on a page and find myself trapped, with fewer and fewer paths leading out. Every link is defined by the publisher, not my own curiosity.
 
 How do you make a connection between two articles for your own recall? At best, we have bookmarks.
 
@@ -26,7 +26,7 @@ Well, I built an extension that allows you to create and persist user-defined li
 
 {{< youtube id=BD_CWhJzGfQ class="youtube" >}}
 
-So far, this discussion hasn't focused much on AI's impact on the web... hopefully, I can help make that link (heh!). Large Language Models offers two distinct ways to think about the future of hypermedia: one as a philosophical successor to the original vision, and the other as the practical toolkit to upgrade the web we already have.
+So far, this discussion hasn't focused much on AI's impact on the web... Large Language Models offers two distinct ways to think about the future of hypermedia: one as a philosophical successor to the original vision (which is a much longer discussion), and the other as the practical toolkit to upgrade the web we already have (which is quite fun).
 
 As I was thinking about the Memex, I kept circling back to the idea that LLMs, not the web, are its modern embodiment. My usage of Large Language Models doesn't feel a million miles away from what Bush described. His vision was deeply personal: you build and navigate your own web of knowledge. While LLMs are grounded in their training data, your previous conversations and connections to personal data make the experience something more than what we get on the web. I tried to summarize the analogy as follows:
 
@@ -40,13 +40,13 @@ As I was thinking about the Memex, I kept circling back to the idea that LLMs, n
 
 In this view, the concept of "trails" is deeply interesting. LLM tools don't create hard, permanent links between two distinct pieces of information. Instead, they build on previous interactions as a conversation progresses. If you observe their "thinking traces," you can see the link being _inferred_ rather than explicitly created.
 
-Beyond this philosophical parallel, LLMs also offer the practical _tools_ to finally realize the lost promise of hypertext _on the web itself_. They are the enabling technology that can upgrade the humble `<a>` tag and make it truly "hyper."
+Beyond this philosophical parallel, LLMs also offer the practical _tools_ to finally realize the promise of hypertext _on the web itself_. They are the enabling technology that can upgrade the humble `<a>` tag and make it truly "hyper."
 
 For decades, ideas like summarizing a link's destination or merging content from another page were technically possible but practically impossible to implement at scale. With LLMs, these complex natural language tasks become trivial. This opens the door to evolving the web and differentiating it from both applications and the closed conversational interfaces of LLMs. And it all comes down to enhancing the link.
 
-While the `<a>` tag is part of the concept of hypertext, I don't think the humble `<a>` is actually "hyper." It's just a link. It points from Site A to Site B. It might have some `rel` properties to define the nature of the link, but fundamentally, it's just a pointer.
+While the humble `<a>` tag is part of the concept of hypertext, I don't think the `<a>` is actually "hyper." It's just a pointer. It points from Site A to Site B. It might have some `rel` properties to define the nature of the link, but fundamentally, it's just a pointer.
 
-Now, I'm being a bit harsh on the `<a>` tag. It's actually pretty incredible. Links are very simple to create. You write a small bit of text and can point to a page, a named element within a page, and in probably the biggest change to anchoring—you can now link to arbitrary text with Text Fragments. For a brief while, you could also link into functionality.
+Now, I'm being a bit harsh on the `<a>` tag. It's actually pretty incredible. Links are very simple to create. You write a small bit of text and can point to a page, a named element within a page, and in probably the biggest change to anchoring—you can now link to arbitrary text with Text Fragments. For a brief while, [you could also link into functionality](https://paul.kinlan.me/what-happened-to-web-intents/) (actually if websites could be MCP servers, we might actually solve this).
 
 The way we experience a link is typically one-way: `A->B`. Yes, many platforms like [Wikipedia](https://www.wikimedia.org/) or [TiddlyWiki](https://tiddlywiki.com/) allow for bi-directional linking. And yes, there are protocols like WebMention that enable ping-backs so that a site owner can present all the sites that link to them. But site-level features like these require the site to support them, and infrastructure protocols require you to set up some very complex infrastructure.
 
@@ -90,6 +90,7 @@ It's fun to think about how links might evolve as our technology evolves. Here a
 - Image maps have largely died out, but now that we can identify objects in an image, could we make it easier to author an image map with language annotations instead of bounding boxes (e.g., "red car" -> ford.com)?
 - We can link to a time-code in an audio file. With audio-to-text models, could we do something similar to text fragments for audio?
 - Could we make it easier to extract useful content from an `<audio>` such as links that were 'heard' in the discussion.
+- If a site could expose their embeddings, could we cross-link across the origin automatically?
 - During my research on hyperlinking, much of the content I accessed was in PDFs on the Internet Archive. These PDFs are hosted in an application that requires many clicks to get to the important page. Could links be augmented with simple actions? Of course, we would have to think carefully about safety to mitigate "Buy these nappies" attacks and a host of others.
 
 For 30-40 years the original discussions around hypermedia and hypertext had almost no practical applications. It appears to have been all academic and centered around egos. While technologies like HyperCard existed and were well-liked, it wasn't until the web arrived that humanity really progressed in this area. In the following 30 years, there again wasn't much development in linking on the web.
