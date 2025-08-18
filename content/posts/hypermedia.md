@@ -14,9 +14,9 @@ The early years of hypertext research focused on the opportunities that digital 
 
 _A user would create the links._
 
-When the web was introduced, it had the concept of hyperlinks, but it wasn't until this past month that I realized the web's hyperlinking model is different: Links are created by the author, whereas many of the early hypertext systems were user-driven, allowing individuals to create their own links and connections between documents.
+When the web was introduced, it had the concept of hyperlinks, but it wasn't until this past month that I realized its model is fundamentally different. Links are created by the **author** of a page using the static `<a>` tag. We, the readers, simply follow these pre-defined paths.
 
-The author-centricity of creating links has its benefits. An author can guide me to knowledge, but I frequently see a frustrating side effect on the web: sites acting like gravity wells. I land on a page and find fewer and fewer links to other sites. Every link is defined by the author, not the reader. As sites try to capture as much time and attention as possible, external links become less prevalent.
+This author-centric model has a frustrating side effect: sites acting like **"gravity wells."** An author can guide me to knowledge, but as sites try to capture as much of our time and attention as possible, they reduce the number of external links. I land on a page and find myself trapped, with fewer and fewer paths leading out. Every link is defined by the publisher, not my own curiosity.
 
 How do you make a connection between two articles for your own recall? At best, we have bookmarks.
 
