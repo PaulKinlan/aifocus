@@ -2,6 +2,8 @@
 title: hypermedia
 date: 2025-08-18T00:00:00.000Z
 slug: hypermedia
+authors:
+  - paulkinlan
 ---
 
 I was introduced to the concept of the [Memex](https://en.wikipedia.org/wiki/Memex) after my post about [super-apps](/super-apps/). It's a fascinating view of the future from the late 1940s and early 1950s. [Vannevar Bush](https://en.wikipedia.org/wiki/Vannevar_Bush) presented a vision of an information system that he named the Memex. Ignoring the heavily gendered language and technology that were firmly set in their time (microfilm), ["As We May Think," the article that introduced the Memex, was a fabulous read that I encourage everyone to explore](https://www.ias.ac.in/article/fulltext/reso/005/11/0094-0103).

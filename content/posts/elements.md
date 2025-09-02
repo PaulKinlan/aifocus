@@ -2,6 +2,8 @@
 title: elements
 date: 2025-07-16T17:00:00.000Z
 slug: elements
+authors:
+  - paulkinlan
 ---
 
 As much as struggle with [on-device processing](/on-device/) and the quality of its output compared to server models, I am excited by some of the APIs that are being built into browsers that are backed by LLMs and other AI inference models.
