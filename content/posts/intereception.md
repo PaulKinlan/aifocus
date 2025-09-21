@@ -8,7 +8,7 @@ authors:
 
 This is a very quick post. I had an idea as I was walking the dog this evening, and I wanted to build a functioning demo and write about it within a couple of hours.
 
-While the post and idea started this evening, the genesis of the idea has been brewing for a while and goes back over a year to August 2024, when I wrote about [being sucked into a virtual internet](https://paul.kinlan.me/fictitious-web/). WebSim has been on my mind for a while, and I wanted to be able to simulate my own version of the web using the browser directly and not via another web page. A couple of weeks ago, I managed to work out how to get [Puppeteer](https://pptr.dev/) to intercept requests and respond with content generated via an LLM.
+While the post and idea started this evening, the genesis of the idea has been brewing for a while and goes back over a year to August 2024, when I wrote about [being sucked into a virtual internet](https://paul.kinlan.me/fictitious-web/). WebSim has been on my mind for a while, because I loved the idea of being able to simulate my own version of the web using the browser directly and not via another web page. And a couple of weeks ago, I managed to work out how to get [Puppeteer](https://pptr.dev/) to intercept requests and respond with content generated via an LLM.
 
 `npx fauxmium` is the command, and there are more details on my [personal blog](https://paul.kinlan.me/projects/fauxmium/). The code is on [GitHub](https://github.com/paulkinlan/fauxmium). You can watch it in action on my YouTube channel:
 
