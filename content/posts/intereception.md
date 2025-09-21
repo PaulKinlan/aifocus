@@ -6,7 +6,6 @@ authors:
   - paulkinlan
 ---
 
-T
 This is a very quick post. I had an idea as I was walking the dog this evening, and I wanted to build a functioning demo and write about it within a couple of hours.
 
 While the post and idea started this evening, the genesis of the idea has been brewing for a while and goes back over a year to August 2024, when I wrote about [being sucked into a virtual internet](https://paul.kinlan.me/fictitious-web/). WebSim has been on my mind for a while, and I wanted to be able to simulate my own version of the web using the browser directly and not via another web page. A couple of weeks ago, I managed to work out how to get [Puppeteer](https://pptr.dev/) to intercept requests and respond with content generated via an LLM.
