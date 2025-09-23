@@ -3,13 +3,35 @@ title: developer-experience
 date: 2025-07-31T17:00:00.000Z
 draft: true
 slug: developer-experience
+authors:
+  - paulkinlan
 ---
 
 In October last year I wrote "[will developer care about frameworks in the future?](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/)" and it's been on my mind a lot since then.
 
-If I look at what the like of Replit, Bolt and other tools are doing, they are doing the opposite, they are preferring to output React code ([in some cases by crafting their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275)) so developers today can understand and use. I get it. If you are build a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated.
+If I look at what the likes of Replit, Bolt and other tools are doing, they are doing the opposite, they are preferring to output React code ([in some cases by crafting their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275)) so developers today can understand and use. I get it. If you are build a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated.
 
-I can take a short-term L on being right, for the long-term win. I'm also stubborn and happy to dig in on a point that I think I am correct on.
+For these developer focused tools, I get it. If you are build a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated. I can take a short-term L on being right, for the long-term win. I'm also stubborn and happy to dig in on a point that I think I am correct on.
+
+https://trends.builtwith.com/cms/Lovable
+
+- 2025-06-10 - 0 sites in builtwith.com index
+- 2025-09-13 - Outside Top 1m - 77,723 sites in builtwith.com index. Top 1m - 80
+  Top 100k - 14, Top 1k - 1.
+
+https://trends.builtwith.com/javascript/React
+
+- Top 1m - 81,636
+- Top 100k - 13,688
+- Top 10k - 1,627
+- Top 1000 - 185
+- Outside Top 1m - 4,468,373
+
+Interesting, there isn't growth in React within the top 1m sites, it's decreasing. Outside of the top 1m sites, though, between november '24 and september '25, it's grown from 3.5m to 4.5m sites using React. It looks like the growth has followed and s-curve and has slowed (the data should be followed.)
+
+It's hard to know if this data is actually accurate. If you look at Replit's usage, it's far below the reported usage.
+
+Looking at HTTP Archive...
 
 Another way to frame my "will we care about frameworks in the future?" post is "will we care about developer experience in the future?". With this framing, I want to take a quick look at what is happening in the web platform today, that is the APIs that browser are putting into the runtime and what it might mean.
 
