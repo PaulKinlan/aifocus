@@ -22,6 +22,8 @@ This evening, I was wondering if I could take it a step further and have a large
 
 So I built a proof of concept off the back of `fauxmium` called `interceptium` [[code](https://github.com/paulkinlan/interceptium)]. You launch [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing) via Puppeteer and set it up to intercept every request. Then, [when a request is made](https://github.com/PaulKinlan/interceptium/blob/e0389616f2b087033054b4f60e47de2d2cb739af/browser.js#L67), you decide if you want to handle the request or let it go to the network. If you want to handle it, you have the chance to change the request (you might want to automatically generate post-data, for example). You send the potentially modified request to the network, get the response, and then you can pass the request data to an LLM, which generates HTML that is then returned to the browser.
 
+{{< figure src="/images/interceptium.png" alt="Interceptium and its ability to change request/response" >}}
+
 Under the hood this looks like a typical request router that you might see in a web framework. This enables you to have multiple interceptors that can handle different types of requests. You can have one interceptor that handles requests for home pages and summarizes the content and another that will modify an image through something like `nano-banana`.
 
 A concrete example is below. I like summaries, so I have a `SummaryInterceptor` that intercepts requests to my blog's homepage, and I ask the LLM to summarize the content of the page. The LLM returns a summary in HTML format, which is then rendered in the browser.
