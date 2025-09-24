@@ -1,5 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   if ("Summarizer" in window) {
+    const { Summarizer } = window;
+    const availability = await Summarizer.availability();
+    if (availability === "unavailable") {
+      // keep the summary section hidden
+      return;
+    }
     const summaryContainer = document.querySelector(".e-summary");
 
     const summaryElementInitialText = "Expand to see summary";
@@ -18,9 +24,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (details.open) {
           const summarizer = await Summarizer.create({
             type: "tldr",
-            format: "markdown",
+            format: "plain-text",
             length: "medium",
             expectedInputLanguages: ["en", "en-GB", "en-US"],
+            moitor: (m) => {
+              m.addEventListener("downloadprogress", (e) => {
+                summaryElement.textContent = `Downloading model... ${Math.round(
+                  e.loaded * 100
+                )}%`;
+              });
+            },
           });
 
           details.removeEventListener("toggle", this);
