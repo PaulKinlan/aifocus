@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     const summaryContainer = document.querySelector(".e-summary");
+    summaryContainer.classList.add("visible");
 
     const summaryElementInitialText = "Expand to see summary";
     let summary = summaryElementInitialText;
