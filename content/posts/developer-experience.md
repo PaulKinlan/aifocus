@@ -42,7 +42,7 @@ Correlation is not causation, and only the tool creators see the full picture as
 
 The models and the tools are preferring the tools that developers are already using, and it's driving a self-reinforcing cycle of adoption. If you are launching a new API or tool today, you need to consider how it will be adopted by the ecosystem and how to get it into the training corpus of the LLMs.
 
-**We have two loops of feedback:**
+We have two loops of feedback in play here:
 
 1. React dominates the existing web (~13M+ new sites in 12 months)
 2. LLMs train on the existing web
