@@ -4,6 +4,8 @@ date: 2024-10-11T17:00:00.000Z
 slug: dead-framework-theory
 ---
 
+_These are my opinions and are ruminations on what might be happening as more and more developers use LLMs and Frameworks to build on the web._
+
 In October last year I wrote "[will developers care about frameworks in the future?](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/)" predicting that LLMs would abstract away framework choice. I was wrong—or at least, wrong about the timeline.
 
 The reality is more interesting and more permanent: **React isn't competing with other frameworks anymore. React has become the platform.** And if you're building a new framework, library or browser feature today, you need to understand that you're not just competing with React—you're competing against a self-reinforcing feedback loop between LLM training data, system prompts, and developer output that makes displacing React functionally impossible.
@@ -107,16 +109,12 @@ Why? Because:
 
 For example:
 
-- People loved [Sass](https://sass-lang.com/), but you need a build-step, so we have [CSS Nesting](https://developer.chrome.com/docs/css-ui/css-nesting). But React developers already have CSS-in-JS solutions that LLMs know how to output.
+- People loved [Sass](https://sass-lang.com/), but you need a build-step, so we have [CSS Nesting](https://developer.chrome.com/docs/css-ui/css-nesting). However its rarely output because preprocessor patterns are more common in the corpus and also React developers already have CSS-in-JS solutions that LLMs know how to output.
 - Carousels are hard to build, so maybe we should have them as an intrinsic part of the platform. But there are [tons](https://flowbite.com/docs/components/carousel/#:~:text=Create%20a%20new%20carousel%20object%20using%20the%20options%20set%20above.) of [libraries](https://daisyui.com/components/carousel/?lang=en) that [create](https://getbootstrap.com/docs/4.0/components/carousel/) great [carousels](https://www.npmjs.com/package/react-multi-carousel) that are already in LLM training data.
-
-Web Components? Not in most LLM outputs because React components dominate training data.
-CSS Nesting? Rarely output because preprocessor patterns are more common in the corpus.
-View Transitions? Interesting, but frameworks already have animation libraries.
 
 As an author of many sites, I love these features. CSS Nesting alone lets me structure my CSS in a way that I personally find easier to read and maintain. But it doesn't really change the quality of the experience of the site for the person using my site. It doesn't change the performance of the site. It doesn't change how accessible my site is. It just makes it easier for me to write and maintain.
 
-The only new platform features that matter are ones that **can't be built in user-space**, like:
+The only new platform features that matter are ones that _can't be built in user-space_, like:
 
 - Multi-page view transitions (new navigation capabilities)
 - WebGPU (fundamentally new compute access)
@@ -124,15 +122,19 @@ The only new platform features that matter are ones that **can't be built in use
 
 Everything else is competing against entrenched patterns in both React libraries AND LLM training data.
 
-We don't see massive technology shifts in the top 1000 through to top 1 million because these are established sites with established teams and shifting technology is hard with often unclear benefit outside of potential improvements to product velocity.
+There's at least 3 constituencies to consider here:
 
-The tools, frameworks and libraries are not something that concerns a normal person using the web. What concerns people is the experience of using the page. Does it load quickly enough? Are the interactions smooth? Does the site actually do what I need it to do?
+1. The "head" businesses building on the web - The top 1000 sites take the lion's share of traffic and revenue on the web, and we don't see massive technology shifts in the top 1000 through to top 1 million because these are established sites with established teams and shifting technology is hard with often unclear benefit outside of potential improvements to product velocity. They are likely to be using LLM based tooling to help increase velocity, but they are not going to be switching frameworks or libraries lightly.
 
-[There is an opportunity for millions more people to deploy on to the web](/transition/)—people who are not formal web developers who will use tools like Loveable, Replit, or even directly in a chat app. They may never need to look at the code, so what do any of these new APIs do to help them build better sites?
+2. The "middle" businesses building on the web - The next 10 million sites are being built by small teams and individuals and will likely be using LLMs to build new sites completely and unless they prompt will use the defaults the tools output
 
-People building with these tools don't know about Passkeys, WebAuthn, Web Components, CSS Nesting, View Transitions, or any of the other new features being added to the platform. They just want a site created that does what they need it to do.
+3. The "long tail" - These are people who are not formal web developers who will use tools like Loveable, Replit, or even directly in a chat app. They may never need to look at the code, so what do any of these new APIs do to help them build better sites? and they represent the growth in the platform and we have an [opportunity for millions more people to deploy on to the web](/transition/)
 
-Today, if you are an LLM or a tool that outputs code from an LLM, to not output React by default is to limit your potential audience as your competitors are serving the current demand.
+The people in groups 2 and 3 are the ones driving the growth in sites on the web and are unlikely to be building with these tools don't know about Passkeys, WebAuthn, Web Components, CSS Nesting, View Transitions, or any of the other new features being added to the platform. They just want a site created that does what they need it to do.
+
+The thing is, the normal people using the web don't care about the tools, frameworks and libraries are not something that concerns a normal person using the web. What concerns people is the experience of using the page. Does it load quickly enough? Are the interactions smooth? Does the site actually do what I need it to do?
+
+Today, if you are a company targeting developers in any of those categories (LLM or a tool that outputs code from an LLM), to not output React by default is to limit your potential audience as your competitors are serving the current demand.
 
 Now consider the current working model for code-generating LLM tools which reflect the ecosystem that they are trained on. This means that any new API, framework or library has a large hurdle to get over in terms of being something that will be output by the tool. The fact that _any_ new feature might not be in the training corpus _and_ will not be prevalent enough to have its usage patterns and idioms ingrained in the training and by extension the output of an LLM should be a concern to the people building new platform features.
 
@@ -144,10 +146,12 @@ Looking at today's trend of tools primarily outputting React code, the comprehen
 
 **For tool creators (e.g, IDEs):** If you're not outputting React by default, you're limiting your addressable market. Your competitors are serving current demand. You can't afford to be principled about framework diversity.
 
-**For the industry:** We need to stop pretending framework choice matters and start competing on user outcomes. I really want to see Evals and Benchmarks that focus on quality outcomes like Core Web Vitals did for performance. My hope is that as users of tools that create sites care more about the experience of the site, then the tools will be incentivized to output code that meets those needs versus what is the easiest to output for the developer to maintain today.
+Dead framework theory isn't about frameworks dying. It's about new frameworks being dead on arrival in a world where React has become the platform as long as people need to maintain the code.
+
+Can we and should we break this cycle so that the library you spent the last year building or that elegant new framework with better ergonomics are not dead before they ship—not because they're bad, but because they're not React, and LLMs output React, and LLMs are how sites get built now?
+
+We need to start competing on user outcomes. I really want to see Evals and Benchmarks that focus on quality outcomes like Core Web Vitals did for performance. My hope is that as users of tools that create sites care more about the experience of the site, then the tools will be incentivized to output code that meets those needs versus what is the easiest to output for the developer to maintain today.
 
 As for the web runtime, for the web to progress we should be looking to fundamentally new capabilities in the browser—the things that can't be built in user-space, or where there is clear user-experience benefit that can't be achieved with libraries. Multi-page view transitions are a great example.
 
-Dead framework theory isn't about frameworks dying. It's about new frameworks being dead on arrival in a world where React has become the platform.
-
-Can we and should we break this cycle so that the library you spent the last year building or that elegant new framework with better ergonomics are not dead before they ship—not because they're bad, but because they're not React, and LLMs output React, and LLMs are how sites get built now.
+I'm still of the opinion that actually in the long run, if we keep using LLMs to build sites, [the framework will become irrelevant](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/) as the models and tools improve to the point people [manipulate the site by words alone](https://blog.almaer.com/english-will-become-the-most-popular-development-language-in-6-years/) and the delivery technology is just an optimized compiled output that meets the needs of the user.
