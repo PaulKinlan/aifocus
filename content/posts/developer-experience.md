@@ -1,6 +1,6 @@
 ---
-title: "dead framework theory"
-date: 2024-10-11T17:00:00.000Z
+title: dead framework theory
+date: 2025-10-12T23:00:00.000Z
 slug: dead-framework-theory
 ---
 
