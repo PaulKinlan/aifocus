@@ -77,7 +77,7 @@ If you launch a new framework, library or browser feature today, even if it's te
 
 By the time you've done step 1, the ecosystem using React has generated another 10M+ sites. You might flip that order, and do a massive campaign to get developer mind share, and supplement it with paid integrations in to the library ecosystem. We might even see new business models where framework and library authors pay tooling providers to include their framework in system prompts. But even then, you're fighting against entrenched patterns in both React libraries AND LLM training data.
 
-This isn't about React being the best tool. It's about React being past the point where network effects make alternatives viable.
+This isn't about React being the best tool or that it's Model is good for LLMs (I don't see any evidence there at all). It's about React being past the point where network effects make alternatives viable.
 
 Here's what brought this home for me: Last week I used Claude to build a Chrome Extension using Chrome's built-in `prompt` API. Claude dutifully wrote the entire extension, but used `self.ai.languageModel`—the API from 6 months ago. The current API is `LanguageModel.create()`, but that wasn't in the training corpus.
 
