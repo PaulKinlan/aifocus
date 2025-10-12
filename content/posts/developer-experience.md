@@ -1,14 +1,16 @@
 ---
-title: dead framework theory
-date: 2025-10-11T17:00:00.000Z
+title: "dead framework theory"
+date: 2024-10-11T17:00:00.000Z
 slug: dead-framework-theory
 ---
 
-In October last year I wrote "[will developer care about frameworks in the future?](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/)" and it's been on my mind a lot since then.
+In October last year I wrote "[will developers care about frameworks in the future?](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/)" predicting that LLMs would abstract away framework choice. I was wrong—or at least, wrong about the timeline.
 
-If I look at what the likes of Replit, Bolt and other tools are doing, they are doing the opposite, they are preferring to output React code ([in some cases by crafting their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275)) so developers today can understand and use. I get it. If you are building a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated.
+The reality is more interesting and more permanent: **React isn't competing with other frameworks anymore. React has become the platform.** And if you're building a new framework, library or browser feature today, you need to understand that you're not just competing with React—you're competing against a self-reinforcing feedback loop between LLM training data, system prompts, and developer output that makes displacing React functionally impossible.
 
-[According to builtwith.com, there were +13m sites outside of the top 1m deployed with React in the last 12 months](https://trends.builtwith.com/javascript/React). I think about the following charts a lot.
+If you look at what Replit, Bolt, and similar tools are doing, they're not trying to abstract away frameworks—they're [explicitly hardcoding React into their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275). They have to. If you're building a tool today to attract developers, you need to give them code they can maintain. And "code developers can maintain" now means "React" for the vast majority of web developers.
+
+[According to builtwith.com, there were +13m sites outside of the top 1m deployed with React in the last 12 months](https://trends.builtwith.com/javascript/React). Look at these curves:
 
 {{< figure src="/images/react-builtwith-all-time.png" caption="React usage over time" >}}
 
@@ -18,105 +20,134 @@ However, looking at [HTTP Archive](https://httparchive.org/reports/techreport/te
 
 {{< figure src="/images/react-http-archive-all.png" caption="HTTP Archive. React usage over the last 6 months" >}}
 
-Firstly, the dataset size is vastly different. HTTP Archive is looking over [some 12-16 million origins](/images/http-archive-origins-over-time.png), while [Builtwith is reportedly looking](https://trends.builtwith.com/javascript/React) at some [414 million _root domains_](/images/built-with-coverage.png). Sites also don't get into HTTP Archive unless there is some amount of usage and many sites in builtwith might be parked domains or sites that are not actively being used.
+The dataset sizes are vastly different. HTTP Archive looks over [some 12-16 million origins](/images/http-archive-origins-over-time.png), while [Builtwith is reportedly looking](https://trends.builtwith.com/javascript/React) at some [414 million _root domains_](/images/built-with-coverage.png). Sites also don't get into HTTP Archive unless there is some amount of usage and many sites in Builtwith might be parked domains or sites that are not actively being used.
 
-Looking at the top 1m, the detection rate is a lot more aligned, 140k vs 160k.
+Looking at the top 1m, the detection rate is more aligned: 140k vs 160k.
 
 {{< figure src="/images/react-http-archive-top-1m.png" caption="HTTP Archive. React usage in the top 1m" >}}
 
 {{< figure src="/images/react-builtwith-top-1m.png" caption="Builtwith React usage in the top 1m" >}}
 
-There are always false positives in these numbers, but the trends are interesting. To sanity check myself, I looked at the 2nd most popular framework, Angular (both variants - AngularJS and Angular).
+Take all these numbers with a pinch of salt. The detection can be broken, the datasets are different sizes and the definitions of what is being measured are different. But the trends feel undeniable: React's growth continues while competitors [like Angular, sadly stagnate](/images/builtwith-angular-12mo.png).
 
-{{< figure src="/images/builtwith-angularjs-alltime.png" caption="Angular usage over time" >}}
+So what has driven the uptick in React sites? The evidence suggests LLM tools over the last 12-18 months are preferring to output React code.
 
-{{< figure src="/images/builtwith-angularjs-12mo.png" caption="Angular usage over the last 12 months" >}}
-
-Compared to [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=React,Angular,AngularJS&geo=ALL&rank=ALL&page=1#adoption)...
-
-{{< figure src="/images/angular-react-http-archive-all.png" caption="HTTP Archive. Angular vs React usage all time" >}}
-
-... the numbers look like they are inline with [builtwith alltime](/images/builtwith-angular-alltime.png) and [over the last 12 months](/images/builtwith-angular-12mo.png). It doesn't look good for Angular.
-
-Could it be vercel that is driving the growth in React sites? They've had a meteoric rise in sites hosted on them. Just look at the curve!
-
-{{< figure src="/images/vercel.png" caption="Vercel usage over time" >}}
-
-But looking at the last 12 months, the growth is not as pronounced.
-
-{{< figure src="/images/vercel-builtwith-12mo.png" caption="Vercel usage over the last 12 months" >}}
-
-Take all these numbers with a pinch of salt. I'm sure Vercel would quibble with these numbers, the React and Angular teams too. The detection can be broken, the datasets are different sizes and the definitions of what is being measured are different. But the trends are interesting.
-
-Thinking on the trends, we don't see massive technology shifts in the top 1000 through to top 1 million because these are established sites with established teams and shifting technology is hard and often unclear benefit outside of potential improvements to product velocity.
-
-So what has driven the uptick in React sites? Is it being driven because LLM tools over the last 12-18 months are prefering to outputting React code?
-
-Truthfully, we don't know. I look at Token growth on OpenRouter, programming tools are [burning through Billions of tokens a day](https://aifoc.us/token-slinging) via just one gateway, the curves look similar....
+Look at token growth on OpenRouter. Programming tools are [burning through billions of tokens a day](https://aifoc.us/token-slinging) via just one gateway. The curves look similar:
 
 {{< figure src="/images/open-router-tokens-oct.png" caption="OpenRouter token usage over time" >}}
 
-But correlation is not causation and really only the tool creators know as they see the tokens that flow through their systems.
+Correlation is not causation, and only the tool creators see the full picture as tokens flow through their systems. But the timing is striking: massive token growth coinciding with massive React deployment growth.
 
-_If_ you believe that the majority of new sites being deployed are being created with the help of LLMs, then... something
+The models and the tools are preferring the tools that developers are already using, and it's driving a self-reinforcing cycle of adoption. If you are launching a new API or tool today, you need to consider how it will be adopted by the ecosystem and how to get it into the training corpus of the LLMs.
 
-I was using Claude code last week to build a Chrome Extension that uses Chrome's built-in `prompt` API to help me take a prompt from the Omnibox and route it to a tool in the Chrome extension. Claude was great, it dutifully helped wriste the entire extension, but for one small error. It used `self.ai.languageModel` to call the prompt API. This _was_ the correct API to call 6 months ago, but now it's `LanguageModel.create()`. It wasn't in the corpus and it had no context to build from to get to the correct API. I had to fix it.
+**We have two loops of feedback:**
 
-Today, if your framework or documentation isn't in the training corpus of the LLM, then it won't be output. If the system prompt of the tool a developer uses doesn't have your API, library or framework, then it's not in the output. And, if the user of a tool doesn't ask for a specific API, library or framework, then it won't be output. Model providers are skewing it so the model prefers a certain style, or framework or library (I do wonder if we will see library and framework authors paying tooling providers to include even the faintest mention of their library or framework in the system prompt.)
+1. React dominates the existing web (~13M+ new sites in 12 months)
+2. LLMs train on the existing web
+3. LLMs output React by default
+4. New sites built with LLMs use React
+5. More React sites exist for future training
+6. Go to step 2
 
-I can take a short-term L on being right, for the long-term win - I still believe that as LLMs progress they won't actually need the human constructs to efficiently build a maintainable site (also, I'm stubborn and happy to dig in on a point that I think I am correct on.)
+And...
 
-The models and the tools are preferring the tools that developers are already using, and it's driving a virtuous (vicious?) circle of adoption, to the point that if you are launching a new API or tools today you need to consider how it will be adopted by the ecosystem and how to get it into the training corpus of the LLMs.
+1. React dominates the developer ecosystem
+2. IDEs and tools that developers preferntially output React
+3. Tools ask LLMs to output React by default
+4. New sites built are using React
+5. More React sites exist to increase demand for tools to output React
+6. Go to step 1
 
-But what does this mean for the web platform APIs, that is the things that are being built into the browser? Over the last few years, we've seen a lot of new APIs and features that are designed to make the developer's life easier.
+I don't actually know if this is bad or good. We're getting more sites on the web and they're all pretty high quality. But it does create barriers for new frameworks, tools and web platform features that we need to understand. Specifically when:
 
-Over the last couple of years there's been a push to smooth a lot of the rough edges of the web platform, that is, developers like feature that make it easier for developers to do something that was hard. We like libraries and frameworks for this reason, and many developers are excited by the fact that something that once required a tool will now be a part of the web runtime by default.
+1. Your framework isn't in the training data because it's new
+2. Tool creators hardcode React because that's what developers know today
+3. Developers expect React output because that's what works
+4. Companies won't use your framework if their developers can't maintain it
+5. React has thousands of libraries; you have dozens
+
+If you launch a new framework, library or browser feature today, even if it's technically superior, you need to:
+
+- Get into LLM training data (12-18 month lag minimum)
+- Convince tool creators to modify system prompts (requires existing adoption)
+- Build a comprehensive library ecosystem (years of development)
+- Overcome developer inertia and get developers to ask for it
+
+By the time you've done step 1, the ecosystem using React has generated another 10M+ sites. You might flip that order, and do a massive campaign to get developer mind share, and supplement it with paid integrations in to the library ecosystem. We might even see new business models where framework and library authors pay tooling providers to include their framework in system prompts. But even then, you're fighting against entrenched patterns in both React libraries AND LLM training data.
+
+This isn't about React being the best tool. It's about React being past the point where network effects make alternatives viable.
+
+Here's what brought this home for me: Last week I used Claude to build a Chrome Extension using Chrome's built-in `prompt` API. Claude dutifully wrote the entire extension, but used `self.ai.languageModel`—the API from 6 months ago. The current API is `LanguageModel.create()`, but that wasn't in the training corpus.
+
+Add in the fact that it can take years of [Interop](https://web.dev/blog/interop-2025) work to get a feature to the point it becomes "[Baseline newly-available](https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility#:~:text=Features%20listed%20as%20newly%20available%20work%20in%20at%20least%20the%20latest%20stable%20version%20of%20each%20of%20the%20Baseline%20browsers%2C%20but%20may%20not%20work%20with%20older%20browsers%20and%20devices.)" and then another 36 months for it to reach a point where it's "[Baseline widely-available](https://developer.mozilla.org/en-US/docs/Glossary/Baseline/Compatibility#:~:text=Features%20listed%20as%20widely%20available%20have%20a%20consistent%20history%20of%20support%20in%20each%20of%20the%20Baseline%20browsers%20for%20at%20least%202.5%20years.)". By that time, the ecosystem has moved on, and the feature is competing against entrenched patterns in both React libraries AND LLM training data.
+
+This is the new reality: **If it's not in the LLM training data, it doesn't exist.** Not for 12-18 months, at least not until the next model training cycle and not until enough examples exist in the wild to statistically matter.
+
+Now apply this to frameworks:
+
+- **Web platform APIs**: 0-6 months of real-world usage before training cutoff
+- **New frameworks**: 0-6 months of real-world usage before training cutoff
+- **React patterns**: 10+ years of accumulated examples
+
+Today, if your framework or documentation isn't in the training corpus of the LLM, then it won't be output. If the system prompt of the tool a developer uses doesn't have your API, library or framework, then it's not in the output. And if the user of a tool doesn't ask for a specific API, library or framework, then it won't be output. Model providers are skewing it so the model prefers a certain style, or framework or library.
+
+The same dynamic applies to new web platform APIs designed to replace framework features. Consider the typical pattern:
+
+1. Browser teams identify a common pattern in frameworks (e.g., CSS Nesting instead of Sass)
+2. Multi-year standardization process begins
+3. Feature ships in browsers
+4. Developers... keep using the framework pattern
+
+Why? Because:
+
+- **The LLM learned the old pattern**: Sass has 15 years of examples; CSS Nesting has 1 or 2 years
+- **The framework already works**: React developers use styled-components, Tailwind, CSS modules
+- **The ecosystem is built**: Thousands of React component libraries use existing CSS patterns
+- **There's no incentive to switch**: The new platform feature doesn't make the site better for users
 
 For example:
 
-- People loved [Sass](https://sass-lang.com/), but you need a build-step, so it would be better for it to be in the platform, so we have [CSS Nesting](https://developer.chrome.com/docs/css-ui/css-nesting).
-- Colour-space functions like `okchl` and `hsl` make it easier for designers to modify the colours on a page because they are in a language they are used to from their tools.
-- Carousels are hard to build, so maybe we should have them as an intrinsic part of the platform. At the same time, there are [tons](https://flowbite.com/docs/components/carousel/#:~:text=Create%20a%20new%20carousel%20object%20using%20the%20options%20set%20above.) of [libraries](https://daisyui.com/components/carousel/?lang=en) that [create](https://getbootstrap.com/docs/4.0/components/carousel/) great [carousels](https://www.npmjs.com/package/react-multi-carousel).
+- People loved [Sass](https://sass-lang.com/), but you need a build-step, so we have [CSS Nesting](https://developer.chrome.com/docs/css-ui/css-nesting). But React developers already have CSS-in-JS solutions that LLMs know how to output.
+- Carousels are hard to build, so maybe we should have them as an intrinsic part of the platform. But there are [tons](https://flowbite.com/docs/components/carousel/#:~:text=Create%20a%20new%20carousel%20object%20using%20the%20options%20set%20above.) of [libraries](https://daisyui.com/components/carousel/?lang=en) that [create](https://getbootstrap.com/docs/4.0/components/carousel/) great [carousels](https://www.npmjs.com/package/react-multi-carousel) that are already in LLM training data.
+
+Web Components? Not in most LLM outputs because React components dominate training data.
+CSS Nesting? Rarely output because preprocessor patterns are more common in the corpus.
+View Transitions? Interesting, but frameworks already have animation libraries.
 
 As an author of many sites, I love these features. CSS Nesting alone lets me structure my CSS in a way that I personally find easier to read and maintain. But it doesn't really change the quality of the experience of the site for the person using my site. It doesn't change the performance of the site. It doesn't change how accessible my site is. It just makes it easier for me to write and maintain.
 
-But if you look at the tools that developers use to start a site, they are not going to "use the platform", they either use what their company has mandated, or what they are used to, and I believe that this is compounding at an increasing rate that you can't escape that React might be _the platform_.
+The only new platform features that matter are ones that **can't be built in user-space**, like:
 
-But let me hard double-down on a point and go completely against all the evidence that the graphs that point up and to the right in this post. Please, just humour me for a moment and [email me](mailto:paul@aifoc.us) if you disagree.
+- Multi-page view transitions (new navigation capabilities)
+- WebGPU (fundamentally new compute access)
+- WebAuthN and PassKeys (security primitives)
 
-Lets have a quick look at a common pattern that I've seen over the years for development of new web platform features is:
+Everything else is competing against entrenched patterns in both React libraries AND LLM training data.
 
-- Web browser's identify a common pattern in popular user-space tools that might be interesting for the web, so a multi-year standardisation and development cycle starts;
-- User-space tools that are being used by developers continue to get adoption and develop further.
-- The web platform APIs that was being designed to replace the need for the user-space tools frequently don't do enough for them to be replaced with the platform primitive
-- The user-space tools (Frameworks and existing libraries) that are "being replaced" are not incentivize to use the platform because they already have something working that is being used.
-
-For motivated developers, green-field projects might take advantage of the new platform primitive. For everyone else? you use what you know or are told to use.
+We don't see massive technology shifts in the top 1000 through to top 1 million because these are established sites with established teams and shifting technology is hard with often unclear benefit outside of potential improvements to product velocity.
 
 The tools, frameworks and libraries are not something that concerns a normal person using the web. What concerns people is the experience of using the page. Does it load quickly enough? Are the interactions smooth? Does the site actually do what I need it to do?
 
-[I believe that there is an opportunity for millions more people to deploy on to the web](/transition/), that is people who are not formal web developers who will use tools like Loveable, Replit, or even directly in a chat app and they may never need to look at the code, so what then do any of these new APIs do to help them build better sites?
+[There is an opportunity for millions more people to deploy on to the web](/transition/)—people who are not formal web developers who will use tools like Loveable, Replit, or even directly in a chat app. They may never need to look at the code, so what do any of these new APIs do to help them build better sites?
 
-People building with these tools don't know about Passkeys, WebAuthn, Web Components, CSS Nesting, View Transitions, or any of the other new features that are being added to the platform. They just want to have a site created that does what they need it to do.
+People building with these tools don't know about Passkeys, WebAuthn, Web Components, CSS Nesting, View Transitions, or any of the other new features being added to the platform. They just want a site created that does what they need it to do.
 
-Today, if you are an LLM or an tool that outputs code from an LLM, to not output React by default is to limit your potential audience as your competitors are serving the current demand. Tomorrow?
+Today, if you are an LLM or a tool that outputs code from an LLM, to not output React by default is to limit your potential audience as your competitors are serving the current demand.
 
-Now, if you consider our current working model for code-generating LLM tools which reflect the ecosystem that they are trained on. This means that any new API, frameworks or library has a large hurdle to get over in terms of being something that will be output by the tool. The fact that _any_ new feature might not be in the training corpus _and_ will not be prevalent enough to have it's usage patterns and idioms ingrained in the training and by extension the output of an LLM; should be a concern to the people building new platform features.
+Now consider the current working model for code-generating LLM tools which reflect the ecosystem that they are trained on. This means that any new API, framework or library has a large hurdle to get over in terms of being something that will be output by the tool. The fact that _any_ new feature might not be in the training corpus _and_ will not be prevalent enough to have its usage patterns and idioms ingrained in the training and by extension the output of an LLM should be a concern to the people building new platform features.
 
-What should the platform creators do then (that is spec authors and browser developers)?
+Looking at today's trend of tools primarily outputting React code, the comprehensive ecosystem of user-space libraries can do almost everything from custom select boxes, specialized date components and everything else. I can't see a world where a new platform feature is going to displace the libraries in use nor can I see a world where a new framework is going to displace React in the short to medium term—I really love what the Remix folks are doing with Remix 3 and I will keenly watch how it is adopted and how LLMs might pick this up to see how this post plays out in the real world. I'd love to see how long it takes for LLMs to start outputting Remix code without specific prompting or including docs in the context.
 
-If you take [JS0](https://docs.google.com/presentation/d/1ylROTu3N6MyHzNzWJXQAc7Bo1O0FHO3lNKfQMfPOA4o/edit?slide=id.p#slide=id.p) to an extreme and apply it to HTML and CSS and browser APIs (Web0 anyone??) then you could argue that a healthy tooling ecosystem already exists to abstract away the platform (WebSugar): If you want a carousel, you can use a library. If you want state management, you can use a library. If you want animations, you can use a library. If you want to do .... you can use a library. It's only when there is something fundamentally new that can't be built in user-space that the platform needs to evolve. And if we take a view that LLMs tool can output any code to meet the requirements set out by the user. I see less and less need for developer experience based improvements to the raw web-platform, especially in a world where people creating sites might never actually look at the code.
+**For framework authors:** Building a new framework is building a product that LLMs won't output for 12-18 months minimum, that has no library ecosystem, that developers don't know, and that companies won't adopt. You're not competing with React's technical merits—you're competing with React's statistical dominance in every LLM training corpus and every tools providers preference for their customer.
 
-Looking at todays trend of tools primarily outputting React code, the comprehensive ecosystem of user-space libraries can do almost everything from custom select boxes, specialized date components and everything else that is available. I can't see a world where a new platform feature is going to displace the libraries in use nor can I see a world where a new framework is going to displace React in the short to medium term &mdash; (that was a handcrafted mdash) I really love what the Remix folks are doing with Remix 3 and I will keenly watch how it is adopted and how LLMs might pick this up to see how this post plays out in the real world - I'd love see how long it takes for LLMs to start outputting Remix code without specific prompting or including docs in the context.
+**For platform developers:** Developer experience features (syntactic sugar, convenience APIs) are competing against established React patterns in LLM training data. They will not be adopted at scale. Focus on fundamental capabilities that can't be built in user-space. For features that browser developers are creating today, we need to take a long hard look at the benefits that they will bring to the user and not the developer. To that extent, many of the platform features ranging from Web Components through to syntactical changes are just not needed by the vast majority of people building sites in the coming years.
 
-This entire post might sound like a capitulation to the dominance of React and the pointlessness of building any new platform feature or tools, but I don't think it is. I think it's a call to action for people building new platform features to really consider the incentives of the people building sites and the tools that they are using. If you are building a new framework or library, then you need to consider how it will be adopted by the ecosystem and how to get it into the training corpus of the LLMs. If you are building a new platform feature, then you need to consider how it will be adopted by the ecosystem and how to get it into the training corpus of the LLMs.
+**For tool creators (e.g, IDEs):** If you're not outputting React by default, you're limiting your addressable market. Your competitors are serving current demand. You can't afford to be principled about framework diversity.
 
-And that as an industry we should be competing on the outcomes for the user.
+**For the industry:** We need to stop pretending framework choice matters and start competing on user outcomes. I really want to see Evals and Benchmarks that focus on quality outcomes like Core Web Vitals did for performance. My hope is that as users of tools that create sites care more about the experience of the site, then the tools will be incentivized to output code that meets those needs versus what is the easiest to output for the developer to maintain today.
 
-As for the web runtime, I think for the web to progress we should be looking to fundamentally new capabilities in the browser; the things that can't be built in user-space, or where there is clear user-experience benefit that can't be achieved with libraries. Multi-page view transitions are a great example.
+As for the web runtime, for the web to progress we should be looking to fundamentally new capabilities in the browser—the things that can't be built in user-space, or where there is clear user-experience benefit that can't be achieved with libraries. Multi-page view transitions are a great example.
 
-For features that browser developers are creating today, we need to take a long hard look at the benefits that they will bring to the user and not the developer. To that extent, I would argue many of the platform features ranging from Web Components through to syntactical changes are just not needed by the vast majority of people building sites in the coming years.
+Dead framework theory isn't about frameworks dying. It's about new frameworks being dead on arrival in a world where React has become the platform.
 
-I really want to see Evals and Benchmarks that focus on quality outcomes like Core Web Vitals did for performance. My hope would be then that as users of tools that create sites care more about the experience of the site, then the tools will be incentivized to output code that meets those needs vs what is the easiest to output for the developer to maintain today.
-
-And while I still enjoy handcrafting a site and applying care to the structure of the code and the direct access to the platform, I am in the minority. The majority of people building sites will be using tools that generate their sites and will not care about the code, or the frameworks, or the libraries, just the experience of the site.... hopefully... and who needs a frameworks then?
+Can we and should we break this cycle so that the library you spent the last year building or that elegant new framework with better ergonomics are not dead before they ship—not because they're bad, but because they're not React, and LLMs output React, and LLMs are how sites get built now.
