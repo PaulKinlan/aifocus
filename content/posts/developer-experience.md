@@ -6,7 +6,7 @@ slug: dead-framework-theory
 
 In October last year I wrote "[will developer care about frameworks in the future?](https://paul.kinlan.me/will-we-care-about-frameworks-in-the-future/)" and it's been on my mind a lot since then.
 
-If I look at what the likes of Replit, Bolt and other tools are doing, they are doing the opposite, they are preferring to output React code ([in some cases by crafting their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275)) so developers today can understand and use. I get it. If you are build a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated.
+If I look at what the likes of Replit, Bolt and other tools are doing, they are doing the opposite, they are preferring to output React code ([in some cases by crafting their system prompts](https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools/blob/7e9f6102c7d164dfdbfca3bfd66f3d8ad5c0b2cc/Open%20Source%20prompts/Bolt/Prompt.txt#L275)) so developers today can understand and use. I get it. If you are building a tool today to attract developers of today, then you need to give them confidence that they will be able to maintain the code that is generated.
 
 [According to builtwith.com, there were +13m sites outside of the top 1m deployed with React in the last 12 months](https://trends.builtwith.com/javascript/React). I think about the following charts a lot.
 
@@ -14,7 +14,7 @@ If I look at what the likes of Replit, Bolt and other tools are doing, they are 
 
 {{< figure src="/images/react-builtwith-12mo.png" caption="React usage over the last 12 months" >}}
 
-However, looking at [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=ALL#adoption), it tells a different story. React usage has stalled at 9 million origins on mobile vs 55 million origins as reported by Builtwith.h
+However, looking at [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=ALL#adoption), it tells a different story. React usage has stalled at 9 million origins on mobile vs 55 million origins as reported by Builtwith.
 
 {{< figure src="/images/react-http-archive-all.png" caption="HTTP Archive. React usage over the last 6 months" >}}
 
@@ -26,7 +26,7 @@ Looking at the top 1m, the detection rate is a lot more aligned, 140k vs 160k.
 
 {{< figure src="/images/react-builtwith-top-1m.png" caption="Builtwith React usage in the top 1m" >}}
 
-There are always false potentials in these numbers, but the trends are interesting. To sanity check myself, I looked at the 2nd most popular framework, Angular (both varients - AngularJS and Angular).
+There are always false positives in these numbers, but the trends are interesting. To sanity check myself, I looked at the 2nd most popular framework, Angular (both variants - AngularJS and Angular).
 
 {{< figure src="/images/builtwith-angularjs-alltime.png" caption="Angular usage over time" >}}
 
@@ -36,7 +36,7 @@ Compared to [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=
 
 {{< figure src="/images/angular-react-http-archive-all.png" caption="HTTP Archive. Angular vs React usage all time" >}}
 
-.. the numbers look inline for compared with [builtwith alltime](/images/builtwith-angular-alltime.png) and [over the last 12 months](/images/builtwith-angular-12mo.png). It doesn't look good for Angular.
+... the numbers look like they are inline with [builtwith alltime](/images/builtwith-angular-alltime.png) and [over the last 12 months](/images/builtwith-angular-12mo.png). It doesn't look good for Angular.
 
 Could it be vercel that is driving the growth in React sites? They've had a meteoric rise in sites hosted on them. Just look at the curve!
 
@@ -60,9 +60,9 @@ But correlation is not causation and really only the tool creators know as they 
 
 _If_ you believe that the majority of new sites being deployed are being created with the help of LLMs, then... something
 
-I was using Claude code last week to build a Chrome Extension that uses Chrome's built-in `prompt` API to help me take a prompt from the omnibox and route it to a tool in the Chrome extension. Claude was great, it dutifully helped wrote the entire extension, but for one small error. It used `self.ai.languageModel` to call the prompt API. This _was_ the correct API to call 6 months ago, but now it's `LanguageModel.create()`. It wasn't in the corpus and it had no context to build from to get to the correct API. I had to fix it.
+I was using Claude code last week to build a Chrome Extension that uses Chrome's built-in `prompt` API to help me take a prompt from the Omnibox and route it to a tool in the Chrome extension. Claude was great, it dutifully helped wriste the entire extension, but for one small error. It used `self.ai.languageModel` to call the prompt API. This _was_ the correct API to call 6 months ago, but now it's `LanguageModel.create()`. It wasn't in the corpus and it had no context to build from to get to the correct API. I had to fix it.
 
-Today, if your framework or documentation isn't in the training corpus of the LLM, then it won't be output. If the system prompt of the tool a developer uses doesn't have your API, library or framework, then it's not in the output. And, if the user of a tool doesn't ask for a specific API, library or framework, then it won't be output. A model provider _are_ skewing it so the model prefers a certain style, or framework or library (I do wonder if we will see library and framework authors paying tooling providers to include even the faintest mention of their library or framework in the system prompt.)
+Today, if your framework or documentation isn't in the training corpus of the LLM, then it won't be output. If the system prompt of the tool a developer uses doesn't have your API, library or framework, then it's not in the output. And, if the user of a tool doesn't ask for a specific API, library or framework, then it won't be output. Model providers are skewing it so the model prefers a certain style, or framework or library (I do wonder if we will see library and framework authors paying tooling providers to include even the faintest mention of their library or framework in the system prompt.)
 
 I can take a short-term L on being right, for the long-term win - I still believe that as LLMs progress they won't actually need the human constructs to efficiently build a maintainable site (also, I'm stubborn and happy to dig in on a point that I think I am correct on.)
 
