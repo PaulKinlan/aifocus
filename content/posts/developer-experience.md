@@ -18,7 +18,7 @@ If you look at what Replit, Bolt, and similar tools are doing, they're not tryin
 
 {{< figure src="/images/react-builtwith-12mo.png" caption="React usage over the last 12 months" >}}
 
-However, looking at [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=ALL#adoption), it tells a different story. React usage has stalled at 9 million origins on mobile vs 55 million origins as reported by Builtwith.
+However, looking at [HTTP Archive](https://httparchive.org/reports/techreport/tech?tech=ALL#adoption), it tells a different story. React usage has stalled at 1.2 million mobile origins on mobile vs 55 million origins as reported by Builtwith.
 
 {{< figure src="/images/react-http-archive-all.png" caption="HTTP Archive. React usage over the last 6 months" >}}
 
