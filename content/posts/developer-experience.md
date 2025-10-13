@@ -32,7 +32,7 @@ Looking at the top 1m, the detection rate is more aligned: 140k vs 160k.
 
 We're looking at about 12-18% of sites in the top 1m. Take all these numbers with a pinch of salt. The detection can be broken, the datasets are different sizes and the definitions of what is being measured are different. But the trends feel undeniable: React's growth continues while competitors [like Angular, sadly stagnate](/images/builtwith-angular-12mo.png).
 
-So what has driven the uptick in React sites? My read of the evidence suggests LLM tools over the last 12-18 months are preferring to output React code.
+So what has driven the uptick in React sites? My read of the data suggests LLM tools over the last 12-18 months are preferring to output React code.
 
 Look at token growth on OpenRouter. Programming tools are [burning through billions of tokens a day](https://aifoc.us/token-slinging) via just one gateway. The curves look similar:
 
