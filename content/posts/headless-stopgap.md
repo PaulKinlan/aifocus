@@ -1,0 +1,202 @@
+---
+title: headless stopgap
+date: 2025-11-17T10:00:00.000Z
+slug: headless-stopgap
+authors:
+  - paulkinlan
+---
+
+I remember my early days building for the web. We had no separation of concerns. We used `<font>` and `<center>` tags, transparent `spacer.gif`s, and complex table layouts to force our content into a shape. Presentation and content were a single, messy soup.
+
+My first encounter with CSS in Netscape Navigator 4 was a mind-blowing moment. It was the first time I was confronted with the _idea_ that you could (and should) separate the document's structure (HTML) from its presentation (CSS).
+
+This concept was cemented for the entire industry by the CSS Zen Garden. It was the ultimate demo: one single HTML file, hundreds of completely different visual designs. This idea, that content and presentation are two different things, has stuck with me ever since.
+
+For the past decade, we've been running with this idea. Headless CMSs are the logical conclusion of that CSS Zen Garden-era thinking. We put our pure content in an API and make our presentation layer (a React app, usually) completely separate. We thought we'd finally achieved the ultimate separation.
+
+But it's a trap. We've just relocated the coupling. Instead of being locked to a WordPress template loop, we're locked to `contentful.getEntry()` loops. We're still manually mapping `fields.heroTitle` to `<h1>` and `fields.heroImage.url` to `<img>`. This isn't freedom, it's a 1:1 mapping to a rigid JSON schema instead of a flexible template.
+
+Something has been gnawing away at me because I don't think we're at our final form of content management by a long way. As I explored in "[Whither CMS?](https://aifoc.us/whither-cms/)", for years "normal people" and local businesses have fled to walled gardens like Facebook, not because they _want_ to, but because the alternative is too hard. When I moved to North Wales, I saw this firsthand. They know their content, their goals, and their intent (name, address, pictures, booking forms), but the barriers of design, cost, and technical skills are too high.
+
+That post also highlighted a key gap: the data shows popular CMSs (like WordPress) are dominant in the web's massive "long tail," but not where people actually spend their time. We're still failing to provide tools for the _vast majority_ of people who just want a simple, independent presence.
+
+I do think with the introduction of Large Language Models we are on the verge of the _next_ great separation. The first was `(Content + Style)` -\> `(Content) + (Style)`. The new one is `(Rigid Components)` -\> `(Pure Intent)`. We need to move from "structured data" to "semantic intent."
+
+I think that LLMs will finally makes this possible by acting as the bridge, allowing anyone to simply _describe_ what they want, starting with their content (the most important part) and **progressively layering** on style _and_ functionality.
+
+The "block editor" (Gutenberg, Notion, etc.) was a step in the right direction, but it's still a "what you see is what you get" system that mashes content and presentation into a messy HTML blob. You can't easily change the markup of every "Two Column" block on your site.
+
+The new model requires a hard separation of "Content" and "Chrome."
+
+- **Content:** The pure, unadulterated "what." The text, the image URL, the list items. This is sacred and _must not be changed_ by the LLM. In my experimental [ssgen](https://github.com/PaulKinlan/ssgen) project, this is just raw Markdown.
+- **Chrome:** The "how." The `<div>`s, the `grid`, the `shadow-lg`, the `rounded-xl`. This is the _shell_ that presents the content. It is disposable and should be generated.
+
+The LLM's role is to act as a just-in-time "chrome generator." It reads the pure content (`# My Title`) and wraps it in the _appropriate_ presentation (`<div class="hero"><h1 class="text-4xl...">My Title</h1></div>`) based on context, leaving the content itself pristine.
+
+Right now, we define style with `tailwind.config.js`, `_variables.scss`, and massive design system libraries. This is _prescriptive_ and brittle.
+
+The new model is "Style as Intent." Instead of _coding_ the style, we _describe_ it. The LLM acts as the style-transfer engine.
+
+My `ssgen` experiment proves this is possible in two ways:
+
+1.  **Textual Intent (The Brand File):** We give the LLM a simple "brand.md" file.
+    _"Our brand is professional and minimalist. Use a dark blue primary color (\#0a2351), a serious serif font for headings, and generous white space."_
+2.  **Visual Intent (The Screenshot):** We give the LLM an image.
+    _"Make it look like this."_
+3.  **Functional Intent:** Describe what you need to do and [hypermedia](/hypermedia/) can make it possible.
+
+The LLM uses this "intent" to inform how it builds the "chrome", enabling us to bridge the gap between the author's brain and the final code.
+
+This brings us to what I think is the most powerful idea. Back in 2016, I wrote a post called "[Custom Elements: an ecosystem. Still being worked out](https://paul.kinlan.me/custom-elements-ecosystem/)."
+
+The dream was that semantic, custom HTML elements could become a universal _interchange format_. An author should be able to write `<share-button>` or `<aspect-image>`, and the _developer_ or _platform_ would provide the best _implementation_ for that context (whether it was Polymer, AMP, or just vanilla JS). The author's HTML would be stable, even if the underlying tech changed.
+
+That's not what happened.
+
+As the post warned, framework ecosystems exploded, and each one built its _own_ proprietary, prefixed component model (`<amp-img>`, `<iron-image>`). This fragmented the composability of the platform. We didn't get an ecosystem; we got a set of high-walled gardens that locked developers in. A React `<ProductCard>` is almost useless in a Vue app. However if you look at how people use frameworks React, `<ProductCard>` and `<ContactForm>` are surprisingly good, descriptive definitions of the intent of what is being created.
+
+Can we use LLMs to finally deliver on that original vision of semantic, functional HTML elements that are _implementation agnostic_?
+
+One of the things that I loved about HTML was it's ability to render even if the input HTML was malformed in some way. No `</p>`, not a problem. What if we could extend that flexibility even further into describing what you want?
+
+If as an author I could describe that I want a [`contact-form`](https://github.com/PaulKinlan/ssgen/blob/main/content/contact-form.md) and what I want it to achieve even if I don't know HTML, that would be nice.
+
+```Markdown
+# Contact me for availability
+
+<contact-form>
+mail to: paul@aifoc.us
+I need the users name, email address, message and date they would like an appointment
+</contact-form>
+```
+
+Should produce something like:
+{{< figure src=/images/contact-form.png caption="`ssgen`'ed form" >}}
+
+Oh - [wait it does](https://ssgen.paulkinlan-ea.deno.net/contact-form).
+
+I think there's a massive opportunity to cement the web as the place for all content and I think the LLM is the missing piece that can finally deliver on the concept I set out in 2016 to bind an implementation to an author's intent.
+
+Consider the two roles:
+
+1. **The Author's Job:** Write pure semantic _intent_.
+2. **The LLM's Job:** Act as the "intelligent renderer" (e.g, `ssgen`). It sees these tags, understands their _function_ and _contract_, and generates the _entire, correct, and secure implementation_ (the `<iframe>`, the `<form>`, the Stripe.js `<script>`) on the fly, _using the brand guidelines_.
+
+This is the real decoupling. The author is finally free. They don't need to know HTML, JavaScript, or even what framework is being used. They just declare their high-level intent, and the LLM handles the implementation, breaking the framework lock-in for good.
+
+https://raw.githubusercontent.com/PaulKinlan/ssgen/refs/heads/main/content/element.md
+
+```Markdown
+---
+prompt: element.md
+---
+
+This is a test page testing how elements being automatically generated.
+
+# Google Map and Pin
+
+<google-map><pin-location city="Ruthin"/></google-map>
+
+# Google Font
+
+<google-font font=Lobster size=30pt>Hello World</google-font>
+```
+
+{{< figure src="/images/elements-ssgen.png" caption="Google Map and Google fonts generated by LLM" >}}
+
+Demo: [View Element Demo](https://ssgen.paulkinlan-ea.deno.net/element)
+Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/element.md)
+
+```html
+<google-map location="Tower of London" zoom="14" />
+<newsletter-signup form-id="my-campaign-id" />
+<checkout-button item="prod_123xyz" price="19.99" currency="GBP" />
+```
+
+Or how about a carousel?
+
+```Markdown
+---
+prompt: element.md
+---
+
+This is a test page to test elements that could work by being generated
+
+in this demo we are going to create a carousel of images.
+
+<carousel>
+  Img url=https://picsum.photos/200/300 link_text=paul kinlan link=https://paul.kinlan.me
+  Img url=https://picsum.photos/200/300 link_text=web dev link=https://web.dev
+  Img url=https://picsum.photos/200/300 link=https://developer.chrome.com link_text="chrome." ; open the link in a new window
+</carousel>
+```
+
+Demo: [View Carousel Demo](https://ssgen.paulkinlan-ea.deno.net/carousel)
+Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/carousel.md)
+
+{{< figure src="/images/carousel-ssgen.png" caption="Carousel generated by LLM" >}}
+
+```Markdown
+---
+prompt: element.md
+style:
+  image: images/screen.png
+---
+
+# Portfolio Showcase
+
+## My Creative Work
+
+Explore a collection of my recent projects and designs.
+
+## Featured Projects
+
+### Project Alpha
+
+A revolutionary web application that changed the industry.
+
+### Project Beta
+
+Beautiful design meets functionality in this mobile app.
+
+### Project Gamma
+
+Enterprise solution delivering results at scale.
+
+## About Me
+
+I'm a designer and developer passionate about creating beautiful, functional digital experiences.
+
+## Contact
+
+Let's work together on your next project!
+```
+
+Demo: [View Carousel Demo](https://ssgen.paulkinlan-ea.deno.net/style-image-example)
+Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/style-image-example.md)
+
+{{< figure src="/images/style-ssgen.png" caption="Site generated by LLM with image as source" >}}
+
+It can also be progressive. By sending the HTTP headers through to the LLM we can influence the output of the LLM to produce code that that is the best possible experience for the browser (e.,g Chrome, Safari or Firefox) and the platform (e.g, desktop or mobile).
+
+The future of building websites isn't a complex CMS with fields and buttons. It's a conversation. It's about lowering the barrier to entry so drastically that anyone with an idea can have a presence on the _open web_, not just inside Facebook's walls.
+
+The new workflow is simple:
+
+1.  **You write semantic content** (Markdown + custom functional tags).
+2.  **You provide stylistic intent** (a brand file or a screenshot).
+3.  **An Intelligent Renderer (`ssgen`\!)** generates the complete, functional, and on-brand site.
+
+This isn't about replacing developers. It's about elevating them _and_ empowering everyone else. Developers stop building the 1000th "contact form" and instead build the _engine_ that understands the `<contact-form />` tag and your intent.
+
+For everyone else, the CMS becomes a simple text file, and the "renderer" is an LLM that can finally understand what they mean.
+
+I think this model is very compelling, but we need to address a number of concerns:
+
+- [The latency needs to be a lot lower](/latency/) and we need to have better ways
+- We need better ways to have deterministic styling and output across pages. The demo I presented today does not have this.
+- Validation and security need to be rock solid. We can't have LLMs generating insecure code.
+
+One of the most compelling aspects of this model is that I think it can get people out of the vendor lock-in that we see prescriptive frameworks and platforms. I think there are opportunities to separate "content" from "chrome" at a higher level of abstraction than the raw platform that don't force us into rigid JSON schemas or templates or complex CMSs.
+
+If we explore this dynamic generation of "chrome" from "content" and "intent" further, we get to a world where every navigation to a page is an opportunity to generate the best possible experience for that _specific_ user, on their _specific_ device, nomatter their context.

@@ -1,0 +1,22 @@
+<script>
+  function resizeIframe(iframe) {
+    // Get various height metrics to ensure cross-browser compatibility
+    var doc = iframe.contentWindow.document;
+    var height = Math.max(
+      doc.body.scrollHeight,
+      doc.documentElement.scrollHeight,
+      doc.body.offsetHeight,
+      doc.documentElement.offsetHeight,
+      doc.body.clientHeight,
+      doc.documentElement.clientHeight
+    );
+
+    // Apply the calculated height to the iframe element
+    iframe.style.height = height + "px";
+  }
+
+  onload = () => {
+    const iframes = document.getElementsByTagName('iframe');
+    Array.from(iframes).forEach(resizeIframe);
+  }
+</script>
