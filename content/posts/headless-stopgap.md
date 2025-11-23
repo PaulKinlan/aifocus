@@ -47,17 +47,11 @@ My `ssgen` experiment shows that this is possible in three ways:
 
 The LLM uses this "intent" to inform how it builds the "chrome", enabling us to bridge the gap between the author and the final code.
 
-This brings us to what I think is the most powerful idea. Back in 2016, I wrote a post called "[Custom Elements: an ecosystem. Still being worked out](https://paul.kinlan.me/custom-elements-ecosystem/)." The dream was that semantic, custom HTML elements could become a universal _interchange format_. An author should be able to write `<share-button>` or `<aspect-image>`, and the _developer_ or _platform_ would provide the best _implementation_ for that context (whether it was Polymer, AMP, or just vanilla JS). The author's HTML would be stable, even if the underlying tech changed.
+But how can we think about describing intent while enabling ease of authorship? One of the things that I loved about HTML was its ability to render even if the input HTML was malformed in some way. No `</p>`, not a problem. What if we could extend that flexibility even further into describing what you want?
 
-That's not what happened.
+If as an author I could describe that I want a `<contact-form>` and what I want it to achieve even if I don't know HTML, that could be pretty powerful.
 
-As the post warned, framework ecosystems exploded, and each one built its _own_ proprietary, prefixed component model (`<amp-img>`, `<iron-image>`). This fragmented the composability of the platform. We didn't get an ecosystem; we got a set of high-walled gardens that locked developers in. A React `<ProductCard>` is almost useless in a Vue app. However, if you look at how people use frameworks like React, `<ProductCard>` and `<ContactForm>` are surprisingly good, descriptive definitions of the intent of what is being created.
-
-Can we use LLMs to finally deliver on that original vision of semantic, functional HTML elements that are _implementation agnostic_?
-
-One of the things that I loved about HTML was its ability to render even if the input HTML was malformed in some way. No `</p>`, not a problem. What if we could extend that flexibility even further into describing what you want?
-
-If as an author I could describe that I want a [`contact-form`](https://github.com/PaulKinlan/ssgen/blob/main/content/contact-form.md) and what I want it to achieve even if I don't know HTML, that would be nice.
+Maybe I could write something like this:
 
 ```Markdown
 # Contact me for availability
@@ -71,7 +65,13 @@ I need the users name, email address, message and date they would like an appoin
 Should produce something like:
 {{< figure src=/images/contact-form.png caption="`ssgen`'ed form" >}}
 
-Oh - [wait it does](https://ssgen.paulkinlan-ea.deno.net/contact-form).
+Oh - [wait it does](https://ssgen.paulkinlan-ea.deno.net/contact-form) | [Code](https://github.com/PaulKinlan/ssgen/blob/main/content/contact-form.md).
+
+This brings us to what I think is the most powerful idea. Back in 2016, I wrote a post called "[Custom Elements: an ecosystem. Still being worked out](https://paul.kinlan.me/custom-elements-ecosystem/)." The dream was that semantic, custom HTML elements could become a universal _interchange format_. An author should be able to write `<share-button>` or `<aspect-image>`, and the _developer_ or _platform_ would provide the best _implementation_ for that context (whether it was Polymer, AMP, or just vanilla JS). The author's HTML would be stable, even if the underlying tech changed.
+
+Yes, that future did not happen, but as the post warned, framework ecosystems exploded, and each one built its _own_ proprietary, prefixed component model (`<amp-img>`, `<iron-image>`). This fragmented the composability of the platform. We didn't get an ecosystem; we got a set of high-walled gardens that locked developers in. A React `<ProductCard>` is almost useless in a Vue app. However, if you look at how people use frameworks like React, `<ProductCard>` and `<ContactForm>` are surprisingly good, descriptive definitions of the intent of what is being created.
+
+Can we use LLMs to finally deliver on that original vision of semantic, functional HTML elements that are _implementation agnostic_?
 
 I think there's a massive opportunity to cement the web as the place for all content and I think the LLM is the missing piece that can finally deliver on the concept I set out in 2016 to bind an implementation to an author's intent.
 
@@ -80,9 +80,9 @@ Consider the two roles:
 1. **The Author's Job:** Write pure semantic _intent_.
 2. **The LLM's Job:** Act as the "intelligent renderer" (e.g, `ssgen`). It sees these tags, understands their _function_ and _contract_, and generates the _entire, correct, and secure implementation_ (the `<iframe>`, the `<form>`, the Stripe.js `<script>`) on the fly, _using the brand guidelines_.
 
-This is the real decoupling. The author is finally free. They don't need to know HTML, JavaScript, or even what framework is being used. They just declare their high-level intent, and the LLM handles the implementation, breaking the framework lock-in for good.
+I think this is decoupling that we should explore more. Authors don't need to know HTML, JavaScript, or even what framework is being used. They just declare their high-level intent, and the LLM handles the implementation, which might help us to break the framework lock-in for good.
 
-https://raw.githubusercontent.com/PaulKinlan/ssgen/refs/heads/main/content/element.md
+Consider this example of functional elements that `ssgen` can already generate:
 
 ```Markdown
 ---
@@ -103,15 +103,29 @@ This is a test page testing how elements being automatically generated.
 {{< figure src="/images/elements-ssgen.png" caption="Google Map and Google fonts generated by LLM" >}}
 
 Demo: [View Element Demo](https://ssgen.paulkinlan-ea.deno.net/element)
-Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/element.md)
+Code: [View on GitHub](https://raw.githubusercontent.com/PaulKinlan/ssgen/refs/heads/main/content/element.md)
+
+These elements we're entirely made up as a way to explain what I wanted in the page. The LLM understood the intent of what I wanted and generated the correct code to make it happen.
+
+I could imagine a world where you could write:
 
 ```html
+Welcome to my site about travel! Here is my trip to the tower of London:
+
 <google-map location="Tower of London" zoom="14" />
-<newsletter-signup form-id="my-campaign-id" />
+
+You can book tickets using here:
+
 <checkout-button item="prod_123xyz" price="19.99" currency="GBP" />
+
+If you want more information about my travels, sign up to my newsletter:
+
+<newsletter-signup form-id="my-campaign-id" />
 ```
 
-Or how about a carousel?
+I think this is pretty fun. Exploring this model further, we can create more complex elements.
+
+How about a carousel of images?
 
 ```Markdown
 ---
@@ -129,10 +143,14 @@ in this demo we are going to create a carousel of images.
 </carousel>
 ```
 
+{{< figure src="/images/carousel-ssgen.png" caption="Carousel generated by LLM" >}}
+
 Demo: [View Carousel Demo](https://ssgen.paulkinlan-ea.deno.net/carousel)
 Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/carousel.md)
 
-{{< figure src="/images/carousel-ssgen.png" caption="Carousel generated by LLM" >}}
+The LLM understood the intent of what I wanted and generated a working carousel with navigation buttons, image links, and accessibility features.
+
+Finally, consider a full portfolio page where I provide the content and a screenshot of the style I want:
 
 ```Markdown
 ---
@@ -182,19 +200,15 @@ The future of building websites isn't a complex CMS with fields and buttons. It'
 The new workflow is simple:
 
 1.  **You write semantic content** (Markdown + custom functional tags).
-2.  **You provide stylistic intent** (a brand file or a screenshot).
-3.  **An Intelligent Renderer (`ssgen`\!)** generates the complete, functional, and on-brand site.
+2.  **You provide stylistic intent** (a brand file or a screenshot, or even CSS file).
+3.  **An LLM Renderer (`ssgen`\!)** generates the complete, functional, and on-brand site.
 
-This isn't about replacing developers. It's about elevating them _and_ empowering everyone else. Developers stop building the 1000th "contact form" and instead build the _engine_ that understands the `<contact-form />` tag and your intent.
+I like the idea that a CMS can become a simple text file (Markdown) that anyone can write, and the "renderer" is an LLM-powered engine that can understand both the content and the intent of the author.
 
-For everyone else, the CMS becomes a simple text file, and the "renderer" is an LLM that can finally understand what they mean.
+There are a number of challenges that I can see you already raise:
 
-I think this model is very compelling, but we need to address a number of concerns:
+The first two (latency and deterministic output) are hard-stops if you think about how today's web is built to ensure that the experience works the same across all browsers and devices for all users, however the non-determinism of these LLM tools might actually be a feature. We are now in a world where every navigation to a page is an opportunity to generate the best possible experience for that _specific_ user, on their _specific_ device, for their _specific_ browser, no matter their context.
 
-- [The latency needs to be a lot lower](/latency/) and we need to have better ways
-- We need better ways to have deterministic styling and output across pages. The demo I presented today does not have this.
-- Validation and security need to be rock solid. We can't have LLMs generating insecure code.
+The real big challenge that I see is: Security and the validation of the intent. How do we ensure that the generated code is safe, secure, and does not expose vulnerabilities? We need to build robust "element handlers" that can validate and sanitize the generated code before it goes live, or even force the pages to run in highly sandboxed and CSP-restricted environments.
 
-One of the most compelling aspects of this model is that I think it can get people out of the vendor lock-in that we see prescriptive frameworks and platforms. I think there are opportunities to separate "content" from "chrome" at a higher level of abstraction than the raw platform that don't force us into rigid JSON schemas or templates or complex CMSs.
-
-If we explore this dynamic generation of "chrome" from "content" and "intent" further, we get to a world where every navigation to a page is an opportunity to generate the best possible experience for that _specific_ user, on their _specific_ device, no matter their context.
+Headless CMSs were a step in the right direction, but they are just a stopgap. The real future is about separating content from presentation and functionality at a higher level of abstraction, using LLMs to generate the "chrome" based on the author's intent and if we follow this model I think we can get people out of the vendor lock-in that we see with prescriptive frameworks and platforms.
