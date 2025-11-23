@@ -28,8 +28,8 @@ The "block editor" (Gutenberg, Notion, etc.) was a step in the right direction, 
 
 The new model requires a hard separation of "Content" and "Chrome."
 
-- **Content:** The pure, unadulterated "what." The text, the image URL, the list items. This is sacred and _must not be changed_ by the LLM. In my experimental [ssgen](https://github.com/PaulKinlan/ssgen) project, this is just raw Markdown.
-- **Chrome:** The "how." The `<div>`s, the `grid`, the `shadow-lg`, the `rounded-xl`. This is the _shell_ that presents the content. It is disposable and should be generated.
+- **Content:** The text, the image URL, the list items. This is sacred and _must not be changed_ by the LLM. In my experimental [ssgen](https://github.com/PaulKinlan/ssgen) project, this is just raw Markdown.
+- **Chrome:** The `<div>`s, the `grid`, the `shadow-lg`, the `rounded-xl`. This is the _shell_ that presents the content. It is disposable and should be generated.
 
 The LLM's role is to act as a just-in-time "chrome generator." It reads the pure content (`# My Title`) and wraps it in the _appropriate_ presentation (`<div class="hero"><h1 class="text-4xl...">My Title</h1></div>`) based on context, leaving the content itself pristine.
 
