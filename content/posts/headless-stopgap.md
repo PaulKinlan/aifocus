@@ -1,6 +1,6 @@
 ---
 title: headless stopgap
-date: 2025-11-17T10:00:00.000Z
+date: 2025-11-23T10:00:00.000Z
 slug: headless-stopgap
 authors:
   - paulkinlan
