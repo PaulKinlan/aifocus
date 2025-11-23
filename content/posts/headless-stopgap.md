@@ -20,24 +20,24 @@ Something has been gnawing away at me because I don't think we're at our final f
 
 That post also highlighted a key gap: the data shows popular CMSs (like WordPress) are dominant in the web's massive "long tail," but not where people actually spend their time. We're still failing to provide tools for the _vast majority_ of people who just want a simple, independent presence.
 
-I do think with the introduction of Large Language Models we are on the verge of the _next_ great separation. The first was `(Content + Style)` -\> `(Content) + (Style)`. The new one is `(Rigid Components)` -\> `(Pure Intent)`. We need to move from "structured data" to "semantic intent."
+I do think with the introduction of Large Language Models we are on the verge of the _next_ great separation. The first was `(Content + Style)` -\> `(Content) + (Style)` with CSS and CMS systems. The new one is `(Rigid Components)` -\> `(Pure Intent)` that will enable us to move from "structured data" to "intent."
 
-I think that LLMs will finally makes this possible by acting as the bridge, allowing anyone to simply _describe_ what they want, starting with their content (the most important part) and **progressively layering** on style _and_ functionality.
+It seems that LLMs will finally make this possible by acting as the bridge, allowing anyone to simply _describe_ what they want, starting with their content (the most important part) and **progressively layering** on style _and_ functionality.
 
 The "block editor" (Gutenberg, Notion, etc.) was a step in the right direction, but it's still a "what you see is what you get" system that mashes content and presentation into a messy HTML blob. You can't easily change the markup of every "Two Column" block on your site.
 
 The new model requires a hard separation of "Content" and "Chrome."
 
 - **Content:** The pure, unadulterated "what." The text, the image URL, the list items. This is sacred and _must not be changed_ by the LLM. In my experimental [ssgen](https://github.com/PaulKinlan/ssgen) project, this is just raw Markdown.
-- **Chrome:** The "how." The `<div>`s, the `grid`, the `shadow-lg`, the `rounded-xl`. This is the _shell_ that presents the content. It is disposable and should be generated.
+- **chrome:** The "how." The `<div>`s, the `grid`, the `shadow-lg`, the `rounded-xl`. This is the _shell_ that presents the content. It is disposable and should be generated.
 
 The LLM's role is to act as a just-in-time "chrome generator." It reads the pure content (`# My Title`) and wraps it in the _appropriate_ presentation (`<div class="hero"><h1 class="text-4xl...">My Title</h1></div>`) based on context, leaving the content itself pristine.
 
-Right now, we define style with `tailwind.config.js`, `_variables.scss`, and massive design system libraries. This is _prescriptive_ and brittle.
+Right now, we define style with `tailwind.config.js`, `_variables.css`, and massive design system libraries. This is _prescriptive_ and brittle.
 
 The new model is "Style as Intent." Instead of _coding_ the style, we _describe_ it. The LLM acts as the style-transfer engine.
 
-My `ssgen` experiment proves this is possible in two ways:
+My `ssgen` experiment shows that this is possible in three ways:
 
 1.  **Textual Intent (The Brand File):** We give the LLM a simple "brand.md" file.
     _"Our brand is professional and minimalist. Use a dark blue primary color (\#0a2351), a serious serif font for headings, and generous white space."_
@@ -45,19 +45,17 @@ My `ssgen` experiment proves this is possible in two ways:
     _"Make it look like this."_
 3.  **Functional Intent:** Describe what you need to do and [hypermedia](/hypermedia/) can make it possible.
 
-The LLM uses this "intent" to inform how it builds the "chrome", enabling us to bridge the gap between the author's brain and the final code.
+The LLM uses this "intent" to inform how it builds the "chrome", enabling us to bridge the gap between the author and the final code.
 
-This brings us to what I think is the most powerful idea. Back in 2016, I wrote a post called "[Custom Elements: an ecosystem. Still being worked out](https://paul.kinlan.me/custom-elements-ecosystem/)."
-
-The dream was that semantic, custom HTML elements could become a universal _interchange format_. An author should be able to write `<share-button>` or `<aspect-image>`, and the _developer_ or _platform_ would provide the best _implementation_ for that context (whether it was Polymer, AMP, or just vanilla JS). The author's HTML would be stable, even if the underlying tech changed.
+This brings us to what I think is the most powerful idea. Back in 2016, I wrote a post called "[Custom Elements: an ecosystem. Still being worked out](https://paul.kinlan.me/custom-elements-ecosystem/)." The dream was that semantic, custom HTML elements could become a universal _interchange format_. An author should be able to write `<share-button>` or `<aspect-image>`, and the _developer_ or _platform_ would provide the best _implementation_ for that context (whether it was Polymer, AMP, or just vanilla JS). The author's HTML would be stable, even if the underlying tech changed.
 
 That's not what happened.
 
-As the post warned, framework ecosystems exploded, and each one built its _own_ proprietary, prefixed component model (`<amp-img>`, `<iron-image>`). This fragmented the composability of the platform. We didn't get an ecosystem; we got a set of high-walled gardens that locked developers in. A React `<ProductCard>` is almost useless in a Vue app. However if you look at how people use frameworks React, `<ProductCard>` and `<ContactForm>` are surprisingly good, descriptive definitions of the intent of what is being created.
+As the post warned, framework ecosystems exploded, and each one built its _own_ proprietary, prefixed component model (`<amp-img>`, `<iron-image>`). This fragmented the composability of the platform. We didn't get an ecosystem; we got a set of high-walled gardens that locked developers in. A React `<ProductCard>` is almost useless in a Vue app. However, if you look at how people use frameworks like React, `<ProductCard>` and `<ContactForm>` are surprisingly good, descriptive definitions of the intent of what is being created.
 
 Can we use LLMs to finally deliver on that original vision of semantic, functional HTML elements that are _implementation agnostic_?
 
-One of the things that I loved about HTML was it's ability to render even if the input HTML was malformed in some way. No `</p>`, not a problem. What if we could extend that flexibility even further into describing what you want?
+One of the things that I loved about HTML was its ability to render even if the input HTML was malformed in some way. No `</p>`, not a problem. What if we could extend that flexibility even further into describing what you want?
 
 If as an author I could describe that I want a [`contact-form`](https://github.com/PaulKinlan/ssgen/blob/main/content/contact-form.md) and what I want it to achieve even if I don't know HTML, that would be nice.
 
@@ -172,12 +170,12 @@ I'm a designer and developer passionate about creating beautiful, functional dig
 Let's work together on your next project!
 ```
 
-Demo: [View Carousel Demo](https://ssgen.paulkinlan-ea.deno.net/style-image-example)
+Demo: [View Style Transfer Demo](https://ssgen.paulkinlan-ea.deno.net/style-image-example)
 Code: [View on GitHub](https://github.com/PaulKinlan/ssgen/blob/main/content/style-image-example.md)
 
 {{< figure src="/images/style-ssgen.png" caption="Site generated by LLM with image as source" >}}
 
-It can also be progressive. By sending the HTTP headers through to the LLM we can influence the output of the LLM to produce code that that is the best possible experience for the browser (e.,g Chrome, Safari or Firefox) and the platform (e.g, desktop or mobile).
+It can also be progressive. By sending the HTTP headers through to the LLM we can influence the output of the LLM to produce code that is the best possible experience for the browser (e.g., Chrome, Safari or Firefox) and the platform (e.g., desktop or mobile).
 
 The future of building websites isn't a complex CMS with fields and buttons. It's a conversation. It's about lowering the barrier to entry so drastically that anyone with an idea can have a presence on the _open web_, not just inside Facebook's walls.
 
@@ -199,4 +197,4 @@ I think this model is very compelling, but we need to address a number of concer
 
 One of the most compelling aspects of this model is that I think it can get people out of the vendor lock-in that we see prescriptive frameworks and platforms. I think there are opportunities to separate "content" from "chrome" at a higher level of abstraction than the raw platform that don't force us into rigid JSON schemas or templates or complex CMSs.
 
-If we explore this dynamic generation of "chrome" from "content" and "intent" further, we get to a world where every navigation to a page is an opportunity to generate the best possible experience for that _specific_ user, on their _specific_ device, nomatter their context.
+If we explore this dynamic generation of "chrome" from "content" and "intent" further, we get to a world where every navigation to a page is an opportunity to generate the best possible experience for that _specific_ user, on their _specific_ device, no matter their context.
