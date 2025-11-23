@@ -33,9 +33,7 @@ The new model requires a hard separation of "Content" and "Chrome."
 
 The LLM's role is to act as a just-in-time "chrome generator." It reads the pure content (`# My Title`) and wraps it in the _appropriate_ presentation (`<div class="hero"><h1 class="text-4xl...">My Title</h1></div>`) based on context, leaving the content itself pristine.
 
-Right now, we define style with `tailwind.config.js`, `_variables.css`, and massive design system libraries. This is _prescriptive_ and brittle.
-
-The new model is "Style as Intent." Instead of _coding_ the style, we _describe_ it. The LLM acts as the style-transfer engine.
+Right now, we ask people to style with `tailwind.config.js`, `_variables.css`, and create massive design system libraries. A new model could be "Intent." Instead of _coding_ the style and the intent, we _describe_ it. The LLM acts as the style-transfer engine.
 
 My `ssgen` experiment shows that this is possible in three ways:
 
