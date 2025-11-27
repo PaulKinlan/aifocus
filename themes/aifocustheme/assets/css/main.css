@@ -207,6 +207,14 @@ article {
       background-color: black;
     }
 
+    video {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px; /* Rounded corners */
+      box-shadow: #000000 0px 0px 10px; /* Shadow effect */
+      background-color: black;
+    }
+
     figcaption {
       color: #333; /* Lighter text */
       margin-top: 0.5em;
