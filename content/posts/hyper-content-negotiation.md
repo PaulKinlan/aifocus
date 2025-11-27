@@ -59,6 +59,8 @@ I recently spent some time wondering how we might have a more of a 'lean-back' e
 
 [Flickity](http://flickity.val.run) is a surprisingly fun experiment. I screenshot the url, extract the markdown and use an LLM to generate a script. The script is then passed into `veo3` and now we have a list of overviews of the pages. Yes, the videos aren't perfect—the text coherence is a little off—but I thought it was a neat experiment.
 
+{{< video src="/images/flickity.mp4" caption="Flickity Web Demo (I don't know why there's no sound in the video)" >}}
+
 Flickity just made me think a lot about the future of the web being truly a multimodal hypermedia platform that is shaped to the user's preference.
 
 With LLMs we have the ability to convert almost any content into any form of content and I think this will be a super-power of the web and the browser. In [interception](https://aifoc.us/interception/) I explored what it might be like for the browser to mediate and control the response from a server (for example to only every summarize the content) - it was an interesting experiment in that it shows that the web is more flexible than we take for granted, but highlights that morphing content in the client has a lot of potential issues ranging from lack of developer control all the way to breaking expectations of how JavaScript might work.
