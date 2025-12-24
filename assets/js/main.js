@@ -95,12 +95,20 @@ document.addEventListener("DOMContentLoaded", function() {
       // Prompt user for their Mastodon instance
       const instance = prompt("Enter your Mastodon instance (e.g., mastodon.social):");
       if (instance) {
-        const cleanInstance = instance.replace(/^https?:\/\//, "").replace(/\/$/, "");
-        window.open(
-          `https://${cleanInstance}/share?text=${text}`,
-          "_blank",
-          "noopener,noreferrer"
-        );
+        // Clean and validate the instance URL
+        const cleanInstance = instance.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
+        
+        // Basic validation: check if it looks like a valid domain
+        const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        if (cleanInstance && domainRegex.test(cleanInstance)) {
+          window.open(
+            `https://${cleanInstance}/share?text=${text}`,
+            "_blank",
+            "noopener,noreferrer"
+          );
+        } else {
+          alert("Please enter a valid Mastodon instance domain (e.g., mastodon.social)");
+        }
       }
     });
   }
