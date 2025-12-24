@@ -62,3 +62,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     summaryContainer.style.display = "block";
   }
 });
+
+// Share functionality
+document.addEventListener("DOMContentLoaded", function() {
+  // Check if Navigator.share is supported
+  if (navigator.share) {
+    const nativeShareButton = document.querySelector(".share-native");
+    if (nativeShareButton) {
+      nativeShareButton.style.display = "inline-flex";
+      nativeShareButton.addEventListener("click", async function() {
+        try {
+          await navigator.share({
+            title: document.title,
+            url: window.location.href
+          });
+        } catch (err) {
+          // User cancelled or share failed
+          console.log("Share failed or was cancelled:", err);
+        }
+      });
+    }
+  }
+  
+  // Mastodon share - prompt for instance
+  const mastodonButton = document.querySelector(".share-mastodon");
+  if (mastodonButton) {
+    mastodonButton.addEventListener("click", function() {
+      const url = this.getAttribute("data-url");
+      const title = this.getAttribute("data-title");
+      const text = encodeURIComponent(`${title} ${url}`);
+      
+      // Prompt user for their Mastodon instance
+      const instance = prompt("Enter your Mastodon instance (e.g., mastodon.social):");
+      if (instance) {
+        const cleanInstance = instance.replace(/^https?:\/\//, "").replace(/\/$/, "");
+        window.open(
+          `https://${cleanInstance}/share?text=${text}`,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    });
+  }
+});
+
