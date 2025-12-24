@@ -32,6 +32,9 @@
   {{ partial "subscribe.html" . }}
 </section>
 <section>
+  {{ partial "share.html" . }}
+</section>
+<section>
   {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
   {{ if ne $page.RelPermalink page.RelPermalink }}
   {{ if eq $idx 0 }}

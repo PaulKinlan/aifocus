@@ -1,0 +1,54 @@
+{{ $pageUrl := .Permalink }}
+{{ $pageTitle := .Title }}
+
+<div class="share-container">
+  <h3 class="share-title">Share this post</h3>
+  <div class="share-buttons">
+    <!-- Navigator.share button (shown only if supported) -->
+    <button class="share-button share-native" aria-label="Share via native share menu" title="Share" style="display: none;">
+      <i class="fa-solid fa-share-nodes"></i>
+      <span>Share</span>
+    </button>
+    
+    <!-- X (Twitter) -->
+    <a href="https://twitter.com/intent/tweet?url={{ $pageUrl | urlquery }}&text={{ $pageTitle | urlquery }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="share-button share-twitter"
+       aria-label="Share on X (Twitter)"
+       title="Share on X">
+      <i class="fa-brands fa-x-twitter"></i>
+      <span>X</span>
+    </a>
+    
+    <!-- Bluesky -->
+    <a href="https://bsky.app/intent/compose?text={{ printf "%s %s" $pageTitle $pageUrl | urlquery }}" 
+       target="_blank" 
+       rel="noopener noreferrer" 
+       class="share-button share-bluesky"
+       aria-label="Share on Bluesky"
+       title="Share on Bluesky">
+      <i class="fa-solid fa-cloud"></i>
+      <span>Bluesky</span>
+    </a>
+    
+    <!-- Mastodon -->
+    <button class="share-button share-mastodon"
+            data-url="{{ $pageUrl }}"
+            data-title="{{ $pageTitle }}"
+            aria-label="Share on Mastodon"
+            title="Share on Mastodon">
+      <i class="fa-brands fa-mastodon"></i>
+      <span>Mastodon</span>
+    </button>
+    
+    <!-- Email -->
+    <a href="mailto:?subject={{ $pageTitle | urlquery }}&body={{ printf "Check out this post: %s" $pageUrl | urlquery }}" 
+       class="share-button share-email"
+       aria-label="Share via Email"
+       title="Share via Email">
+      <i class="fa-solid fa-envelope"></i>
+      <span>Email</span>
+    </a>
+  </div>
+</div>
