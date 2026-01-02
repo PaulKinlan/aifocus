@@ -5,11 +5,13 @@ date: 2026-01-02T19:20:54.779Z
 slug: projects
 ---
 
-It's been nearly 9 months since I started this blog and I feel that while I kept up a good pace of articles and I've dived deeper in to my thoughts on the intersection of web and AI (specifically LLMs), a lot of what I've done in the last year is building things, so it's all been kind of hidden and also not exclusively talked about.
+It's been nearly 9 months since I started this blog and I feel that while I kept up a good pace of articles and I've dived deeper in to my thoughts on the intersection of web and AI (specifically LLMs), a lot of what I've done in the last year is building things, so it's all been kind of hidden.
 
-This post is a relatively short one in comparison to my other posts, but I think it shows how busy I've been.
+To set some context, I'm the manager and lead of the Chrome Developer Relations team. My day job is to help my team be successful (they are successful when they help developers build amazing websites and help the web to thrive). Up until 2024 I'd been personally very pessimistic about the health and future of the Web. The platform is competing against mobile platforms (specifically Apps) and the platforms defined by those Apps (Facebook, Instagram, TikTok) and not really succeeding. These new platforms made it even easier to share ideas and content, and the general thought was that all use of computing by the billions of people on the planet will move to these new platforms and you could see and feel this slow decline of the web. While LLMs have enabled me to be incredibly productive both in helping me do my day job, they have revitalised my passion for the web because 1) I think it's the most versitile medium that we have ever seen (and will ever see), and the ability for LLMs to parse and manipulate content give us an ability to build entirely new experiences instantly for anyone with a computer and internet connection, and 2) it rekindled my love of experimenting and pushing the boundaries of what is possible on the medium that is called "The Web".
 
-Projects that deeply integrate LLMs:
+This post details just some of the things that I built that I think are interesting enough to share (and that I can talk about)
+
+I really want to push on the intersection of the Web and LLMs, so here are some projects that deeply integrate LLMs:
 
 -   [ai-wc](https://github.com/PaulKinlan/ai-wc) - AI Web Components. In my [elements](https://aifoc.us/elements/) post I explored how we might add LLM technology to enhance existing elements. I've got a bit of a love-hate relationship with Web Components, but the ability for them to now participate in a `<form>` submission is a critical enhancement and I really wish there was more exploration of web components in this context.
     
@@ -54,7 +56,7 @@ Projects that deeply integrate LLMs:
 -   [Omnibox-mcp](https://github.com/PaulKinlan/omnibox-mcp) - I built this to showcase to the Chrome team what having MCP as a first-class citizen might look like. It's a Chrome extension that registers a omnibox keyword `@mcp` and when invoked will act like an agent. It was built pretty much exclusively with an LLM.
     
 
-Exclusively LLM coded things (I really dislike the term vibe-coding). I've built a lot of software this year that while they don't push on the intersection of Web and LLMs, they are me using LLM's exclusively to accelerate and amplify my ability to ship products
+I've built a lot of software this year that while they don't push on the intersection of Web and LLMs, they are me using LLM's exclusively to accelerate and amplify my ability to ship products. Here's just a few of them:
 
 -   [LeviRoutes](https://github.com/PaulKinlan/leviroutes) - Untouched for over a decade, I refactored using LLMs and even published it to [npm](https://www.npmjs.com/package/leviroutes). I wouldn't have done this at all without an LLM. I use co-pilot a lot and I thought it was pretty neat that you can [get it to write reports for you too](https://github.com/PaulKinlan/leviroutes/issues/22).
     
@@ -79,6 +81,8 @@ Exclusively LLM coded things (I really dislike the term vibe-coding). I've built
 -   [Robots.txt scanner](https://github.com/PaulKinlan/robots-txt-scanner) - I needed a simple tool that helps me get some stats on who blocks what in the context of AI companies. It's not perfect, but it got me the answer I needed.
     
 -   [Site categoriser](https://github.com/PaulKinlan/site-category) - Similar to robots.txt, I wanted to quickly categorize the top 10k sites. Again, far from perfect but useful enough.
+    
+-   [Stop don't do this](https://www.val.town/x/paulkinlan/stop-dont-do-this) - Shell script generator. At somepoint I want to explore an shell entirely driven by LLMs.
     
 -   [Warpscan.app](https://github.com/PaulKinlan/warpscan) - I [built](https://warpscan.app/) this to make my daughter laugh. I saw a bunch of funny videos for a similar native app and just wanted something that worked well in the browser. This was built entirely with an LLM but also highlighted issues when asking it to use APIs that were not in the model (in this case the new FileSystem API). The lag between new API coming out and being in the model is alarming and presents real challenges for any new tool, and RAG just doesn't cut the mustard.
     
