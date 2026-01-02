@@ -5,7 +5,7 @@ date: 2026-01-02T19:20:54.779Z
 slug: projects
 ---
 
-It's been nearly 9 months since I started this blog and I feel that while I kept up a good pace of articles and I've dived deeper in to my thoughts on the intersection of web and AI (specifically LLMs), however a lot of what I've done in the last year is building things, so it's all been kind of hidden.
+It’s been nearly 9 months since I started this blog and I feel that while I kept up a good pace of articles and I’ve dived deeper in to my thoughts on the intersection of web and AI (specifically LLMs), however a lot of what I’ve done is hidden away because they are the things that I've been building that help me test my ideas and hypothesis'.
 
 To set some context, I'm the manager and lead of the Chrome Developer Relations team. My day job is to help my team be successful (they are successful when they help developers build amazing websites and help the web to thrive). Up until 2024 I'd been personally very pessimistic about the health and future of the Web. The platform is competing against mobile platforms (specifically Apps) and the platforms defined by those Apps (Facebook, Instagram, TikTok) and not really succeeding. These new platforms made it even easier to share ideas and content, and the general thought was that all use of computing by the billions of people on the planet will move to these new platforms and you could see and feel this slow decline of the web.
 
