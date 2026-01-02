@@ -11,7 +11,7 @@ To set some context, I'm the manager and lead of the Chrome Developer Relations 
 
 This post details just some of the things that I built that I think are interesting enough to share (and that I can talk about)
 
-I really want to push on the intersection of the Web and LLMs, so here are some projects that deeply integrate LLMs:
+First up, the experiments that I built to try and push on the intersection of the Web and LLMs by deeply integrating both technologies:
 
 -   [ai-wc](https://github.com/PaulKinlan/ai-wc) - AI Web Components. In my [elements](https://aifoc.us/elements/) post I explored how we might add LLM technology to enhance existing elements. I've got a bit of a love-hate relationship with Web Components, but the ability for them to now participate in a `<form>` submission is a critical enhancement and I really wish there was more exploration of web components in this context.
     
