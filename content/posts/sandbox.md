@@ -123,6 +123,8 @@ Co-do is an AI-powered file manager that runs entirely in the browser. You grant
 {{< figure src="/images/co-do-create.png" alt="Co-do" caption="Co-do - Asking for permission to create a file on the filesystem" >}}
 {{< figure src="/images/co-do-final.png" alt="Co-do" caption="Co-do - All done - summary, new file and sha256" >}}
 
+Here is the [summary file](/sandbox-summary.md) that was created in the screenshots
+
 It implements the layered sandboxing approach we discussed:
 
 1.  File system isolation via the File System Access API - You select a folder, and Co-do can only operate within that boundary. No reaching up to parent directories, no accessing siblings. It's the browser's chroot equivalent.
