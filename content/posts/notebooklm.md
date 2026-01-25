@@ -10,7 +10,7 @@ authors:
 
 NotebookLM is one of my favorite applications in decades. If you haven't experienced it before, it's an application that lets you pull in sources from all around &mdash; Google Drive, PDFs, public links &mdash; collate them into a notebook, and then query or transform that content. Want to turn five research papers into a podcast? Done. Need to extract key takeaways from a collection of articles? Easy. It's a fundamentally different way of interacting with information.
 
-But there's something that has been nagging at me. The browser already *is* a collection of sources. Tabs, bookmarks, history, tab groups &mdash; these are all repositories of content that I've deemed interesting enough to keep around. Yet the ability to manipulate what's across those sources isn't something we've spent much time thinking about.
+But there's something that has been nagging at me. The browser already _is_ a collection of sources. Tabs, bookmarks, history, tab groups &mdash; these are all repositories of content that I've deemed interesting enough to keep around. Yet the ability to manipulate what's across those sources isn't something we've spent much time thinking about.
 
 What would happen if NotebookLM was actually a web browser?
 
@@ -24,7 +24,7 @@ So I started to explore this in a project I call [FolioLM](https://github.com/Pa
 
 ## The browser sees what you see
 
-Here's something that differentiates FolioLM from NotebookLM and similar tools: FolioLM runs inside your browser, which means it has access to everything *you* have access to.
+Here's something that differentiates FolioLM from NotebookLM and similar tools: FolioLM runs inside your browser, which means it has access to everything _you_ have access to.
 
 That paywall-protected article from the Financial Times? If you're logged in, FolioLM can extract it. That internal wiki behind your corporate firewall? Accessible. That research paper you can only read because your university has a subscription? It's right there.
 
@@ -37,6 +37,7 @@ This is genuinely powerful. The content that matters most to me &mdash; the stuf
 FolioLM is a Chrome extension that tries to bring NotebookLM-style capabilities directly into the browser. It's built around a few core concepts:
 
 **Source Collection**: You can add sources from anywhere the browser can see:
+
 - The current tab (one click)
 - Multiple selected tabs at once
 - All tabs in a tab group
@@ -56,13 +57,13 @@ FolioLM is a Chrome extension that tries to bring NotebookLM-style capabilities 
 
 **Transformations**: This is where it gets interesting. FolioLM can transform your collected sources into 19 different formats:
 
-| Category | Transformations |
-|----------|-----------------|
-| Educational | Quiz, Flashcards, Study Guide |
-| Creative | Podcast Script, Email Summary, Slide Deck |
-| Analytical | Report, Timeline, Comparison, Data Table, Mind Map |
-| Reference | Glossary, FAQ, Outline, Citations |
-| Business | Action Items, Executive Brief, Key Takeaways, Pros/Cons |
+| Category    | Transformations                                         |
+| ----------- | ------------------------------------------------------- |
+| Educational | Quiz, Flashcards, Study Guide                           |
+| Creative    | Podcast Script, Email Summary, Slide Deck               |
+| Analytical  | Report, Timeline, Comparison, Data Table, Mind Map      |
+| Reference   | Glossary, FAQ, Outline, Citations                       |
+| Business    | Action Items, Executive Brief, Key Takeaways, Pros/Cons |
 
 Each transformation is configurable &mdash; you can adjust the number of quiz questions, the tone of the podcast, the depth of the report. The results can be saved, opened in full-screen, or copied to your clipboard.
 
@@ -71,6 +72,18 @@ Each transformation is configurable &mdash; you can adjust the number of quiz qu
 {{< figure src="/images/foliolm-timeline.png" alt="FolioLM timeline transformation" caption="Generating a timeline from collected sources" >}}
 
 {{< figure src="/images/foliolm-study-guide.png" alt="FolioLM study guide transformation" caption="Creating an interactive study guide" >}}
+
+## Built with links in mind
+
+One thing I care deeply about is staying true to the web. FolioLM is designed to enhance your relationship with web content, not replace it.
+
+Every source you add keeps its original URL. There's an external link icon on every source that opens the original page in a new tab. When the AI cites a source in a response, those citations are clickable &mdash; they open the source URL with [text fragment highlighting](https://developer.chrome.com/docs/web-platform/text-fragments), so you land directly on the relevant passage.
+
+The extension also extracts links from the content itself. When you add an article, FolioLM captures all the outbound links along with their anchor text and surrounding context. These get analyzed by AI and surfaced as "Suggested Links" &mdash; related sources you might want to add to your notebook. It's actively encouraging you to explore more of the web, not less.
+
+Source types are visually distinguished with icons &mdash; tabs, bookmarks, history entries &mdash; so you always know where content came from. You can refresh sources to re-extract content from the original URL. Nothing is locked inside the extension; every piece of information has a path back to where it came from.
+
+This matters because it would be easy to build a tool that just ingests content and presents it in a closed environment. But that's not the web. The web is about connections, about following links, about discovering things you didn't know existed. FolioLM tries to amplify that rather than replace it.
 
 ## The technical bits
 
