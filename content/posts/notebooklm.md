@@ -2,7 +2,7 @@
 title: If NotebookLM was a web browser
 date: "2026-01-25T18:00:00.000Z"
 slug: if-notebooklm-was-a-web-browser
-description: Building FolioLM - a Chrome extension that brings NotebookLM-style source collection and AI querying directly into the browser
+description: I built a Chrome extension that brings NotebookLM-style source collection and AI querying directly into the browser
 draft: true
 authors:
   - paulkinlan
