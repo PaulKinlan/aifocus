@@ -117,13 +117,19 @@ Introducing [co-do.xyz](http://co-do.xyz) \[[Source](https://github.com/PaulKinl
 
 Co-do is an AI-powered file manager that runs entirely in the browser. You grant it access to a folder on your machine, configure your AI provider (Anthropic, OpenAI, or Google), and ask it to help with file operations - listing files, creating documents, searching content, comparing files. It also has access to a number of pre-compiled WASM binaries for operations that you might want to perform on text files (for now, I'm hoping to bundle `ffmpeg` later).
 
+{{< figure src="/images/co-do-1.png" alt="Co-do" caption="Co-do - asking a complex request on file data" >}}
+{{< figure src="/images/co-do-start.png" alt="Co-do" caption="Co-do - planning" >}}
+{{< figure src="/images/co-do-permission.png" alt="Co-do" caption="Co-do - Using a WASM tool and asking for permission  - sha256 - to hash a file" >}}
+{{< figure src="/images/co-do-create.png" alt="Co-do" caption="Co-do - Asking for permission to create a file on the filesystem" >}}
+{{< figure src="/images/co-do-final.png" alt="Co-do" caption="Co-do - All done - summary, new file and sha256" >}}
+
 It implements the layered sandboxing approach we discussed:
 
 1.  File system isolation via the File System Access API - You select a folder, and Co-do can only operate within that boundary. No reaching up to parent directories, no accessing siblings. It's the browser's chroot equivalent.
 2.  Network lockdown via CSP - The strictest policy I could is to block everything and then only allow: `connect-src 'self' https://api.anthropic.com https://api.openai.com https://generativelanguage.googleapis.com`. Only the AI providers can receive your data. Image tags exfiltrating content to unknown servers should not be easy, but there's a world where any of these three API providers has an endpoint that could be accessible by a simple \`GET\`.
 3.  LLM input guarding - The current demo will send the contents of the file to the LLM, firstly this might not be needed for tool calling, and secondly, you have to be confident of tools that you configure on your call to the LLM won't leak data (for example, many APIs have Web Search tool, is it secure? I'm sure the providers do their best, but you need to make sure it's not a new vector for exfiltration)
 4.  LLM output sandboxing - AI responses render in sandboxed iframes with allow-same-origin but critically not allow-scripts. The LLM can't inject executable JavaScript into the page. We can measure the content height for proper display, but any `<script>` tags are dead on arrival.
-5.  Execution isolation for custom tools - Co-do supports WebAssembly custom tools that run in isolated Web Workers. Each execution gets a fresh Worker that can be truly terminated if it misbehaves (timeouts, runaway loops). The Workers inherit the CSP, so even WASM modules can't make unauthorised network requests.
+5.  Execution isolation for custom tools - Co-do supports WebAssembly custom tools that run in isolated Web Workers. Each execution gets a fresh Worker that can be truly terminated if it misbehaves (timeouts, runaway loops). The Workers inherit the CSP, so even WASM modules shouldn't be able to make unauthorised network requests.
 
 There are some gaps that everyone should be aware of:
 
