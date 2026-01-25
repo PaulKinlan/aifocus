@@ -10,7 +10,7 @@ I got hooked on Claude code over the holiday break and used it to create a numbe
 
 I then saw Claude Cowork and thought that if it makes it easier for people to perform tasks that work across some of the files on your device, then it could be a pretty compelling view of the future of automation for non-coding computing tasks. One of the worries that people rightly have is giving unfettered access to a tool that you don't know how it works and can perform destructive actions on your data. I read a post by [Simon Willison that described how they implemented this](https://gist.github.com/simonw/35732f187edbe4fbd0bf976d013f22c8) using their [sandbox experiment](https://github.com/anthropic-experimental/sandbox-runtime) to create a sandboxed vm that is locked down to only the directory that the user selected with limited network access.
 
-It got me thinking about the Browser and the sandbox that has been created over the last 30 years to run incredibly hostile and untrusted code from all across the web on a user's device the instant that they enter or tap on a URL. I think it's incredible that we have this way to run code that you've no clue what it will do when you see a little blue link or a piece of text that looks like `https://paul.kinlan.me/` - I mean, who would trust that guy?
+This got me thinking about the Browser. Over the last 30 years, we have built a sandbox specifically designed to run incredibly hostile, untrusted code from anywhere on the web, the instant a user taps a URL. I think it's incredible that we have this way to run code that you've no clue what it will do when you see a little blue link or a piece of text that looks like `https://paul.kinlan.me/` - I mean, who would trust that guy?
 
 Could you build something like Co-work in the Browser? Maybe... In this post I want to discuss some of the work and research that I've done to see if how far we can get and if the Browser's ability to run untrusted code from anywhere on the web is useful (and good enough) for us to be able to enable software to do more for us directly on our computer.
 
@@ -39,7 +39,7 @@ I think that the browser has built up a good model of protecting the user's file
     
 -   **Layer 2: Origin-private filesystem** - while not directly giving access to the raw filesystem you get the ability to have a filesystem directly in the browser only accessible to the current origin
     
--   **Layer 3: Full access to a folder -** Building on top of Layer 1, you can get a handle directly to the user-selected folder and with permission you can both read and write to it, but you can't access any level higher in the directory tree, and you can't look at sibling directories either - effectively you have `chroot`
+-   **Layer 3: Full access to a folder - Building on top of Layer 1, you can get a handle directly to the user-selected folder. With permission, you can both read and write to it, but you can't access any level higher in the directory tree or look at sibling directories. Effectively, you have a \`chroot\`-like environment restricted to that specific handle.**
     
 
 I think this is pretty compelling - you could imagine a Layer 1 and Layer 2 solution working together - a web application could read the data the user has granted access to and then save some edits to a file on the Origin, keeping the original file intact and letting you continue edits.
@@ -52,17 +52,17 @@ So if we are able to access selected directories and all the files within them o
 
 The blunt answer is that unless you have an entirely client-side LLM you can't, you have to send the data in your files, or a list of your files at some point for the LLM to do work on them. The best that I think we can do is "Manage the network".
 
-Normally CSP is the bane of many a web developer's life, but it is our friend who _helps_ to protect us. Unlike a VM, which can strictly control the network interface of the host Operating System, we don't have that level of isolation in the browser. But we do have some control.
+Normally, Content Security Policy (CSP) is the bane of a web developer's life, but here it is our friend. Unlike a VM, which can strictly control the network interface of the host OS, the browser doesn't offer that level of total isolation. But via CSP, we do have some control.
 
 Why is this important though? Well, there are lots of ways to craft a URLs such that you can pass some data that the user thought was private into another system without any intervention from the user. For example, displaying an image in the browser is an expected thing on the web. You could ask an LLM to generate an `<img>` whose URL contains some sensitive data from the file which will then happily be sent to the server "hosting the image".
 
-CSP can protect us somewhat. We can set a pretty strict CSP constraint on the origin. In the case of co-do, the only network requests that can be made are to `self` and to the LLM-provider. The host page can also set the constraints to stop image loading, media loading, object and font-loading etc, but setting them up manually can be error prone, so you would want to set the most restrictive policy first and then open up holes to the services that you require or trust. But even then, we are putting our trust that the LLM provider doesn't provide open access to other GET requests.
+CSP can protect us somewhat. We can set a pretty strict CSP constraint on the origin. In the case of co-do, the only network requests that can be made are to `self` and to the LLM-provider. The host page can also set constraints to stop image, media, object, and font loading. However, manually configuring these can be error-prone, so it is safer to start with the most restrictive policy (\`default-src 'none'\`) and then selectively open up access to the specific services you require. But even then, we are putting our trust that the LLM provider doesn't provide open access to other GET requests.
 
 So, we try and control our current page as much as possible, ensuring that only a small amount of requests can be made.
 
 If we display any content from the LLM, we should also heavily sanitise the data.... Actually, we should probably completely sandbox the data. `<iframe>`s are a great way to separate content as they can create a layer of indirection from the host and things we want embedded, however as we will discover, they need some improving to be valuable for our sandboxing needs. One game-changing feature for the sandbox is, well, the `sandbox` attribute on the `<iframe>` which can be used to further isolate any generated content away from main page by putting the frame into a 'locked-down' mode, to the point where the content in the frame can do almost nothing. It can't run JS, it can't navigate etc, unless the host-page allows it. This restrict-then-include model stands in contrast to the `allow` attribute that controls whether the content in the iframe is allowed to use any advanced APIs by actively stating which features you are disallowing. For example, your allow attribute might become: `allow="camera 'none'; microphone 'none'; geolocation 'none'; fullscreen 'none'; display-capture 'none'; payment 'none'; autoplay 'none'"`
 
-This looks like a good model: we can restrict the ability to run dangerous JS and further remove access to powerful APIs. If an LLM can be coerced to generate an iframe element, then it might be possible to escape the sandbox because surprisingly, the host page's CSP doesn't filter in-to the iframe, unless you use `srcDoc` or a `blob:` URL
+This looks like a good model: we can restrict the ability to run dangerous JS and further remove access to powerful APIs. If an LLM can be coerced to generate an iframe element, then it might be possible to escape the sandbox because surprisingly, the host page's CSP doesn't filter in-to the iframe, unless you use `srcDoc` or a `blob:` URL.
 
 If you are in a Blink based browser, you do have the ability to set the `csp` attribute and control what the embedded content can do on the network. It's odd that this isn't available on Gecko or WebKit based browsers as it seems like a very useful attribute to allow the host to have fine-grained control over what requests are allowed from the embedded frame.
 
@@ -89,7 +89,7 @@ Your outer iframe embeds a resource that you control, can be via `srcdoc` that s
 "></iframe>
 ```
 
-This is still hard to manage, because you have to ensure that the data that you are including in the inner \`srcdoc\` doesn't have any escape strings if you encode it straight from a server
+This is still hard to manage. You have to ensure that the data included in the inner \`srcdoc\` is properly escaped so it doesn't break out of the attribute string if you encode it straight from a server.
 
 The double-iframe is also incredibly wasteful, it's essentially loading two full DOM's (which are already heavy) for every time we are embedding untrusted content.
 
@@ -97,7 +97,7 @@ The iframe is the only renderer sandbox we have and I think there are a number o
 
 -   All browsers should ship the `csp` attribute and let the embedder refine and further restrict access to the network.
     
--   I'm not confident that CSP alone prevents all network access. You can see from this [demo](https://paulkinlan--94679278f65111f09bbf42dde27851f2.web.val.run/double-iframe.html) that the Beacon API might have queued a message. What happens with dns lookups for resources? A quick dump of the network traffic in Chrome via `chrome://net-export/` seems to show no network access, but I just don't have complete confidence yet and more exploration needs to be done.
+-   I'm not confident that CSP alone prevents all network access. You can see from this demo that the Beacon API might appear to queue a message. While connect-src should strictly block beacons, edge cases in implementation can be tricky. Similarly, what happens with DNS lookups? A quick dump of the network traffic in Chrome via chrome://net-export/ seems to show no network access, but I believe this area deserves more rigorous stress-testing.
     
 -   We need a way to be able to size the outer-iframe (or iframes in general) that doesn't rely on access to `iframe.contentDocument.body.innerHeight` and `sandbox='allow-same-origin` - this constraint though means that we have to fully untrust any JS that might be rendered in the inner-frame and I think that is a shame because it would be nice to be able to have fully interactive experiences.
     
@@ -122,11 +122,13 @@ It implements the layered sandboxing approach we discussed:
 
 1.  File system isolation via the File System Access API - You select a folder, and Co-do can only operate within that boundary. No reaching up to parent directories, no accessing siblings. It's the browser's chroot equivalent.
     
-2.  Network lockdown via CSP - The strictest policy I could manage: connect-src 'self' [https://api.anthropic.com](https://api.anthropic.com) [https://api.openai.com](https://api.openai.com) [https://generativelanguage.googleapis.com](https://generativelanguage.googleapis.com). Only the AI providers can receive your data. Image tags exfiltrating content to unknown servers should not be easy, but there's a world where any of these three API providers has an endpoint that could be accessibly by a simple `GET`.
+2.  Network lockdown via CSP - The strictest policy I could manage: connect-src 'self' [https://api.anthropic.com](https://api.anthropic.com) [https://api.openai.com](https://api.openai.com) [https://generativelanguage.googleapis.com](https://generativelanguage.googleapis.com). Only the AI providers can receive your data. Image tags exfiltrating content to unknown servers should not be easy, but there's a world where any of these three API providers has an endpoint that could be accessible by a simple \`GET\`.
     
-3.  LLM output sandboxing - AI responses render in sandboxed iframes with allow-same-origin but critically not allow-scripts. The LLM can't inject executable JavaScript into the page. We can measure the content height for proper display, but any `<script>` tags are dead on arrival.
+3.  LLM input guarding - The current demo will send the contents of the file to the LLM, firstly this might not be needed for tool calling, and secondly, you have to be confident of tools that you configure on your call to the LLM won't leak data (for example, many APIs have Web Search tool, is it secure? I'm sure the providers do their best, but you need to make sure it's not a new vector for exfiltration)
     
-4.  Execution isolation for custom tools - Co-do supports WebAssembly custom tools that run in isolated Web Workers. Each execution gets a fresh Worker that can be truly terminated if it misbehaves (timeouts, runaway loops). The Workers inherit the CSP, so even WASM modules can't make unauthorized network requests.
+4.  LLM output sandboxing - AI responses render in sandboxed iframes with allow-same-origin but critically not allow-scripts. The LLM can't inject executable JavaScript into the page. We can measure the content height for proper display, but any `<script>` tags are dead on arrival.
+    
+5.  Execution isolation for custom tools - Co-do supports WebAssembly custom tools that run in isolated Web Workers. Each execution gets a fresh Worker that can be truly terminated if it misbehaves (timeouts, runaway loops). The Workers inherit the CSP, so even WASM modules can't make unauthorized network requests.
     
 
 There are some gaps that everyone should be aware of:
@@ -143,7 +145,7 @@ There are some gaps that everyone should be aware of:
     
 -   Permission fatigue is real. Asking users to approve every operation is secure but annoying. Letting users blanket-allow operations is convenient but risky. I've tried to find a middle ground, but the fundamental tension remains.
     
--   Cross-browser limitations. The csp attribute on iframes only works in Blink-based browsers. The double-iframe technique works everywhere but it's wasteful and awkward. Safari's File System Access API support is limited.
+-   Cross-browser limitations. The csp attribute on iframes only works in Blink-based browsers. The double-iframe technique works everywhere but it's wasteful and awkward. Safari's File System Access API support is limited (specifically, it lacks \`showDirectoryPicker\`, making the local folder editing workflow impossible currently).
     
 
 **This is really a Chrome demo.**
