@@ -37,9 +37,7 @@ I think that the browser has built up a good model of protecting the user's file
 
 I think this is pretty compelling - you could imagine a Layer 1 and Layer 2 solution working together - a web application could read the data the user has granted access to and then save some edits to a file on the Origin, keeping the original file intact and letting you continue edits.
 
-Layer 3 is where I think it gets interesting (and scary), being able to edit files.
-
-Yes, I am putting my trust in the browser's runtime to ensure that sites can't break out of this jail, but the model seems to work surprisingly well.
+Layer 3 is where I think it gets interesting (and scary), being able to edit files - it enables so many new use-cases and possibilities for automation and knowledge-work, but we have to put complete trust in the browser's runtime to ensure that sites can't break out of this Filesystem jail.
 
 So if we are able to access selected directories and all the files within them on a users machine, how do we ensure that the data remains within our control? We have to be able to completely control the network.
 
