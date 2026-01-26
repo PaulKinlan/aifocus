@@ -208,15 +208,6 @@ article {
       cursor: zoom-in;
     }
 
-    img[popover] {
-      /* Override UA default that hides popovers when not open */
-      display: block;
-      margin: auto;
-      border: 0;
-      padding: 0;
-      inset: unset;
-    }
-
     img[popover]:popover-open {
       position: fixed;
       inset: 0;

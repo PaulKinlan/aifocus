@@ -1,7 +1,6 @@
 <figure{{ with .Get "class" }} class="{{ . }}"{{ end }}>
   {{- with .Get "link" }}<a href="{{ . }}">{{ end -}}
-  <img popover="auto"
-    src="{{ .Get "src" }}"
+  <img src="{{ .Get "src" }}"
     {{- with .Get "alt" }} alt="{{ . }}"{{ end -}}
     {{- with .Get "title" }} title="{{ . }}"{{ end -}}
   >

@@ -1,9 +1,12 @@
 // Lightbox: click figure images to expand via popover
 document.addEventListener("click", (e) => {
-  const img = e.target.closest("figure img[popover]");
-  if (img && !img.matches(":popover-open")) {
-    img.showPopover();
-  }
+  const img = e.target.closest("figure img");
+  if (!img || img.matches(":popover-open")) return;
+  img.popover = "auto";
+  img.addEventListener("toggle", (e) => {
+    if (e.newState === "closed") img.removeAttribute("popover");
+  }, { once: true });
+  img.showPopover();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
