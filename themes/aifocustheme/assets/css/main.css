@@ -205,6 +205,34 @@ article {
       border-radius: 10px; /* Rounded corners */
       box-shadow: #000000 0px 0px 10px; /* Shadow effect */
       background-color: black;
+      cursor: zoom-in;
+    }
+
+    img[popover] {
+      /* Override UA default that hides popovers when not open */
+      display: block;
+      margin: auto;
+      border: 0;
+      padding: 0;
+      inset: unset;
+    }
+
+    img[popover]:popover-open {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      max-width: 90vw;
+      max-height: 90vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 0;
+      box-shadow: none;
+      cursor: zoom-out;
+    }
+
+    img[popover]::backdrop {
+      background: rgba(0, 0, 0, 0.8);
     }
 
     video {

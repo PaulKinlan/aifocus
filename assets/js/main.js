@@ -1,3 +1,11 @@
+// Lightbox: click figure images to expand via popover
+document.addEventListener("click", (e) => {
+  const img = e.target.closest("figure img[popover]");
+  if (img && !img.matches(":popover-open")) {
+    img.showPopover();
+  }
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   if ("Summarizer" in window) {
     const { Summarizer } = window;
