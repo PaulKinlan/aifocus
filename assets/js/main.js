@@ -1,12 +1,16 @@
-// Lightbox: click figure images to expand via popover
+// Lightbox: click figure images to expand via a shared popover
 document.addEventListener("click", (e) => {
   const img = e.target.closest("figure img");
-  if (!img || img.matches(":popover-open")) return;
-  img.popover = "auto";
-  img.addEventListener("toggle", (e) => {
-    if (e.newState === "closed") img.removeAttribute("popover");
-  }, { once: true });
-  img.showPopover();
+  if (!img) return;
+  let box = document.getElementById("lightbox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "lightbox";
+    box.popover = "auto";
+    document.body.appendChild(box);
+  }
+  box.replaceChildren(img.cloneNode());
+  box.showPopover();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {

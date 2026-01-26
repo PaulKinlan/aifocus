@@ -208,24 +208,6 @@ article {
       cursor: zoom-in;
     }
 
-    img[popover]:popover-open {
-      position: fixed;
-      inset: 0;
-      margin: auto;
-      max-width: 90vw;
-      max-height: 90vh;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      border-radius: 0;
-      box-shadow: none;
-      cursor: zoom-out;
-    }
-
-    img[popover]::backdrop {
-      background: rgba(0, 0, 0, 0.8);
-    }
-
     video {
       max-width: 100%;
       height: auto;
@@ -498,6 +480,26 @@ footer {
 
 .share-button span {
   font-weight: 500;
+}
+
+/* Lightbox popover */
+#lightbox {
+  border: 0;
+  padding: 0;
+  background: transparent;
+
+  img {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: zoom-out;
+  }
+}
+
+#lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.8);
 }
 
 /* Responsive adjustments */
