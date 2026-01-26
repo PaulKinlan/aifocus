@@ -484,8 +484,16 @@ footer {
 
 /* Lightbox popover */
 #lightbox {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
   background: transparent;
 
   img {
@@ -500,6 +508,10 @@ footer {
 
 #lightbox::backdrop {
   background: rgba(0, 0, 0, 0.8);
+}
+
+html:has(#lightbox:popover-open) {
+  overflow: hidden;
 }
 
 /* Responsive adjustments */
