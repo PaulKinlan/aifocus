@@ -50,11 +50,14 @@ By the time I got home, the conversion was done:
 | Shaker Beige    | BM HC-45   | Garden Rain        | V094-2       |
 | Grant Beige     | BM HC-83   | Vanderbilt Beach   | V134-1       |
 | Canvas Tan      | SW 7531    | Vanderbilt Beach   | V134-1       |
+....
+Shortened
+....
 | Kilim Beige     | SW 6106    | *(give SW code to mixer)* | N/A   |
 | Wool Skein      | SW 6148    | *(give SW code to mixer)* | N/A   |
 
 BM is Benjamin Moore, SW is Sherwin-Williams.
-Nearby RAL matches (not exact): RAL 1013, 1014, 1015, 7032.
+Nearby RAL matches (not exact): RAL 1013, 1014, 1015, 7032 [ shortened ......]
 ```
 
 I went back to the store the following day. I learned a lot more about what RAL codes actually are and how they don't cleanly map to the colours we'd picked from the website. But the ones the system suggested were, when I checked them physically, close enough to what we needed as inspiration.
@@ -67,7 +70,7 @@ I didn't write a task scheduler. I wrote a sentence that said "review ideas and 
 
 The same set of instructions works reasonably well across Claude Code, Codex, and Gemini CLI. It's not perfect, but I can use them more or less interchangeably. That's surprising. These LLM CLIs are a new kind of runtime, and the fact that a markdown file can act as a program across all of them opens up a way of building software that I hadn't really thought about before.
 
-I'm not rejecting existing tools. Logseq is excellent. My friend [Rob Dodson](https://robdodson.me/) is doing great work at the intersection of second brain thinking and large language models. His piece on [giving his second brain a gardener](https://robdodson.me/posts/i-gave-my-second-brain-a-gardener/), his writing on [building a mobile second brain](https://robdodson.me/posts/how-i-built-my-mobile-second-brain/), and his thoughts on [why AI chatbots become gatekeepers](https://robdodson.me/posts/your-ai-chatbot-is-a-gatekeeper/) are all worth reading.
+I'm not rejecting existing tools. Logseq is excellent. My friend [Rob Dodson](https://robdodson.me/) is doing great work at the intersection of second brain thinking and large language models. His piece on [giving his second brain a gardener](https://robdodson.me/posts/i-gave-my-second-brain-a-gardener/), his writing on [building a mobile second brain](https://robdodson.me/posts/how-i-built-my-mobile-second-brain/), and his thoughts on [why AI chatbots become gatekeepers](https://robdodson.me/posts/your-ai-chatbot-is-a-gatekeeper/) are all worth reading, and at the same time, I now have a tool that works well enough for me.
 
 And I'll be honest: there's a good chance I fall away from this model eventually. It would be a stretch to pretend this has permanently replaced everything.
 
