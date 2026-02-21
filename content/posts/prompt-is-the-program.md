@@ -2,7 +2,6 @@
 title: The Prompt Is the Program
 date: 2026-02-21T19:15:00.000Z
 slug: prompt-is-the-program
-draft: true
 authors:
   - paulkinlan
 ---
