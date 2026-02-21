@@ -1,5 +1,5 @@
 ---
-title: The Prompt Is the Program
+title: the prompt is the program
 date: 2026-02-21T19:15:00.000Z
 slug: prompt-is-the-program
 authors:
