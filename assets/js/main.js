@@ -1,3 +1,18 @@
+// Lightbox: click figure images to expand via a shared popover
+document.addEventListener("click", (e) => {
+  const img = e.target.closest("figure img");
+  if (!img) return;
+  let box = document.getElementById("lightbox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "lightbox";
+    box.popover = "auto";
+    document.body.appendChild(box);
+  }
+  box.replaceChildren(img.cloneNode());
+  box.showPopover();
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   if ("Summarizer" in window) {
     const { Summarizer } = window;

@@ -1,0 +1,13 @@
+<figure{{ with .Get "class" }} class="{{ . }}"{{ end }}>
+  {{- with .Get "link" }}<a href="{{ . }}">{{ end -}}
+  <img src="{{ .Get "src" }}"
+    {{- with .Get "alt" }} alt="{{ . }}"{{ end -}}
+    {{- with .Get "title" }} title="{{ . }}"{{ end -}}
+  >
+  {{- with .Get "link" }}</a>{{ end -}}
+  {{- with .Get "caption" }}
+  <figcaption>
+    <p>{{ . }}</p>
+  </figcaption>
+  {{- end }}
+</figure>
