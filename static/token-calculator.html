@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salary vs Tokens Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    padding: 1.5rem;
+    max-width: 900px;
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    color: #334155;
+  }
+
+  .controls {
+    margin-bottom: 1.5rem;
+  }
+
+  .control-group { margin-bottom: 1.25rem; }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+  }
+
+  .sublabel {
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: #666;
+    margin-bottom: 0.4rem;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: #2563eb;
+    height: 6px;
+  }
+
+  .value-display {
+    min-width: 100px;
+    text-align: right;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.45rem;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+  }
+
+  .side-by-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .scenario-col {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  .scenario-col.yegge { border-color: #f59e0b; }
+  .scenario-col.huang { border-color: #2563eb; }
+
+  .scenario-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .yegge .scenario-header { color: #b45309; }
+  .huang .scenario-header { color: #1d4ed8; }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+  }
+
+  .row:last-child { border-bottom: none; }
+  .row-label { color: #64748b; }
+  .row-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .row-value.yegge-accent { color: #b45309; }
+  .row-value.huang-accent { color: #1d4ed8; }
+
+  .big-stat {
+    text-align: center;
+    padding: 0.75rem 0;
+    margin: 0.5rem 0;
+    background: #f8fafc;
+    border-radius: 8px;
+  }
+
+  .big-stat .number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .yegge .big-stat .number { color: #b45309; }
+  .huang .big-stat .number { color: #1d4ed8; }
+
+  .big-stat .unit {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-top: 0.15rem;
+  }
+
+  .summary-bar {
+    margin-top: 1.25rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+  }
+
+  .summary-bar h3 {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .summary-item .label { font-size: 0.72rem; color: #64748b; }
+  .summary-item .val { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .summary-item .val.neg { color: #dc2626; }
+  .summary-item .val.pos { color: #16a34a; }
+
+  .note {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 640px) {
+    .side-by-side { grid-template-columns: 1fr; }
+    .summary-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f172a; color: #e2e8f0; }
+    h2 { color: #94a3b8; }
+    select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+    .scenario-col { background: #1e293b; }
+    .scenario-col.yegge { border-color: #b45309; }
+    .scenario-col.huang { border-color: #2563eb; }
+    .row { border-color: #334155; }
+    .row-label { color: #94a3b8; }
+    .big-stat { background: #0f172a; }
+    .summary-bar { background: #1e293b; border-color: #334155; }
+    .summary-bar h3, .summary-item .label { color: #94a3b8; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Engineer salary (total comp)</label>
+    <div class="slider-row">
+      <input type="range" id="salary" min="50000" max="1000000" step="10000" value="350000" oninput="update()">
+      <span class="value-display" id="salary-display">$350,000</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Team size</label>
+    <div class="slider-row">
+      <input type="range" id="team" min="1" max="200" step="1" value="20" oninput="update()">
+      <span class="value-display" id="team-display">20</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Model</label>
+    <div class="sublabel">Blended rate uses real-world ratio: 93% input, 7% output</div>
+    <select id="model" onchange="update()">
+      <option value="6.32">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
+      <option value="3.79">Claude Sonnet 4.5/4.6 ($3/$15 per 1M)</option>
+      <option value="21.93">GPT-5 Pro ($15/$120 per 1M)</option>
+      <option value="2.56">GPT-5.2 ($1.75/$14 per 1M)</option>
+      <option value="1.83">GPT-5 ($1.25/$10 per 1M)</option>
+      <option value="2.66">Gemini 3.1 Pro ($2/$12 per 1M)</option>
+      <option value="0.67">Gemini 3 Flash ($0.50/$3 per 1M)</option>
+      <option value="0.45">Gemini 2.5 Flash ($0.30/$2.50 per 1M)</option>
+      <option value="1.26">Claude Haiku 4.5 ($1/$5 per 1M)</option>
+      <option value="3.79">Grok 4 ($3/$15 per 1M)</option>
+      <option value="0.22">Grok 4.1 Fast ($0.20/$0.50 per 1M)</option>
+    </select>
+  </div>
+</div>
+
+<div class="side-by-side">
+  <!-- Shared token budget callout -->
+  <div class="scenario-col" style="grid-column: 1 / -1; text-align: center; padding: 0.75rem; background: #1e293b; border-color: #475569;">
+    <div style="font-size: 0.75rem; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em;">Both approaches spend the same on tokens</div>
+    <div style="font-size: 1.4rem; font-weight: 800; margin: 0.25rem 0; color: #fff;" id="shared-token-budget">$3,500,000/yr</div>
+    <div style="font-size: 0.75rem; color: #cbd5e1;" id="shared-token-explain">Steve: 10 cut salaries redirected. Jensen: 50% of 20 salaries added on top.</div>
+  </div>
+
+  <!-- Steve: Replace half -->
+  <div class="scenario-col yegge">
+    <div class="scenario-header">Steve: replace half, fund the rest</div>
+
+    <div class="row">
+      <span class="row-label">Engineers</span>
+      <span class="row-value"><span id="y-remaining">10</span> remain, <span id="y-cut">10</span> cut</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Salary spend</span>
+      <span class="row-value" id="y-salary-spend">$3,500,000</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Total cost (salary + tokens)</span>
+      <span class="row-value" id="y-total-cost">$7,000,000</span>
+    </div>
+
+    <div class="big-stat">
+      <div class="number" id="y-tokens-per-eng">151.7M</div>
+      <div class="unit">tokens / engineer / day</div>
+    </div>
+
+    <div class="row">
+      <span class="row-label">Token budget per engineer</span>
+      <span class="row-value yegge-accent" id="y-budget-per-eng">$350,000/yr</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Tasks per engineer / year</span>
+      <span class="row-value" id="y-tasks-per-eng">554K</span>
+    </div>
+    <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
+      <span class="row-label">Total team tokens / year</span>
+      <span class="row-value" id="y-total-tokens">554B</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Total team tasks / year</span>
+      <span class="row-value" id="y-total-tasks">5.5M</span>
+    </div>
+  </div>
+
+  <!-- Jensen: Amplify all -->
+  <div class="scenario-col huang">
+    <div class="scenario-header">Jensen: keep all, add 50% in tokens</div>
+
+    <div class="row">
+      <span class="row-label">Engineers</span>
+      <span class="row-value"><span id="h-remaining">20</span> remain, <span id="h-cut">0</span> cut</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Salary spend</span>
+      <span class="row-value" id="h-salary-spend">$7,000,000</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Total cost (salary + tokens)</span>
+      <span class="row-value" id="h-total-cost">$10,500,000</span>
+    </div>
+
+    <div class="big-stat">
+      <div class="number" id="h-tokens-per-eng">75.9M</div>
+      <div class="unit">tokens / engineer / day</div>
+    </div>
+
+    <div class="row">
+      <span class="row-label">Token budget per engineer</span>
+      <span class="row-value huang-accent" id="h-budget-per-eng">$175,000/yr</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Tasks per engineer / year</span>
+      <span class="row-value" id="h-tasks-per-eng">277K</span>
+    </div>
+    <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
+      <span class="row-label">Total team tokens / year</span>
+      <span class="row-value" id="h-total-tokens">554B</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Total team tasks / year</span>
+      <span class="row-value" id="h-total-tasks">5.5M</span>
+    </div>
+  </div>
+</div>
+
+<div class="summary-bar">
+  <h3>The trade-off</h3>
+  <div class="summary-grid">
+    <div class="summary-item">
+      <div class="label">Jensen costs more</div>
+      <div class="val neg" id="s-cost-diff">+$3,500,000/yr</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Jensen keeps more engineers</div>
+      <div class="val pos" id="s-eng-diff">+10</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Each Steve engineer gets</div>
+      <div class="val" id="s-token-diff">2.0x more tokens</div>
+    </div>
+  </div>
+</div>
+
+<p class="note">
+  At these defaults, both models generate the same $3.5M token budget: Steve redirects 10 cut salaries, Jensen adds 50% on top of 20 salaries. Same tokens purchased, but Steve's engineers each get twice as many because they're split across half the team. Jensen's total bill is 50% higher because all 20 salaries are still being paid. The question is whether 20 engineers with fewer tokens each outperform 10 engineers with more.
+  Blended token rate: 93.4% input, 6.6% output. Tasks estimated at ~100K tokens each. Prices from OpenRouter, March 2026.
+</p>
+
+<script>
+  const salaryEl = document.getElementById('salary');
+  const teamEl = document.getElementById('team');
+  const modelEl = document.getElementById('model');
+
+  function fmt(n) {
+    if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(0);
+  }
+
+  function fmtMoney(n) {
+    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+
+  function update() {
+    const salary = +salaryEl.value;
+    const team = +teamEl.value;
+    const blended = +modelEl.value;
+
+    document.getElementById('salary-display').textContent = fmtMoney(salary);
+    document.getElementById('team-display').textContent = team;
+
+    const totalSalary = salary * team;
+
+    // --- Steve: cut 50%, redirect salary to tokens ---
+    const yCut = Math.round(team * 0.5);
+    const yRemaining = team - yCut;
+    const yTokenBudget = salary * yCut;
+    const ySalarySpend = salary * yRemaining;
+    const yTotalCost = ySalarySpend + yTokenBudget; // same as original total
+    const yTokensYear = (yTokenBudget / blended) * 1e6;
+    const yTokensDay = yTokensYear / 365;
+    const yTokensPerEngDay = yRemaining > 0 ? yTokensDay / yRemaining : 0;
+    const yBudgetPerEng = yRemaining > 0 ? yTokenBudget / yRemaining : 0;
+    const yTasks = yTokensYear / 100000;
+
+    document.getElementById('y-remaining').textContent = yRemaining;
+    document.getElementById('y-cut').textContent = yCut;
+    document.getElementById('y-salary-spend').textContent = fmtMoney(ySalarySpend);
+    document.getElementById('y-total-cost').textContent = fmtMoney(yTotalCost);
+    document.getElementById('y-tokens-per-eng').textContent = fmt(yTokensPerEngDay);
+    document.getElementById('y-budget-per-eng').textContent = fmtMoney(yBudgetPerEng) + '/yr';
+    document.getElementById('y-tasks-per-eng').textContent = fmt(yTasks / (yRemaining || 1));
+    document.getElementById('y-total-tokens').textContent = fmt(yTokensYear);
+    document.getElementById('y-total-tasks').textContent = fmt(yTasks);
+
+    // --- Jensen: keep all, add 50% salary as token budget ---
+    const hRemaining = team;
+    const hCut = 0;
+    const hTokenBudget = salary * 0.5 * team;
+    const hSalarySpend = totalSalary;
+    const hTotalCost = hSalarySpend + hTokenBudget;
+    const hTokensYear = (hTokenBudget / blended) * 1e6;
+    const hTokensDay = hTokensYear / 365;
+    const hTokensPerEngDay = hRemaining > 0 ? hTokensDay / hRemaining : 0;
+    const hBudgetPerEng = hRemaining > 0 ? hTokenBudget / hRemaining : 0;
+    const hTasks = hTokensYear / 100000;
+
+    document.getElementById('h-remaining').textContent = hRemaining;
+    document.getElementById('h-cut').textContent = hCut;
+    document.getElementById('h-salary-spend').textContent = fmtMoney(hSalarySpend);
+    document.getElementById('h-total-cost').textContent = fmtMoney(hTotalCost);
+    document.getElementById('h-tokens-per-eng').textContent = fmt(hTokensPerEngDay);
+    document.getElementById('h-budget-per-eng').textContent = fmtMoney(hBudgetPerEng) + '/yr';
+    document.getElementById('h-tasks-per-eng').textContent = fmt(hTasks / (hRemaining || 1));
+    document.getElementById('h-total-tokens').textContent = fmt(hTokensYear);
+    document.getElementById('h-total-tasks').textContent = fmt(hTasks);
+
+    // --- Shared token budget ---
+    document.getElementById('shared-token-budget').textContent = fmtMoney(yTokenBudget) + '/yr';
+    document.getElementById('shared-token-explain').textContent =
+      'Steve: ' + yCut + ' cut salaries redirected. Jensen: 50% of ' + team + ' salaries added on top. Same ' + fmt(yTokensYear) + ' tokens/year.';
+
+    // --- Summary comparison ---
+    const costDiff = hTotalCost - yTotalCost;
+    const engDiff = hRemaining - yRemaining;
+    const tokenRatio = yTokensPerEngDay > 0 && hTokensPerEngDay > 0
+      ? (yTokensPerEngDay / hTokensPerEngDay).toFixed(1) + 'x more tokens'
+      : '-';
+
+    const costEl = document.getElementById('s-cost-diff');
+    costEl.textContent = (costDiff >= 0 ? '+' : '') + fmtMoney(costDiff) + '/yr';
+    costEl.className = 'val ' + (costDiff > 0 ? 'neg' : 'pos');
+
+    document.getElementById('s-eng-diff').textContent = '+' + engDiff;
+    document.getElementById('s-token-diff').textContent = tokenRatio;
+  }
+
+  update();
+</script>
+</body>
+</html>
