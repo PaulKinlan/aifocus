@@ -10,8 +10,21 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #1a1a1a;
     padding: 1.5rem;
-    max-width: 900px;
     line-height: 1.5;
+  }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  @media (min-width: 1100px) {
+    .main-layout {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+    .left-panel .summary-bar { margin-top: 1rem; }
   }
 
   h2 {
@@ -164,6 +177,104 @@
   .summary-item .val.neg { color: #dc2626; }
   .summary-item .val.pos { color: #16a34a; }
 
+  .tasks-breakdown {
+    margin: 0.25rem 0;
+  }
+
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0.3rem;
+    padding: 0.3rem 0;
+  }
+
+  .tasks-cell {
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 6px;
+    padding: 0.3rem 0.2rem;
+  }
+
+  .tasks-num {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tasks-period {
+    display: block;
+    font-size: 0.65rem;
+    color: #64748b;
+  }
+
+  .charts-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+  }
+
+  @media (min-width: 1100px) {
+    .charts-section { margin-top: 0; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .charts-section h3 {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+
+  .charts-section .sublabel {
+    margin-bottom: 0.75rem;
+  }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .chart-wrap h4 {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-wrap canvas {
+    width: 100%;
+    height: 260px;
+    display: block;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .chart-legend span::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 3px;
+    margin-right: 0.3rem;
+    vertical-align: middle;
+  }
+
+  .chart-legend .leg-yegge::before { background: #f59e0b; }
+  .chart-legend .leg-huang::before { background: #2563eb; }
+
+  @media (max-width: 640px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
   .note {
     font-size: 0.72rem;
     color: #94a3b8;
@@ -188,10 +299,18 @@
     .big-stat { background: #0f172a; }
     .summary-bar { background: #1e293b; border-color: #334155; }
     .summary-bar h3, .summary-item .label { color: #94a3b8; }
+    .tasks-cell { background: #0f172a; }
+    .tasks-period { color: #94a3b8; }
+    .charts-section { background: #1e293b; border-color: #334155; }
+    .charts-section h3, .chart-wrap h4 { color: #94a3b8; }
   }
 </style>
 </head>
 <body>
+
+<div style="text-align: right; margin-bottom: 0.5rem;">
+  <a href="/token-calculator.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: #2563eb; border: 1px solid #2563eb; border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
+</div>
 
 <div class="controls">
   <div class="control-group">
@@ -212,22 +331,43 @@
 
   <div class="control-group">
     <label>Model</label>
-    <div class="sublabel">Blended rate uses real-world ratio: 93% input, 7% output</div>
+    <div class="sublabel">Blended rate computed from input/output ratio below</div>
     <select id="model" onchange="update()">
-      <option value="6.32">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
-      <option value="3.79">Claude Sonnet 4.5/4.6 ($3/$15 per 1M)</option>
-      <option value="21.93">GPT-5 Pro ($15/$120 per 1M)</option>
-      <option value="2.56">GPT-5.2 ($1.75/$14 per 1M)</option>
-      <option value="1.83">GPT-5 ($1.25/$10 per 1M)</option>
-      <option value="2.66">Gemini 3.1 Pro ($2/$12 per 1M)</option>
-      <option value="0.67">Gemini 3 Flash ($0.50/$3 per 1M)</option>
-      <option value="0.45">Gemini 2.5 Flash ($0.30/$2.50 per 1M)</option>
-      <option value="1.26">Claude Haiku 4.5 ($1/$5 per 1M)</option>
-      <option value="3.79">Grok 4 ($3/$15 per 1M)</option>
-      <option value="0.22">Grok 4.1 Fast ($0.20/$0.50 per 1M)</option>
+      <option value="5,25">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
+      <option value="3,15">Claude Sonnet 4.5/4.6 ($3/$15 per 1M)</option>
+      <option value="15,120">GPT-5 Pro ($15/$120 per 1M)</option>
+      <option value="1.75,14">GPT-5.2 ($1.75/$14 per 1M)</option>
+      <option value="1.25,10">GPT-5 ($1.25/$10 per 1M)</option>
+      <option value="2,12">Gemini 3.1 Pro ($2/$12 per 1M)</option>
+      <option value="0.50,3">Gemini 3 Flash ($0.50/$3 per 1M)</option>
+      <option value="0.30,2.50">Gemini 2.5 Flash ($0.30/$2.50 per 1M)</option>
+      <option value="1,5">Claude Haiku 4.5 ($1/$5 per 1M)</option>
+      <option value="3,15">Grok 4 ($3/$15 per 1M)</option>
+      <option value="0.20,0.50">Grok 4.1 Fast ($0.20/$0.50 per 1M)</option>
     </select>
   </div>
+
+  <div class="control-group">
+    <label>Input token ratio</label>
+    <div class="sublabel">Real-world programming data shows ~93% input. Adjust to see how the ratio affects blended cost.</div>
+    <div class="slider-row">
+      <input type="range" id="input-ratio" min="50" max="99" step="1" value="93" oninput="update()">
+      <span class="value-display" id="ratio-display">93% in / 7% out</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Tokens per task</label>
+    <div class="sublabel">Estimated tokens for one substantial coding task (context + output). Default 100K based on typical agent sessions.</div>
+    <div class="slider-row">
+      <input type="range" id="tokens-per-task" min="10000" max="2000000" step="10000" value="100000" oninput="update()">
+      <span class="value-display" id="task-size-display">100K</span>
+    </div>
+  </div>
 </div>
+
+<div class="main-layout">
+<div class="left-panel">
 
 <div class="side-by-side">
   <!-- Shared token budget callout -->
@@ -263,9 +403,17 @@
       <span class="row-label">Token budget per engineer</span>
       <span class="row-value yegge-accent" id="y-budget-per-eng">$350,000/yr</span>
     </div>
-    <div class="row">
-      <span class="row-label">Tasks per engineer / year</span>
-      <span class="row-value" id="y-tasks-per-eng">554K</span>
+    <div class="tasks-breakdown">
+      <div class="row" style="border-bottom: none; padding-bottom: 0.1rem;">
+        <span class="row-label">Tasks per engineer</span>
+        <span class="row-value"></span>
+      </div>
+      <div class="tasks-grid">
+        <div class="tasks-cell"><span class="tasks-num" id="y-tasks-day">—</span><span class="tasks-period">/ day</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="y-tasks-week">—</span><span class="tasks-period">/ week</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="y-tasks-month">—</span><span class="tasks-period">/ month</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="y-tasks-year">—</span><span class="tasks-period">/ year</span></div>
+      </div>
     </div>
     <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
       <span class="row-label">Total team tokens / year</span>
@@ -303,9 +451,17 @@
       <span class="row-label">Token budget per engineer</span>
       <span class="row-value huang-accent" id="h-budget-per-eng">$175,000/yr</span>
     </div>
-    <div class="row">
-      <span class="row-label">Tasks per engineer / year</span>
-      <span class="row-value" id="h-tasks-per-eng">277K</span>
+    <div class="tasks-breakdown">
+      <div class="row" style="border-bottom: none; padding-bottom: 0.1rem;">
+        <span class="row-label">Tasks per engineer</span>
+        <span class="row-value"></span>
+      </div>
+      <div class="tasks-grid">
+        <div class="tasks-cell"><span class="tasks-num" id="h-tasks-day">—</span><span class="tasks-period">/ day</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="h-tasks-week">—</span><span class="tasks-period">/ week</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="h-tasks-month">—</span><span class="tasks-period">/ month</span></div>
+        <div class="tasks-cell"><span class="tasks-num" id="h-tasks-year">—</span><span class="tasks-period">/ year</span></div>
+      </div>
     </div>
     <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
       <span class="row-label">Total team tokens / year</span>
@@ -336,15 +492,46 @@
   </div>
 </div>
 
+</div><!-- end left-panel -->
+<div class="right-panel">
+
+<div class="charts-section">
+  <h3>Sensitivity analysis</h3>
+  <div class="sublabel">How tasks per engineer per day change as you sweep each variable. The dot marks your current slider position.</div>
+  <div class="charts-grid">
+    <div class="chart-wrap">
+      <h4>Engineer salary</h4>
+      <canvas id="chart-salary"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>Input token ratio</h4>
+      <canvas id="chart-ratio"></canvas>
+    </div>
+    <div class="chart-wrap">
+      <h4>Tokens per task</h4>
+      <canvas id="chart-tasksize"></canvas>
+    </div>
+  </div>
+  <div class="chart-legend">
+    <span class="leg-yegge">Steve</span>
+    <span class="leg-huang">Jensen</span>
+  </div>
+</div>
+
+</div><!-- end right-panel -->
+</div><!-- end main-layout -->
+
 <p class="note">
   At these defaults, both models generate the same $3.5M token budget: Steve redirects 10 cut salaries, Jensen adds 50% on top of 20 salaries. Same tokens purchased, but Steve's engineers each get twice as many because they're split across half the team. Jensen's total bill is 50% higher because all 20 salaries are still being paid. The question is whether 20 engineers with fewer tokens each outperform 10 engineers with more.
-  Blended token rate: 93.4% input, 6.6% output. Tasks estimated at ~100K tokens each. Prices from OpenRouter, March 2026.
+  Adjust the input/output ratio to see how it affects blended cost (real-world programming data shows ~93% input). Adjust tokens per task to reflect your own usage — heavier agent sessions may use 500K+ tokens per task. Prices from OpenRouter, March 2026.
 </p>
 
 <script>
   const salaryEl = document.getElementById('salary');
   const teamEl = document.getElementById('team');
   const modelEl = document.getElementById('model');
+  const inputRatioEl = document.getElementById('input-ratio');
+  const tokensPerTaskEl = document.getElementById('tokens-per-task');
 
   function fmt(n) {
     if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
@@ -361,10 +548,18 @@
   function update() {
     const salary = +salaryEl.value;
     const team = +teamEl.value;
-    const blended = +modelEl.value;
+    const inputRatio = +inputRatioEl.value / 100;
+    const outputRatio = 1 - inputRatio;
+    const tokensPerTask = +tokensPerTaskEl.value;
+
+    // Parse input/output prices from model value
+    const [inputPrice, outputPrice] = modelEl.value.split(',').map(Number);
+    const blended = inputRatio * inputPrice + outputRatio * outputPrice;
 
     document.getElementById('salary-display').textContent = fmtMoney(salary);
     document.getElementById('team-display').textContent = team;
+    document.getElementById('ratio-display').textContent = Math.round(inputRatio * 100) + '% in / ' + Math.round(outputRatio * 100) + '% out';
+    document.getElementById('task-size-display').textContent = fmt(tokensPerTask);
 
     const totalSalary = salary * team;
 
@@ -378,7 +573,7 @@
     const yTokensDay = yTokensYear / 365;
     const yTokensPerEngDay = yRemaining > 0 ? yTokensDay / yRemaining : 0;
     const yBudgetPerEng = yRemaining > 0 ? yTokenBudget / yRemaining : 0;
-    const yTasks = yTokensYear / 100000;
+    const yTasks = yTokensYear / tokensPerTask;
 
     document.getElementById('y-remaining').textContent = yRemaining;
     document.getElementById('y-cut').textContent = yCut;
@@ -386,7 +581,11 @@
     document.getElementById('y-total-cost').textContent = fmtMoney(yTotalCost);
     document.getElementById('y-tokens-per-eng').textContent = fmt(yTokensPerEngDay);
     document.getElementById('y-budget-per-eng').textContent = fmtMoney(yBudgetPerEng) + '/yr';
-    document.getElementById('y-tasks-per-eng').textContent = fmt(yTasks / (yRemaining || 1));
+    const yTasksPerEng = yTasks / (yRemaining || 1);
+    document.getElementById('y-tasks-day').textContent = fmt(yTasksPerEng / 365);
+    document.getElementById('y-tasks-week').textContent = fmt(yTasksPerEng / 52);
+    document.getElementById('y-tasks-month').textContent = fmt(yTasksPerEng / 12);
+    document.getElementById('y-tasks-year').textContent = fmt(yTasksPerEng);
     document.getElementById('y-total-tokens').textContent = fmt(yTokensYear);
     document.getElementById('y-total-tasks').textContent = fmt(yTasks);
 
@@ -400,7 +599,7 @@
     const hTokensDay = hTokensYear / 365;
     const hTokensPerEngDay = hRemaining > 0 ? hTokensDay / hRemaining : 0;
     const hBudgetPerEng = hRemaining > 0 ? hTokenBudget / hRemaining : 0;
-    const hTasks = hTokensYear / 100000;
+    const hTasks = hTokensYear / tokensPerTask;
 
     document.getElementById('h-remaining').textContent = hRemaining;
     document.getElementById('h-cut').textContent = hCut;
@@ -408,7 +607,11 @@
     document.getElementById('h-total-cost').textContent = fmtMoney(hTotalCost);
     document.getElementById('h-tokens-per-eng').textContent = fmt(hTokensPerEngDay);
     document.getElementById('h-budget-per-eng').textContent = fmtMoney(hBudgetPerEng) + '/yr';
-    document.getElementById('h-tasks-per-eng').textContent = fmt(hTasks / (hRemaining || 1));
+    const hTasksPerEng = hTasks / (hRemaining || 1);
+    document.getElementById('h-tasks-day').textContent = fmt(hTasksPerEng / 365);
+    document.getElementById('h-tasks-week').textContent = fmt(hTasksPerEng / 52);
+    document.getElementById('h-tasks-month').textContent = fmt(hTasksPerEng / 12);
+    document.getElementById('h-tasks-year').textContent = fmt(hTasksPerEng);
     document.getElementById('h-total-tokens').textContent = fmt(hTokensYear);
     document.getElementById('h-total-tasks').textContent = fmt(hTasks);
 
@@ -430,9 +633,179 @@
 
     document.getElementById('s-eng-diff').textContent = '+' + engDiff;
     document.getElementById('s-token-diff').textContent = tokenRatio;
+
+    // --- Sensitivity charts ---
+    drawCharts(salary, team, inputRatio, outputRatio, inputPrice, outputPrice, tokensPerTask);
+  }
+
+  function setupCanvas(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx, W: rect.width, H: rect.height };
+  }
+
+  function drawLine(ctx, points, color, W, H, pad) {
+    const pw = W - pad.left - pad.right;
+    const ph = H - pad.top - pad.bottom;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    points.forEach((p, i) => {
+      const x = pad.left + (p.x * pw);
+      const y = pad.top + ph - (p.y * ph);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  function drawDot(ctx, nx, ny, color, W, H, pad) {
+    const pw = W - pad.left - pad.right;
+    const ph = H - pad.top - pad.bottom;
+    const x = pad.left + (nx * pw);
+    const y = pad.top + ph - (ny * ph);
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    ctx.strokeStyle = isDark ? '#0f172a' : '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function drawGrid(ctx, W, H, pad, xLabels, yMax, yLabel, isDark) {
+    const pw = W - pad.left - pad.right;
+    const ph = H - pad.top - pad.bottom;
+
+    ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+      const gy = pad.top + (ph / 4) * i;
+      ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + pw, gy); ctx.stroke();
+    }
+
+    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+
+    // Y-axis labels
+    ctx.textAlign = 'right';
+    for (let i = 0; i <= 4; i++) {
+      const v = yMax * (i / 4);
+      ctx.fillText(fmt(v), pad.left - 5, pad.top + ph - (ph / 4) * i + 3);
+    }
+
+    // X-axis labels
+    ctx.textAlign = 'center';
+    xLabels.forEach(l => {
+      const x = pad.left + l.pos * pw;
+      ctx.fillText(l.text, x, H - pad.bottom + 14);
+    });
+
+    // Axis titles
+    ctx.fillText(yLabel, pad.left + pw / 2, H - 2);
+  }
+
+  // Compute tasks/engineer/day for both scenarios given all params
+  function tasksPerEngDay(sal, tm, ir, or, inP, outP, tpt) {
+    const bl = ir * inP + or * outP;
+    const cut = Math.round(tm * 0.5);
+    const yRem = tm - cut;
+    const yBpe = yRem > 0 ? (sal * cut) / yRem : 0;
+    const hBpe = sal * 0.5;
+    return {
+      y: yRem > 0 ? ((yBpe / bl) * 1e6) / 365 / tpt : 0,
+      h: ((hBpe / bl) * 1e6) / 365 / tpt
+    };
+  }
+
+  function drawYAxisTitle(ctx, pad, H, isDark) {
+    ctx.save();
+    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.translate(10, pad.top + (H - pad.top - pad.bottom) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillText('Tasks / eng / day', 0, 0);
+    ctx.restore();
+  }
+
+  function drawSensitivityChart(canvasId, steps, xLabels, xAxisLabel, curNx, isDark, pad) {
+    const c = setupCanvas(document.getElementById(canvasId));
+    c.ctx.clearRect(0, 0, c.W, c.H);
+
+    const maxY = Math.max(...steps.map(s => s.y)) * 1.1;
+    const yPts = steps.map(s => ({ x: s.nx, y: s.y / maxY }));
+    const hPts = steps.map(s => ({ x: s.nx, y: s.h / maxY }));
+
+    drawGrid(c.ctx, c.W, c.H, pad, xLabels, maxY, xAxisLabel, isDark);
+    drawLine(c.ctx, yPts, '#f59e0b', c.W, c.H, pad);
+    drawLine(c.ctx, hPts, '#3b82f6', c.W, c.H, pad);
+
+    // Find current values by interpolating at curNx
+    const idx = Math.min(steps.length - 1, Math.max(0, Math.round(curNx * (steps.length - 1))));
+    drawDot(c.ctx, curNx, steps[idx].y / maxY, '#f59e0b', c.W, c.H, pad);
+    drawDot(c.ctx, curNx, steps[idx].h / maxY, '#3b82f6', c.W, c.H, pad);
+
+    drawYAxisTitle(c.ctx, pad, c.H, isDark);
+  }
+
+  function drawCharts(salary, team, inputRatio, outputRatio, inputPrice, outputPrice, tokensPerTask) {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const pad = { top: 15, right: 15, bottom: 32, left: 50 };
+    const N = 80;
+
+    // --- Chart 1: Salary sweep ($50K to $1M) ---
+    const salMin = 50000, salMax = 1000000;
+    const salSteps = [];
+    for (let i = 0; i <= N; i++) {
+      const s = salMin + (salMax - salMin) * (i / N);
+      const t = tasksPerEngDay(s, team, inputRatio, outputRatio, inputPrice, outputPrice, tokensPerTask);
+      salSteps.push({ nx: i / N, y: t.y, h: t.h });
+    }
+    const salXLabels = [100000, 250000, 500000, 750000, 1000000].map(v => ({
+      pos: (v - salMin) / (salMax - salMin), text: fmtMoney(v)
+    }));
+    const salCurNx = (salary - salMin) / (salMax - salMin);
+    drawSensitivityChart('chart-salary', salSteps, salXLabels, 'Engineer salary', salCurNx, isDark, pad);
+
+    // --- Chart 2: Input ratio sweep (50% to 99%) ---
+    const ratioSteps = [];
+    for (let i = 0; i <= N; i++) {
+      const r = 50 + 49 * (i / N);
+      const ir = r / 100;
+      const or = 1 - ir;
+      const t = tasksPerEngDay(salary, team, ir, or, inputPrice, outputPrice, tokensPerTask);
+      ratioSteps.push({ nx: i / N, y: t.y, h: t.h });
+    }
+    const ratioXLabels = [50, 60, 70, 80, 90, 99].map(r => ({
+      pos: (r - 50) / 49, text: r + '%'
+    }));
+    const ratioCurNx = (inputRatio * 100 - 50) / 49;
+    drawSensitivityChart('chart-ratio', ratioSteps, ratioXLabels, 'Input token ratio', ratioCurNx, isDark, pad);
+
+    // --- Chart 4: Tokens per task sweep (10K to 2M, log scale) ---
+    const logMin = Math.log10(10000);
+    const logMax = Math.log10(2000000);
+    const taskSteps = [];
+    for (let i = 0; i <= N; i++) {
+      const logVal = logMin + (logMax - logMin) * (i / N);
+      const tpt = Math.pow(10, logVal);
+      const t = tasksPerEngDay(salary, team, inputRatio, outputRatio, inputPrice, outputPrice, tpt);
+      taskSteps.push({ nx: i / N, y: t.y, h: t.h });
+    }
+    const taskXLabels = [10000, 50000, 100000, 500000, 1000000, 2000000].map(v => ({
+      pos: (Math.log10(v) - logMin) / (logMax - logMin), text: fmt(v)
+    }));
+    const taskCurNx = (Math.log10(tokensPerTask) - logMin) / (logMax - logMin);
+    drawSensitivityChart('chart-tasksize', taskSteps, taskXLabels, 'Tokens per task (log scale)', taskCurNx, isDark, pad);
   }
 
   update();
+  window.addEventListener('resize', update);
 </script>
 </body>
 </html>

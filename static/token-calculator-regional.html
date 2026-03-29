@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regional Token Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    padding: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .controls { margin-bottom: 1.5rem; }
+  .control-group { margin-bottom: 1.25rem; }
+  label { display: block; font-weight: 600; margin-bottom: 0.2rem; font-size: 0.9rem; }
+  .sublabel { font-weight: 400; font-size: 0.78rem; color: #666; margin-bottom: 0.4rem; }
+  .slider-row { display: flex; align-items: center; gap: 1rem; }
+  input[type="range"] { flex: 1; accent-color: #2563eb; height: 6px; }
+  .value-display { min-width: 100px; text-align: right; font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  select { width: 100%; padding: 0.45rem; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+
+  h3.section-title {
+    font-size: 0.85rem;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 0.5rem 0;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  h3.section-title:first-of-type { margin-top: 0; }
+
+  .section-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+
+  /* --- Per-region cards --- */
+  .region-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.6rem;
+  }
+
+  .region-card {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.6rem;
+  }
+
+  .region-card.highlight { border-color: #2563eb; }
+  .region-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #334155; }
+  .region-salary { font-size: 0.72rem; color: #64748b; margin-bottom: 0.3rem; }
+
+  .region-stat {
+    text-align: center;
+    padding: 0.4rem 0;
+    margin: 0.3rem 0;
+    background: #f8fafc;
+    border-radius: 6px;
+  }
+  .region-stat .number { font-size: 1.2rem; font-weight: 800; color: #1d4ed8; }
+  .region-stat .unit { font-size: 0.6rem; color: #64748b; }
+
+  .region-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.2rem 0;
+    font-size: 0.72rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .region-row:last-child { border-bottom: none; }
+  .region-row-label { color: #64748b; }
+  .region-row-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* --- Matrix tables --- */
+  .matrix-wrap {
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+  }
+
+  .matrix-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #334155;
+    margin-bottom: 0.4rem;
+  }
+
+  table.matrix {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  table.matrix th, table.matrix td {
+    padding: 0.4rem 0.35rem;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    vertical-align: top;
+  }
+
+  table.matrix th {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #334155;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  table.matrix th.row-header {
+    text-align: right;
+    min-width: 100px;
+  }
+
+  table.matrix th.corner {
+    background: none;
+    border-color: transparent;
+  }
+
+  table.matrix td .tasks {
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: block;
+  }
+
+  table.matrix td .cost {
+    font-size: 0.65rem;
+    color: #64748b;
+    display: block;
+  }
+
+  table.matrix td .tokens {
+    font-size: 0.62rem;
+    color: #94a3b8;
+    display: block;
+  }
+
+  table.matrix td.diagonal {
+    background: #f0f9ff;
+  }
+
+  table.matrix td.better {
+    background: #f0fdf4;
+  }
+
+  table.matrix td.worse {
+    background: #fef2f2;
+  }
+
+  table.matrix td.na {
+    background: #fef2f2;
+    color: #dc2626;
+    font-weight: 600;
+  }
+
+  .matrices-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 1100px) {
+    .matrices-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .note {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin-top: 1rem;
+    line-height: 1.4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f172a; color: #e2e8f0; }
+    select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+    h3.section-title { color: #e2e8f0; border-color: #334155; }
+    .section-desc { color: #94a3b8; }
+    .region-card { background: #1e293b; border-color: #334155; }
+    .region-card.highlight { border-color: #2563eb; }
+    .region-name { color: #e2e8f0; }
+    .region-row { border-color: #334155; }
+    .region-row-label { color: #94a3b8; }
+    .region-stat { background: #0f172a; }
+    table.matrix th, table.matrix td { border-color: #334155; }
+    table.matrix th { background: #1e293b; color: #e2e8f0; }
+    table.matrix td.diagonal { background: #172554; }
+    table.matrix td.better { background: #14532d; }
+    table.matrix td.worse { background: #450a0a; }
+    table.matrix td.na { background: #450a0a; color: #fca5a5; }
+    .matrix-label { color: #e2e8f0; }
+  }
+</style>
+</head>
+<body>
+
+<div style="text-align: right; margin-bottom: 0.5rem;">
+  <a href="/token-calculator-regional.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: #2563eb; border: 1px solid #2563eb; border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
+</div>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Model</label>
+    <div class="sublabel">Blended rate computed from input/output ratio below</div>
+    <select id="model" onchange="update()">
+      <option value="5,25">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
+      <option value="3,15">Claude Sonnet 4.5/4.6 ($3/$15 per 1M)</option>
+      <option value="15,120">GPT-5 Pro ($15/$120 per 1M)</option>
+      <option value="1.75,14">GPT-5.2 ($1.75/$14 per 1M)</option>
+      <option value="1.25,10">GPT-5 ($1.25/$10 per 1M)</option>
+      <option value="2,12">Gemini 3.1 Pro ($2/$12 per 1M)</option>
+      <option value="0.50,3">Gemini 3 Flash ($0.50/$3 per 1M)</option>
+      <option value="0.30,2.50">Gemini 2.5 Flash ($0.30/$2.50 per 1M)</option>
+      <option value="1,5">Claude Haiku 4.5 ($1/$5 per 1M)</option>
+      <option value="3,15">Grok 4 ($3/$15 per 1M)</option>
+      <option value="0.20,0.50">Grok 4.1 Fast ($0.20/$0.50 per 1M)</option>
+    </select>
+  </div>
+
+  <div class="control-group">
+    <label>Input token ratio</label>
+    <div class="slider-row">
+      <input type="range" id="input-ratio" min="50" max="99" step="1" value="93" oninput="update()">
+      <span class="value-display" id="ratio-display">93% in / 7% out</span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Tokens per task</label>
+    <div class="slider-row">
+      <input type="range" id="tokens-per-task" min="10000" max="2000000" step="10000" value="100000" oninput="update()">
+      <span class="value-display" id="task-size-display">100K</span>
+    </div>
+  </div>
+</div>
+
+<h3 class="section-title">Each region under Jensen's model</h3>
+<div class="section-desc">What each region gets when you apply Jensen's formula (50% of salary in tokens) locally. Higher salary = more tokens. An Indian engineer's token budget is a fraction of a Bay Area engineer's, despite doing the same work.</div>
+<div id="cards-jensen" class="region-grid"></div>
+
+<h3 class="section-title">Each region under Steve's model</h3>
+<div class="section-desc">The CFO does the math and fires half the team, redirecting their full salary to tokens for the remaining half. Each remaining engineer gets one fired engineer's salary as their token budget. Again, the Bay Area engineer gets dramatically more AI throughput simply because they cost more.</div>
+<div id="cards-steve" class="region-grid"></div>
+
+<h3 class="section-title">The relocation matrix</h3>
+<div class="section-desc">What if you take the budget you're currently spending in one region and hire in another instead? Rows are your current spend (source). Columns are where you hire (destination). Each cell shows tasks/engineer/day and total cost. Green cells give you more tasks than hiring locally; red cells give fewer.</div>
+
+<div class="matrices-grid">
+  <div class="matrix-wrap">
+    <div class="matrix-label">Jensen's model (budget = source salary x 1.5)</div>
+    <table class="matrix" id="matrix-jensen"></table>
+  </div>
+  <div class="matrix-wrap">
+    <div class="matrix-label">Steve's model (budget = source salary)</div>
+    <table class="matrix" id="matrix-steve"></table>
+  </div>
+</div>
+
+<p class="note">
+  Senior engineer total comp from levels.fyi and Glassdoor (2025-2026). Jensen: salary + 50% in tokens. Steve: fire the engineer, redirect salary. In the matrix, the savings from hiring in a cheaper region are redirected to tokens. Token prices are global. The arbitrage is real: same AI model, same quality engineer, dramatically different throughput depending on where you hire.
+</p>
+
+<script>
+  const REGIONS = [
+    { id: 'us-sf',     name: 'Bay Area',     salary: 400000 },
+    { id: 'us-avg',    name: 'US (avg)',      salary: 250000 },
+    { id: 'canada',    name: 'Canada',        salary: 170000 },
+    { id: 'uk-london', name: 'UK (London)',   salary: 150000 },
+    { id: 'germany',   name: 'Germany',       salary: 130000 },
+    { id: 'uk-other',  name: 'UK (other)',    salary: 100000 },
+    { id: 'india',     name: 'India',         salary: 60000  },
+  ];
+
+  const modelEl = document.getElementById('model');
+  const inputRatioEl = document.getElementById('input-ratio');
+  const tokensPerTaskEl = document.getElementById('tokens-per-task');
+
+  function fmt(n) {
+    if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(0);
+  }
+
+  function fmtMoney(n) {
+    if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+    return '$' + n.toFixed(0);
+  }
+
+  function fmtMoneyFull(n) {
+    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  }
+
+  function buildCardSet(containerId, prefix, costLabel) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = REGIONS.map(r => `
+      <div class="region-card${r.id === 'us-sf' ? ' highlight' : ''}" id="card-${prefix}-${r.id}">
+        <div class="region-name">${r.name}</div>
+        <div class="region-salary">${fmtMoneyFull(r.salary)} total comp</div>
+        <div class="region-stat">
+          <div class="number" id="${prefix}-${r.id}-tasks-day">-</div>
+          <div class="unit">tasks / day</div>
+        </div>
+        <div class="region-row">
+          <span class="region-row-label">Token budget</span>
+          <span class="region-row-value" id="${prefix}-${r.id}-budget">-</span>
+        </div>
+        <div class="region-row">
+          <span class="region-row-label">Tokens / day</span>
+          <span class="region-row-value" id="${prefix}-${r.id}-tokens-day">-</span>
+        </div>
+        <div class="region-row">
+          <span class="region-row-label">${costLabel}</span>
+          <span class="region-row-value" id="${prefix}-${r.id}-total-cost">-</span>
+        </div>
+        <div class="region-row">
+          <span class="region-row-label">vs Bay Area</span>
+          <span class="region-row-value" id="${prefix}-${r.id}-vs-sf">-</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function buildCards() {
+    buildCardSet('cards-jensen', 'j', 'Total cost (salary + tokens)');
+    buildCardSet('cards-steve', 's', 'Token budget (= salary)');
+  }
+
+  function tasksPerDay(tokenBudget, blended, tokensPerTask) {
+    if (tokenBudget <= 0) return 0;
+    return ((tokenBudget / blended) * 1e6) / 365 / tokensPerTask;
+  }
+
+  function buildMatrix(tableId, budgetFn) {
+    // budgetFn(sourceRegion) returns the total budget available
+    const table = document.getElementById(tableId);
+    const inputRatio = +inputRatioEl.value / 100;
+    const outputRatio = 1 - inputRatio;
+    const tokensPerTask = +tokensPerTaskEl.value;
+    const [inputPrice, outputPrice] = modelEl.value.split(',').map(Number);
+    const blended = inputRatio * inputPrice + outputRatio * outputPrice;
+
+    // Compute diagonal baselines (tasks/day when source=dest)
+    const diagonals = {};
+    REGIONS.forEach(src => {
+      const budget = budgetFn(src);
+      const tokenBudget = budget - src.salary;
+      diagonals[src.id] = tasksPerDay(tokenBudget, blended, tokensPerTask);
+    });
+
+    let html = '<tr><th class="corner">Hire in &rarr;<br>Budget from &darr;</th>';
+    REGIONS.forEach(dest => {
+      html += `<th>${dest.name}<br><span style="font-weight:400;text-transform:none;font-size:0.62rem;">${fmtMoney(dest.salary)}</span></th>`;
+    });
+    html += '</tr>';
+
+    REGIONS.forEach(src => {
+      const budget = budgetFn(src);
+      html += `<tr><th class="row-header">${src.name}<br><span style="font-weight:400;font-size:0.62rem;">Budget: ${fmtMoney(budget)}</span></th>`;
+
+      REGIONS.forEach(dest => {
+        const tokenBudget = budget - dest.salary;
+        if (tokenBudget < 0) {
+          html += '<td class="na">Can\'t<br>afford</td>';
+          return;
+        }
+
+        const tpd = tasksPerDay(tokenBudget, blended, tokensPerTask);
+        const totalCost = dest.salary + tokenBudget;
+        const isDiag = src.id === dest.id;
+        const baseline = diagonals[src.id];
+
+        let cls = 'diagonal';
+        if (!isDiag && baseline > 0) {
+          cls = tpd > baseline * 1.01 ? 'better' : (tpd < baseline * 0.99 ? 'worse' : 'diagonal');
+        }
+
+        html += `<td class="${cls}">`;
+        html += `<span class="tasks">${fmt(tpd)}</span>`;
+        html += `<span class="cost">${fmtMoney(totalCost)} total</span>`;
+        html += `<span class="tokens">${fmtMoney(tokenBudget)} tokens</span>`;
+        html += '</td>';
+      });
+
+      html += '</tr>';
+    });
+
+    table.innerHTML = html;
+  }
+
+  function update() {
+    const inputRatio = +inputRatioEl.value / 100;
+    const outputRatio = 1 - inputRatio;
+    const tokensPerTask = +tokensPerTaskEl.value;
+    const [inputPrice, outputPrice] = modelEl.value.split(',').map(Number);
+    const blended = inputRatio * inputPrice + outputRatio * outputPrice;
+
+    document.getElementById('ratio-display').textContent = Math.round(inputRatio * 100) + '% in / ' + Math.round(outputRatio * 100) + '% out';
+    document.getElementById('task-size-display').textContent = fmt(tokensPerTask);
+
+    // Update Jensen cards (50% of salary in tokens)
+    const sfJensen = {};
+    REGIONS.forEach(r => {
+      const tokenBudget = r.salary * 0.5;
+      const tpd = tasksPerDay(tokenBudget, blended, tokensPerTask);
+      const tokensDay = ((tokenBudget / blended) * 1e6) / 365;
+      document.getElementById('j-' + r.id + '-budget').textContent = fmtMoneyFull(tokenBudget) + '/yr';
+      document.getElementById('j-' + r.id + '-tokens-day').textContent = fmt(tokensDay);
+      document.getElementById('j-' + r.id + '-tasks-day').textContent = fmt(tpd);
+      document.getElementById('j-' + r.id + '-total-cost').textContent = fmtMoneyFull(r.salary * 1.5) + '/yr';
+      if (r.id === 'us-sf') sfJensen.tpd = tpd;
+    });
+    REGIONS.forEach(r => {
+      const tpd = tasksPerDay(r.salary * 0.5, blended, tokensPerTask);
+      const pct = sfJensen.tpd > 0 ? (tpd / sfJensen.tpd * 100).toFixed(0) + '%' : '-';
+      document.getElementById('j-' + r.id + '-vs-sf').textContent = r.id === 'us-sf' ? 'baseline' : pct;
+    });
+
+    // Update Steve cards (full salary becomes token budget, no human)
+    const sfSteve = {};
+    REGIONS.forEach(r => {
+      const tokenBudget = r.salary;
+      const tpd = tasksPerDay(tokenBudget, blended, tokensPerTask);
+      const tokensDay = ((tokenBudget / blended) * 1e6) / 365;
+      document.getElementById('s-' + r.id + '-budget').textContent = fmtMoneyFull(tokenBudget) + '/yr';
+      document.getElementById('s-' + r.id + '-tokens-day').textContent = fmt(tokensDay);
+      document.getElementById('s-' + r.id + '-tasks-day').textContent = fmt(tpd);
+      document.getElementById('s-' + r.id + '-total-cost').textContent = fmtMoneyFull(tokenBudget) + '/yr';
+      if (r.id === 'us-sf') sfSteve.tpd = tpd;
+    });
+    REGIONS.forEach(r => {
+      const tpd = tasksPerDay(r.salary, blended, tokensPerTask);
+      const pct = sfSteve.tpd > 0 ? (tpd / sfSteve.tpd * 100).toFixed(0) + '%' : '-';
+      document.getElementById('s-' + r.id + '-vs-sf').textContent = r.id === 'us-sf' ? 'baseline' : pct;
+    });
+
+    // Build matrices
+    // Jensen: budget = source salary x 1.5
+    buildMatrix('matrix-jensen', (src) => src.salary * 1.5);
+    // Steve: budget = source salary (the fired engineer's full salary)
+    buildMatrix('matrix-steve', (src) => src.salary);
+  }
+
+  buildCards();
+  update();
+</script>
+</body>
+</html>
