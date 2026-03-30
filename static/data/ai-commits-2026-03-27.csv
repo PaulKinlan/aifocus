@@ -1,0 +1,313 @@
+tool,period_start,period_end,granularity,total_count,url
+Claude (co-author),2025-09-29,2025-10-05,weekly,180773,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-09-29..2025-10-05&type=commits
+Claude (co-author),2025-10-06,2025-10-12,weekly,195601,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-10-06..2025-10-12&type=commits
+Claude (co-author),2025-10-13,2025-10-19,weekly,201619,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-10-13..2025-10-19&type=commits
+Claude (co-author),2025-10-20,2025-10-26,weekly,274352,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-10-20..2025-10-26&type=commits
+Claude (co-author),2025-10-27,2025-11-02,weekly,266277,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-10-27..2025-11-02&type=commits
+Claude (co-author),2025-11-03,2025-11-09,weekly,258298,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-11-03..2025-11-09&type=commits
+Claude (co-author),2025-11-10,2025-11-16,weekly,278572,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-11-10..2025-11-16&type=commits
+Claude (co-author),2025-11-17,2025-11-23,weekly,269754,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-11-17..2025-11-23&type=commits
+Claude (co-author),2025-11-24,2025-11-30,weekly,292081,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-11-24..2025-11-30&type=commits
+Claude (co-author),2025-12-01,2025-12-07,weekly,313786,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-12-01..2025-12-07&type=commits
+Claude (co-author),2025-12-08,2025-12-14,weekly,319290,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-12-08..2025-12-14&type=commits
+Claude (co-author),2025-12-15,2025-12-21,weekly,343700,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-12-15..2025-12-21&type=commits
+Claude (co-author),2025-12-22,2025-12-28,weekly,369278,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-12-22..2025-12-28&type=commits
+Claude (co-author),2025-12-29,2026-01-04,weekly,488479,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2025-12-29..2026-01-04&type=commits
+Claude (co-author),2026-01-05,2026-01-11,weekly,608733,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-01-05..2026-01-11&type=commits
+Claude (co-author),2026-01-12,2026-01-18,weekly,720795,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-01-12..2026-01-18&type=commits
+Claude (co-author),2026-01-19,2026-01-25,weekly,836286,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-01-19..2026-01-25&type=commits
+Claude (co-author),2026-01-26,2026-02-01,weekly,922208,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-01-26..2026-02-01&type=commits
+Claude (co-author),2026-02-02,2026-02-08,weekly,1077342,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-02-02..2026-02-08&type=commits
+Claude (co-author),2026-02-09,2026-02-15,weekly,1201150,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-02-09..2026-02-15&type=commits
+Claude (co-author),2026-02-16,2026-02-22,weekly,1464164,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-02-16..2026-02-22&type=commits
+Claude (co-author),2026-02-23,2026-03-01,weekly,1687549,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-02-23..2026-03-01&type=commits
+Claude (co-author),2026-03-02,2026-03-08,weekly,1808435,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-03-02..2026-03-08&type=commits
+Claude (co-author),2026-03-09,2026-03-15,weekly,2062166,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-03-09..2026-03-15&type=commits
+Claude (co-author),2026-03-16,2026-03-22,weekly,2618295,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-03-16..2026-03-22&type=commits
+Claude (co-author),2026-03-23,2026-03-27,weekly,1904891,https://github.com/search?q=Co-Authored-By%3A+Claude+author-date%3A2026-03-23..2026-03-27&type=commits
+GitHub Copilot (co-author),2025-09-29,2025-10-05,weekly,15978,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-09-29..2025-10-05&type=commits
+GitHub Copilot (co-author),2025-10-06,2025-10-12,weekly,16756,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-10-06..2025-10-12&type=commits
+GitHub Copilot (co-author),2025-10-13,2025-10-19,weekly,17761,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-10-13..2025-10-19&type=commits
+GitHub Copilot (co-author),2025-10-20,2025-10-26,weekly,19159,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-10-20..2025-10-26&type=commits
+GitHub Copilot (co-author),2025-10-27,2025-11-02,weekly,18458,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-10-27..2025-11-02&type=commits
+GitHub Copilot (co-author),2025-11-03,2025-11-09,weekly,21461,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-11-03..2025-11-09&type=commits
+GitHub Copilot (co-author),2025-11-10,2025-11-16,weekly,21856,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-11-10..2025-11-16&type=commits
+GitHub Copilot (co-author),2025-11-17,2025-11-23,weekly,22200,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-11-17..2025-11-23&type=commits
+GitHub Copilot (co-author),2025-11-24,2025-11-30,weekly,20610,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-11-24..2025-11-30&type=commits
+GitHub Copilot (co-author),2025-12-01,2025-12-07,weekly,22033,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-12-01..2025-12-07&type=commits
+GitHub Copilot (co-author),2025-12-08,2025-12-14,weekly,21719,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-12-08..2025-12-14&type=commits
+GitHub Copilot (co-author),2025-12-15,2025-12-21,weekly,18234,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-12-15..2025-12-21&type=commits
+GitHub Copilot (co-author),2025-12-22,2025-12-28,weekly,14587,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-12-22..2025-12-28&type=commits
+GitHub Copilot (co-author),2025-12-29,2026-01-04,weekly,16063,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2025-12-29..2026-01-04&type=commits
+GitHub Copilot (co-author),2026-01-05,2026-01-11,weekly,19639,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-01-05..2026-01-11&type=commits
+GitHub Copilot (co-author),2026-01-12,2026-01-18,weekly,19538,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-01-12..2026-01-18&type=commits
+GitHub Copilot (co-author),2026-01-19,2026-01-25,weekly,21157,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-01-19..2026-01-25&type=commits
+GitHub Copilot (co-author),2026-01-26,2026-02-01,weekly,20776,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-01-26..2026-02-01&type=commits
+GitHub Copilot (co-author),2026-02-02,2026-02-08,weekly,22850,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-02-02..2026-02-08&type=commits
+GitHub Copilot (co-author),2026-02-09,2026-02-15,weekly,30818,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-02-09..2026-02-15&type=commits
+GitHub Copilot (co-author),2026-02-16,2026-02-22,weekly,63050,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-02-16..2026-02-22&type=commits
+GitHub Copilot (co-author),2026-02-23,2026-03-01,weekly,72061,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-02-23..2026-03-01&type=commits
+GitHub Copilot (co-author),2026-03-02,2026-03-08,weekly,80748,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-03-02..2026-03-08&type=commits
+GitHub Copilot (co-author),2026-03-09,2026-03-15,weekly,81948,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-03-09..2026-03-15&type=commits
+GitHub Copilot (co-author),2026-03-16,2026-03-22,weekly,80561,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-03-16..2026-03-22&type=commits
+GitHub Copilot (co-author),2026-03-23,2026-03-27,weekly,53358,https://github.com/search?q=Co-Authored-By%3A+GitHub+Copilot+author-date%3A2026-03-23..2026-03-27&type=commits
+Cursor (co-author),2025-09-29,2025-10-05,weekly,4728,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-09-29..2025-10-05&type=commits
+Cursor (co-author),2025-10-06,2025-10-12,weekly,4638,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-10-06..2025-10-12&type=commits
+Cursor (co-author),2025-10-13,2025-10-19,weekly,5273,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-10-13..2025-10-19&type=commits
+Cursor (co-author),2025-10-20,2025-10-26,weekly,5187,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-10-20..2025-10-26&type=commits
+Cursor (co-author),2025-10-27,2025-11-02,weekly,5711,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-10-27..2025-11-02&type=commits
+Cursor (co-author),2025-11-03,2025-11-09,weekly,5013,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-11-03..2025-11-09&type=commits
+Cursor (co-author),2025-11-10,2025-11-16,weekly,5185,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-11-10..2025-11-16&type=commits
+Cursor (co-author),2025-11-17,2025-11-23,weekly,4207,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-11-17..2025-11-23&type=commits
+Cursor (co-author),2025-11-24,2025-11-30,weekly,5192,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-11-24..2025-11-30&type=commits
+Cursor (co-author),2025-12-01,2025-12-07,weekly,5168,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-12-01..2025-12-07&type=commits
+Cursor (co-author),2025-12-08,2025-12-14,weekly,4960,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-12-08..2025-12-14&type=commits
+Cursor (co-author),2025-12-15,2025-12-21,weekly,4738,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-12-15..2025-12-21&type=commits
+Cursor (co-author),2025-12-22,2025-12-28,weekly,3908,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-12-22..2025-12-28&type=commits
+Cursor (co-author),2025-12-29,2026-01-04,weekly,5102,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2025-12-29..2026-01-04&type=commits
+Cursor (co-author),2026-01-05,2026-01-11,weekly,5706,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-01-05..2026-01-11&type=commits
+Cursor (co-author),2026-01-12,2026-01-18,weekly,6483,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-01-12..2026-01-18&type=commits
+Cursor (co-author),2026-01-19,2026-01-25,weekly,7394,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-01-19..2026-01-25&type=commits
+Cursor (co-author),2026-01-26,2026-02-01,weekly,41487,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-01-26..2026-02-01&type=commits
+Cursor (co-author),2026-02-02,2026-02-08,weekly,136447,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-02-02..2026-02-08&type=commits
+Cursor (co-author),2026-02-09,2026-02-15,weekly,191272,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-02-09..2026-02-15&type=commits
+Cursor (co-author),2026-02-16,2026-02-22,weekly,206701,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-02-16..2026-02-22&type=commits
+Cursor (co-author),2026-02-23,2026-03-01,weekly,112034,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-02-23..2026-03-01&type=commits
+Cursor (co-author),2026-03-02,2026-03-08,weekly,19412,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-03-02..2026-03-08&type=commits
+Cursor (co-author),2026-03-09,2026-03-15,weekly,19002,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-03-09..2026-03-15&type=commits
+Cursor (co-author),2026-03-16,2026-03-22,weekly,23449,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-03-16..2026-03-22&type=commits
+Cursor (co-author),2026-03-23,2026-03-27,weekly,16108,https://github.com/search?q=Co-Authored-By%3A+Cursor+author-date%3A2026-03-23..2026-03-27&type=commits
+Codex (co-author),2025-09-29,2025-10-05,weekly,1496,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-09-29..2025-10-05&type=commits
+Codex (co-author),2025-10-06,2025-10-12,weekly,1658,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-10-06..2025-10-12&type=commits
+Codex (co-author),2025-10-13,2025-10-19,weekly,2583,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-10-13..2025-10-19&type=commits
+Codex (co-author),2025-10-20,2025-10-26,weekly,3089,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-10-20..2025-10-26&type=commits
+Codex (co-author),2025-10-27,2025-11-02,weekly,3253,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-10-27..2025-11-02&type=commits
+Codex (co-author),2025-11-03,2025-11-09,weekly,2285,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-11-03..2025-11-09&type=commits
+Codex (co-author),2025-11-10,2025-11-16,weekly,2127,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-11-10..2025-11-16&type=commits
+Codex (co-author),2025-11-17,2025-11-23,weekly,2729,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-11-17..2025-11-23&type=commits
+Codex (co-author),2025-11-24,2025-11-30,weekly,1855,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-11-24..2025-11-30&type=commits
+Codex (co-author),2025-12-01,2025-12-07,weekly,1653,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-12-01..2025-12-07&type=commits
+Codex (co-author),2025-12-08,2025-12-14,weekly,1985,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-12-08..2025-12-14&type=commits
+Codex (co-author),2025-12-15,2025-12-21,weekly,2702,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-12-15..2025-12-21&type=commits
+Codex (co-author),2025-12-22,2025-12-28,weekly,2034,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-12-22..2025-12-28&type=commits
+Codex (co-author),2025-12-29,2026-01-04,weekly,3359,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2025-12-29..2026-01-04&type=commits
+Codex (co-author),2026-01-05,2026-01-11,weekly,5534,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-01-05..2026-01-11&type=commits
+Codex (co-author),2026-01-12,2026-01-18,weekly,6336,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-01-12..2026-01-18&type=commits
+Codex (co-author),2026-01-19,2026-01-25,weekly,5372,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-01-19..2026-01-25&type=commits
+Codex (co-author),2026-01-26,2026-02-01,weekly,5389,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-01-26..2026-02-01&type=commits
+Codex (co-author),2026-02-02,2026-02-08,weekly,9767,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-02-02..2026-02-08&type=commits
+Codex (co-author),2026-02-09,2026-02-15,weekly,11325,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-02-09..2026-02-15&type=commits
+Codex (co-author),2026-02-16,2026-02-22,weekly,13089,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-02-16..2026-02-22&type=commits
+Codex (co-author),2026-02-23,2026-03-01,weekly,14995,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-02-23..2026-03-01&type=commits
+Codex (co-author),2026-03-02,2026-03-08,weekly,18307,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-03-02..2026-03-08&type=commits
+Codex (co-author),2026-03-09,2026-03-15,weekly,17087,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-03-09..2026-03-15&type=commits
+Codex (co-author),2026-03-16,2026-03-22,weekly,19424,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-03-16..2026-03-22&type=commits
+Codex (co-author),2026-03-23,2026-03-27,weekly,13598,https://github.com/search?q=Co-Authored-By%3A+Codex+author-date%3A2026-03-23..2026-03-27&type=commits
+Aider (co-author),2025-09-29,2025-10-05,weekly,2404,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-09-29..2025-10-05&type=commits
+Aider (co-author),2025-10-06,2025-10-12,weekly,1883,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-10-06..2025-10-12&type=commits
+Aider (co-author),2025-10-13,2025-10-19,weekly,1490,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-10-13..2025-10-19&type=commits
+Aider (co-author),2025-10-20,2025-10-26,weekly,2298,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-10-20..2025-10-26&type=commits
+Aider (co-author),2025-10-27,2025-11-02,weekly,1571,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-10-27..2025-11-02&type=commits
+Aider (co-author),2025-11-03,2025-11-09,weekly,1555,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-11-03..2025-11-09&type=commits
+Aider (co-author),2025-11-10,2025-11-16,weekly,2043,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-11-10..2025-11-16&type=commits
+Aider (co-author),2025-11-17,2025-11-23,weekly,3179,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-11-17..2025-11-23&type=commits
+Aider (co-author),2025-11-24,2025-11-30,weekly,2289,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-11-24..2025-11-30&type=commits
+Aider (co-author),2025-12-01,2025-12-07,weekly,2087,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-12-01..2025-12-07&type=commits
+Aider (co-author),2025-12-08,2025-12-14,weekly,1603,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-12-08..2025-12-14&type=commits
+Aider (co-author),2025-12-15,2025-12-21,weekly,1272,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-12-15..2025-12-21&type=commits
+Aider (co-author),2025-12-22,2025-12-28,weekly,1126,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-12-22..2025-12-28&type=commits
+Aider (co-author),2025-12-29,2026-01-04,weekly,1209,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2025-12-29..2026-01-04&type=commits
+Aider (co-author),2026-01-05,2026-01-11,weekly,1212,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-01-05..2026-01-11&type=commits
+Aider (co-author),2026-01-12,2026-01-18,weekly,1669,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-01-12..2026-01-18&type=commits
+Aider (co-author),2026-01-19,2026-01-25,weekly,1549,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-01-19..2026-01-25&type=commits
+Aider (co-author),2026-01-26,2026-02-01,weekly,1239,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-01-26..2026-02-01&type=commits
+Aider (co-author),2026-02-02,2026-02-08,weekly,1996,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-02-02..2026-02-08&type=commits
+Aider (co-author),2026-02-09,2026-02-15,weekly,1516,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-02-09..2026-02-15&type=commits
+Aider (co-author),2026-02-16,2026-02-22,weekly,2006,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-02-16..2026-02-22&type=commits
+Aider (co-author),2026-02-23,2026-03-01,weekly,2257,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-02-23..2026-03-01&type=commits
+Aider (co-author),2026-03-02,2026-03-08,weekly,2316,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-03-02..2026-03-08&type=commits
+Aider (co-author),2026-03-09,2026-03-15,weekly,2121,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-03-09..2026-03-15&type=commits
+Aider (co-author),2026-03-16,2026-03-22,weekly,2512,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-03-16..2026-03-22&type=commits
+Aider (co-author),2026-03-23,2026-03-27,weekly,1367,https://github.com/search?q=Co-Authored-By%3A+Aider+author-date%3A2026-03-23..2026-03-27&type=commits
+Devin (co-author),2025-09-29,2025-10-05,weekly,688,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-09-29..2025-10-05&type=commits
+Devin (co-author),2025-10-06,2025-10-12,weekly,627,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-10-06..2025-10-12&type=commits
+Devin (co-author),2025-10-13,2025-10-19,weekly,1071,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-10-13..2025-10-19&type=commits
+Devin (co-author),2025-10-20,2025-10-26,weekly,994,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-10-20..2025-10-26&type=commits
+Devin (co-author),2025-10-27,2025-11-02,weekly,983,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-10-27..2025-11-02&type=commits
+Devin (co-author),2025-11-03,2025-11-09,weekly,636,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-11-03..2025-11-09&type=commits
+Devin (co-author),2025-11-10,2025-11-16,weekly,718,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-11-10..2025-11-16&type=commits
+Devin (co-author),2025-11-17,2025-11-23,weekly,1182,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-11-17..2025-11-23&type=commits
+Devin (co-author),2025-11-24,2025-11-30,weekly,1172,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-11-24..2025-11-30&type=commits
+Devin (co-author),2025-12-01,2025-12-07,weekly,1351,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-12-01..2025-12-07&type=commits
+Devin (co-author),2025-12-08,2025-12-14,weekly,1532,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-12-08..2025-12-14&type=commits
+Devin (co-author),2025-12-15,2025-12-21,weekly,1807,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-12-15..2025-12-21&type=commits
+Devin (co-author),2025-12-22,2025-12-28,weekly,831,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-12-22..2025-12-28&type=commits
+Devin (co-author),2025-12-29,2026-01-04,weekly,1789,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2025-12-29..2026-01-04&type=commits
+Devin (co-author),2026-01-05,2026-01-11,weekly,2326,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-01-05..2026-01-11&type=commits
+Devin (co-author),2026-01-12,2026-01-18,weekly,2463,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-01-12..2026-01-18&type=commits
+Devin (co-author),2026-01-19,2026-01-25,weekly,1535,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-01-19..2026-01-25&type=commits
+Devin (co-author),2026-01-26,2026-02-01,weekly,1404,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-01-26..2026-02-01&type=commits
+Devin (co-author),2026-02-02,2026-02-08,weekly,1661,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-02-02..2026-02-08&type=commits
+Devin (co-author),2026-02-09,2026-02-15,weekly,1943,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-02-09..2026-02-15&type=commits
+Devin (co-author),2026-02-16,2026-02-22,weekly,1189,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-02-16..2026-02-22&type=commits
+Devin (co-author),2026-02-23,2026-03-01,weekly,1494,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-02-23..2026-03-01&type=commits
+Devin (co-author),2026-03-02,2026-03-08,weekly,2153,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-03-02..2026-03-08&type=commits
+Devin (co-author),2026-03-09,2026-03-15,weekly,2913,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-03-09..2026-03-15&type=commits
+Devin (co-author),2026-03-16,2026-03-22,weekly,3363,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-03-16..2026-03-22&type=commits
+Devin (co-author),2026-03-23,2026-03-27,weekly,1860,https://github.com/search?q=Co-Authored-By%3A+Devin+author-date%3A2026-03-23..2026-03-27&type=commits
+Windsurf (co-author),2025-09-29,2025-10-05,weekly,81,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-09-29..2025-10-05&type=commits
+Windsurf (co-author),2025-10-06,2025-10-12,weekly,78,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-10-06..2025-10-12&type=commits
+Windsurf (co-author),2025-10-13,2025-10-19,weekly,77,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-10-13..2025-10-19&type=commits
+Windsurf (co-author),2025-10-20,2025-10-26,weekly,99,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-10-20..2025-10-26&type=commits
+Windsurf (co-author),2025-10-27,2025-11-02,weekly,186,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-10-27..2025-11-02&type=commits
+Windsurf (co-author),2025-11-03,2025-11-09,weekly,118,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-11-03..2025-11-09&type=commits
+Windsurf (co-author),2025-11-10,2025-11-16,weekly,70,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-11-10..2025-11-16&type=commits
+Windsurf (co-author),2025-11-17,2025-11-23,weekly,142,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-11-17..2025-11-23&type=commits
+Windsurf (co-author),2025-11-24,2025-11-30,weekly,233,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-11-24..2025-11-30&type=commits
+Windsurf (co-author),2025-12-01,2025-12-07,weekly,242,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-12-01..2025-12-07&type=commits
+Windsurf (co-author),2025-12-08,2025-12-14,weekly,102,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-12-08..2025-12-14&type=commits
+Windsurf (co-author),2025-12-15,2025-12-21,weekly,108,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-12-15..2025-12-21&type=commits
+Windsurf (co-author),2025-12-22,2025-12-28,weekly,185,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-12-22..2025-12-28&type=commits
+Windsurf (co-author),2025-12-29,2026-01-04,weekly,110,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2025-12-29..2026-01-04&type=commits
+Windsurf (co-author),2026-01-05,2026-01-11,weekly,114,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-01-05..2026-01-11&type=commits
+Windsurf (co-author),2026-01-12,2026-01-18,weekly,201,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-01-12..2026-01-18&type=commits
+Windsurf (co-author),2026-01-19,2026-01-25,weekly,186,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-01-19..2026-01-25&type=commits
+Windsurf (co-author),2026-01-26,2026-02-01,weekly,607,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-01-26..2026-02-01&type=commits
+Windsurf (co-author),2026-02-02,2026-02-08,weekly,350,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-02-02..2026-02-08&type=commits
+Windsurf (co-author),2026-02-09,2026-02-15,weekly,380,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-02-09..2026-02-15&type=commits
+Windsurf (co-author),2026-02-16,2026-02-22,weekly,467,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-02-16..2026-02-22&type=commits
+Windsurf (co-author),2026-02-23,2026-03-01,weekly,518,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-02-23..2026-03-01&type=commits
+Windsurf (co-author),2026-03-02,2026-03-08,weekly,546,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-03-02..2026-03-08&type=commits
+Windsurf (co-author),2026-03-09,2026-03-15,weekly,559,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-03-09..2026-03-15&type=commits
+Windsurf (co-author),2026-03-16,2026-03-22,weekly,687,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-03-16..2026-03-22&type=commits
+Windsurf (co-author),2026-03-23,2026-03-27,weekly,572,https://github.com/search?q=Co-Authored-By%3A+Windsurf+author-date%3A2026-03-23..2026-03-27&type=commits
+Happy (co-author),2025-09-29,2025-10-05,weekly,771,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-09-29..2025-10-05&type=commits
+Happy (co-author),2025-10-06,2025-10-12,weekly,1061,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-10-06..2025-10-12&type=commits
+Happy (co-author),2025-10-13,2025-10-19,weekly,1355,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-10-13..2025-10-19&type=commits
+Happy (co-author),2025-10-20,2025-10-26,weekly,1654,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-10-20..2025-10-26&type=commits
+Happy (co-author),2025-10-27,2025-11-02,weekly,1675,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-10-27..2025-11-02&type=commits
+Happy (co-author),2025-11-03,2025-11-09,weekly,1467,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-11-03..2025-11-09&type=commits
+Happy (co-author),2025-11-10,2025-11-16,weekly,1038,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-11-10..2025-11-16&type=commits
+Happy (co-author),2025-11-17,2025-11-23,weekly,1067,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-11-17..2025-11-23&type=commits
+Happy (co-author),2025-11-24,2025-11-30,weekly,1284,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-11-24..2025-11-30&type=commits
+Happy (co-author),2025-12-01,2025-12-07,weekly,1755,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-12-01..2025-12-07&type=commits
+Happy (co-author),2025-12-08,2025-12-14,weekly,1326,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-12-08..2025-12-14&type=commits
+Happy (co-author),2025-12-15,2025-12-21,weekly,1393,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-12-15..2025-12-21&type=commits
+Happy (co-author),2025-12-22,2025-12-28,weekly,1197,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-12-22..2025-12-28&type=commits
+Happy (co-author),2025-12-29,2026-01-04,weekly,1783,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2025-12-29..2026-01-04&type=commits
+Happy (co-author),2026-01-05,2026-01-11,weekly,1849,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-01-05..2026-01-11&type=commits
+Happy (co-author),2026-01-12,2026-01-18,weekly,2733,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-01-12..2026-01-18&type=commits
+Happy (co-author),2026-01-19,2026-01-25,weekly,3341,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-01-19..2026-01-25&type=commits
+Happy (co-author),2026-01-26,2026-02-01,weekly,3743,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-01-26..2026-02-01&type=commits
+Happy (co-author),2026-02-02,2026-02-08,weekly,5480,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-02-02..2026-02-08&type=commits
+Happy (co-author),2026-02-09,2026-02-15,weekly,6048,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-02-09..2026-02-15&type=commits
+Happy (co-author),2026-02-16,2026-02-22,weekly,6455,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-02-16..2026-02-22&type=commits
+Happy (co-author),2026-02-23,2026-03-01,weekly,7101,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-02-23..2026-03-01&type=commits
+Happy (co-author),2026-03-02,2026-03-08,weekly,5466,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-03-02..2026-03-08&type=commits
+Happy (co-author),2026-03-09,2026-03-15,weekly,5398,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-03-09..2026-03-15&type=commits
+Happy (co-author),2026-03-16,2026-03-22,weekly,5711,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-03-16..2026-03-22&type=commits
+Happy (co-author),2026-03-23,2026-03-27,weekly,4327,https://github.com/search?q=Co-Authored-By%3A+Happy+author-date%3A2026-03-23..2026-03-27&type=commits
+Copilot Agent (author),2025-09-29,2025-10-05,weekly,50046,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-09-29..2025-10-05&type=commits
+Copilot Agent (author),2025-10-06,2025-10-12,weekly,55071,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-10-06..2025-10-12&type=commits
+Copilot Agent (author),2025-10-13,2025-10-19,weekly,55259,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-10-13..2025-10-19&type=commits
+Copilot Agent (author),2025-10-20,2025-10-26,weekly,57964,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-10-20..2025-10-26&type=commits
+Copilot Agent (author),2025-10-27,2025-11-02,weekly,74273,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-10-27..2025-11-02&type=commits
+Copilot Agent (author),2025-11-03,2025-11-09,weekly,89529,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-11-03..2025-11-09&type=commits
+Copilot Agent (author),2025-11-10,2025-11-16,weekly,84588,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-11-10..2025-11-16&type=commits
+Copilot Agent (author),2025-11-17,2025-11-23,weekly,90059,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-11-17..2025-11-23&type=commits
+Copilot Agent (author),2025-11-24,2025-11-30,weekly,88453,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-11-24..2025-11-30&type=commits
+Copilot Agent (author),2025-12-01,2025-12-07,weekly,104573,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-12-01..2025-12-07&type=commits
+Copilot Agent (author),2025-12-08,2025-12-14,weekly,103506,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-12-08..2025-12-14&type=commits
+Copilot Agent (author),2025-12-15,2025-12-21,weekly,93595,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-12-15..2025-12-21&type=commits
+Copilot Agent (author),2025-12-22,2025-12-28,weekly,78608,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-12-22..2025-12-28&type=commits
+Copilot Agent (author),2025-12-29,2026-01-04,weekly,93631,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2025-12-29..2026-01-04&type=commits
+Copilot Agent (author),2026-01-05,2026-01-11,weekly,107378,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-01-05..2026-01-11&type=commits
+Copilot Agent (author),2026-01-12,2026-01-18,weekly,104855,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-01-12..2026-01-18&type=commits
+Copilot Agent (author),2026-01-19,2026-01-25,weekly,98369,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-01-19..2026-01-25&type=commits
+Copilot Agent (author),2026-01-26,2026-02-01,weekly,118795,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-01-26..2026-02-01&type=commits
+Copilot Agent (author),2026-02-02,2026-02-08,weekly,141227,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-02-02..2026-02-08&type=commits
+Copilot Agent (author),2026-02-09,2026-02-15,weekly,148989,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-02-09..2026-02-15&type=commits
+Copilot Agent (author),2026-02-16,2026-02-22,weekly,128683,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-02-16..2026-02-22&type=commits
+Copilot Agent (author),2026-02-23,2026-03-01,weekly,122933,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-02-23..2026-03-01&type=commits
+Copilot Agent (author),2026-03-02,2026-03-08,weekly,129951,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-03-02..2026-03-08&type=commits
+Copilot Agent (author),2026-03-09,2026-03-15,weekly,135591,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-03-09..2026-03-15&type=commits
+Copilot Agent (author),2026-03-16,2026-03-22,weekly,117669,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-03-16..2026-03-22&type=commits
+Copilot Agent (author),2026-03-23,2026-03-27,weekly,77017,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D+author-date%3A2026-03-23..2026-03-27&type=commits
+Jules (author),2025-09-29,2025-10-05,weekly,13866,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-09-29..2025-10-05&type=commits
+Jules (author),2025-10-06,2025-10-12,weekly,13941,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-10-06..2025-10-12&type=commits
+Jules (author),2025-10-13,2025-10-19,weekly,12172,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-10-13..2025-10-19&type=commits
+Jules (author),2025-10-20,2025-10-26,weekly,11960,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-10-20..2025-10-26&type=commits
+Jules (author),2025-10-27,2025-11-02,weekly,11742,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-10-27..2025-11-02&type=commits
+Jules (author),2025-11-03,2025-11-09,weekly,11996,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-11-03..2025-11-09&type=commits
+Jules (author),2025-11-10,2025-11-16,weekly,11241,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-11-10..2025-11-16&type=commits
+Jules (author),2025-11-17,2025-11-23,weekly,12914,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-11-17..2025-11-23&type=commits
+Jules (author),2025-11-24,2025-11-30,weekly,14061,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-11-24..2025-11-30&type=commits
+Jules (author),2025-12-01,2025-12-07,weekly,14281,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-12-01..2025-12-07&type=commits
+Jules (author),2025-12-08,2025-12-14,weekly,17862,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-12-08..2025-12-14&type=commits
+Jules (author),2025-12-15,2025-12-21,weekly,20856,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-12-15..2025-12-21&type=commits
+Jules (author),2025-12-22,2025-12-28,weekly,20370,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-12-22..2025-12-28&type=commits
+Jules (author),2025-12-29,2026-01-04,weekly,21082,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2025-12-29..2026-01-04&type=commits
+Jules (author),2026-01-05,2026-01-11,weekly,21171,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-01-05..2026-01-11&type=commits
+Jules (author),2026-01-12,2026-01-18,weekly,24619,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-01-12..2026-01-18&type=commits
+Jules (author),2026-01-19,2026-01-25,weekly,36981,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-01-19..2026-01-25&type=commits
+Jules (author),2026-01-26,2026-02-01,weekly,29928,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-01-26..2026-02-01&type=commits
+Jules (author),2026-02-02,2026-02-08,weekly,31360,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-02-02..2026-02-08&type=commits
+Jules (author),2026-02-09,2026-02-15,weekly,30529,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-02-09..2026-02-15&type=commits
+Jules (author),2026-02-16,2026-02-22,weekly,33438,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-02-16..2026-02-22&type=commits
+Jules (author),2026-02-23,2026-03-01,weekly,32326,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-02-23..2026-03-01&type=commits
+Jules (author),2026-03-02,2026-03-08,weekly,26486,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-03-02..2026-03-08&type=commits
+Jules (author),2026-03-09,2026-03-15,weekly,29064,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-03-09..2026-03-15&type=commits
+Jules (author),2026-03-16,2026-03-22,weekly,26890,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-03-16..2026-03-22&type=commits
+Jules (author),2026-03-23,2026-03-27,weekly,17228,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D+author-date%3A2026-03-23..2026-03-27&type=commits
+Devin (author),2025-09-29,2025-10-05,weekly,1429,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-09-29..2025-10-05&type=commits
+Devin (author),2025-10-06,2025-10-12,weekly,1653,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-10-06..2025-10-12&type=commits
+Devin (author),2025-10-13,2025-10-19,weekly,1874,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-10-13..2025-10-19&type=commits
+Devin (author),2025-10-20,2025-10-26,weekly,1625,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-10-20..2025-10-26&type=commits
+Devin (author),2025-10-27,2025-11-02,weekly,1695,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-10-27..2025-11-02&type=commits
+Devin (author),2025-11-03,2025-11-09,weekly,2254,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-11-03..2025-11-09&type=commits
+Devin (author),2025-11-10,2025-11-16,weekly,1827,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-11-10..2025-11-16&type=commits
+Devin (author),2025-11-17,2025-11-23,weekly,2047,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-11-17..2025-11-23&type=commits
+Devin (author),2025-11-24,2025-11-30,weekly,1941,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-11-24..2025-11-30&type=commits
+Devin (author),2025-12-01,2025-12-07,weekly,2047,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-12-01..2025-12-07&type=commits
+Devin (author),2025-12-08,2025-12-14,weekly,2414,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-12-08..2025-12-14&type=commits
+Devin (author),2025-12-15,2025-12-21,weekly,2448,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-12-15..2025-12-21&type=commits
+Devin (author),2025-12-22,2025-12-28,weekly,1706,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-12-22..2025-12-28&type=commits
+Devin (author),2025-12-29,2026-01-04,weekly,1820,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2025-12-29..2026-01-04&type=commits
+Devin (author),2026-01-05,2026-01-11,weekly,2225,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-01-05..2026-01-11&type=commits
+Devin (author),2026-01-12,2026-01-18,weekly,3162,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-01-12..2026-01-18&type=commits
+Devin (author),2026-01-19,2026-01-25,weekly,2064,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-01-19..2026-01-25&type=commits
+Devin (author),2026-01-26,2026-02-01,weekly,1830,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-01-26..2026-02-01&type=commits
+Devin (author),2026-02-02,2026-02-08,weekly,2171,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-02-02..2026-02-08&type=commits
+Devin (author),2026-02-09,2026-02-15,weekly,2738,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-02-09..2026-02-15&type=commits
+Devin (author),2026-02-16,2026-02-22,weekly,3137,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-02-16..2026-02-22&type=commits
+Devin (author),2026-02-23,2026-03-01,weekly,3191,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-02-23..2026-03-01&type=commits
+Devin (author),2026-03-02,2026-03-08,weekly,4475,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-03-02..2026-03-08&type=commits
+Devin (author),2026-03-09,2026-03-15,weekly,3896,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-03-09..2026-03-15&type=commits
+Devin (author),2026-03-16,2026-03-22,weekly,3909,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-03-16..2026-03-22&type=commits
+Devin (author),2026-03-23,2026-03-27,weekly,3097,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D+author-date%3A2026-03-23..2026-03-27&type=commits
+Amazon Q (author),2025-09-29,2025-10-05,weekly,4,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-09-29..2025-10-05&type=commits
+Amazon Q (author),2025-10-06,2025-10-12,weekly,15,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-10-06..2025-10-12&type=commits
+Amazon Q (author),2025-10-13,2025-10-19,weekly,26,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-10-13..2025-10-19&type=commits
+Amazon Q (author),2025-10-20,2025-10-26,weekly,26,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-10-20..2025-10-26&type=commits
+Amazon Q (author),2025-10-27,2025-11-02,weekly,17,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-10-27..2025-11-02&type=commits
+Amazon Q (author),2025-11-03,2025-11-09,weekly,27,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-11-03..2025-11-09&type=commits
+Amazon Q (author),2025-11-10,2025-11-16,weekly,17,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-11-10..2025-11-16&type=commits
+Amazon Q (author),2025-11-17,2025-11-23,weekly,22,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-11-17..2025-11-23&type=commits
+Amazon Q (author),2025-11-24,2025-11-30,weekly,35,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-11-24..2025-11-30&type=commits
+Amazon Q (author),2025-12-01,2025-12-07,weekly,29,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-12-01..2025-12-07&type=commits
+Amazon Q (author),2025-12-08,2025-12-14,weekly,50,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-12-08..2025-12-14&type=commits
+Amazon Q (author),2025-12-15,2025-12-21,weekly,13,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-12-15..2025-12-21&type=commits
+Amazon Q (author),2025-12-22,2025-12-28,weekly,58,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-12-22..2025-12-28&type=commits
+Amazon Q (author),2025-12-29,2026-01-04,weekly,46,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2025-12-29..2026-01-04&type=commits
+Amazon Q (author),2026-01-05,2026-01-11,weekly,12,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-01-05..2026-01-11&type=commits
+Amazon Q (author),2026-01-12,2026-01-18,weekly,19,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-01-12..2026-01-18&type=commits
+Amazon Q (author),2026-01-19,2026-01-25,weekly,3,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-01-19..2026-01-25&type=commits
+Amazon Q (author),2026-01-26,2026-02-01,weekly,13,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-01-26..2026-02-01&type=commits
+Amazon Q (author),2026-02-02,2026-02-08,weekly,9,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-02-02..2026-02-08&type=commits
+Amazon Q (author),2026-02-09,2026-02-15,weekly,12,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-02-09..2026-02-15&type=commits
+Amazon Q (author),2026-02-16,2026-02-22,weekly,22,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-02-16..2026-02-22&type=commits
+Amazon Q (author),2026-02-23,2026-03-01,weekly,1,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-02-23..2026-03-01&type=commits
+Amazon Q (author),2026-03-02,2026-03-08,weekly,5,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-03-02..2026-03-08&type=commits
+Amazon Q (author),2026-03-09,2026-03-15,weekly,2,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-03-09..2026-03-15&type=commits
+Amazon Q (author),2026-03-16,2026-03-22,weekly,3,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-03-16..2026-03-22&type=commits
+Amazon Q (author),2026-03-23,2026-03-27,weekly,1,https://github.com/search?q=author%3Aamazon-q-developer%5Bbot%5D+author-date%3A2026-03-23..2026-03-27&type=commits

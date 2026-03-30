@@ -1,0 +1,155 @@
+tool,period_start,period_end,granularity,total_count,url
+Copilot SWE Agent (author),2025-09-01,2025-09-30,monthly,95824,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot SWE Agent (author),2025-10-01,2025-10-31,monthly,130275,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot SWE Agent (author),2025-11-01,2025-11-30,monthly,188228,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot SWE Agent (author),2025-12-01,2025-12-31,monthly,193454,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot SWE Agent (author),2026-01-01,2026-01-31,monthly,208224,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot SWE Agent (author),2026-02-01,2026-02-28,monthly,270221,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot SWE Agent (author),2026-03-01,2026-03-28,monthly,326250,https://github.com/search?q=is%3Apr+author%3Acopilot-swe-agent%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Codex Connector (author),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Codex Connector (author),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Codex Connector (author),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Codex Connector (author),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Codex Connector (author),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Codex Connector (author),2026-02-01,2026-02-28,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Codex Connector (author),2026-03-01,2026-03-28,monthly,0,https://github.com/search?q=is%3Apr+author%3Achatgpt-codex-connector%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Claude (author),2025-09-01,2025-09-30,monthly,97,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Claude (author),2025-10-01,2025-10-31,monthly,179,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Claude (author),2025-11-01,2025-11-30,monthly,295,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Claude (author),2025-12-01,2025-12-31,monthly,775,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Claude (author),2026-01-01,2026-01-31,monthly,1035,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Claude (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Claude (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Aclaude%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Devin (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Devin (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Devin (author),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Devin (author),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Devin (author),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Devin (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Devin (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Adevin-ai-integration%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Jules (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Jules (author),2025-10-01,2025-10-31,monthly,17647,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Jules (author),2025-11-01,2025-11-30,monthly,40347,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Jules (author),2025-12-01,2025-12-31,monthly,80694,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Jules (author),2026-01-01,2026-01-31,monthly,116653,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Jules (author),2026-02-01,2026-02-28,monthly,6677,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Jules (author),2026-03-01,2026-03-28,monthly,7438,https://github.com/search?q=is%3Apr+author%3Agoogle-labs-jules%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Amazon Q (author),2025-09-01,2025-09-30,monthly,79,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Amazon Q (author),2025-10-01,2025-10-31,monthly,186,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Amazon Q (author),2025-11-01,2025-11-30,monthly,109,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Amazon Q (author),2025-12-01,2025-12-31,monthly,281,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Amazon Q (author),2026-01-01,2026-01-31,monthly,103,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Amazon Q (author),2026-02-01,2026-02-28,monthly,39,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Amazon Q (author),2026-03-01,2026-03-28,monthly,21,https://github.com/search?q=is%3Apr+author%3Aamazon-q-developer%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Sweep (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Sweep (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Sweep (author),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Sweep (author),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Sweep (author),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Sweep (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Sweep (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asweep-ai%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Pixeebot (author),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Pixeebot (author),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Pixeebot (author),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Pixeebot (author),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Pixeebot (author),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Pixeebot (author),2026-02-01,2026-02-28,monthly,0,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Pixeebot (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Apixeebot%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Codeflash (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Codeflash (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Codeflash (author),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Codeflash (author),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Codeflash (author),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Codeflash (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Codeflash (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodeflash-ai%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Codegen (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Codegen (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Codegen (author),2025-11-01,2025-11-30,monthly,546,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Codegen (author),2025-12-01,2025-12-31,monthly,484,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Codegen (author),2026-01-01,2026-01-31,monthly,431,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Codegen (author),2026-02-01,2026-02-28,monthly,404,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Codegen (author),2026-03-01,2026-03-28,monthly,284,https://github.com/search?q=is%3Apr+author%3Acodegen-sh%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Mentat (author),2025-09-01,2025-09-30,monthly,110,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Mentat (author),2025-10-01,2025-10-31,monthly,71,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Mentat (author),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Mentat (author),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Mentat (author),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Mentat (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Mentat (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Amentatbot%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+GitAuto (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+GitAuto (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+GitAuto (author),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+GitAuto (author),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+GitAuto (author),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+GitAuto (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+GitAuto (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agitauto-ai%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+CodeRabbit (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+CodeRabbit (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+CodeRabbit (author),2025-11-01,2025-11-30,monthly,1205,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+CodeRabbit (author),2025-12-01,2025-12-31,monthly,1665,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+CodeRabbit (author),2026-01-01,2026-01-31,monthly,1493,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+CodeRabbit (author),2026-02-01,2026-02-28,monthly,1304,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+CodeRabbit (author),2026-03-01,2026-03-28,monthly,1003,https://github.com/search?q=is%3Apr+author%3Acoderabbitai%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Sourcery (author),2025-09-01,2025-09-30,monthly,1,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Sourcery (author),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Sourcery (author),2025-11-01,2025-11-30,monthly,1,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Sourcery (author),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Sourcery (author),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Sourcery (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Sourcery (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Asourcery-ai%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Gemini Code Assist (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Gemini Code Assist (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Gemini Code Assist (author),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Gemini Code Assist (author),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Gemini Code Assist (author),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Gemini Code Assist (author),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Gemini Code Assist (author),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Agemini-code-assist%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Cursor (author),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Cursor (author),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Cursor (author),2025-11-01,2025-11-30,monthly,391,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Cursor (author),2025-12-01,2025-12-31,monthly,271,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Cursor (author),2026-01-01,2026-01-31,monthly,313,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Cursor (author),2026-02-01,2026-02-28,monthly,692,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Cursor (author),2026-03-01,2026-03-28,monthly,3654,https://github.com/search?q=is%3Apr+author%3Acursor%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Dependabot (author),2025-09-01,2025-09-30,monthly,1616856,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Dependabot (author),2025-10-01,2025-10-31,monthly,1364819,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Dependabot (author),2025-11-01,2025-11-30,monthly,1422123,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Dependabot (author),2025-12-01,2025-12-31,monthly,1541684,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Dependabot (author),2026-01-01,2026-01-31,monthly,1598015,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Dependabot (author),2026-02-01,2026-02-28,monthly,1817450,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Dependabot (author),2026-03-01,2026-03-28,monthly,1632120,https://github.com/search?q=is%3Apr+author%3Adependabot%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Renovate (author),2025-09-01,2025-09-30,monthly,370855,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2025-09-01..2025-09-30&type=pullrequests
+Renovate (author),2025-10-01,2025-10-31,monthly,389934,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2025-10-01..2025-10-31&type=pullrequests
+Renovate (author),2025-11-01,2025-11-30,monthly,385209,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2025-11-01..2025-11-30&type=pullrequests
+Renovate (author),2025-12-01,2025-12-31,monthly,376709,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2025-12-01..2025-12-31&type=pullrequests
+Renovate (author),2026-01-01,2026-01-31,monthly,396180,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2026-01-01..2026-01-31&type=pullrequests
+Renovate (author),2026-02-01,2026-02-28,monthly,399471,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2026-02-01..2026-02-28&type=pullrequests
+Renovate (author),2026-03-01,2026-03-28,monthly,486606,https://github.com/search?q=is%3Apr+author%3Arenovate%5Bbot%5D+created%3A2026-03-01..2026-03-28&type=pullrequests
+Claude Code (body),2025-09-01,2025-09-30,monthly,32642,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2025-09-01..2025-09-30&type=pullrequests
+Claude Code (body),2025-10-01,2025-10-31,monthly,64911,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2025-10-01..2025-10-31&type=pullrequests
+Claude Code (body),2025-11-01,2025-11-30,monthly,61521,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2025-11-01..2025-11-30&type=pullrequests
+Claude Code (body),2025-12-01,2025-12-31,monthly,100010,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2025-12-01..2025-12-31&type=pullrequests
+Claude Code (body),2026-01-01,2026-01-31,monthly,179865,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2026-01-01..2026-01-31&type=pullrequests
+Claude Code (body),2026-02-01,2026-02-28,monthly,345940,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2026-02-01..2026-02-28&type=pullrequests
+Claude Code (body),2026-03-01,2026-03-28,monthly,600433,https://github.com/search?q=is%3Apr+"Generated+with+Claude+Code"+created%3A2026-03-01..2026-03-28&type=pullrequests
+Claude (co-author in body),2025-09-01,2025-09-30,monthly,3069,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2025-09-01..2025-09-30&type=pullrequests
+Claude (co-author in body),2025-10-01,2025-10-31,monthly,7983,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2025-10-01..2025-10-31&type=pullrequests
+Claude (co-author in body),2025-11-01,2025-11-30,monthly,9037,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2025-11-01..2025-11-30&type=pullrequests
+Claude (co-author in body),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2025-12-01..2025-12-31&type=pullrequests
+Claude (co-author in body),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2026-01-01..2026-01-31&type=pullrequests
+Claude (co-author in body),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2026-02-01..2026-02-28&type=pullrequests
+Claude (co-author in body),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+"Co-Authored-By%3A+Claude"+created%3A2026-03-01..2026-03-28&type=pullrequests
+Devin (body),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2025-09-01..2025-09-30&type=pullrequests
+Devin (body),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2025-10-01..2025-10-31&type=pullrequests
+Devin (body),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2025-11-01..2025-11-30&type=pullrequests
+Devin (body),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2025-12-01..2025-12-31&type=pullrequests
+Devin (body),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2026-01-01..2026-01-31&type=pullrequests
+Devin (body),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2026-02-01..2026-02-28&type=pullrequests
+Devin (body),2026-03-01,2026-03-28,monthly,1673,https://github.com/search?q=is%3Apr+"Created+by+Devin"+created%3A2026-03-01..2026-03-28&type=pullrequests
+Sweep (title),2025-09-01,2025-09-30,monthly,9745,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2025-09-01..2025-09-30&type=pullrequests
+Sweep (title),2025-10-01,2025-10-31,monthly,4978,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2025-10-01..2025-10-31&type=pullrequests
+Sweep (title),2025-11-01,2025-11-30,monthly,4379,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2025-11-01..2025-11-30&type=pullrequests
+Sweep (title),2025-12-01,2025-12-31,monthly,4529,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2025-12-01..2025-12-31&type=pullrequests
+Sweep (title),2026-01-01,2026-01-31,monthly,6174,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2026-01-01..2026-01-31&type=pullrequests
+Sweep (title),2026-02-01,2026-02-28,monthly,13208,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2026-02-01..2026-02-28&type=pullrequests
+Sweep (title),2026-03-01,2026-03-28,monthly,23813,https://github.com/search?q=is%3Apr+"Sweep%3A"+created%3A2026-03-01..2026-03-28&type=pullrequests

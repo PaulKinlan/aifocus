@@ -1,0 +1,309 @@
+tool,period_start,period_end,granularity,total_count,url
+CodeRabbit (commenter),2025-09-01,2025-09-30,monthly,160816,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+CodeRabbit (commenter),2025-10-01,2025-10-31,monthly,191646,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+CodeRabbit (commenter),2025-11-01,2025-11-30,monthly,211430,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+CodeRabbit (commenter),2025-12-01,2025-12-31,monthly,246545,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+CodeRabbit (commenter),2026-01-01,2026-01-31,monthly,307988,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+CodeRabbit (commenter),2026-02-01,2026-02-28,monthly,314919,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+CodeRabbit (commenter),2026-03-01,2026-03-28,monthly,419100,https://github.com/search?q=is%3Apr+commenter%3Acoderabbitai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Gemini Code Assist (commenter),2025-09-01,2025-09-30,monthly,43751,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Gemini Code Assist (commenter),2025-10-01,2025-10-31,monthly,52618,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Gemini Code Assist (commenter),2025-11-01,2025-11-30,monthly,64501,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Gemini Code Assist (commenter),2025-12-01,2025-12-31,monthly,78155,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Gemini Code Assist (commenter),2026-01-01,2026-01-31,monthly,106415,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Gemini Code Assist (commenter),2026-02-01,2026-02-28,monthly,148889,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Gemini Code Assist (commenter),2026-03-01,2026-03-28,monthly,197433,https://github.com/search?q=is%3Apr+commenter%3Agemini-code-assist%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Cursor (commenter),2025-09-01,2025-09-30,monthly,51969,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Cursor (commenter),2025-10-01,2025-10-31,monthly,71645,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Cursor (commenter),2025-11-01,2025-11-30,monthly,41439,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Cursor (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Cursor (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Cursor (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Cursor (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acursor%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Claude (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Claude (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Claude (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Claude (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Claude (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Claude (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Claude (commenter),2026-03-01,2026-03-28,monthly,48717,https://github.com/search?q=is%3Apr+commenter%3Aclaude%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Copilot (commenter),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot (commenter),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot (commenter),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot (commenter),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot (commenter),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot (commenter),2026-02-01,2026-02-28,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot (commenter),2026-03-01,2026-03-28,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acopilot%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Copilot PR Reviewer (commenter),2025-09-01,2025-09-30,monthly,144980,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot PR Reviewer (commenter),2025-10-01,2025-10-31,monthly,181377,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot PR Reviewer (commenter),2025-11-01,2025-11-30,monthly,205767,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot PR Reviewer (commenter),2025-12-01,2025-12-31,monthly,257037,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot PR Reviewer (commenter),2026-01-01,2026-01-31,monthly,300602,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot PR Reviewer (commenter),2026-02-01,2026-02-28,monthly,378706,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot PR Reviewer (commenter),2026-03-01,2026-03-28,monthly,530704,https://github.com/search?q=is%3Apr+commenter%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Sourcery (commenter),2025-09-01,2025-09-30,monthly,17346,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Sourcery (commenter),2025-10-01,2025-10-31,monthly,19626,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Sourcery (commenter),2025-11-01,2025-11-30,monthly,18680,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Sourcery (commenter),2025-12-01,2025-12-31,monthly,18657,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Sourcery (commenter),2026-01-01,2026-01-31,monthly,21106,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Sourcery (commenter),2026-02-01,2026-02-28,monthly,29362,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Sourcery (commenter),2026-03-01,2026-03-28,monthly,39844,https://github.com/search?q=is%3Apr+commenter%3Asourcery-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Korbit (commenter),2025-09-01,2025-09-30,monthly,3194,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Korbit (commenter),2025-10-01,2025-10-31,monthly,2309,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Korbit (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Korbit (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Korbit (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Korbit (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Korbit (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Akorbit-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+What The Diff (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+What The Diff (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+What The Diff (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+What The Diff (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+What The Diff (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+What The Diff (commenter),2026-02-01,2026-02-28,monthly,563,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+What The Diff (commenter),2026-03-01,2026-03-28,monthly,970,https://github.com/search?q=is%3Apr+commenter%3Awhat-the-diff%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+CodeAnt AI (commenter),2025-09-01,2025-09-30,monthly,179,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+CodeAnt AI (commenter),2025-10-01,2025-10-31,monthly,1000,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+CodeAnt AI (commenter),2025-11-01,2025-11-30,monthly,2093,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+CodeAnt AI (commenter),2025-12-01,2025-12-31,monthly,3140,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+CodeAnt AI (commenter),2026-01-01,2026-01-31,monthly,3631,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+CodeAnt AI (commenter),2026-02-01,2026-02-28,monthly,4724,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+CodeAnt AI (commenter),2026-03-01,2026-03-28,monthly,6680,https://github.com/search?q=is%3Apr+commenter%3Acodeant-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Augment Code (commenter),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Augment Code (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Augment Code (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Augment Code (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Augment Code (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Augment Code (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Augment Code (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aaugmentcode%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Ellipsis (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Ellipsis (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Ellipsis (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Ellipsis (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Ellipsis (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Ellipsis (commenter),2026-02-01,2026-02-28,monthly,5402,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Ellipsis (commenter),2026-03-01,2026-03-28,monthly,2775,https://github.com/search?q=is%3Apr+commenter%3Aellipsis-dev%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Greptile (commenter),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Greptile (commenter),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Greptile (commenter),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Greptile (commenter),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Greptile (commenter),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Greptile (commenter),2026-02-01,2026-02-28,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Greptile (commenter),2026-03-01,2026-03-28,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Agreptile%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Greptile Apps (commenter),2025-09-01,2025-09-30,monthly,8186,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Greptile Apps (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Greptile Apps (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Greptile Apps (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Greptile Apps (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Greptile Apps (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Greptile Apps (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agreptile-apps%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+PR-Agent/CodiumAI (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+PR-Agent/CodiumAI (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+PR-Agent/CodiumAI (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+PR-Agent/CodiumAI (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+PR-Agent/CodiumAI (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+PR-Agent/CodiumAI (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+PR-Agent/CodiumAI (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Qodo (commenter),2025-09-01,2025-09-30,monthly,3,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Qodo (commenter),2025-10-01,2025-10-31,monthly,2,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Qodo (commenter),2025-11-01,2025-11-30,monthly,10,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Qodo (commenter),2025-12-01,2025-12-31,monthly,14,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Qodo (commenter),2026-01-01,2026-01-31,monthly,10,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Qodo (commenter),2026-02-01,2026-02-28,monthly,7,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Qodo (commenter),2026-03-01,2026-03-28,monthly,3,https://github.com/search?q=is%3Apr+commenter%3Aqodo-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Copilot SWE Agent (commenter),2025-09-01,2025-09-30,monthly,18918,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot SWE Agent (commenter),2025-10-01,2025-10-31,monthly,23586,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot SWE Agent (commenter),2025-11-01,2025-11-30,monthly,48492,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot SWE Agent (commenter),2025-12-01,2025-12-31,monthly,54072,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot SWE Agent (commenter),2026-01-01,2026-01-31,monthly,59764,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot SWE Agent (commenter),2026-02-01,2026-02-28,monthly,53962,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot SWE Agent (commenter),2026-03-01,2026-03-28,monthly,65333,https://github.com/search?q=is%3Apr+commenter%3Acopilot-swe-agent%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Codex Connector (commenter),2025-09-01,2025-09-30,monthly,62266,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Codex Connector (commenter),2025-10-01,2025-10-31,monthly,103768,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Codex Connector (commenter),2025-11-01,2025-11-30,monthly,95517,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Codex Connector (commenter),2025-12-01,2025-12-31,monthly,121926,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Codex Connector (commenter),2026-01-01,2026-01-31,monthly,126606,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Codex Connector (commenter),2026-02-01,2026-02-28,monthly,261267,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Codex Connector (commenter),2026-03-01,2026-03-28,monthly,358440,https://github.com/search?q=is%3Apr+commenter%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Devin (commenter),2025-09-01,2025-09-30,monthly,4177,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Devin (commenter),2025-10-01,2025-10-31,monthly,4993,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Devin (commenter),2025-11-01,2025-11-30,monthly,5550,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Devin (commenter),2025-12-01,2025-12-31,monthly,7556,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Devin (commenter),2026-01-01,2026-01-31,monthly,10206,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Devin (commenter),2026-02-01,2026-02-28,monthly,19528,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Devin (commenter),2026-03-01,2026-03-28,monthly,40640,https://github.com/search?q=is%3Apr+commenter%3Adevin-ai-integration%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Jules (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Jules (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Jules (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Jules (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Jules (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Jules (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Jules (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agoogle-labs-jules%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Amazon Q (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Amazon Q (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Amazon Q (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Amazon Q (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Amazon Q (commenter),2026-01-01,2026-01-31,monthly,2152,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Amazon Q (commenter),2026-02-01,2026-02-28,monthly,3457,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Amazon Q (commenter),2026-03-01,2026-03-28,monthly,4610,https://github.com/search?q=is%3Apr+commenter%3Aamazon-q-developer%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Sweep (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Sweep (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Sweep (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Sweep (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Sweep (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Sweep (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Sweep (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Asweep-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Pixeebot (commenter),2025-09-01,2025-09-30,monthly,21,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Pixeebot (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Pixeebot (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Pixeebot (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Pixeebot (commenter),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Pixeebot (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Pixeebot (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Apixeebot%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Codeflash (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Codeflash (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Codeflash (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Codeflash (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Codeflash (commenter),2026-01-01,2026-01-31,monthly,96,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Codeflash (commenter),2026-02-01,2026-02-28,monthly,115,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Codeflash (commenter),2026-03-01,2026-03-28,monthly,116,https://github.com/search?q=is%3Apr+commenter%3Acodeflash-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Codegen (commenter),2025-09-01,2025-09-30,monthly,582,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Codegen (commenter),2025-10-01,2025-10-31,monthly,251,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Codegen (commenter),2025-11-01,2025-11-30,monthly,200,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Codegen (commenter),2025-12-01,2025-12-31,monthly,92,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Codegen (commenter),2026-01-01,2026-01-31,monthly,119,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Codegen (commenter),2026-02-01,2026-02-28,monthly,105,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Codegen (commenter),2026-03-01,2026-03-28,monthly,88,https://github.com/search?q=is%3Apr+commenter%3Acodegen-sh%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Mentat (commenter),2025-09-01,2025-09-30,monthly,424,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Mentat (commenter),2025-10-01,2025-10-31,monthly,433,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Mentat (commenter),2025-11-01,2025-11-30,monthly,65,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Mentat (commenter),2025-12-01,2025-12-31,monthly,482,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Mentat (commenter),2026-01-01,2026-01-31,monthly,35,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Mentat (commenter),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Mentat (commenter),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Amentatbot%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+GitAuto (commenter),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+GitAuto (commenter),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+GitAuto (commenter),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+GitAuto (commenter),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+GitAuto (commenter),2026-01-01,2026-01-31,monthly,36,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+GitAuto (commenter),2026-02-01,2026-02-28,monthly,13,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+GitAuto (commenter),2026-03-01,2026-03-28,monthly,16,https://github.com/search?q=is%3Apr+commenter%3Agitauto-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Dosu (commenter),2025-09-01,2025-09-30,monthly,459,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Dosu (commenter),2025-10-01,2025-10-31,monthly,707,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Dosu (commenter),2025-11-01,2025-11-30,monthly,661,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Dosu (commenter),2025-12-01,2025-12-31,monthly,1060,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Dosu (commenter),2026-01-01,2026-01-31,monthly,1484,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Dosu (commenter),2026-02-01,2026-02-28,monthly,2986,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Dosu (commenter),2026-03-01,2026-03-28,monthly,1959,https://github.com/search?q=is%3Apr+commenter%3Adosubot%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Continue (commenter),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Continue (commenter),2025-10-01,2025-10-31,monthly,4,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Continue (commenter),2025-11-01,2025-11-30,monthly,265,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Continue (commenter),2025-12-01,2025-12-31,monthly,4888,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Continue (commenter),2026-01-01,2026-01-31,monthly,2883,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Continue (commenter),2026-02-01,2026-02-28,monthly,419,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Continue (commenter),2026-03-01,2026-03-28,monthly,291,https://github.com/search?q=is%3Apr+commenter%3Acontinue%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Graphite (commenter),2025-09-01,2025-09-30,monthly,4564,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Graphite (commenter),2025-10-01,2025-10-31,monthly,6548,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Graphite (commenter),2025-11-01,2025-11-30,monthly,3750,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Graphite (commenter),2025-12-01,2025-12-31,monthly,4058,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Graphite (commenter),2026-01-01,2026-01-31,monthly,3237,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Graphite (commenter),2026-02-01,2026-02-28,monthly,3707,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Graphite (commenter),2026-03-01,2026-03-28,monthly,4095,https://github.com/search?q=is%3Apr+commenter%3Agraphite-app%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+CodeRabbit (reviewer),2025-09-01,2025-09-30,monthly,62458,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+CodeRabbit (reviewer),2025-10-01,2025-10-31,monthly,68282,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+CodeRabbit (reviewer),2025-11-01,2025-11-30,monthly,74960,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+CodeRabbit (reviewer),2025-12-01,2025-12-31,monthly,90041,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+CodeRabbit (reviewer),2026-01-01,2026-01-31,monthly,110014,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+CodeRabbit (reviewer),2026-02-01,2026-02-28,monthly,146367,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+CodeRabbit (reviewer),2026-03-01,2026-03-28,monthly,207419,https://github.com/search?q=is%3Apr+reviewed-by%3Acoderabbitai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Gemini Code Assist (reviewer),2025-09-01,2025-09-30,monthly,40116,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Gemini Code Assist (reviewer),2025-10-01,2025-10-31,monthly,47483,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Gemini Code Assist (reviewer),2025-11-01,2025-11-30,monthly,58260,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Gemini Code Assist (reviewer),2025-12-01,2025-12-31,monthly,69942,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Gemini Code Assist (reviewer),2026-01-01,2026-01-31,monthly,94554,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Gemini Code Assist (reviewer),2026-02-01,2026-02-28,monthly,127751,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Gemini Code Assist (reviewer),2026-03-01,2026-03-28,monthly,162435,https://github.com/search?q=is%3Apr+reviewed-by%3Agemini-code-assist%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Cursor (reviewer),2025-09-01,2025-09-30,monthly,15091,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Cursor (reviewer),2025-10-01,2025-10-31,monthly,17327,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Cursor (reviewer),2025-11-01,2025-11-30,monthly,19552,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Cursor (reviewer),2025-12-01,2025-12-31,monthly,21493,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Cursor (reviewer),2026-01-01,2026-01-31,monthly,26483,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Cursor (reviewer),2026-02-01,2026-02-28,monthly,29319,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Cursor (reviewer),2026-03-01,2026-03-28,monthly,34230,https://github.com/search?q=is%3Apr+reviewed-by%3Acursor%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Claude (reviewer),2025-09-01,2025-09-30,monthly,392,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Claude (reviewer),2025-10-01,2025-10-31,monthly,900,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Claude (reviewer),2025-11-01,2025-11-30,monthly,1164,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Claude (reviewer),2025-12-01,2025-12-31,monthly,1518,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Claude (reviewer),2026-01-01,2026-01-31,monthly,2905,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Claude (reviewer),2026-02-01,2026-02-28,monthly,6407,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Claude (reviewer),2026-03-01,2026-03-28,monthly,15653,https://github.com/search?q=is%3Apr+reviewed-by%3Aclaude%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Copilot (reviewer),2025-09-01,2025-09-30,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot (reviewer),2025-10-01,2025-10-31,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot (reviewer),2025-11-01,2025-11-30,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot (reviewer),2025-12-01,2025-12-31,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot (reviewer),2026-01-01,2026-01-31,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot (reviewer),2026-02-01,2026-02-28,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot (reviewer),2026-03-01,2026-03-28,monthly,0,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Copilot PR Reviewer (reviewer),2025-09-01,2025-09-30,monthly,144980,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Copilot PR Reviewer (reviewer),2025-10-01,2025-10-31,monthly,181376,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Copilot PR Reviewer (reviewer),2025-11-01,2025-11-30,monthly,205766,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Copilot PR Reviewer (reviewer),2025-12-01,2025-12-31,monthly,257047,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Copilot PR Reviewer (reviewer),2026-01-01,2026-01-31,monthly,300635,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Copilot PR Reviewer (reviewer),2026-02-01,2026-02-28,monthly,378710,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Copilot PR Reviewer (reviewer),2026-03-01,2026-03-28,monthly,532081,https://github.com/search?q=is%3Apr+reviewed-by%3Acopilot-pull-request-reviewer%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Codex Connector (reviewer),2025-09-01,2025-09-30,monthly,57371,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Codex Connector (reviewer),2025-10-01,2025-10-31,monthly,87912,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Codex Connector (reviewer),2025-11-01,2025-11-30,monthly,74917,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Codex Connector (reviewer),2025-12-01,2025-12-31,monthly,37938,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Codex Connector (reviewer),2026-01-01,2026-01-31,monthly,59714,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Codex Connector (reviewer),2026-02-01,2026-02-28,monthly,116244,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Codex Connector (reviewer),2026-03-01,2026-03-28,monthly,164481,https://github.com/search?q=is%3Apr+reviewed-by%3Achatgpt-codex-connector%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Sourcery (reviewer),2025-09-01,2025-09-30,monthly,14662,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Sourcery (reviewer),2025-10-01,2025-10-31,monthly,17313,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Sourcery (reviewer),2025-11-01,2025-11-30,monthly,17188,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Sourcery (reviewer),2025-12-01,2025-12-31,monthly,17792,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Sourcery (reviewer),2026-01-01,2026-01-31,monthly,20321,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Sourcery (reviewer),2026-02-01,2026-02-28,monthly,28353,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Sourcery (reviewer),2026-03-01,2026-03-28,monthly,37531,https://github.com/search?q=is%3Apr+reviewed-by%3Asourcery-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Korbit (reviewer),2025-09-01,2025-09-30,monthly,943,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Korbit (reviewer),2025-10-01,2025-10-31,monthly,323,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Korbit (reviewer),2025-11-01,2025-11-30,monthly,456,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Korbit (reviewer),2025-12-01,2025-12-31,monthly,607,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Korbit (reviewer),2026-01-01,2026-01-31,monthly,63,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Korbit (reviewer),2026-02-01,2026-02-28,monthly,64,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Korbit (reviewer),2026-03-01,2026-03-28,monthly,156,https://github.com/search?q=is%3Apr+reviewed-by%3Akorbit-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Ellipsis (reviewer),2025-09-01,2025-09-30,monthly,4678,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Ellipsis (reviewer),2025-10-01,2025-10-31,monthly,4094,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Ellipsis (reviewer),2025-11-01,2025-11-30,monthly,3437,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Ellipsis (reviewer),2025-12-01,2025-12-31,monthly,3357,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Ellipsis (reviewer),2026-01-01,2026-01-31,monthly,4022,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Ellipsis (reviewer),2026-02-01,2026-02-28,monthly,5297,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Ellipsis (reviewer),2026-03-01,2026-03-28,monthly,2714,https://github.com/search?q=is%3Apr+reviewed-by%3Aellipsis-dev%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2025-09-01,2025-09-30,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2025-10-01,2025-10-31,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2025-11-01,2025-11-30,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2025-12-01,2025-12-31,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2026-01-01,2026-01-31,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2026-02-01,2026-02-28,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+PR-Agent/CodiumAI (reviewer),2026-03-01,2026-03-28,monthly,ERROR,https://github.com/search?q=is%3Apr+reviewed-by%3Acodiumai-pr-agent-pro%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Qodo (reviewer),2025-09-01,2025-09-30,monthly,1,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Qodo (reviewer),2025-10-01,2025-10-31,monthly,1,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Qodo (reviewer),2025-11-01,2025-11-30,monthly,2,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Qodo (reviewer),2025-12-01,2025-12-31,monthly,6,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Qodo (reviewer),2026-01-01,2026-01-31,monthly,4,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Qodo (reviewer),2026-02-01,2026-02-28,monthly,4,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Qodo (reviewer),2026-03-01,2026-03-28,monthly,3,https://github.com/search?q=is%3Apr+reviewed-by%3Aqodo-ai%5Bbot%5D+updated%3A2026-03-01..2026-03-28&type=pullrequests
+Claude Code (in comments),2025-09-01,2025-09-30,monthly,1189,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2025-09-01..2025-09-30&type=pullrequests
+Claude Code (in comments),2025-10-01,2025-10-31,monthly,2875,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2025-10-01..2025-10-31&type=pullrequests
+Claude Code (in comments),2025-11-01,2025-11-30,monthly,3230,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2025-11-01..2025-11-30&type=pullrequests
+Claude Code (in comments),2025-12-01,2025-12-31,monthly,4127,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2025-12-01..2025-12-31&type=pullrequests
+Claude Code (in comments),2026-01-01,2026-01-31,monthly,5462,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2026-01-01..2026-01-31&type=pullrequests
+Claude Code (in comments),2026-02-01,2026-02-28,monthly,7455,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2026-02-01..2026-02-28&type=pullrequests
+Claude Code (in comments),2026-03-01,2026-03-28,monthly,13141,https://github.com/search?q=is%3Apr+in%3Acomments+"Generated+with+Claude+Code"+updated%3A2026-03-01..2026-03-28&type=pullrequests
+CodeRabbit (in comments),2025-09-01,2025-09-30,monthly,161001,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2025-09-01..2025-09-30&type=pullrequests
+CodeRabbit (in comments),2025-10-01,2025-10-31,monthly,191875,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2025-10-01..2025-10-31&type=pullrequests
+CodeRabbit (in comments),2025-11-01,2025-11-30,monthly,211581,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2025-11-01..2025-11-30&type=pullrequests
+CodeRabbit (in comments),2025-12-01,2025-12-31,monthly,246697,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2025-12-01..2025-12-31&type=pullrequests
+CodeRabbit (in comments),2026-01-01,2026-01-31,monthly,308305,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2026-01-01..2026-01-31&type=pullrequests
+CodeRabbit (in comments),2026-02-01,2026-02-28,monthly,315347,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2026-02-01..2026-02-28&type=pullrequests
+CodeRabbit (in comments),2026-03-01,2026-03-28,monthly,419988,https://github.com/search?q=is%3Apr+in%3Acomments+"CodeRabbit"+updated%3A2026-03-01..2026-03-28&type=pullrequests
