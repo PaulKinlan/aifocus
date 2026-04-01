@@ -142,4 +142,4 @@ I'd love to get your thoughts on the state of the CMS ecosystem and where you th
 
 ---
 
-_Thank you to Terry Pollard spotting a number of typos and errors in this post._
+_Thank you to Barry Pollard spotting a number of typos and errors in this post._
