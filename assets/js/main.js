@@ -1,3 +1,5 @@
+import "./webmcp.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   if ("Summarizer" in window) {
     const { Summarizer } = window;
