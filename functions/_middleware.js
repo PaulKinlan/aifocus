@@ -67,13 +67,16 @@ function markdownSiblingPath(pathname) {
 
 async function decorateMarkdown(response) {
   if (!response.ok) return response;
-  const body = await response.clone().arrayBuffer();
-  const text = new TextDecoder().decode(body);
+  // Read body as text so any transport-level encoding is resolved before we
+  // re-serve it; then strip encoding/length headers that no longer apply.
+  const text = await response.text();
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/markdown; charset=utf-8");
+  headers.delete("content-encoding");
+  headers.delete("content-length");
   headers.set("x-markdown-tokens", String(estimateTokens(text)));
   headers.append("Vary", "Accept");
-  return new Response(body, {
+  return new Response(text, {
     status: response.status,
     statusText: response.statusText,
     headers,
