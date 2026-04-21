@@ -30,3 +30,22 @@ theme = 'aifocustheme'
 [permalinks.page]
     posts = '/:slug/'
     tutorials = '/training/:slug/'
+
+[mediaTypes]
+  [mediaTypes."text/markdown"]
+    suffixes = ['md']
+
+[outputFormats]
+  [outputFormats.markdown]
+    name = 'markdown'
+    mediaType = 'text/markdown'
+    isPlainText = true
+    permalinkable = true
+    baseName = 'index'
+
+[outputs]
+  home = ['html', 'rss']
+  page = ['html', 'markdown']
+  section = ['html', 'rss']
+  taxonomy = ['html']
+  term = ['html', 'rss']
