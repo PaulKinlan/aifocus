@@ -44,7 +44,7 @@ theme = 'aifocustheme'
     baseName = 'index'
 
 [outputs]
-  home = ['html', 'rss']
+  home = ['html', 'rss', 'json']
   page = ['html', 'markdown']
   section = ['html', 'rss']
   taxonomy = ['html']
