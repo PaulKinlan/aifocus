@@ -1,0 +1,12 @@
+{{- $pages := where site.RegularPages "Type" "posts" -}}
+{{- $articles := slice -}}
+{{- range $pages.ByDate.Reverse -}}
+  {{- $articles = $articles | append (dict
+    "title" .Title
+    "url" .Permalink
+    "date" (.Date.Format "2006-01-02")
+    "summary" (.Summary | plainify | chomp)
+    "readingTime" .ReadingTime
+  ) -}}
+{{- end -}}
+{{- dict "site" site.Title "baseURL" site.BaseURL "articles" $articles | jsonify -}}
