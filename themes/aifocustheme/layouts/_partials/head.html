@@ -17,6 +17,10 @@
 {{ printf `
 <link rel=%q type=%q href=%q title=%q>` .Rel .MediaType.Type .RelPermalink site.Title | safeHTML }}
 {{ end }}
+{{ with .OutputFormats.Get "markdown" }}
+{{ printf `
+<link rel="alternate" type=%q href=%q title="Markdown">` .MediaType.Type .RelPermalink | safeHTML }}
+{{ end }}
 <meta name="theme-color" content="#fdfcf8">
 <script type="speculationrules">
   {
