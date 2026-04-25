@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             script-src 'self' 'unsafe-inline';
+             style-src 'self' 'unsafe-inline';
+             img-src 'self' data:;
+             connect-src https://api.anthropic.com https://generativelanguage.googleapis.com https://api.openai.com;" />
+  <title>self-adapting journal — where prompts run demo</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-raised: #161b22;
+      --bg-deep: #010409;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-dim: #8b949e;
+      --accent: #58a6ff;
+      --accent-warm: #f0883e;
+      --ok: #3fb950;
+      --err: #f85149;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.5 ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+      min-height: 100vh;
+    }
+    a { color: var(--accent); }
+
+    .banner {
+      background: var(--bg-deep);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 16px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .banner strong { color: var(--accent-warm); letter-spacing: 0.08em; }
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 6px rgba(63, 185, 80, 0.8);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 50% { opacity: 0.35; } }
+
+    .top-bar {
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-raised);
+    }
+    .top-bar .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+    input[type="password"], input[type="text"], select {
+      background: var(--bg-deep);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 8px;
+      font: inherit;
+      border-radius: 3px;
+    }
+    input[type="password"] { width: 280px; }
+    input[type="text"] { width: 180px; }
+    button {
+      background: var(--bg-deep);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      font: inherit;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: var(--bg); border-color: var(--accent); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.primary { background: var(--accent); color: var(--bg-deep); border-color: var(--accent); font-weight: 600; }
+    button.primary:hover:not(:disabled) { filter: brightness(1.15); }
+    button.danger { color: var(--err); border-color: var(--err); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 0;
+      min-height: calc(100vh - 120px);
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-width: 0; }
+    .panel:last-child { border-right: none; }
+    .panel h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-raised);
+      font-weight: 600;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel h2 small { font-weight: normal; text-transform: none; letter-spacing: normal; color: var(--text-dim); }
+    .panel-body { padding: 14px 16px; flex: 1; overflow: auto; }
+
+    textarea {
+      width: 100%;
+      background: var(--bg-deep);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      font: inherit;
+      border-radius: 3px;
+      resize: vertical;
+    }
+    #systemPrompt { min-height: 320px; font-size: 12px; line-height: 1.55; }
+    #userInput { min-height: 80px; }
+
+    .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .row.end { justify-content: flex-end; }
+
+    .tree { font-size: 12px; }
+    .tree .dir {
+      color: var(--accent-warm);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+    .tree .file {
+      display: block;
+      padding: 3px 6px;
+      color: var(--text-dim);
+      cursor: pointer;
+      border-radius: 2px;
+    }
+    .tree .file:hover { background: rgba(88, 166, 255, 0.08); color: var(--text); }
+    .tree .file.active { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+
+    .viewer {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      margin-top: 10px;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 340px;
+      overflow: auto;
+      border-radius: 3px;
+    }
+    .viewer.empty { color: var(--text-dim); font-style: italic; }
+
+    .transcript {
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .msg {
+      padding: 8px 10px;
+      border-left: 2px solid var(--border);
+      background: var(--bg-raised);
+      border-radius: 0 3px 3px 0;
+    }
+    .msg.user { border-left-color: var(--accent); }
+    .msg.tool { border-left-color: var(--accent-warm); font-family: inherit; }
+    .msg.assistant { border-left-color: var(--ok); }
+    .msg.error { border-left-color: var(--err); color: var(--err); }
+    .msg .kind {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 4px;
+    }
+    .msg pre {
+      background: var(--bg-deep);
+      padding: 6px 8px;
+      margin-top: 4px;
+      border-radius: 2px;
+      font: 11px/1.4 ui-monospace, monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow: auto;
+      max-height: 200px;
+    }
+    .empty-transcript { color: var(--text-dim); font-style: italic; font-size: 12px; }
+
+    .hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+    .hint code { background: var(--bg-deep); padding: 1px 4px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <span class="dot"></span>
+    <span>SANDBOX DEMO</span>
+    <span>·</span>
+    <span>runs entirely in your browser</span>
+    <span>·</span>
+    <span>OPFS storage</span>
+    <span>·</span>
+    <span>key goes only to <strong>api.anthropic.com</strong></span>
+  </div>
+
+  <div class="top-bar">
+    <span class="label">API key</span>
+    <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" />
+    <span class="label">Model</span>
+    <input id="model" type="text" value="claude-sonnet-4-6" />
+    <button id="reset" class="danger">Clear sandbox</button>
+    <span id="status" class="hint" style="margin-left: auto;"></span>
+  </div>
+
+  <div class="layout">
+    <section class="panel">
+      <h2>
+        <span>System prompt <small>(the program)</small></span>
+        <button id="resetPrompt" style="padding: 3px 8px; font-size: 11px;">reset to default</button>
+      </h2>
+      <div class="panel-body">
+        <textarea id="systemPrompt" spellcheck="false"></textarea>
+        <div class="hint">Edit the prompt to change how the journal behaves. That prose is the program. The runtime below doesn't change when you edit it — that's the point.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>
+        <span>Sandbox — OPFS</span>
+        <small id="fileCount">empty</small>
+      </h2>
+      <div class="panel-body">
+        <div id="tree" class="tree">
+          <div class="hint">No files yet. Write something below to kick off the journal.</div>
+        </div>
+        <div id="viewer" class="viewer empty">Click a file to view its contents.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="layout" style="border-top: 1px solid var(--border);">
+    <section class="panel">
+      <h2><span>You</span></h2>
+      <div class="panel-body">
+        <textarea id="userInput" placeholder="What's on your mind? e.g. 'Had coffee with Alice, we talked about the new agent-do release. She's going to try it on her side.'" spellcheck="false"></textarea>
+        <div class="row end">
+          <button id="send" class="primary" disabled>Send</button>
+        </div>
+        <div class="hint">The agent will read the current sandbox, then create or update files to capture what you said.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>
+        <span>Agent transcript</span>
+        <small id="step"></small>
+      </h2>
+      <div class="panel-body">
+        <div id="transcript"><div class="empty-transcript">The agent's reasoning and tool calls will stream here.</div></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>
