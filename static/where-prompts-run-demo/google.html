@@ -8,9 +8,9 @@
              script-src 'self' 'unsafe-inline';
              style-src 'self' 'unsafe-inline';
              img-src 'self' data:;
-             connect-src https://api.anthropic.com;" />
-  <title>self-adapting journal — Anthropic — where prompts run demo</title>
-  <script>window.PROVIDER_ID = 'anthropic';</script>
+             connect-src https://generativelanguage.googleapis.com;" />
+  <title>self-adapting journal — Google — where prompts run demo</title>
+  <script>window.PROVIDER_ID = 'google';</script>
   <style>
     :root {
       --bg: #0d1117;
@@ -262,20 +262,20 @@
     <span>·</span>
     <span>OPFS storage</span>
     <span>·</span>
-    <span>key goes only to <strong id="endpointHint">api.anthropic.com</strong></span>
+    <span>key goes only to <strong id="endpointHint">generativelanguage.googleapis.com</strong></span>
   </div>
 
   <div class="top-bar">
     <span class="label">Provider</span>
     <select id="provider">
       <option value="anthropic">Anthropic (Claude)</option>
-      <option value="google">Google (Gemini)</option>
+      <option value="google" selected>Google (Gemini)</option>
       <option value="openai">OpenAI (GPT)</option>
     </select>
     <span class="label">API key</span>
-    <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" />
+    <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" />
     <span class="label">Model</span>
-    <input id="model" type="text" value="claude-sonnet-4-6" />
+    <input id="model" type="text" value="gemini-3.1-pro-preview" />
     <button id="reset" class="danger">Clear sandbox</button>
     <span id="status" class="hint" style="margin-left: auto;"></span>
   </div>

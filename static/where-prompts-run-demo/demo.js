@@ -1,11 +1,14 @@
 /**
  * Self-adapting journal demo — the harness is small enough to fit on
- * the page. Everything below is the runtime: a five-step tool-use loop
- * against Anthropic's messages API, plus three OPFS tools the agent
- * can call. The *program* is the prose in the system-prompt textarea.
+ * the page. Everything below is the runtime: a tool-use loop against
+ * one of three provider APIs (Anthropic, Google Gemini, OpenAI), plus
+ * three OPFS tools the agent can call. The *program* is the prose in
+ * the system-prompt textarea.
  *
  * Edit the prompt, and the same runtime becomes a different tool.
- * That's the claim the post is making. This file is the evidence.
+ * Switch the provider, and the same prompt runs against a different
+ * model. That's the claim the post is making. This file is the
+ * evidence.
  */
 
 const DEFAULT_PROMPT = `You are a self-adapting journal. You manage a small directory of markdown files in a sandboxed filesystem (OPFS) that represents the user's notes, relationships, and themes. Nothing you write leaves the browser.
@@ -95,13 +98,17 @@ async function opfsWalk(prefix = '') {
   return tree;
 }
 
-// ─── Tool declarations (Anthropic format) ────────────────────────────
+// ─── Canonical tool definitions ──────────────────────────────────────
+//
+// Same JSONSchema for the three tools, three different wrappers per
+// provider. Keeping them in one place so the rest of the file doesn't
+// have to know about provider-specific shapes.
 
-const TOOLS = [
+const TOOL_SPECS = [
   {
     name: 'opfs_list',
     description: 'List the contents of an OPFS directory. Pass an empty string for the root.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: { path: { type: 'string', description: 'Directory path. Empty string means root.' } },
       required: ['path'],
@@ -110,7 +117,7 @@ const TOOLS = [
   {
     name: 'opfs_read',
     description: 'Read a text file from OPFS.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: { path: { type: 'string' } },
       required: ['path'],
@@ -119,7 +126,7 @@ const TOOLS = [
   {
     name: 'opfs_write',
     description: 'Write (or overwrite) a text file in OPFS. Creates parent directories as needed.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         path: { type: 'string' },
@@ -129,6 +136,23 @@ const TOOLS = [
     },
   },
 ];
+
+const TOOLS_ANTHROPIC = TOOL_SPECS.map((t) => ({
+  name: t.name,
+  description: t.description,
+  input_schema: t.parameters,
+}));
+
+const TOOLS_OPENAI = TOOL_SPECS.map((t) => ({
+  type: 'function',
+  function: { name: t.name, description: t.description, parameters: t.parameters },
+}));
+
+const TOOLS_GOOGLE = TOOL_SPECS.map((t) => ({
+  name: t.name,
+  description: t.description,
+  parameters: t.parameters,
+}));
 
 async function runTool(name, input) {
   if (name === 'opfs_list') {
@@ -146,63 +170,197 @@ async function runTool(name, input) {
   return `ERROR: unknown tool ${name}`;
 }
 
-// ─── Anthropic API loop ──────────────────────────────────────────────
+// ─── Provider abstraction ────────────────────────────────────────────
+//
+// Each provider has:
+//   defaultModel:   suggested model id
+//   keyPlaceholder: the field placeholder for the API key
+//   endpoint:       the host the key gets sent to (for the banner)
+//   init():         build the per-run context (messages, system, etc.)
+//   step():         do one round-trip; returns {textBlocks, toolUses, done}
+//   appendResults():append tool results into the context for the next step
+//
+// Tool uses are normalised to {id, name, input}. Tool results are
+// {id, name, result:string}. The runner is provider-agnostic.
 
-async function callAnthropic({ apiKey, model, system, messages }) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
+const PROVIDERS = {
+  anthropic: {
+    label: 'Anthropic (Claude)',
+    defaultModel: 'claude-sonnet-4-6',
+    keyPlaceholder: 'sk-ant-…',
+    endpoint: 'api.anthropic.com',
+    init(system, userMessage) {
+      return { messages: [{ role: 'user', content: userMessage }], system };
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      system,
-      messages,
-      tools: TOOLS,
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`anthropic API ${res.status}: ${text}`);
-  }
-  return await res.json();
-}
+    async step(ctx, apiKey, model) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 2048,
+          system: ctx.system,
+          messages: ctx.messages,
+          tools: TOOLS_ANTHROPIC,
+        }),
+      });
+      if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
+      const reply = await res.json();
+      ctx.messages.push({ role: 'assistant', content: reply.content });
+      const textBlocks = reply.content.filter((b) => b.type === 'text').map((b) => b.text);
+      const toolUses = reply.content
+        .filter((b) => b.type === 'tool_use')
+        .map((b) => ({ id: b.id, name: b.name, input: b.input ?? {} }));
+      const done = reply.stop_reason === 'end_turn' || toolUses.length === 0;
+      return { textBlocks, toolUses, done };
+    },
+    appendResults(ctx, results) {
+      ctx.messages.push({
+        role: 'user',
+        content: results.map((r) => ({
+          type: 'tool_result',
+          tool_use_id: r.id,
+          content: r.result,
+        })),
+      });
+    },
+  },
 
-async function runLoop({ apiKey, model, system, userMessage, onEvent }) {
-  const messages = [{ role: 'user', content: userMessage }];
+  openai: {
+    label: 'OpenAI (GPT)',
+    defaultModel: 'gpt-5.4',
+    keyPlaceholder: 'sk-…',
+    endpoint: 'api.openai.com',
+    init(system, userMessage) {
+      return {
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userMessage },
+        ],
+      };
+    },
+    async step(ctx, apiKey, model) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: ctx.messages,
+          tools: TOOLS_OPENAI,
+        }),
+      });
+      if (!res.ok) throw new Error(`openai ${res.status}: ${await res.text()}`);
+      const reply = await res.json();
+      const choice = reply.choices?.[0];
+      const msg = choice?.message ?? {};
+      ctx.messages.push(msg);
+      const textBlocks = msg.content ? [msg.content] : [];
+      const toolUses = (msg.tool_calls ?? []).map((tc) => {
+        let input = {};
+        try { input = JSON.parse(tc.function?.arguments ?? '{}'); } catch { input = {}; }
+        return { id: tc.id, name: tc.function?.name ?? '', input };
+      });
+      const done = choice?.finish_reason !== 'tool_calls' && toolUses.length === 0;
+      return { textBlocks, toolUses, done };
+    },
+    appendResults(ctx, results) {
+      for (const r of results) {
+        ctx.messages.push({
+          role: 'tool',
+          tool_call_id: r.id,
+          content: r.result,
+        });
+      }
+    },
+  },
+
+  google: {
+    label: 'Google (Gemini)',
+    defaultModel: 'gemini-3.1-pro-preview',
+    keyPlaceholder: 'AIza…',
+    endpoint: 'generativelanguage.googleapis.com',
+    init(system, userMessage) {
+      return {
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        system,
+      };
+    },
+    async step(ctx, apiKey, model) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const body = {
+        contents: ctx.contents,
+        systemInstruction: { parts: [{ text: ctx.system }] },
+        tools: [{ functionDeclarations: TOOLS_GOOGLE }],
+      };
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`google ${res.status}: ${await res.text()}`);
+      const reply = await res.json();
+      const cand = reply.candidates?.[0];
+      const parts = cand?.content?.parts ?? [];
+      ctx.contents.push({ role: 'model', parts });
+      const textBlocks = parts.filter((p) => p.text).map((p) => p.text);
+      // Gemini doesn't issue tool-call IDs; synthesise stable ones from the position.
+      const toolUses = parts
+        .map((p, i) => ({ p, i }))
+        .filter(({ p }) => p.functionCall)
+        .map(({ p, i }) => ({
+          id: `g${ctx.contents.length}-${i}`,
+          name: p.functionCall.name,
+          input: p.functionCall.args ?? {},
+        }));
+      const done = toolUses.length === 0;
+      return { textBlocks, toolUses, done };
+    },
+    appendResults(ctx, results) {
+      ctx.contents.push({
+        role: 'user',
+        parts: results.map((r) => ({
+          functionResponse: {
+            name: r.name,
+            response: { result: r.result },
+          },
+        })),
+      });
+    },
+  },
+};
+
+// ─── Provider-agnostic loop ──────────────────────────────────────────
+
+async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent }) {
+  const provider = PROVIDERS[providerId];
+  if (!provider) throw new Error(`unknown provider: ${providerId}`);
+  const ctx = provider.init(system, userMessage);
+
   for (let step = 0; step < 12; step++) {
     onEvent({ type: 'step', step });
-    const reply = await callAnthropic({ apiKey, model, system, messages });
-    // Record assistant response (full content array) as the next assistant message.
-    messages.push({ role: 'assistant', content: reply.content });
+    const { textBlocks, toolUses, done } = await provider.step(ctx, apiKey, model);
+    for (const t of textBlocks) if (t.trim()) onEvent({ type: 'text', text: t });
 
-    const toolUses = reply.content.filter((b) => b.type === 'tool_use');
-    const textBlocks = reply.content.filter((b) => b.type === 'text');
-    for (const t of textBlocks) if (t.text.trim()) onEvent({ type: 'text', text: t.text });
+    if (done) return;
 
-    if (reply.stop_reason === 'end_turn' || toolUses.length === 0) {
-      return;
-    }
-
-    // Execute every tool use from this step, then send results back.
-    const toolResults = [];
+    const results = [];
     for (const use of toolUses) {
       onEvent({ type: 'tool_use', name: use.name, input: use.input });
       let result;
       try { result = await runTool(use.name, use.input); }
       catch (e) { result = `ERROR: ${e.message}`; }
       onEvent({ type: 'tool_result', name: use.name, result });
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: use.id,
-        content: typeof result === 'string' ? result : JSON.stringify(result),
-      });
+      results.push({ id: use.id, name: use.name, result: typeof result === 'string' ? result : JSON.stringify(result) });
     }
-    messages.push({ role: 'user', content: toolResults });
+    provider.appendResults(ctx, results);
   }
   onEvent({ type: 'text', text: '(stopped at step cap)' });
 }
@@ -211,19 +369,43 @@ async function runLoop({ apiKey, model, system, userMessage, onEvent }) {
 
 const $ = (id) => document.getElementById(id);
 
-const LS_KEY = 'wpr_demo_apikey';
 const LS_PROMPT = 'wpr_demo_prompt';
+const LS_PROVIDER = 'wpr_demo_provider';
+const LS_KEY = (p) => `wpr_demo_apikey_${p}`;
+const LS_MODEL = (p) => `wpr_demo_model_${p}`;
+
+// The page is provider-locked. window.PROVIDER_ID is set inline in the
+// HTML before this module runs. The provider dropdown is a navigator
+// to the other provider's HTML page, not a runtime switch — each page
+// has its own strict CSP that allows only one provider's endpoint.
+const PROVIDER_PAGES = {
+  anthropic: './',
+  google: './google.html',
+  openai: './openai.html',
+};
+
+function getProviderId() {
+  return window.PROVIDER_ID;
+}
 
 function loadState() {
-  const storedKey = localStorage.getItem(LS_KEY) ?? '';
+  const p = getProviderId();
+  const def = PROVIDERS[p];
+  // Restore stored values for the current locked provider.
+  const storedKey = localStorage.getItem(LS_KEY(p));
+  if (storedKey) $('apiKey').value = storedKey;
+  const storedModel = localStorage.getItem(LS_MODEL(p));
+  if (storedModel) $('model').value = storedModel;
+  $('apiKey').placeholder = def.keyPlaceholder;
+  $('endpointHint').textContent = def.endpoint;
+  $('provider').value = p;
   const storedPrompt = localStorage.getItem(LS_PROMPT) ?? DEFAULT_PROMPT;
-  $('apiKey').value = storedKey;
   $('systemPrompt').value = storedPrompt;
   updateSendEnabled();
 }
 
 function updateSendEnabled() {
-  const ok = $('apiKey').value.trim().length > 10 && $('userInput').value.trim().length > 0;
+  const ok = $('apiKey').value.trim().length > 5 && $('userInput').value.trim().length > 0;
   $('send').disabled = !ok;
 }
 
@@ -299,13 +481,16 @@ function escapeHtml(s) {
 }
 
 async function handleSend() {
+  const providerId = getProviderId();
   const apiKey = $('apiKey').value.trim();
-  const model = $('model').value.trim() || 'claude-sonnet-4-6';
+  const model = $('model').value.trim() || PROVIDERS[providerId].defaultModel;
   const system = $('systemPrompt').value;
   const userMessage = $('userInput').value.trim();
   if (!apiKey || !userMessage) return;
 
-  localStorage.setItem(LS_KEY, apiKey);
+  localStorage.setItem(LS_PROVIDER, providerId);
+  localStorage.setItem(LS_KEY(providerId), apiKey);
+  localStorage.setItem(LS_MODEL(providerId), model);
   localStorage.setItem(LS_PROMPT, system);
 
   appendTranscript('user', userMessage);
@@ -314,28 +499,23 @@ async function handleSend() {
 
   const btn = $('send');
   btn.disabled = true;
-  toast('running…');
+  toast(`running on ${PROVIDERS[providerId].label}…`);
   $('step').textContent = '';
-
-  const pendingTools = new Map();
 
   try {
     await runLoop({
-      apiKey, model, system,
+      providerId, apiKey, model, system,
       userMessage: `Today's date: ${new Date().toISOString().slice(0, 10)}\n\nUser input:\n${userMessage}`,
       onEvent: (e) => {
         if (e.type === 'step') {
           $('step').textContent = `step ${e.step + 1}`;
         } else if (e.type === 'tool_use') {
-          pendingTools.set(e.name + JSON.stringify(e.input), { name: e.name, input: e.input });
           appendTranscript('tool', { name: e.name, input: e.input });
-          // Refresh the tree during tool use so the user sees files appear.
           refreshTree();
         } else if (e.type === 'tool_result') {
-          // Attach result to the last tool message.
           const t = $('transcript');
           const lastTool = t.querySelector('.msg.tool:last-child');
-          if (lastTool && !lastTool.querySelector('pre:nth-child(3)')) {
+          if (lastTool && lastTool.querySelectorAll('pre').length < 2) {
             const pre = document.createElement('pre');
             pre.style.color = 'var(--text-dim)';
             pre.textContent = truncate(e.result, 500);
@@ -360,6 +540,14 @@ async function handleSend() {
 
 // ─── Wire events ─────────────────────────────────────────────────────
 
+$('provider').addEventListener('change', (e) => {
+  const target = e.target.value;
+  if (target === getProviderId()) return;
+  // Each provider lives on a separate page with a strict CSP that only
+  // allows that provider's endpoint. Navigate rather than switch.
+  const url = PROVIDER_PAGES[target];
+  if (url) window.location.href = url;
+});
 $('apiKey').addEventListener('input', updateSendEnabled);
 $('userInput').addEventListener('input', updateSendEnabled);
 $('send').addEventListener('click', handleSend);
@@ -381,7 +569,10 @@ $('reset').addEventListener('click', async () => {
   toast('sandbox cleared');
 });
 
-$('resetPrompt').addEventListener('click', () => {
+$('resetPrompt').addEventListener('click', (e) => {
+  // Inside <summary>; stop the click from toggling the details element.
+  e.stopPropagation();
+  e.preventDefault();
   if (!confirm('Reset the system prompt to default? Your current edits will be lost.')) return;
   $('systemPrompt').value = DEFAULT_PROMPT;
   localStorage.removeItem(LS_PROMPT);
