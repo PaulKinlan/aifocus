@@ -24,7 +24,7 @@ Someone will create the master registry (either via some search engine or a list
 
 The fact I'm writing this posts is a not-so-subtle hint that it's not something being focused on. So why is now a good time to look at this again?
 
-A lot of people ask me about the many issues we had with Web Intents and how it was solved. For example, one issue that the verbs we had we're either too constrained or they were too open and not constrained enough. The verbs' schema probably wasn't the right way to describe things because it was too easy to define an intent there was a lot of worry about the ecosystem getting too diffuse and never finding an app that would could match the intent (share vs send vs share_image vs share_picture).
+A lot of people ask me about the many issues we had with Web Intents and how it was solved. For example, one issue that the verbs we had we're either too constrained or they were too open and not constrained enough. The verbs' schema probably wasn't the right way to describe things because it was too easy to define an intent there was a lot of worry about the ecosystem getting too diffuse and never finding an app that would could match the intent (`share` vs `send` vs `share_image` vs `share_picture`).
 
 The solution was to constrain things in to bespoke APIs and it worked for the platform at the time. `navigator.share` and `share_target` were two APIs that did what they said on the tin, they worked well and matched the intent on the supply and demand side.
 
