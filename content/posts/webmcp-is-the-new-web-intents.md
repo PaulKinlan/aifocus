@@ -6,7 +6,7 @@ authors:
   - paulkinlan
 ---
 
-One day the web will have a federated way to link to functionlaity. I swear we will.
+One day the web will have a federated way to link to functionality. I swear we will.
 
 For those who know me, you can tell that I've been thinking about Web Intents again... a lot. 
 
