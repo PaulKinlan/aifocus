@@ -39,6 +39,7 @@ While `codex` or `claude` or `gemini-cli` all have sandboxing, I really don't wa
 V8 created an isolation boundary for untrusted JavaScript from any random page or script, and it really does feel like we need a V8-shaped sandbox for these agent-loops.
 
 The more I build agents, the less I chat with them and the more I want them to pick up context from what I'm already doing, and act when something happens.
+
 For example, I might want an agent to understand email, so when a message arrives at an alias, the agent wakes and does some work. Time is another: a scheduled tick every thirty minutes, every hour, once a day. When I run `agent-do` as a shell command, I can tell it to watch a folder and react when a file changes. When I bookmark something in the browser... 
 
 The browser now has many of these hooks to let me do all of those things without needing to install a new runtime for each one, I've come to realise that while [co-do.xyz](https://co-do.xyz) is a fun proof-of-concept of the browser being good sandbox, it's not particularly useful at acting like an agent because it only responds to a user prompt and not other environmental prompts that you might expect an agent to be able to react to.
