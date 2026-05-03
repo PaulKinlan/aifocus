@@ -33,7 +33,7 @@ This clearly puts the emphasis on defining good specs.
 
 Browser engines will then differentiate consciously on whether the specs match their vision of the web, rather than on engineering capability or cost.
 
-OK, so we are building browsers with an LLM now, but I haven't addressed point 3. Taalas. I'm not going to talk about the company, but more about the progression of capability _and_ speed of LLMs. And this is where I project a bit into the land of science fiction (or maybe just pure fantasy).
+OK, so we are building browsers with an LLM now, but I haven't addressed point 3. While, I mentioned Talaas, the point is about the progression of capability _and_ speed of LLMs. And this is where I project a bit into the land of science fiction (or maybe just pure fantasy).
 
 Let's make some base assumptions:
 
@@ -41,43 +41,25 @@ Let's make some base assumptions:
 * Model quality keeps improving following scaling laws
 * Model performance keeps improving following [TODO insert law] laws and we see continued 10x increases in performance.
 
-**There is a point in the future where a web specification could be implemented in real-time...**
+In [Whither CMS](/whither-cms/) I show that you can build a server middleware that takes any markup and renders it on the fly. `<carousel></carousel>` becomes a working component. If the browser supports the carousel-related CSS primitives the middleware uses them; if not, it implements the feature in JS. It's not practical today, but I think we will get to optimized, generated UIs quickly given the current performance trajectories.
 
-In Whither CMS, I built a server middleware that can take _any_ markup and render it. For example, `<carousel></carousel>` will render a carousel. It worked surprisingly well, all the way up to generating different content types (HTML, image, or video), and it would produce HTML that worked in any browser. If your browser supported the carousel-related CSS primitives, it would use those; if not, it would implement them in JS. Today it isn't quick, but I can see a line where this becomes a way to build sites in the near future.
+I think us web-developers get a bit of a bum rap. Eveyone is saying the tools will automate page generation. However, the web is the people that have the ideas and make the content... So I want to throw this one idea out to our browser-engineering friends: **There is a point in the future where a web specification could be implemented in real-time in the browser...**
 
-But I want to take you one step further. During my dog walks I end up daydreaming and talking to my dog (Cwtch, she's great). We both came up with a bit of a thought experiment: if you extend the time horizon far enough and LLMs become fast enough, then the browser can be built around the page, instead of the page around the capabilities of the browser.
+My dog (Cwtch, she's a good girl) and I were discussing this very topic  whilst on a long walk the other week and we were trying to determine what would change if the browser is built around the page, instead of the page around the capabilities of the browser? if the browser produces a working components from the provided markup (heck, even just a description) at request time and what would be the implications on the web and browsers?
 
-Today when I'm building a site, I make a determination of what features I can use based on the audience that I think will access it. If I'm building something that has very specific hardware features, then I might choose Chrome as my target. If it's meant to reach as broad an audience as possible, then I might choose a Baseline feature set that is widely available.
+Take a website that says "measure my heart rate from my Coros monitor and graph it". Today, that needs WebBluetooth, the browser vendor's prior decision to ship the API, the right Bluetooth profile, and whatever JS the developer writes on top. In an instantly-generated browser, the runtime already knows the device. The Bluetooth Heart Rate Service over GATT is documented hardware. The page describes the intent. The browser builds the binding on the fly, the sandbox enforces the boundary, and the user gets the same end result (a working app) with one less spec in the way. Web Bluetooth as a separate web spec stops being load-bearing the moment the browser can produce its equivalent on demand.
 
-So if we can build the browser on the fly, why would I need to make that decision?
+Which means the role of a web spec changes. Today specs define a standardised interface that abstracts complexity, so people can access functionality consistently across browsers, securely. Bluetooth is already specced out as a hardware platform. LLMs are getting increasingly good at interfacing with hardware, either by reverse-engineering it or by reading the vendor's guide. If the browser can generate the binding from the underlying hardware spec, the web's redundant equivalent (WebBluetooth, and maybe dozens of others) stops being necessary. The web-platform then can be pared back to a minimal core, and everything above that is generated on demand from intent.
 
-Take, for example: `A website using [Design.md] that measures your heart rate and connects to my Coros monitor`. Today you can get quite far in a couple of minutes; 10x the performance of LLMs twice over and you're at sub-second generation. How might that work in an instantly-generated browser?
+Rendering is the open question I haven't worked out. A lot of the web's UI surface is developer-experience improvements layered over a much smaller graphics primitive. In an instantly-generated browser, is the UI just WASM, Canvas, and WebGPU? [Flipbook.page](https://flipbook.page/) recently showed some compelling ideas about generating UI in a world of LLMs without HTML, and that's the kind of work I'd be watching.
 
-The browser runtime knows the machine type and capabilities the user is currently on. In a world of instant generation, the UI follows the `Design.md`, and the browser/LLM knows that Coros heart rate monitors expose the standard Bluetooth Heart Rate Service over GATT. With the browser as the sandbox, it exposes the connection to the HW through the sandbox, and the client-side code calls the hooks that have been defined, and voila... (you have to appreciate the huge hand-waving here.)
+We'd still need to work out security and privacy. The same-origin model and CSP would have to remain, alongside a lot of new primitives we don't have yet. Assistive technology and machines would also need to read generated content with the same confidence they read hand-written HTML, which is its own problem and probably worth a post on its own.
 
-Today we create specifications to define a standardised interface that abstracts some form of complexity from the underlying system and enables people to access the technology in a consistent way irrespective of what browser they use, while ensuring the user remains secure and their information private.
+In a world of instant generation, I don't know whether we want a browser vendor to be the one deciding which features make it into the browser. There are roughly two paths:
 
-So what does that mean for web specs? Do we even need them? I could see a world where the answer is no, because the machines we use have already defined a comprehensive set of specifications of their own.
-
-1. Bluetooth is pretty well specced out as a hardware platform (imagine there was never a Web Bluetooth spec)
-2. LLMs are getting increasingly good at accessing hardware, either via reverse-engineering or because the vendor has published a guide.
-
-If we can generate the logic to interface with the user's preferred device at runtime, then we need to take a critical look at features like `WebBluetooth` and ask whether they even need to exist.
-
-We could get to a world where the browser and the web platform are pared back to a minimal set of building blocks, with the rest of the platform generated on demand.
-
-I don't even know how rendering might work. A lot of the web development around UI features is developer-experience improvements. Is UI just WASM and Canvas + WebGPU? [Flipbook.page](https://flipbook.page/) recently showcased some very compelling ideas about generation of UI in the world of LLMs without HTML.
-
-We'd clearly have to work out security and privacy, so I imagine things like the same-origin model and CSP would still be needed, alongside a lot of other new primitives. We'd also need a way to ensure assistive technology and machines can read generated content with the same confidence they read hand-written HTML, which is its own problem and probably worth a post on its own.
-
-In a world of instant generation, I don't know whether we want a browser vendor to be the one deciding which features should be in the browser.
-
-* If we do want them to decide on capabilities, then I imagine web standards for high-level features still make sense and the browser ships the feature (albeit generated).
+* If we do want them to decide on capabilities, then web standards for high-level features still make sense and the browser ships the feature (albeit generated).
 * If we want to take the browser to the minimal extreme, then web standards become the absolute minimum needed to make a secure and private runtime, and the runtime solves the rest.
 
+Personally I lean toward the second. The runtime evolves faster than a standards process, and once you trust the sandbox you've solved the load-bearing question. The security implications are doing a lot of the work in that bet, so I'm watching the security primitives more than the feature list.
+
 I think we are many years out from having local hardware quick enough to build a browser at runtime, but I'm very interested to see how browsers, and not just web development changes as LLMs evolve and I think there are some low-hanging fruits when it comes to feature development today.
-
-
-
-
-
