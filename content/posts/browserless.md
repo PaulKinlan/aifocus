@@ -39,7 +39,7 @@ Let's make some base assumptions:
 
 * Model quality is good enough to implement features given a good enough spec and tests
 * Model quality keeps improving following scaling laws
-* Model inference performance keeps improving fast (a16z calls it [LLMflation](https://a16z.com/llmflation-llm-inference-cost/), observing roughly a 10x annual drop in the cost of equivalent-quality model inference, and [Epoch AI](https://epoch.ai/data-insights/llm-inference-price-trends) measures the same trend at anywhere between 1.7x and 31x per year depending on the performance tier).
+* Model performance keeps improving on two fronts. Hardware [FLOPS roughly doubles every 2.3 years](https://epoch.ai/blog/trends-in-machine-learning-hardware) across ML accelerators, and [algorithmic efficiency](https://epoch.ai/blog/algorithmic-progress-in-language-models) halves the compute needed to reach a given level of performance roughly every 8 months.
 
 In [Whither CMS](/whither-cms/) I show that you can build a server middleware that takes any markup and renders it on the fly. `<carousel></carousel>` becomes a working component. If the browser supports the carousel-related CSS primitives the middleware uses them; if not, it implements the feature in JS. It's not practical today, but I think we will get to optimized, generated UIs quickly given the current performance trajectories.
 
