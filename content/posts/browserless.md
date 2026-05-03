@@ -73,10 +73,10 @@ All of that is the engineering side. The user side is harder and more complex to
 
 Urgh. 
 
-I'm personally more interested in exploring the minimal browser and the generated future a lot more. The runtime can then evolve faster than a standards process as long as you solve the sandbox security and privacy, and it's completely unexplored, so we need to understand *all* of the issues and opportunities.
+I'm personally more interested in exploring the minimal browser and the generated future a lot more. In this world the runtime can then evolve faster than a standards process (as long as you solve the sandbox security and privacy expecations), and it's completely unexplored as a topic, so we would need to understand *all* of the issues and opportunities.
 
-We are many years out from having local hardware quick enough to build a browser at runtime, though projects like [WebLLM](https://webllm.mlc.ai/) running language models in the browser via WebGPU and Chrome's `prompt` API show how far we've already come. I'm very interested to see how browsers, and not just web development, change as LLMs evolve, and I think there are some low-hanging fruits when it comes to feature development today.
+This was a really fun thought experiment for me that I wanted to share. We are many years out from having local hardware quick enough to build a browser at runtime. I'm very interested to see how browsers, and not just web development, change as LLMs evolve, and I think there are some low-hanging fruits when it comes to feature development today.
 
 I believe with pretty high-confidence that the actual near-term future will be that browser vendors all start using tools to create features from comprehensive and well tested specs and more thought and rigour will go into that.
 
-I do think that we really need to spend a lot more time thinking about what happens to the browser as LLMs progress a lot more than we currently do. I think we're already on the path to "autonomous user-agents" with the new generation of [Super-apps](/super-apps) that centralise and control content delivery, and they might be the tools people prefer in the future.
+I do think that we (the industry) really need to spend a lot more time thinking about what happens to the browser as LLMs progress a lot more than we currently do and we need to do it soon because I believe we're already on the path to "autonomous user-agents" with the new generation of [Super-apps](/super-apps) that centralise and control content delivery, and they might be the tools people prefer in the future.
