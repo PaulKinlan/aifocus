@@ -11,7 +11,7 @@ There's a confluence of things that have happened recently that have made me que
 
 1. On January 8th 2026, [Simon Willison predicted](https://simonwillison.net/2026/Jan/8/llm-predictions-for-2026/#3-years-someone-will-build-a-new-browser-using-mainly-ai-assisted-coding-and-it-won-t-even-be-a-surprise) that someone will build a browser using mainly AI-assisted tools within 3 years
 2. On January 27th 2026, [one human and one agent](https://emsh.cat/en/one-human-one-agent-one-browser/) built a browser from scratch (great experiments)
-3. News came out that [Taalas had a chip](https://taalas.com/the-path-to-ubiquitous-ai/) that can spit out nearly 17,000 tokens per second
+3. On the 19th Febuary 2026, News came out that [Taalas had a chip](https://taalas.com/the-path-to-ubiquitous-ai/) that can spit out nearly 17,000 tokens per second by baking a model on to the chip.
 
 I would like to indulge in a little bit of projection and science fiction of my own.
 
@@ -19,9 +19,9 @@ Firstly, I think it is very cool that people are building browsers with LLMs, an
 
 It turns out that a comprehensive spec and a heap of [unit tests](https://web-platform-tests.org/) are a good way to keep the LLM in check and produce outcomes that should work.
 
-While the Web Platform Tests project is huge with over [72,000 commits](https://github.com/web-platform-tests/wpt/commits/master/), 2,224,302 tests and a testament to the shared goals of browser vendors, it's still nowhere near comprehensive enough.
+While the Web Platform Tests project is huge with over [72,000 commits](https://github.com/web-platform-tests/wpt/commits/master/) and 2,224,302 tests and a testament to the shared goals of browser vendors, it's still nowhere near comprehensive enough.
 
-From my own usage of LLMs and the anecdotes of many other developers, LLMs are very good at creating unit tests, and I expect to see `Spec => Unit Test` happening more and more. I think it will make the specification process a lot more robust, and every browser's implementation will get better as we strive for spec conformance.
+From my own usage of LLMs and the anecdotes of many other developers, LLMs are very good at creating unit tests *and* unit tests are good guardrails for coding-agents. I expect to see `Spec => Unit Test` happening more and more with modern tooling. I also think it will make the specification process a lot more robust, and every browser's implementation will get better as we strive for spec conformance.
 
 If we can get this far with an LLM building a new browser today, and we have comprehensive specs and an even more robust test suite, it feels like there is a pretty straight line to a dramatic change in how all browsers are built:
 
@@ -29,17 +29,17 @@ If we can get this far with an LLM building a new browser today, and we have com
 2. Browser vendors will monitor all test failures in their browser and fix them, or update the browser when a spec changes.
 3. Browser vendors will increasingly use LLMs to implement features in the browser, and with a well-planned spec and a comprehensive test suite all features will be developed.
 
-This clearly puts the emphasis on defining good specs.
+This clearly puts the emphasis on defining good specs and more investment there.
 
-Browser engines will then differentiate consciously on whether the specs match their vision of the web, rather than on engineering capability or cost.
+Browser engines will then differentiate consciously on whether the specs match their vision of the web, rather than on their own engineering capability or budgets.
 
 OK, so we are building browsers with an LLM now, but I haven't addressed point 3. While, I mentioned Talaas, the point is about the progression of capability _and_ speed of LLMs. And this is where I project a bit into the land of science fiction (or maybe just pure fantasy).
 
 Let's make some base assumptions:
 
-* Model quality is good enough to implement features given a good enough spec
+* Model quality is good enough to implement features given a good enough spec and tests
 * Model quality keeps improving following scaling laws
-* Model performance keeps improving following [TODO insert law] laws and we see continued 10x increases in performance.
+* Model inference performance keeps improving fast (a16z calls it [LLMflation](https://a16z.com/llmflation-llm-inference-cost/), observing roughly a 10x annual drop in the cost of equivalent-quality model inference, and [Epoch AI](https://epoch.ai/data-insights/llm-inference-price-trends) measures the same trend at anywhere between 1.7x and 31x per year depending on the performance tier).
 
 In [Whither CMS](/whither-cms/) I show that you can build a server middleware that takes any markup and renders it on the fly. `<carousel></carousel>` becomes a working component. If the browser supports the carousel-related CSS primitives the middleware uses them; if not, it implements the feature in JS. It's not practical today, but I think we will get to optimized, generated UIs quickly given the current performance trajectories.
 
@@ -53,7 +53,12 @@ Which means the role of a web spec changes. Today specs define a standardised in
 
 I'm picking on Web Bluetooth because it's an easy example, but there's an entire class of capabilities that machines have that parts of the web ecosystem want and I think at some point the interfaces could be dynamically built.
 
-Rendering is the open question I haven't worked out. A lot of the web's UI surface is developer-experience improvements to smooth make things already possible easier to build. In an instantly-generated browser, is the UI just [WASM](https://webassembly.org/), [Canvas](https://html.spec.whatwg.org/multipage/canvas.html), and [WebGPU](https://www.w3.org/TR/webgpu/) that expose the UI to accesibility tools? I honestly don't knwo, but [Flipbook.page](https://flipbook.page/) recently showed some compelling ideas about generating UI in a world of LLMs without HTML, and the [A2UI protocol](https://a2ui.org/) is another area that explores declarative JSON descriptions of UI that any client can render natively. 
+Rendering is another area that could change a lot. A lot of the web's UI development falls into two categroies:
+
+1) developer-experience improvements to smooth make things already possible easier to build. 
+2) enabling things that have never been possible (see cross-page view-transitions)
+
+In an instantly-generated browser, is the UI just [WASM](https://webassembly.org/), [Canvas](https://html.spec.whatwg.org/multipage/canvas.html), and [WebGPU](https://www.w3.org/TR/webgpu/) that expose the UI to accesibility tools? I honestly don't knwo, but [Flipbook.page](https://flipbook.page/) recently showed some compelling ideas about generating UI in a world of LLMs without HTML, and the [A2UI protocol](https://a2ui.org/) is another area that explores declarative JSON descriptions of UI that any client can render natively. 
 
 We'd still need to work out security and privacy. The [same-origin model](https://html.spec.whatwg.org/multipage/origin.html) and [CSP](https://www.w3.org/TR/CSP3/) would have to remain, alongside a lot of new primitives we don't have yet. Assistive technology and machines would also need to read generated content with the same confidence they read hand-written HTML.
 
