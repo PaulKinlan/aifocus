@@ -1,5 +1,5 @@
 ---
-title: How might a browser be developed
+title: How might a browser be developed?
 date: 2026-05-03T19:59:06.193Z
 slug: how-might-a-browser-be-developed
 draft: true
