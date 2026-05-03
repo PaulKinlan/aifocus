@@ -11,7 +11,7 @@ There's a confluence of things that have happened recently that have made me que
 
 1. On January 8th 2026, [Simon Willison predicted](https://simonwillison.net/2026/Jan/8/llm-predictions-for-2026/#3-years-someone-will-build-a-new-browser-using-mainly-ai-assisted-coding-and-it-won-t-even-be-a-surprise) that someone will build a browser using mainly AI-assisted tools within 3 years
 2. On January 27th 2026, [one human and one agent](https://emsh.cat/en/one-human-one-agent-one-browser/) built a browser from scratch (great experiments)
-3. On the 19th Febuary 2026, News came out that [Taalas had a chip](https://taalas.com/the-path-to-ubiquitous-ai/) that can spit out nearly 17,000 tokens per second by baking a model on to the chip.
+3. On the 19th February 2026, news came out that [Taalas had a chip](https://taalas.com/the-path-to-ubiquitous-ai/) that can spit out nearly 17,000 tokens per second by baking a model onto the chip.
 
 I would like to indulge in a little bit of projection and science fiction of my own.
 
@@ -33,7 +33,7 @@ This clearly puts the emphasis on defining good specs and more investment there.
 
 Browser engines will then differentiate consciously on whether the specs match their vision of the web, rather than on their own engineering capability or budgets.
 
-OK, so we are building browsers with an LLM now, but I haven't addressed point 3. While, I mentioned Talaas, the point is about the progression of capability _and_ speed of LLMs. And this is where I project a bit into the land of science fiction (or maybe just pure fantasy).
+OK, so we are building browsers with an LLM now, but I haven't addressed point 3. While I mentioned Taalas, the point is about the progression of capability _and_ speed of LLMs. And this is where I project a bit into the land of science fiction (or maybe just pure fantasy).
 
 Let's make some base assumptions:
 
@@ -43,7 +43,7 @@ Let's make some base assumptions:
 
 In [Whither CMS](/whither-cms/) I show that you can build a server middleware that takes any markup and renders it on the fly. `<carousel></carousel>` becomes a working component. If the browser supports the carousel-related CSS primitives the middleware uses them; if not, it implements the feature in JS. It's not practical today, but I think we will get to optimized, generated UIs quickly given the current performance trajectories.
 
-I think us web-developers get a bit of a bum rap. Eveyone is saying the tools will automate page generation. However, the web is the people that have the ideas and make the content... So I want to throw this one idea out to our browser-engineering friends: **There is a point in the future where a web specification could be implemented in real-time in the browser...**
+I think us web-developers get a bit of a bum rap. Everyone is saying the tools will automate page generation. However, the web is the people that have the ideas and make the content... So I want to throw this one idea out to our browser-engineering friends: **There is a point in the future where a web specification could be implemented in real-time in the browser...**
 
 My dog (Cwtch, she's a good girl) and I were discussing this very topic whilst on a long walk the other week, trying to determine what would change if the browser is built around the page, instead of the page around the capabilities of the browser. What if the browser produces working components from the provided markup (heck, even just a description) at request time, and what would the implications be for the web and browsers? 
 
@@ -53,12 +53,12 @@ Which means the role of a web spec changes. Today specs define a standardised in
 
 I'm picking on Web Bluetooth because it's an easy example, but there's an entire class of capabilities that machines have that parts of the web ecosystem want and I think at some point the interfaces could be dynamically built.
 
-Rendering is another area that could change a lot. A lot of the web's UI development falls into two categroies:
+Rendering is another area that could change a lot. A lot of the web's UI development falls into two categories:
 
-1) developer-experience improvements to smooth make things already possible easier to build. 
-2) enabling things that have never been possible (see cross-page view-transitions)
+1. developer-experience improvements that make things already possible easier to build.
+2. enabling things that have never been possible (see cross-page view-transitions).
 
-In an instantly-generated browser, is the UI just [WASM](https://webassembly.org/), [Canvas](https://html.spec.whatwg.org/multipage/canvas.html), and [WebGPU](https://www.w3.org/TR/webgpu/) that expose the UI to accesibility tools? I honestly don't knwo, but [Flipbook.page](https://flipbook.page/) recently showed some compelling ideas about generating UI in a world of LLMs without HTML, and the [A2UI protocol](https://a2ui.org/) is another area that explores declarative JSON descriptions of UI that any client can render natively. 
+In an instantly-generated browser, is the UI just [WASM](https://webassembly.org/), [Canvas](https://html.spec.whatwg.org/multipage/canvas.html), and [WebGPU](https://www.w3.org/TR/webgpu/) exposed to accessibility tools? I honestly don't know, but [Flipbook.page](https://flipbook.page/) recently showed some compelling ideas about generating UI in a world of LLMs without HTML, and the [A2UI protocol](https://a2ui.org/) is another area that explores declarative JSON descriptions of UI that any client can render natively.
 
 We'd still need to work out security and privacy. The [same-origin model](https://html.spec.whatwg.org/multipage/origin.html) and [CSP](https://www.w3.org/TR/CSP3/) would have to remain, alongside a lot of new primitives we don't have yet. Assistive technology and machines would also need to read generated content with the same confidence they read hand-written HTML.
 
@@ -69,12 +69,12 @@ In a world of instant generation, I don't know whether we want a browser vendor 
 
 A few second-order things happen if the second path wins. Polyfills disappear, because the generator handles backward compatibility. The "vendor gate" on shipping a new feature collapses, because if the runtime supports an intent description, every browser running a recent generator ships it. Browser engineering teams shift toward runtime, sandbox, and verification work, because the labour-intensive part of shipping a browser was always the per-feature implementation. And the security story flips: provenance becomes a real problem, because two users on the same URL might get different generated implementations and bug reports stop being reproducible without the generated artefact attached.
 
-All of that is the engineering side. The user side is harder and more complex to reason about. The web's promise was that the same URL produced roughly the same experience for anyone with a browser. A flagship iPohne and a five-year-old Android were on the same web. In a generative world, your experience of any given page becomes a function of your device, your generator, and where they're running. So people in regions where high-end hardware is unaffordable, or where the on-device model isn't the best one, get a worse web by default. Not just slower, but less capable, less accurate, more error-prone. Sharing a URL with a friend stops meaning sharing an experience. Urgh. 
+All of that is the engineering side. The user side is harder and more complex to reason about. The web's promise was that the same URL produced roughly the same experience for anyone with a browser. A flagship iPhone and a five-year-old Android were on the same web. In a generative world, your experience of any given page becomes a function of your device, your generator, and where they're running. So people in regions where high-end hardware is unaffordable, or where the on-device model isn't the best one, get a worse web by default. Not just slower, but less capable, less accurate, more error-prone. Sharing a URL with a friend stops meaning sharing an experience. Urgh. 
 
-I'm personally more interested in exploring the minimal browser and the generated futgure a lot more. The runtime can then evolve faster than a standards process as long as you solve the sandbox secuirty and privacy and it's completely unexplored and we need to understand *all* of the issues and opportunities.
+I'm personally more interested in exploring the minimal browser and the generated future a lot more. The runtime can then evolve faster than a standards process as long as you solve the sandbox security and privacy, and it's completely unexplored, so we need to understand *all* of the issues and opportunities.
 
 We are many years out from having local hardware quick enough to build a browser at runtime, though projects like [WebLLM](https://webllm.mlc.ai/) running language models in the browser via WebGPU and Chrome's `prompt` API show how far we've already come. I'm very interested to see how browsers, and not just web development, change as LLMs evolve, and I think there are some low-hanging fruits when it comes to feature development today.
 
 I believe with pretty high-confidence that the actual near-term future will be that browser vendors all start using tools to create features from comprehensive and well tested specs and more thought and rigour will go into that.
 
-I do think that we really need to spend a lot more time thinking about what happens to the browser as LLMs progress a lot more than we currently do. I think we're already on the path to "autonomous user-agents" with the new generation of [Super-apps](/super-apps) that centralize and control content deliveriy, and they might be the tools people prefer in the future.
+I do think that we really need to spend a lot more time thinking about what happens to the browser as LLMs progress a lot more than we currently do. I think we're already on the path to "autonomous user-agents" with the new generation of [Super-apps](/super-apps) that centralise and control content delivery, and they might be the tools people prefer in the future.
