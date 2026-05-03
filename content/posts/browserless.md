@@ -67,6 +67,8 @@ In a world of instant generation, I don't know whether we want a browser vendor 
 * If we do want them to decide on capabilities, then web standards for high-level features still make sense and the browser ships the feature (albeit generated).
 * If we want to take the browser to the minimal extreme, then web standards become the absolute minimum needed to make a secure and private runtime, and the runtime solves the rest.
 
+A few second-order things happen if the second path wins. Polyfills disappear, because the generator handles backward compatibility. The "vendor gate" on shipping a new feature collapses, because if the runtime supports an intent description, every browser running a recent generator ships it. Browser engineering teams shift toward runtime, sandbox, and verification work, because the labour-intensive part of shipping a browser was always the per-feature implementation. And the security story flips: provenance becomes a real problem, because two users on the same URL might get different generated implementations and bug reports stop being reproducible without the generated artefact attached.
+
 My personal opinion is that I'm more interested in exploring the latter a lot more. The runtime can then evolve faster than a standards process as long as you solve the sandbox secuirty and privacy. 
 
 We are many years out from having local hardware quick enough to build a browser at runtime, though projects like [WebLLM](https://webllm.mlc.ai/) running language models in the browser via WebGPU and Chrome's `prompt` API show how far we've already come. I'm very interested to see how browsers, and not just web development, change as LLMs evolve, and I think there are some low-hanging fruits when it comes to feature development today.
