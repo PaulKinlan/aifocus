@@ -62,14 +62,16 @@ In an instantly-generated browser, is the UI just [WASM](https://webassembly.org
 
 We'd still need to work out security and privacy too. The [same-origin model](https://html.spec.whatwg.org/multipage/origin.html) and [CSP](https://www.w3.org/TR/CSP3/) would have to remain, alongside a lot of new primitives we don't have yet (or know).
 
-In a world of instant generation, I don't even know whether we want a browser vendor to be the one deciding which features make it into the browser. There are roughly two paths:
+In a world of instant generation, what is the browser vendors role in deciding what happens? Do we want them to decide on capabilities?
 
-* If we do want them to decide on capabilities, then web standards for high-level features still make sense and the browser ships the feature (albeit generated).
-* If we want to take the browser to the minimal extreme, then web standards become the absolute minimum needed to make a secure and private runtime, and the runtime solves the rest.
+* If we do then then web standards for high-level features still make sense and it's likely we go to a maximal extrame and the browser ships every feature (generated).
+* If we don't then a likely path would take the browser to the minimal extreme, then web standards become the absolute minimum needed to make a secure and private runtime, and the runtime solves the rest.
+
+Maybe there's a third path and the browser vendors will provide "taste" (I really dislike the use of this term.)
 
 A few second-order things happen if the second path wins. Polyfills disappear, because the generator handles backward compatibility. The "vendor gate" on shipping a new feature collapses, because if the runtime supports an intent description, every browser running a recent generator ships it. Browser engineering teams shift toward runtime, sandbox, and verification work, because one of the most labour-intensive parts of shipping a browser was always the per-feature implementation. And the security story flips: provenance becomes a real problem, because two users on the same URL might get different generated implementations and bug reports stop being reproducible without the generated artefact attached.
 
-All of that is the engineering side. The user side is harder and more complex to reason about. There is a genuinely good version of this. Accessibility could become the default rather than something every site author has to remember to bolt on, because the browser generates the most accessible implementation for the user it's actually serving. Internationalisation could come for free. Low-power devices could get a lean tailored version of any site rather than the same bloated one. People who can't write code today could publish a site by writing prose. The web could become more accommodating, not less.
+All of that is the engineering side. The user side is harder and more complex to reason about. I think there is a genuinely good version of this: Accessibility could become the default rather than something every site author has to remember to bolt on, because the browser generates the most accessible implementation for the user it's actually serving. Internationalisation could come for free. Low-power devices could get a lean tailored version of any site rather than the same bloated one. People who can't write code today could publish a site by writing prose. The web could become more accommodating, not less.
 
 But the web's promise was also that the same URL produced roughly the same experience for anyone with a browser. A flagship iPhone and a five-year-old Android were on the same web. In a generative world, your experience of any given page becomes a function of your device, your generator, and where they're running. So people in regions where high-end hardware is unaffordable, or where the on-device model isn't the best one, get a worse web by default. Not just slower, but less capable, less accurate, more error-prone. Sharing a URL with a friend stops meaning sharing an experience.
 
