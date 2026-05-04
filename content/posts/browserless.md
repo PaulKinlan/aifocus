@@ -12,7 +12,7 @@ There's a confluence of things that have happened recently that have made me que
 2. On January 27th 2026, [one human and one agent](https://emsh.cat/en/one-human-one-agent-one-browser/) built a browser from scratch (great experiments)
 3. On the 19th February 2026, news came out that [Taalas had a chip](https://taalas.com/the-path-to-ubiquitous-ai/) that can spit out nearly 17,000 tokens per second by baking a model onto the chip.
 
-I would like to indulge in a little bit of projection and science fiction of my own.
+I would like to indulge in a little bit of projection and in my case, some science fiction of my own.
 
 Firstly, I think it is very cool that people are building browsers with LLMs, and as you can expect from a blog about the intersection of the web and AI, I'm on the positive side of this technology.
 
