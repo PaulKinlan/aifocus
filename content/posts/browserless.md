@@ -16,9 +16,9 @@ I would like to indulge in a little bit of projection and in my case, some scien
 
 Firstly, I think it is very cool that people are building browsers with LLMs, and as you can expect from a blog about the intersection of the web and AI, I'm on the positive side of this technology.
 
-It turns out that a comprehensive spec and a heap of [unit tests](https://web-platform-tests.org/) are a good way to keep the LLM in check and produce outcomes that should work.
+It turns out that a comprehensive spec and a heap of unit tests are a good way to keep the LLM in check and produce outcomes that should work.
 
-While the Web Platform Tests project is huge with over [72,000 commits](https://github.com/web-platform-tests/wpt/commits/master/) and 2,224,302 tests and a testament to the shared goals of browser vendors, it's still nowhere near comprehensive enough.
+While the Web Platform Tests project is huge with over [72,000 commits](https://github.com/web-platform-tests/wpt/commits/master/) and [2,224,302 tests](https://web-platform-tests.org/) are a testament to the shared goals of browser vendors, it's still nowhere near comprehensive enough.
 
 From my own usage of LLMs and the anecdotes of many other developers, LLMs are very good at creating unit tests *and* unit tests are good guardrails for coding-agents. I expect to see `Spec => Unit Test` happening more and more with modern tooling. I also think it will make the specification process a lot more robust, and every browser's implementation will get better as we strive for spec conformance.
 
