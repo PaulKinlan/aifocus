@@ -2,7 +2,6 @@
 title: a business in a box
 date: 2026-05-10T20:00:00.000Z
 slug: business-in-a-box
-draft: true
 authors:
   - paulkinlan
 ---
