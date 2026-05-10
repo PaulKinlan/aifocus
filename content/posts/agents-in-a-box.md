@@ -19,6 +19,16 @@ I've been running an experiment called [docker-agent-test](https://github.com/Pa
 
 When I say "each agent is a Linux user," I mean it literally. When I run `make create [name]` it will run `useradd` and create the account. The agent's role and purpose are stored in the GECOS field of `/etc/passwd`, so other agents can discover what their colleagues do by running `getent passwd`. They share a `/home/shared/` directory for artifacts and a task board. They can't sudo. They can't write outside their home directory. They're sandboxed the same way any unprivileged user on a Unix system is. That said, this isn't using process isolation like `cgroups`.
 
+The whole thing is managed through `make`. Here's the command surface I use day to day:
+
+* `make build` creates the system
+* `make up` starts the system
+* `make down` stops the system
+* `make create <name> --persona coder` creates a user with the uid `<name>` and sets up the default prompts for the coder persona (there are a lot of other personas)
+* `make task-add` adds a task to the shared board for the best agent to pick up
+* `make send <user> "<message>"` sends the user an email and gets them to start work
+* `make tui` runs the text UI that makes it easier to set up
+
 The email part is what reminded me of Qire. At the Liverpool office, email was how work actually moved. A client would email in a request, someone would pick it up, do the work, email back. Internally, we'd email each other tasks, status updates, questions. The email thread was the project management system. Nobody opened Jira. The inbox was the to-do list.
 
 In docker-agent-test, it works the same way. When a task's dependencies are satisfied, the orchestrator emails the assigned agent: "your blockers are clear, here's what you need to do." The agent reads its mail, does the work, publishes artifacts to the shared directory, and the orchestrator picks up the completion and notifies the next agent downstream. If an agent needs something installed and doesn't have sudo, it does what any employee without admin access would do: it sends an email asking for it. I get that email. It's genuinely funny to open my inbox and find a polite request from "coder-1" explaining why it needs `imagemagick` installed and what it plans to do with it.
@@ -29,24 +39,17 @@ Because the system is built on top of Docker and it mounts some directories from
 
 It's fun to watch these next-token prediction machines operate, call tools, and then look up other people "in the company" from `/etc/passwd` who might be able to solve their problem.
 
-What surprised me is how much this feels like managing a small team rather than running software. The agents have a DAG-based task board, so work flows through them in dependency order. But the coordination layer is thin. The orchestrator polls the task board every 30 seconds, checks for completed tasks, and sends mail when blockers are cleared. That's it. There's no complex scheduling. No resource allocation algorithm. Just "your thing is ready, go." The same way a manager at a small company would tap someone on the shoulder and say "the data's in, you can start on the report now."
+What surprised me is how much this feels like managing a small team rather than running software. There are two ways that agents get work:
+
+1) The agents check their email and pick up work and then work out how best to proceed (there are some guardrails and guidance - but it can also evolve as the agests operate) and then email the sender with updates
+2) The agents also share a task board, and each task knows what it depends on. There is an optional orchestrator user that polls the board every 30 seconds, checks for completed tasks, and sends mail to the next agent when its blockers are cleared. 
 
 The circuit breaker is one of the bits I'm most pleased with. If an agent fails five times in a row, it stops and emails root. That's basically the equivalent of an employee coming to you and saying "I've tried this five times and I can't figure it out, I need help." Exponential backoff on transient errors, immediate halt on fatal ones. The system doesn't thrash.
 
-There are preset workflows you can load that define an entire team and task graph in a JSON file. A bug triage preset, a feature build preset, a codebase audit. The preset compiler creates the agents, sets up the task DAG, sends the kickoff email, and everything starts flowing. It feels like hiring a temporary project team. Define the roles, define the work, press go.
+There are preset workflows you can load that define an entire team and task list in a JSON file. A bug triage preset, a feature build preset, a codebase audit. The preset compiler creates the agents, sets up the tasks and their dependencies, sends the kickoff email, and everything starts flowing.
 
-The thing that nags at me is whether this is actually a good idea or just a fun one. Running agents as Linux users felt elegant in a "this is how computers were always supposed to work" way, and a natural extension of what Unix was designed for. The fact that some of those actors are now LLMs instead of humans doesn't change the model much. But the failure modes are different. A human employee who gets confused asks for clarification. An agent that gets confused might quietly do the wrong thing for five cycles before the circuit breaker kicks in. The email-as-coordination pattern works well when the messages are clear, but LLMs can be verbose, and email threads between agents can get long and circular in ways that human email threads usually don't.
+The thing that nags at me is whether this is actually a good idea or just a fun one. Running agents as Linux users felt elegant in a "this is how computers were always supposed to work" way, and a natural extension of what Unix was designed for. The fact that some of those actors are now LLMs instead of humans doesn't change the model much. But the failure modes are different. A human employee who gets confused asks for clarification. An agent that gets confused might quietly do the wrong thing for five cycles before the circuit breaker kicks in. The email-as-coordination pattern works well when the messages are clear, but LLMs can be verbose, and email threads between agents can get long and circular in ways that human email threads usually don't. And it turns out polling for new work, even when using Sonnet, burns through tokens. This was a fun experiment, but it was an expensive one.
 
 Still, every time I open my inbox and see an email from an agent explaining what it did, what it found, and what it thinks should happen next, I get the same feeling I had at Qire when a colleague would send me a question from one of our customers. There's context. There's reasoning. There's a clear next step that I need to do or solve. Bingo.
 
-This was a fun experiment, although it cost me a lot of money. It turns out polling for new work, even when using Sonnet, can burn through tokens like crazy. If you want to play with it, go ahead. It's a bit weird to get set up, since it's all managed via `make`:
-
-* `make build` creates the system
-* `make up` starts the system
-* `make down` stops the system (do this, otherwise your token bill will be high)
-* `make create <name> --persona coder` creates a user with the uid `<name>` and sets up the default prompts for the coder persona (there are a lot of other personas)
-* `make task-add` adds a task to the shared board for the best agent to pick up
-* `make send <user> "<message>"` sends the user an email and gets them to start work
-* `make tui` runs the text UI that makes it easier to set up
-
-My general question is this: with the development of `claude-code` and `codex` CLIs and apps and their continued push into agents and automation, they're effectively building an OS. So what does this mean for OSes? I think a system like the one described in this article could work, but the cost is too high, especially when the CLIs are subsidised behind their subscriptions.
+My general question is this: with the development of `claude-code` and `codex` CLIs and apps and their continued push into agents and automation, they're effectively building an OS. So what does this mean for OSes? I think a system like the one described in this article could work, but the cost is currently too high, especially when the CLIs are subsidised behind their subscriptions.  Who knows, maybe OpenAI or Anthropic will do a linux-disto.
