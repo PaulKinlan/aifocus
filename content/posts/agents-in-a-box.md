@@ -44,7 +44,7 @@ What surprised me is how much this feels like managing a small team rather than 
 1) The agents check their email and pick up work and then work out how best to proceed (there are some guardrails and guidance - but it can also evolve as the agests operate) and then email the sender with updates
 2) The agents also share a task board, and each task knows what it depends on. There is an optional orchestrator user that polls the board every 30 seconds, checks for completed tasks, and sends mail to the next agent when its blockers are cleared. 
 
-The circuit breaker is one of the bits I'm most pleased with. If an agent fails five times in a row, it stops and emails root. That's basically the equivalent of an employee coming to you and saying "I've tried this five times and I can't figure it out, I need help." Exponential backoff on transient errors, immediate halt on fatal ones. The system doesn't thrash.
+The circuit breaker is a neat addition. If an agent fails five times in a row, it stops and emails root and it reminds me of university when I had to ask the admins to install something (they refused).
 
 There are preset workflows you can load that define an entire team and task list in a JSON file. A bug triage preset, a feature build preset, a codebase audit. The preset compiler creates the agents, sets up the tasks and their dependencies, sends the kickoff email, and everything starts flowing.
 
