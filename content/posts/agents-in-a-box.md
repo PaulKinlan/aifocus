@@ -48,7 +48,7 @@ Running agents as Linux users felt elegant in a "this is how computers were alwa
 
 The email-as-coordination and jobs-board pattern works well when the messages are clear, but LLMs can be verbose, and email threads between agents can get long and circular in ways that human email threads usually don't. And it turns out polling for new work, even when using Sonnet, burns through tokens creating a fun but very an expensive project. Ultimately, email commuinication is novel and it means you could slot an agent in to your company, but there are also so many other ways for tools to also communicate with each other (and I think we are seeing that with OpenClaw etc)
 
-Software project management has also moved on so much since 2010. While a Linux system has lots of tools that it can use to complete a task, so much of a persons work revolves around web-apps and Sass that was just to much of a pain to set up in this project.
+Software project management and team coordination have also moved on so much since 2010. While a Linux system has lots of tools that it can use to complete a task, so much of a persons work revolves around web-apps and Sass that was just to much of a pain to set up in this project.
 
 Finally, I've also found it incredibly hard to break down a problem in a way that actually makes use of a "full business" in the box. Yes, I can get one agent to do something, and it's very fun to see it "delegate" but in practice nearly all of the things that I am doing cna be managed by one agent.
 
