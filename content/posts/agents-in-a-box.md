@@ -41,7 +41,7 @@ What surprised me is how much this feels like managing a small team rather than 
 1) The agents check their email and pick up work and then work out how best to proceed (there are some guardrails and guidance - but it can also evolve as the agests operate) and then email the sender with updates
 2) The agents also share a task board, and each task knows what it depends on. There is an optional orchestrator user that polls the board every 30 seconds, checks for completed tasks, and sends mail to the next agent when its blockers are cleared. 
 
-The thing that nags at me is whether this is actually a good idea or just a fun one. Are we going to get businesses running in a box? 
+The thing that nags at me is whether this is actually a good idea or just a fun one. Are we going to get businesses running in a box? what if every user on a machine were an agent?
 
 Running agents as Linux users felt elegant in a "this is how computers were always supposed to work" way, and a natural extension of what Unix was designed for. The fact that some of those users are now LLMs instead of humans doesn't change the model much. I do think Linux could be a good place to run agents as users, but the industry will probablly rally around a differnt runtime (or have it appear like the agent *is* the system.)
 
