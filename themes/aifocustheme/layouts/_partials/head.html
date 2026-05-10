@@ -11,7 +11,7 @@
   integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
   crossorigin="anonymous" referrerpolicy="no-referrer" />
 {{ template "_internal/opengraph.html" . }}
-{{ template "_internal/schema.html" . }}
+{{ partial "jsonld.html" . }}
 {{ template "_internal/twitter_cards.html" . }}
 {{ with .OutputFormats.Get "RSS" }}
 {{ printf `
