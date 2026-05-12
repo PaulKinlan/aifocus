@@ -1,0 +1,90 @@
+---
+title: are pwas cooked?
+date: 2026-05-11T09:00:00.000Z
+slug: are-pwas-cooked
+draft: true
+authors:
+  - paulkinlan
+---
+
+I'm 45 years old and using cooked to mean something that it never meant. I don't know when it happened, but I'm also thinking of writing everything in lowercase and using numbers like 6 and 7 in an amusing way.
+
+Just for avoidance of doubt, this is a personal opinion and muesing.
+
+I just want to ground some of this article in the definition of a PWA. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app) has a good overview.
+
+> "A progressive web app (PWA) is an app that's built using web platform technologies, but that provides a user experience like that of a platform-specific app." 
+
+There's a lot more detail on MDN where they discuss "Platform Specific Apps" and the benefits of using the web. 
+
+One of the sites that I helpt to run [web.dev](https://web.dev/pwa), says this
+
+> Progressive Web Apps (PWA) are web apps built and enhanced with modern APIs to provide enhanced capabilities while still reaching any web user on any device with a single codebase. They combine the broad reach of web apps with the rich capabilities of platform-specific apps to enhance the user experience.
+
+See: https://web.dev/articles/what-are-pwas
+
+Before we get going, here's where your current browser stands on the capabilities this post is about, where we talk about Reliability and Capabilitye etc.
+
+But what does the actual support look like?
+
+{{< iframe "/pwa-cooked-baseline.html" "1280" >}}
+
+That support matrix doesn't look great. The core of the original techjnical requirements are mostly supported (Service Worker, Cache and instalability), but the further that you go into the capabilities that people wanted or expect a "platform application" might have are increasingly not supported across the web.
+
+Now you can argue that Device Capabilites like USB, Serial, HID and Bluetooth should never be on the web, but when I look at the last decade [going back to Frances Berriman and Alex Russell's original 2015 framing](https://infrequently.org/2015/06/progressive-apps-escaping-tabs-without-losing-our-soul/), the case for PWAs as a target for serious application development rested on one bet: the web platform is good enough to host and run the majority of experiences that a business or developer would want to run. Implied in that bet was that we could close the gap with native fast enough that developers wouldn't have to write four codebases (iOS, Android, Mac and Windows).
+
+We never closed the capability gap on the platform and you can now build four codebases that are deeply integrated into the hosts that they run on quickly and to a high-quality.
+
+The clean version of the argument is straightforward. iOS Safari currently scores [86/100 against Chrome Android's 97](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide) on PWA support. The Chromium-only [Fugu surface](https://fugu-tracker.web.app/) (USB, Serial, HID, Bluetooth, File System Access, Window Controls Overlay, Local Fonts, Idle Detection, Compute Pressure) is six years into Safari and Firefox rejection. Mozilla has published "negative" positions on [WebUSB](https://github.com/mozilla/standards-positions/issues/100), [WebHID](https://github.com/mozilla/standards-positions/issues/459), [Web Bluetooth](https://github.com/mozilla/standards-positions/issues/95), [Web NFC](https://github.com/mozilla/standards-positions/issues/238) and [File System Access](https://github.com/mozilla/standards-positions/issues/154) in their standards-positions repo. [Apple's 2026 stance on device APIs](https://webkit.org/tracking-prevention/) is more entrenched than it was in 2022, not less. Web Push on iOS took [from the W3C Push API First Public Working Draft in October 2012](https://www.w3.org/TR/2012/WD-push-api-20121018/) to [declarative shipping in iOS 16.4 in March 2023](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/): just over ten years. The [Baseline transition window](https://web.dev/baseline) from Newly Available to Widely Available is 30 months, which means anything that lands today is not safely usable everywhere until late 2028.
+
+I've tried to pull together as best I can, the shipping history for the full API surface that makes up a what people think a PWA is, grouped into the same bands as above dividing it into: core, engagement, background work, system integration, and device. Blue dots are Chrome, orange are Firefox, grey are Safari. The open circles are "still not shipped".
+
+{{< iframe "/pwa-cooked-timeline.html" "980" >}}
+
+The pattern by band tells you a lot - and I expect each Browser vendor will have their own take that supports their stance. 
+
+* **Core PWA** (Service Worker, Web App Manifest, Cache API) is the one band where every engine shipped. This is the foundation, and it works everywhere. 
+* **Engagement** (Notifications, Push, beforeinstallprompt, App Badging) is a half-shipped surface. [Safari got Push and Notifications in iOS 16.4 (March 2023) but only for installed home-screen PWAs](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/), and beforeinstallprompt is still Chromium-only because [Firefox removed its Site Specific Browser (the closest thing it had to a PWA install) in Firefox 86, February 2021](https://bugzilla.mozilla.org/show_bug.cgi?id=1682593) and [Safari has no equivalent prompt; installation is manual via the share sheet](https://web.dev/learn/pwa/installation-prompt). 
+* **Background work** (Background Sync, Background Fetch, Periodic Background Sync) is the band where the cross-engine story collapses entirely. Every API in it is Chromium-only and has been for years. [Mozilla's position on Background Sync is "negative"](https://github.com/mozilla/standards-positions/issues/173), and so is [its position on Periodic Background Sync](https://github.com/mozilla/standards-positions/issues/214). Background Fetch is still [under review](https://github.com/mozilla/standards-positions/issues/30) and Mozilla has not committed to shipping it. 
+* **System integration** (Web Share, Web Share Target, File Handling, Launch Handler, Manifest Shortcuts, Window Controls Overlay) is mostly Chromium-only, with Web Share as the one partial exception. 
+* **Device / Fugu** (Bluetooth, USB, NFC, Serial, File System Access, HID, Idle Detection, Local Fonts, Compute Pressure) is the famous case: six years of Safari and Firefox rejection, no movement.
+
+The point of breaking it down this way is that "PWA on the open web" was never just a Fugu story. Fugu is the surface that gets quoted because the rejections are loudest, but the broader gap is in engagement and background work, the things developers most associate with what a PWA *is*. If you cannot run a Web Push notification, badge the icon, or sync data in the background on every engine the same way, the PWA-as-app metaphor doesn't hold. The Core PWA band is the only one where the metaphor still works, and that's the band that quietly became infrastructure rather than a category.
+
+Set against that, native development getting dramatically cheaper. [Xcode 26 with Claude Agent SDK + Predictive Code Completion is reporting ~60% time reduction on SwiftUI projects](https://medium.com/@osmandemiroz/reduce-ios-development-time-by-60-with-claude-code-86a4e9d864ca). Apple's [Predictive Code Completion runs on-device](https://lickability.com/blog/xcode-predictive-code-completion/) on the NPU, trained on Swift and the Apple SDKs. [Anthropic's Agent SDK is integrated into Xcode 26.3](https://www.anthropic.com/news/apple-xcode-claude-agent-sdk). [Compose Multiplatform iOS reached Stable](https://www.jetbrains.com/lp/compose-multiplatform/) last year. [React Native New Architecture](https://reactnative.dev/architecture/landing-page) shipped with the bridge removed. [Tauri 2](https://v2.tauri.app/) covers six targets including iOS and Android. [Lynx](https://thenewstack.io/cross-platform-ui-framework-lynx-competes-with-react-native/) is in TikTok production at 2.5× React Native startup. The cost differential between "ship native iOS" and "ship a PWA" used to be quarters. Now it is weeks.
+
+My worry is that the web is shipping the same APIs across browsers significantly more slowly than native is becoming cheap. The gap is widening on the things developers actually want a PWA *for* (install and system integration, and to a far lesser extent, hardware access), and the alternative is materially less expensive than it was 18 months ago.
+
+I actually don't know what the answer is. Speed up? [I do expect browser vendors to start using LLMs to land features](/how-might-a-browser-be-developed/). I just don't think we are going to get over hurdles of the differning principles of what Browser vendors want to prioritize. Apple could ship Fugu. Mozilla could ship the device APIs they have been opposing. Google could slow down... The Interop project could be more aggressive... A power of the web's standardising process is that everyone can disagree and offer a version of the web they want their users to experience.
+
+The thing that is genuinely cooked is the framing that put PWAs in competition with native apps in the first place. The framing said: pick a platform target, the web is your option for cross-platform, install your PWA, get most of the benefits of native without the cost. Ir eally do think that this framing is over. Native is no-longer the cost it used to be. The web cannot win that comparison on capability, and the consumer behaviour on installable PWAs never crossed the threshold required to make it a category. [Web app manifest adoption has been flat at around 9% of sites since 2022](https://almanac.httparchive.org/en/2025/pwa). 
+
+[Service worker adoption is about 19% of all sites](https://almanac.httparchive.org/en/2025/pwa), up roughly tenfold from 2022 however it appears that much of that is Google Tag Manager auto-installing them for performance, which is itself the point: the *plumbing* of progressive web apps became background infrastructure. However sites don't seem to be adopting installability, and offline and caching with about 8% of sites that have a service-worker use `caches.matchAll` (a sign of integrating offline support). Approximatly 1.5% of sites in HTTP Archive are doing offline (a core tenent of PWA).
+
+Sheesh - it's great that people are able to do this, but it's certainly not what I hoped it would be when we started this 10 years ago.
+
+The web's value as a *substrate*, or the platform, the surface that anyone, human or machine, can read, link to, embed, compose against, is having its strongest year in a decade. The tools that people use whether that's Chat GPT or Coding CLIs - they do not load app bundles. They load URLs.
+
+[A link is all you need](/a-link-is-all-you-need/).
+
+If you are shipping a productivity tool that wants widgets, [Live Activities](https://developer.apple.com/documentation/activitykit), [App Intents](https://developer.apple.com/documentation/appintents), system-wide hotkeys, deep accessibility services, or [Apple Intelligence integration](https://developer.apple.com/apple-intelligence/), the web is the wrong target. You have to ship native because the vendor made choices to not let the web integrate as you might want, and now you will use an LLM to write most of the code. The PWA can't ever win that fight.
+
+Government intevention hasn't changed it and it's unlikely to change. So maybe how we think about what goes on to the web has to change.
+
+I'm not going to sit here and say "OMG there's an existential threat, therefore to save the web you need to do agents"... But as an industry I do think we should look at the oppoturnity of the new platforms that are putting pressure on OS owners and see if we can lean-in more.
+
+If you are shipping content, embeddables, agent-callable services, anything that benefits from URLs and search and links and silent updates and zero install, the web is by some distance the right answer. Discovery still happens on the web. Sharing still happens through links. Agents still consume the open web. The next generation of clients is not iOS apps. It could be web-shaped clients with agent layers on top.
+
+I think the web can actually accelerate and influence the direction of computing. The web has real momentum in specific directions, and the move that matters most now is to put more wood behind those arrows rather than re-litigating the device-API fight.
+
+The first is the agent surface. Whether [WebMCP is the right solution or not ](https://developer.chrome.com/blog/webmcp-epp) is not something I can litgatge now, but having a developer or business have their web pages expose tools to the user's agent over a standard interface could cement the web in a future that might see massive growth in people using new "User agents". This concept is structurally, the most important new web API since Service Worker - that I've seen. It needs broader cross-engine support, conventions for agent-card manifests, and a public registry story etc. [But I think it offers so much opporutunity](/webmcp-is-the-new-web-intents/)
+
+The second is on-device AI in the browser. [WebGPU achieved Baseline in January 2026](https://www.webgpu.com/news/webgpu-hits-critical-mass-all-major-browsers-now-ship-it/). [WebLLM](https://webllm.mlc.ai/) runs frontier models in-tab via WebGPU and even the prompt API offer a vision that the web can evolve quickly as the first cross-platform runtime for client-side AI. If that lands while native still requires per-platform model packaging, the web gets a capability native does not have.
+
+The third is Interop and Baseline confidence. [Interop 2026](https://web.dev/blog/interop-2026) is the right project. Its weakness is that "Interop landed" still means waiting 30 months for the Baseline window to close. If the four major engines collectively cut the Newly-to-Widely lag by a year, the entire developer experience of writing for the web shifts.
+
+The fourth is embedding + composition + portability. I do however think we're missing missing out on primitives that enable better embedding and composition. For example, I regret Web Bundles' tie to AMP because it offered a vision for being able to share content more broadly while keep same-orgin semantics, and I as I see coding tools creating HTML pages I really think we have an opportunity to make bundling and sharing simple and safe. There's also a lot to be explored around iframes and sandbox as I noted in [the browser is the sandbox](/the-browser-is-the-sandbox/)
+
+The fifth is making content experiences even stronger. There's been great work on things like [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions/), [popover](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/popover), [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning), [scroll-driven animations](https://developer.chrome.com/docs/css-ui/scroll-driven-animations) to make it easier to build very rich experiences. And when I look at things like HTML in Canvas and what they can enable, that I can't imagine these being easy to ship across native platforms. But as an industry we have to think about making it easy to share more across more machines.
+
+i'm personally not optimnistic about pwa (is cope the word?). but with a lot of work the web's still cooking. i am interested in hearing how you think the platform needs to evolve.

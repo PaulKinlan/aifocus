@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<title>AI model drops: cadence + predicted next</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  padding: 1.25rem;
+  background: #fafafa;
+  line-height: 1.45;
+}
+h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: 1rem; }
+.legend {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: .75rem;
+  font-size: .78rem;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #444;
+}
+.legend .swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  margin-right: .3rem;
+  vertical-align: middle;
+}
+.legend .open {
+  background: white;
+  border: 1.5px dashed #888;
+}
+.legend .closed {
+  background: #888;
+}
+.chart {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: .375rem;
+  padding: 1rem .5rem 1rem 1rem;
+  overflow-x: auto;
+  margin-bottom: 1.25rem;
+}
+.chart svg { display: block; }
+h3 { font-size: .95rem; font-weight: 700; margin: 1.5rem 0 .5rem; }
+.cadence-note { font-size: .85rem; color: #555; margin-bottom: .8rem; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; font-size: .78rem; background: white; border: 1px solid #ddd; border-radius: .375rem; overflow: hidden; }
+th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid #eee; }
+th { background: #f4f4f6; font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #555; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.predicted { color: #1d8b3e; font-weight: 600; }
+.note { font-size: .72rem; color: #888; margin-top: .75rem; line-height: 1.4; }
+.loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
+.error { padding: 1rem; background: #fce4e4; color: #a02020; border-radius: .375rem; font-size: .85rem; }
+.range-buttons {
+  display: flex;
+  gap: .35rem;
+  margin-bottom: .6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.range-buttons .label { font-size: .72rem; color: #777; margin-right: .25rem; }
+.range-buttons button {
+  font: inherit;
+  font-size: .72rem;
+  padding: .25rem .65rem;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #333;
+}
+.range-buttons button:hover { background: #f0f0f0; }
+.range-buttons button.active {
+  background: #1a1a1a;
+  color: white;
+  border-color: #1a1a1a;
+}
+.range-buttons input[type="date"] {
+  font: inherit;
+  font-size: .72rem;
+  padding: .2rem .4rem;
+  border: 1px solid #ddd;
+  border-radius: .25rem;
+  color: #333;
+}
+</style>
+</head>
+<body>
+<h2>AI model drops, by series</h2>
+<p class="subhead">Headline model releases over time, with predicted next drop per series. Live from <code>/model-drops.tsv</code>.</p>
+
+<div class="legend">
+  <span><span class="swatch closed"></span>shipped</span>
+  <span><span class="swatch open"></span>predicted next (median recent gap)</span>
+</div>
+
+<div class="chart" id="timeline-chart"><div class="loading">Loading model data...</div></div>
+
+<h3>Cadence over time</h3>
+<p class="cadence-note">For each release, the median gap between the prior three frontier-tier drops across all series at that point. A downward line means the field is shipping faster. The early-2023 gaps are large, so use the zoom controls to focus on the recent compression.</p>
+<div class="range-buttons" id="cadence-range">
+  <span class="label">zoom</span>
+  <button data-range="all" class="active">all</button>
+  <button data-range="2024">since 2024</button>
+  <button data-range="2025">since 2025</button>
+  <button data-range="12mo">last 12 months</button>
+  <button data-range="6mo">last 6 months</button>
+  <span class="label" style="margin-left:.5rem">custom</span>
+  <input type="date" id="cadence-from" aria-label="from date">
+  <input type="date" id="cadence-to" aria-label="to date">
+</div>
+<div class="chart" id="cadence-chart"></div>
+
+<h3>Predicted next drop per series</h3>
+<table id="stats-table">
+  <thead>
+    <tr>
+      <th>Series</th>
+      <th>Vendor</th>
+      <th class="num">Drops</th>
+      <th class="num">Median gap (days)</th>
+      <th>Last drop</th>
+      <th>Predicted next</th>
+    </tr>
+  </thead>
+  <tbody id="stats-body"></tbody>
+</table>
+<p class="note">Predictions assume the median gap of the last 3 drops continues. A single-drop series gets no prediction. Data: <code>/model-drops.tsv</code>.</p>
+
+<script>
+const PALETTE = [
+  '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+  '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+  '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+  '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5',
+  '#393b79', '#637939', '#8c6d31', '#843c39'
+];
+
+const $ = (id) => document.getElementById(id);
+
+function parseTSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split('\t');
+  return lines.slice(1).map(line => {
+    const cells = line.split('\t');
+    const row = {};
+    header.forEach((h, i) => { row[h] = cells[i]; });
+    row.dateObj = new Date(row.date + 'T00:00:00Z');
+    return row;
+  }).sort((a, b) => a.dateObj - b.dateObj);
+}
+
+function groupBy(rows, key) {
+  const out = new Map();
+  for (const r of rows) {
+    const k = r[key];
+    if (!out.has(k)) out.set(k, []);
+    out.get(k).push(r);
+  }
+  return out;
+}
+
+function median(arr) {
+  if (arr.length === 0) return null;
+  const sorted = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function daysBetween(a, b) {
+  return Math.round((b - a) / (1000 * 60 * 60 * 24));
+}
+
+function fmtDate(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function predictNext(rows) {
+  if (rows.length < 2) return null;
+  const gaps = [];
+  for (let i = 1; i < rows.length; i++) {
+    gaps.push(daysBetween(rows[i - 1].dateObj, rows[i].dateObj));
+  }
+  const recent = gaps.slice(-3);
+  const med = median(recent);
+  if (med == null) return null;
+  const last = rows[rows.length - 1].dateObj;
+  const next = new Date(last.getTime() + med * 24 * 60 * 60 * 1000);
+  return { gap: Math.round(med), date: next };
+}
+
+function renderTimeline(rows) {
+  const series = groupBy(rows, 'series');
+  // Sort series by vendor then series name for visual coherence
+  const seriesList = Array.from(series.entries()).sort((a, b) => {
+    const av = a[1][0].vendor, bv = b[1][0].vendor;
+    if (av !== bv) return av.localeCompare(bv);
+    return a[0].localeCompare(b[0]);
+  });
+
+  const dates = rows.map(r => r.dateObj);
+  const minDate = new Date(dates[0]);
+  const maxDate = new Date(dates[dates.length - 1]);
+
+  // Extend max for predictions
+  const predictions = seriesList.map(([_, rs]) => predictNext(rs)).filter(Boolean);
+  const maxPredicted = predictions.length
+    ? new Date(Math.max(...predictions.map(p => p.date.getTime())))
+    : maxDate;
+  const chartMax = maxPredicted > maxDate ? maxPredicted : maxDate;
+
+  const ROW_H = 22;
+  const TOP_PAD = 36;
+  const BOTTOM_PAD = 24;
+  const LEFT_PAD = 170;
+  const RIGHT_PAD = 28;
+  const PLOT_W = Math.max(700, window.innerWidth - LEFT_PAD - RIGHT_PAD - 60);
+  const W = PLOT_W + LEFT_PAD + RIGHT_PAD;
+  const H = seriesList.length * ROW_H + TOP_PAD + BOTTOM_PAD;
+
+  const span = chartMax - minDate;
+  const dateX = (d) => LEFT_PAD + ((d - minDate) / span) * PLOT_W;
+  const rowY = (i) => TOP_PAD + i * ROW_H + ROW_H / 2;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" style="font-family: inherit; min-width: 100%; width: ${W}px;" role="img" aria-label="Model drops timeline">`;
+
+  // Year ticks
+  const startYear = minDate.getUTCFullYear();
+  const endYear = chartMax.getUTCFullYear();
+  for (let y = startYear; y <= endYear; y++) {
+    const d = new Date(Date.UTC(y, 0, 1));
+    if (d < minDate || d > chartMax) continue;
+    const x = dateX(d);
+    svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="#eaeaea" stroke-width="1" />`;
+    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="#666">${y}</text>`;
+  }
+
+  // "Now" line
+  const now = new Date();
+  if (now >= minDate && now <= chartMax) {
+    const x = dateX(now);
+    svg += `<line x1="${x}" y1="${TOP_PAD - 4}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="#bbb" stroke-width="1" stroke-dasharray="2,3" />`;
+    svg += `<text x="${x}" y="${H - BOTTOM_PAD + 18}" text-anchor="middle" font-size="10" fill="#999">today</text>`;
+  }
+
+  // Series rows
+  seriesList.forEach(([name, rs], i) => {
+    const y = rowY(i);
+    const color = PALETTE[i % PALETTE.length];
+
+    // Series label
+    svg += `<text x="${LEFT_PAD - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#1a1a1a">${name}</text>`;
+
+    // Connect line (faint)
+    if (rs.length > 1) {
+      const x1 = dateX(rs[0].dateObj);
+      const x2 = dateX(rs[rs.length - 1].dateObj);
+      svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1" stroke-opacity="0.35" />`;
+    }
+
+    // Dots for each release
+    for (const r of rs) {
+      const x = dateX(r.dateObj);
+      const title = `${r.model} - ${r.date} (${r.tier})`;
+      svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="${color}"><title>${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</title></circle>`;
+    }
+
+    // Predicted dot
+    const pred = predictNext(rs);
+    if (pred) {
+      const x = dateX(pred.date);
+      // Line from last to predicted (dashed)
+      const lastX = dateX(rs[rs.length - 1].dateObj);
+      svg += `<line x1="${lastX}" y1="${y}" x2="${x}" y2="${y}" stroke="${color}" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.7" />`;
+      svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="${color}" stroke-width="2" stroke-dasharray="2,1.5"><title>${name} predicted next: ${fmtDate(pred.date)} (median gap ${pred.gap} days)</title></circle>`;
+    }
+  });
+
+  svg += `</svg>`;
+  $('timeline-chart').innerHTML = svg;
+}
+
+let allCadencePoints = null;
+
+function computeCadencePoints(rows) {
+  const frontier = rows.filter(r => r.tier === 'frontier').sort((a, b) => a.dateObj - b.dateObj);
+  const points = [];
+  for (let i = 3; i < frontier.length; i++) {
+    const gaps = [
+      daysBetween(frontier[i - 3].dateObj, frontier[i - 2].dateObj),
+      daysBetween(frontier[i - 2].dateObj, frontier[i - 1].dateObj),
+      daysBetween(frontier[i - 1].dateObj, frontier[i].dateObj),
+    ];
+    points.push({ date: frontier[i].dateObj, gap: median(gaps) });
+  }
+  return points;
+}
+
+function rangeBounds(range, allPoints) {
+  const now = new Date();
+  if (range === '2024') return [new Date('2024-01-01T00:00:00Z'), allPoints[allPoints.length - 1].date];
+  if (range === '2025') return [new Date('2025-01-01T00:00:00Z'), allPoints[allPoints.length - 1].date];
+  if (range === '12mo') return [new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000), allPoints[allPoints.length - 1].date];
+  if (range === '6mo') return [new Date(now.getTime() - 182 * 24 * 60 * 60 * 1000), allPoints[allPoints.length - 1].date];
+  return [allPoints[0].date, allPoints[allPoints.length - 1].date];
+}
+
+function renderCadence(range, customFrom, customTo) {
+  if (!allCadencePoints || allCadencePoints.length < 2) {
+    $('cadence-chart').innerHTML = '<div class="loading">Not enough data for cadence chart.</div>';
+    return;
+  }
+
+  let from, to;
+  if (customFrom || customTo) {
+    from = customFrom ? new Date(customFrom + 'T00:00:00Z') : allCadencePoints[0].date;
+    to = customTo ? new Date(customTo + 'T00:00:00Z') : allCadencePoints[allCadencePoints.length - 1].date;
+    document.querySelectorAll('#cadence-range button').forEach(b => b.classList.remove('active'));
+  } else {
+    [from, to] = rangeBounds(range || 'all', allCadencePoints);
+    document.querySelectorAll('#cadence-range button').forEach(b => {
+      b.classList.toggle('active', b.dataset.range === (range || 'all'));
+    });
+  }
+
+  const points = allCadencePoints.filter(p => p.date >= from && p.date <= to);
+  if (points.length < 2) {
+    $('cadence-chart').innerHTML = '<div class="loading">Not enough points in that date range. Try a wider window.</div>';
+    return;
+  }
+
+  const W = 800;
+  const H = 240;
+  const TOP_PAD = 28;
+  const BOTTOM_PAD = 36;
+  const LEFT_PAD = 56;
+  const RIGHT_PAD = 24;
+  const PLOT_W = W - LEFT_PAD - RIGHT_PAD;
+  const PLOT_H = H - TOP_PAD - BOTTOM_PAD;
+
+  const minDate = points[0].date;
+  const maxDate = points[points.length - 1].date;
+  const rawMax = Math.max(...points.map(p => p.gap));
+  const maxGap = Math.max(10, Math.ceil(rawMax / 10) * 10);
+  const minGap = 0;
+
+  const dateX = (d) => LEFT_PAD + ((d - minDate) / Math.max(1, (maxDate - minDate))) * PLOT_W;
+  const gapY = (g) => TOP_PAD + PLOT_H - ((g - minGap) / (maxGap - minGap)) * PLOT_H;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" style="font-family: inherit; min-width: 100%; width: ${W}px;" role="img" aria-label="Cadence over time">`;
+
+  const step = Math.max(10, Math.round(maxGap / 5 / 10) * 10);
+  for (let g = 0; g <= maxGap; g += step) {
+    const y = gapY(g);
+    svg += `<line x1="${LEFT_PAD}" y1="${y}" x2="${W - RIGHT_PAD}" y2="${y}" stroke="#eee" stroke-width="1" />`;
+    svg += `<text x="${LEFT_PAD - 8}" y="${y + 4}" text-anchor="end" font-size="10" fill="#666">${g}d</text>`;
+  }
+
+  const startYear = minDate.getUTCFullYear();
+  const endYear = maxDate.getUTCFullYear();
+  const spanDays = (maxDate - minDate) / (24 * 60 * 60 * 1000);
+  if (spanDays > 200) {
+    for (let y = startYear; y <= endYear; y++) {
+      const d = new Date(Date.UTC(y, 0, 1));
+      if (d < minDate || d > maxDate) continue;
+      const x = dateX(d);
+      svg += `<line x1="${x}" y1="${TOP_PAD}" x2="${x}" y2="${H - BOTTOM_PAD}" stroke="#eaeaea" stroke-width="1" />`;
+      svg += `<text x="${x}" y="${H - BOTTOM_PAD + 16}" text-anchor="middle" font-size="10" fill="#666">${y}</text>`;
+    }
+  } else {
+    for (let y = startYear; y <= endYear; y++) {
+      for (let m = 0; m < 12; m++) {
+        const d = new Date(Date.UTC(y, m, 1));
+        if (d < minDate || d > maxDate) continue;
+        const x = dateX(d);
+        svg += `<line x1="${x}" y1="${TOP_PAD}" x2="${x}" y2="${H - BOTTOM_PAD}" stroke="#eaeaea" stroke-width="1" />`;
+        const label = m === 0 ? `${y}` : d.toLocaleString('en', { month: 'short' });
+        svg += `<text x="${x}" y="${H - BOTTOM_PAD + 16}" text-anchor="middle" font-size="10" fill="#666">${label}</text>`;
+      }
+    }
+  }
+
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${dateX(p.date).toFixed(1)} ${gapY(p.gap).toFixed(1)}`).join(' ');
+  svg += `<path d="${path}" fill="none" stroke="#1f77b4" stroke-width="2" />`;
+
+  for (const p of points) {
+    svg += `<circle cx="${dateX(p.date)}" cy="${gapY(p.gap)}" r="3" fill="#1f77b4"><title>${fmtDate(p.date)}: ${p.gap} days median</title></circle>`;
+  }
+
+  svg += `<text x="14" y="${TOP_PAD + PLOT_H / 2}" text-anchor="middle" font-size="11" fill="#444" transform="rotate(-90, 14, ${TOP_PAD + PLOT_H / 2})">days between drops</text>`;
+
+  svg += `</svg>`;
+  $('cadence-chart').innerHTML = svg;
+}
+
+function renderStats(rows) {
+  const series = groupBy(rows, 'series');
+  const tbody = $('stats-body');
+  const rowsArr = Array.from(series.entries())
+    .map(([name, rs]) => {
+      const sorted = rs.slice().sort((a, b) => a.dateObj - b.dateObj);
+      const gaps = [];
+      for (let i = 1; i < sorted.length; i++) {
+        gaps.push(daysBetween(sorted[i - 1].dateObj, sorted[i].dateObj));
+      }
+      const med = gaps.length ? Math.round(median(gaps)) : null;
+      const last = sorted[sorted.length - 1];
+      const pred = predictNext(sorted);
+      return { name, vendor: sorted[0].vendor, count: sorted.length, med, last, pred };
+    })
+    .sort((a, b) => {
+      // Sort by predicted next date ascending, with no-prediction rows last
+      if (a.pred && b.pred) return a.pred.date - b.pred.date;
+      if (a.pred) return -1;
+      if (b.pred) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  for (const r of rowsArr) {
+    const predCell = r.pred ? `<span class="predicted">${fmtDate(r.pred.date)}</span>` : '<span style="color:#999;">—</span>';
+    tbody.insertAdjacentHTML('beforeend', `
+      <tr>
+        <td>${r.name}</td>
+        <td>${r.vendor}</td>
+        <td class="num">${r.count}</td>
+        <td class="num">${r.med ?? '—'}</td>
+        <td>${fmtDate(r.last.dateObj)}</td>
+        <td>${predCell}</td>
+      </tr>
+    `);
+  }
+}
+
+function wireCadenceControls() {
+  document.querySelectorAll('#cadence-range button').forEach(b => {
+    b.addEventListener('click', () => {
+      $('cadence-from').value = '';
+      $('cadence-to').value = '';
+      renderCadence(b.dataset.range);
+    });
+  });
+  const onCustom = () => {
+    const f = $('cadence-from').value;
+    const t = $('cadence-to').value;
+    if (!f && !t) {
+      renderCadence('all');
+    } else {
+      renderCadence(null, f, t);
+    }
+  };
+  $('cadence-from').addEventListener('change', onCustom);
+  $('cadence-to').addEventListener('change', onCustom);
+}
+
+async function main() {
+  try {
+    const res = await fetch('/model-drops.tsv');
+    if (!res.ok) throw new Error('fetch failed: ' + res.status);
+    const text = await res.text();
+    const rows = parseTSV(text);
+    if (rows.length === 0) throw new Error('No data rows.');
+    renderTimeline(rows);
+    allCadencePoints = computeCadencePoints(rows);
+    wireCadenceControls();
+    renderCadence('all');
+    renderStats(rows);
+  } catch (err) {
+    $('timeline-chart').innerHTML = `<div class="error">Failed to load data: ${err.message}</div>`;
+  }
+}
+
+main();
+</script>
+</body>
+</html>

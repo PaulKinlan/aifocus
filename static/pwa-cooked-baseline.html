@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>What your browser supports</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  padding: 1.25rem;
+  background: #fafafa;
+  line-height: 1.45;
+}
+h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: 1.1rem; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 50px 50px 50px 50px;
+  gap: 0 .35rem;
+  font-size: .85rem;
+}
+.head {
+  font-weight: 700;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #888;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: .25rem;
+  text-align: center;
+}
+.head.name { text-align: left; }
+.name-cell {
+  padding: .35rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.name-cell a {
+  color: #1a5fb4;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.name-cell a:hover { color: #0b3d80; text-decoration-thickness: 2px; }
+.group-header {
+  grid-column: 1 / -1;
+  font-weight: 700;
+  font-size: .62rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #888;
+  padding: .9rem 0 .3rem;
+  margin-top: .25rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+.group-header:first-of-type { margin-top: 0; padding-top: .35rem; }
+.cell {
+  text-align: center;
+  padding: .35rem 0;
+  font-weight: 700;
+  border-bottom: 1px solid #f0f0f0;
+}
+.you {
+  background: #f4f4f8;
+  border-radius: 3px;
+}
+.tick { color: #1d8b3e; }
+.cross { color: #c33; }
+.warn { color: #b87b00; }
+.summary {
+  margin-top: 1.25rem;
+  font-size: .9rem;
+  padding: .85rem 1rem;
+  background: white;
+  border-radius: .375rem;
+  border: 1px solid #ddd;
+}
+.summary strong { color: #1d8b3e; }
+.note { font-size: .72rem; color: #888; margin-top: .75rem; line-height: 1.4; }
+@media (max-width: 540px) {
+  .grid { font-size: .75rem; grid-template-columns: 1fr 38px 38px 38px 38px; }
+  .head { font-size: .6rem; }
+  body { padding: .9rem; }
+}
+</style>
+</head>
+<body>
+<h2>What your browser supports right now</h2>
+<p class="subhead">Live capability check, performed in your browser. "You" is your current engine. Click any capability for the MDN reference.</p>
+
+<div class="grid" id="grid">
+  <div class="head name">Capability</div>
+  <div class="head">Chrome</div>
+  <div class="head">Firefox</div>
+  <div class="head">Safari</div>
+  <div class="head">You</div>
+</div>
+
+<div class="summary" id="summary"></div>
+<p class="note">Engine columns reflect stable shipped state as of May 2026. "You" is feature detection in this iframe. Safari ◐ on Notifications / Push / Badging means iOS 16.4+ only, for installed home-screen PWAs. A "?" in the You column means the feature is manifest-declared and has no JS detection (Web Share Target, Manifest Shortcuts).</p>
+
+<script>
+const MDN = 'https://developer.mozilla.org/en-US/docs/';
+const GROUP_LABELS = {
+  core:   'Core PWA',
+  engage: 'Engagement',
+  bg:     'Background work',
+  sys:    'System integration',
+  device: 'Device (Fugu)',
+  modern: 'Modern web',
+};
+const FEATURES = [
+  { name: 'Service Worker',          group: 'core',   ref: MDN + 'Web/API/Service_Worker_API',                                  check: () => 'serviceWorker' in navigator,            chrome: 'tick', firefox: 'tick',  safari: 'tick'  },
+  { name: 'Web App Manifest',        group: 'core',   ref: MDN + 'Web/Progressive_web_apps/Manifest',                           check: () => { const l = document.createElement('link'); return !!(l.relList && l.relList.supports && l.relList.supports('manifest')); }, chrome: 'tick', firefox: 'tick', safari: 'tick' },
+  { name: 'Cache API',               group: 'core',   ref: MDN + 'Web/API/Cache',                                               check: () => 'caches' in window,                      chrome: 'tick', firefox: 'tick',  safari: 'tick'  },
+  { name: 'Notifications API',       group: 'engage', ref: MDN + 'Web/API/Notifications_API',                                   check: () => 'Notification' in window,                chrome: 'tick', firefox: 'tick',  safari: 'warn'  },
+  { name: 'Push API',                group: 'engage', ref: MDN + 'Web/API/Push_API',                                            check: () => 'PushManager' in window,                 chrome: 'tick', firefox: 'tick',  safari: 'warn'  },
+  { name: 'beforeinstallprompt',     group: 'engage', ref: MDN + 'Web/API/Window/beforeinstallprompt_event',                    check: () => 'onbeforeinstallprompt' in window || 'BeforeInstallPromptEvent' in window, chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'App Badging',             group: 'engage', ref: MDN + 'Web/API/Badging_API',                                         check: () => 'setAppBadge' in navigator,              chrome: 'tick', firefox: 'cross', safari: 'warn'  },
+  { name: 'Background Sync',         group: 'bg',     ref: MDN + 'Web/API/Background_Synchronization_API',                      check: () => 'SyncManager' in window,                 chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Background Fetch',        group: 'bg',     ref: MDN + 'Web/API/Background_Fetch_API',                                check: () => 'BackgroundFetchManager' in self,        chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Periodic Background Sync',group: 'bg',     ref: MDN + 'Web/API/Web_Periodic_Background_Synchronization_API',         check: () => 'PeriodicSyncManager' in window,         chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Web Share',               group: 'sys',    ref: MDN + 'Web/API/Web_Share_API',                                       check: () => 'share' in navigator,                    chrome: 'tick', firefox: 'cross', safari: 'tick'  },
+  { name: 'Web Share Target',        group: 'sys',    ref: MDN + 'Web/Manifest/Reference/share_target',                         check: () => null,                                    chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'File Handling',           group: 'sys',    ref: MDN + 'Web/Manifest/Reference/file_handlers',                        check: () => 'launchQueue' in window,                 chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Launch Handler',          group: 'sys',    ref: MDN + 'Web/Manifest/Reference/launch_handler',                       check: () => 'LaunchParams' in window || 'launchQueue' in window, chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Manifest Shortcuts',      group: 'sys',    ref: MDN + 'Web/Manifest/Reference/shortcuts',                            check: () => null,                                    chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Window Controls Overlay', group: 'sys',    ref: MDN + 'Web/API/Window_Controls_Overlay_API',                         check: () => 'windowControlsOverlay' in navigator,    chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'WebUSB',                  group: 'device', ref: MDN + 'Web/API/WebUSB_API',                                          check: () => 'usb' in navigator,                      chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Web Serial',              group: 'device', ref: MDN + 'Web/API/Web_Serial_API',                                      check: () => 'serial' in navigator,                   chrome: 'tick', firefox: 'warn',  safari: 'cross' },
+  { name: 'WebHID',                  group: 'device', ref: MDN + 'Web/API/WebHID_API',                                          check: () => 'hid' in navigator,                      chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Web Bluetooth',           group: 'device', ref: MDN + 'Web/API/Web_Bluetooth_API',                                   check: () => 'bluetooth' in navigator,                chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Web NFC',                 group: 'device', ref: MDN + 'Web/API/Web_NFC_API',                                         check: () => 'NDEFReader' in window,                  chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'File System Access',      group: 'device', ref: MDN + 'Web/API/File_System_API',                                     check: () => 'showOpenFilePicker' in window,          chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Local Fonts',             group: 'device', ref: MDN + 'Web/API/Local_Font_Access_API',                               check: () => 'queryLocalFonts' in window,             chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Idle Detection',          group: 'device', ref: MDN + 'Web/API/Idle_Detection_API',                                  check: () => 'IdleDetector' in window,                chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'Compute Pressure',        group: 'device', ref: MDN + 'Web/API/Compute_Pressure_API',                                check: () => 'PressureObserver' in window,            chrome: 'tick', firefox: 'cross', safari: 'cross' },
+  { name: 'WebGPU',                  group: 'modern', ref: MDN + 'Web/API/WebGPU_API',                                          check: () => 'gpu' in navigator,                      chrome: 'tick', firefox: 'tick',  safari: 'tick'  },
+  { name: 'View Transitions',        group: 'modern', ref: MDN + 'Web/API/View_Transition_API',                                 check: () => 'startViewTransition' in document,       chrome: 'tick', firefox: 'tick',  safari: 'tick'  },
+  { name: 'Popover API',             group: 'modern', ref: MDN + 'Web/API/Popover_API',                                         check: () => Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'popover'), chrome: 'tick', firefox: 'tick', safari: 'tick' },
+  { name: 'Anchor Positioning',      group: 'modern', ref: MDN + 'Web/CSS/CSS_anchor_positioning',                              check: () => { try { return CSS.supports('anchor-name: --a'); } catch { return false; } }, chrome: 'tick', firefox: 'warn', safari: 'warn' },
+];
+
+const grid = document.getElementById('grid');
+const summary = document.getElementById('summary');
+
+const symbol = (s) => s === 'tick' ? '✓' : s === 'cross' ? '✗' : s === 'warn' ? '◐' : '';
+
+let supportedCount = 0;
+let detectableCount = 0;
+let lastGroup = null;
+
+for (const f of FEATURES) {
+  if (f.group !== lastGroup) {
+    const header = document.createElement('div');
+    header.className = 'group-header';
+    header.textContent = GROUP_LABELS[f.group] || f.group;
+    grid.appendChild(header);
+    lastGroup = f.group;
+  }
+
+  let supported = false;
+  let detectable = true;
+  try {
+    const result = f.check();
+    if (result === null || result === undefined) {
+      detectable = false;
+    } else {
+      supported = !!result;
+    }
+  } catch { supported = false; }
+  if (detectable) {
+    detectableCount++;
+    if (supported) supportedCount++;
+  }
+
+  const yourSymbol = !detectable ? '?' : supported ? '✓' : '✗';
+  const yourCls = !detectable ? 'warn' : supported ? 'tick' : 'cross';
+
+  const row = document.createElement('div');
+  row.style.display = 'contents';
+  row.innerHTML = `
+    <div class="name-cell"><a href="${f.ref}" target="_blank" rel="noopener">${f.name}</a></div>
+    <div class="cell ${f.chrome}">${symbol(f.chrome)}</div>
+    <div class="cell ${f.firefox}">${symbol(f.firefox)}</div>
+    <div class="cell ${f.safari}">${symbol(f.safari)}</div>
+    <div class="cell you ${yourCls}">${yourSymbol}</div>
+  `;
+  grid.appendChild(row);
+}
+
+const totalCount = FEATURES.length;
+const safariSupports = FEATURES.filter(f => f.safari === 'tick').length;
+const youPct = detectableCount ? Math.round((supportedCount / detectableCount) * 100) : 0;
+const safariPct = Math.round((safariSupports / totalCount) * 100);
+
+summary.innerHTML =
+  `Your browser supports <strong>${supportedCount} of ${detectableCount}</strong> detectable features (${youPct}%). ` +
+  `Safari ships <strong>${safariSupports} of ${totalCount}</strong> overall (${safariPct}%). ` +
+  `The difference is the post.`;
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>Device API timeline by engine</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  padding: 1.25rem;
+  background: #fafafa;
+  line-height: 1.45;
+}
+h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: 1.1rem; }
+.legend {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: .85rem;
+  font-size: .8rem;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #444;
+}
+.legend .dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: .35rem;
+  vertical-align: middle;
+}
+.dot.chrome  { background: #3367d6; }
+.dot.firefox { background: #e07b00; }
+.dot.safari  { background: #888; }
+.dot.open    { background: transparent; border: 2px solid #888; box-sizing: border-box; }
+.chart {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: .375rem;
+  padding: 1rem;
+}
+.chart svg { width: 100%; height: auto; display: block; }
+.chart svg a { cursor: pointer; }
+.chart svg a text {
+  fill: #1a5fb4;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.chart svg a:hover text { fill: #0b3d80; text-decoration-thickness: 2px; }
+.note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+<h2>When each PWA / device API shipped, by engine</h2>
+<p class="subhead">Years of first stable shipment. Open circles mean "still not shipped, as of May 2026". For Safari I use the iOS Safari date where it differs from macOS, since iOS is where the PWA story is constrained. Click any API name to open its MDN reference (includes the live browser support matrix).</p>
+
+<div class="legend">
+  <span><span class="dot chrome"></span>Chrome</span>
+  <span><span class="dot firefox"></span>Firefox</span>
+  <span><span class="dot safari"></span>Safari</span>
+  <span><span class="dot open"></span>not shipped</span>
+</div>
+
+<div class="chart" id="chart"></div>
+<p class="note">Sources: caniuse, MDN, vendor release notes. Web Serial in Firefox is Nightly only as of May 2026, drawn as 2026. Safari Push/Notifications/Badging dates are iOS 16.4 (March 2023), when Safari first allowed installed home-screen PWAs to use them.</p>
+
+<script>
+const MDN = 'https://developer.mozilla.org/en-US/docs/';
+const APIS = [
+  // Core PWA
+  { name: 'Service Worker',            chrome: 2015, firefox: 2016, safari: 2018, group: 'core',   ref: MDN + 'Web/API/Service_Worker_API' },
+  { name: 'Web App Manifest',          chrome: 2014, firefox: 2017, safari: 2018, group: 'core',   ref: MDN + 'Web/Progressive_web_apps/Manifest' },
+  { name: 'Cache API',                 chrome: 2015, firefox: 2016, safari: 2018, group: 'core',   ref: MDN + 'Web/API/Cache' },
+  // Engagement
+  { name: 'Notifications API',         chrome: 2014, firefox: 2013, safari: 2023, group: 'engage', ref: MDN + 'Web/API/Notifications_API' },
+  { name: 'Push API',                  chrome: 2015, firefox: 2016, safari: 2023, group: 'engage', ref: MDN + 'Web/API/Push_API' },
+  { name: 'beforeinstallprompt',       chrome: 2017, firefox: null, safari: null, group: 'engage', ref: MDN + 'Web/API/Window/beforeinstallprompt_event' },
+  { name: 'App Badging',               chrome: 2020, firefox: null, safari: 2023, group: 'engage', ref: MDN + 'Web/API/Badging_API' },
+  // Background work
+  { name: 'Background Sync',           chrome: 2016, firefox: null, safari: null, group: 'bg',     ref: MDN + 'Web/API/Background_Synchronization_API' },
+  { name: 'Background Fetch',          chrome: 2019, firefox: null, safari: null, group: 'bg',     ref: MDN + 'Web/API/Background_Fetch_API' },
+  { name: 'Periodic Background Sync',  chrome: 2020, firefox: null, safari: null, group: 'bg',     ref: MDN + 'Web/API/Web_Periodic_Background_Synchronization_API' },
+  // System integration
+  { name: 'Web Share',                 chrome: 2017, firefox: null, safari: 2019, group: 'sys',    ref: MDN + 'Web/API/Web_Share_API' },
+  { name: 'Web Share Target',          chrome: 2019, firefox: null, safari: null, group: 'sys',    ref: MDN + 'Web/Manifest/Reference/share_target' },
+  { name: 'File Handling',             chrome: 2022, firefox: null, safari: null, group: 'sys',    ref: MDN + 'Web/Manifest/Reference/file_handlers' },
+  { name: 'Launch Handler',            chrome: 2023, firefox: null, safari: null, group: 'sys',    ref: MDN + 'Web/Manifest/Reference/launch_handler' },
+  { name: 'Manifest Shortcuts',        chrome: 2020, firefox: null, safari: null, group: 'sys',    ref: MDN + 'Web/Manifest/Reference/shortcuts' },
+  { name: 'Window Controls Overlay',   chrome: 2022, firefox: null, safari: null, group: 'sys',    ref: MDN + 'Web/API/Window_Controls_Overlay_API' },
+  // Device (Fugu)
+  { name: 'Web Bluetooth',             chrome: 2016, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/Web_Bluetooth_API' },
+  { name: 'WebUSB',                    chrome: 2017, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/WebUSB_API' },
+  { name: 'Web NFC',                   chrome: 2020, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/Web_NFC_API' },
+  { name: 'Web Serial',                chrome: 2020, firefox: 2026, safari: null, group: 'device', ref: MDN + 'Web/API/Web_Serial_API' },
+  { name: 'File System Access',        chrome: 2020, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/File_System_API' },
+  { name: 'WebHID',                    chrome: 2021, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/WebHID_API' },
+  { name: 'Idle Detection',            chrome: 2021, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/Idle_Detection_API' },
+  { name: 'Local Fonts',               chrome: 2022, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/Local_Font_Access_API' },
+  { name: 'WebGPU',                    chrome: 2023, firefox: 2025, safari: 2025, group: 'device', ref: MDN + 'Web/API/WebGPU_API' },
+  { name: 'Compute Pressure',          chrome: 2023, firefox: null, safari: null, group: 'device', ref: MDN + 'Web/API/Compute_Pressure_API' },
+  // Modern web
+  { name: 'View Transitions',          chrome: 2023, firefox: 2025, safari: 2024, group: 'modern', ref: MDN + 'Web/API/View_Transition_API' },
+  { name: 'Popover API',               chrome: 2023, firefox: 2024, safari: 2023, group: 'modern', ref: MDN + 'Web/API/Popover_API' },
+  { name: 'Anchor Positioning',        chrome: 2024, firefox: null, safari: null, group: 'modern', ref: MDN + 'Web/CSS/CSS_anchor_positioning' },
+];
+
+const GROUP_LABELS = {
+  core:   'Core PWA',
+  engage: 'Engagement',
+  bg:     'Background work',
+  sys:    'System integration',
+  device: 'Device (Fugu)',
+  modern: 'Modern web',
+};
+
+const YEAR_MIN = 2013;
+const YEAR_MAX = 2026;
+const YEAR_SPAN = YEAR_MAX - YEAR_MIN;
+
+const W = 820;
+const ROW_H = 22;
+const GROUP_GAP = 14;
+const TOP_PAD = 42;
+const BOTTOM_PAD = 18;
+const LEFT_PAD = 200;
+const RIGHT_PAD = 26;
+// Assign a y-offset to each row, inserting a gap when the group changes.
+let cursor = TOP_PAD;
+const rows = [];
+let lastGroup = null;
+for (const api of APIS) {
+  if (lastGroup !== null && api.group !== lastGroup) cursor += GROUP_GAP;
+  rows.push({ api, y: cursor + ROW_H / 2, groupStart: api.group !== lastGroup ? api.group : null });
+  cursor += ROW_H;
+  lastGroup = api.group;
+}
+const H = cursor + BOTTOM_PAD;
+const PLOT_W = W - LEFT_PAD - RIGHT_PAD;
+
+const yearX = (year) => LEFT_PAD + ((year - YEAR_MIN) / YEAR_SPAN) * PLOT_W;
+
+let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" style="font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;" role="img" aria-label="Timeline of PWA and device API shipping by engine">`;
+
+// year ticks + labels
+for (let y = YEAR_MIN; y <= YEAR_MAX; y++) {
+  const x = yearX(y);
+  svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="${y === YEAR_MIN || y === YEAR_MAX ? '#bbb' : '#eee'}" stroke-width="1" />`;
+  if (y === YEAR_MIN || y === YEAR_MAX || y % 2 === 0) {
+    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="#666">${y}</text>`;
+  }
+}
+
+// rows + dots
+rows.forEach(({ api, y, groupStart }) => {
+  if (groupStart) {
+    svg += `<text x="6" y="${y + 4}" text-anchor="start" font-size="10" font-weight="700" fill="#888" letter-spacing="0.04em" style="text-transform: uppercase;">${GROUP_LABELS[groupStart]}</text>`;
+  }
+  svg += `<a target="_blank" rel="noopener" href="${api.ref}"><text x="${LEFT_PAD - 10}" y="${y + 4}" text-anchor="end" font-size="11">${api.name}</text></a>`;
+  svg += `<line x1="${LEFT_PAD}" y1="${y}" x2="${W - RIGHT_PAD}" y2="${y}" stroke="#f0f0f0" stroke-width="1" />`;
+
+  // Place each engine dot on the row centerline. If two engines share an x position, nudge them apart so they don't overlap.
+  let chromeX  = api.chrome  ? yearX(api.chrome)  : null;
+  let firefoxX = api.firefox ? yearX(api.firefox) : yearX(YEAR_MAX);
+  let safariX  = api.safari  ? yearX(api.safari)  : yearX(YEAR_MAX);
+  const OFFSET = 5;
+  if (Math.abs(firefoxX - safariX) < 1) { firefoxX -= OFFSET; safariX += OFFSET; }
+  if (chromeX !== null && Math.abs(chromeX - firefoxX) < 1) { chromeX -= OFFSET; firefoxX += OFFSET; }
+  if (chromeX !== null && Math.abs(chromeX - safariX) < 1) { chromeX -= OFFSET; safariX += OFFSET; }
+
+  if (api.chrome) {
+    svg += `<circle cx="${chromeX}" cy="${y}" r="4.5" fill="#3367d6"><title>Chrome shipped ${api.chrome}</title></circle>`;
+  }
+  if (api.firefox) {
+    svg += `<circle cx="${firefoxX}" cy="${y}" r="4.5" fill="#e07b00"><title>Firefox shipped ${api.firefox}</title></circle>`;
+  } else {
+    svg += `<circle cx="${firefoxX}" cy="${y}" r="4.5" fill="transparent" stroke="#e07b00" stroke-width="2"><title>Firefox not shipped</title></circle>`;
+  }
+  if (api.safari) {
+    svg += `<circle cx="${safariX}" cy="${y}" r="4.5" fill="#888"><title>Safari shipped ${api.safari}</title></circle>`;
+  } else {
+    svg += `<circle cx="${safariX}" cy="${y}" r="4.5" fill="transparent" stroke="#888" stroke-width="2"><title>Safari not shipped</title></circle>`;
+  }
+});
+
+svg += `</svg>`;
+document.getElementById('chart').innerHTML = svg;
+</script>
+</body>
+</html>

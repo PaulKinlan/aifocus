@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+<title>Native vs Web capability comparator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  padding: 1.25rem;
+  background: #fafafa;
+  line-height: 1.45;
+}
+h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: 1.1rem; }
+.split {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 1.6fr;
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .split { grid-template-columns: 1fr; }
+}
+.list { display: flex; flex-direction: column; gap: .3rem; }
+.list button {
+  text-align: left;
+  background: white;
+  border: 1px solid #ddd;
+  padding: .55rem .75rem;
+  font: inherit;
+  font-size: .82rem;
+  border-radius: .375rem;
+  cursor: pointer;
+  color: #1a1a1a;
+  line-height: 1.3;
+}
+.list button:hover { background: #f0f0f0; border-color: #b8b8b8; }
+.list button:focus { outline: 2px solid #3367d6; outline-offset: 1px; }
+.list button.active {
+  background: #1a1a1a;
+  color: white;
+  border-color: #1a1a1a;
+}
+.detail {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: .375rem;
+  padding: 1rem 1.15rem;
+}
+.detail .label {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #888;
+  margin-bottom: .25rem;
+}
+.detail h3 {
+  font-size: 1rem;
+  margin-bottom: .75rem;
+  font-weight: 700;
+}
+.detail .body { font-size: .88rem; color: #1a1a1a; margin-bottom: .9rem; line-height: 1.5; }
+.status {
+  display: inline-block;
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .2rem .55rem;
+  border-radius: .25rem;
+  margin-top: .25rem;
+}
+.status.none { background: #fce4e4; color: #a02020; }
+.status.partial { background: #fff5e0; color: #8b6300; }
+.status.shipped { background: #e0f4e4; color: #1a6c2f; }
+.note { font-size: .72rem; color: #888; margin-top: 1rem; line-height: 1.4; }
+</style>
+</head>
+<body>
+<h2>Native capabilities, and what the web has for each</h2>
+<p class="subhead">Click any capability to see whether the web has an answer.</p>
+
+<div class="split">
+  <div class="list" id="list"></div>
+  <div class="detail" id="detail"></div>
+</div>
+<p class="note">Web column reflects shipped state as of May 2026. "Partial / Chrome-only" means the API exists but Safari and/or Firefox have not implemented it.</p>
+
+<script>
+const CAPABILITIES = [
+  {
+    name: 'Home Screen widgets (iOS / Android)',
+    native: 'A small panel of content on the user\'s home screen, refreshed on a schedule by the system. iOS WidgetKit, Android AppWidget / Glance.',
+    web: 'No equivalent. A web app on the home screen is just the app icon.',
+    status: 'none'
+  },
+  {
+    name: 'Live Activities + Dynamic Island (iOS)',
+    native: 'A persistent, system-managed mini-UI that updates while your app is in the background. Used for delivery tracking, sports scores, ride share, navigation.',
+    web: 'No equivalent.',
+    status: 'none'
+  },
+  {
+    name: 'App Intents (iOS / Siri / Spotlight)',
+    native: 'The surface Apple Intelligence reaches your app through. Lets the system invoke specific actions in response to user requests, shortcuts, or system events.',
+    web: 'WebMCP is structurally similar but only operates inside an open page. No system-wide equivalent.',
+    status: 'partial'
+  },
+  {
+    name: 'Lock Screen widgets',
+    native: 'Content the user can see without unlocking. WidgetKit on the Lock Screen on iOS, Slices on Android.',
+    web: 'No equivalent.',
+    status: 'none'
+  },
+  {
+    name: 'Apple Watch complications',
+    native: 'A small piece of your app on a watch face, updated by ClockKit / WidgetKit.',
+    web: 'No equivalent. The watch does not host a web view in the usual sense.',
+    status: 'none'
+  },
+  {
+    name: 'Long-running background task (Android foreground service)',
+    native: 'Audio playback, navigation, file sync that runs for hours or days, with a persistent system notification.',
+    web: 'Service Workers + Notifications can mimic some of this but cannot run continuously. Background Sync is capped by the browser.',
+    status: 'partial'
+  },
+  {
+    name: 'Menu bar item (macOS)',
+    native: 'NSStatusItem. A persistent icon and menu in the top-right system menu bar.',
+    web: 'No equivalent. The browser does not project page UI into the OS chrome.',
+    status: 'none'
+  },
+  {
+    name: 'Share extension (target)',
+    native: 'Your app appears in the system share sheet. Other apps can hand it a payload.',
+    web: 'Web Share Target Level 2 supports this on installed PWAs in Chrome / Edge. Not on iOS Safari.',
+    status: 'partial'
+  },
+  {
+    name: 'Push notifications',
+    native: 'APNs on iOS, FCM on Android. System-delivered while the app is closed, surfaced in the notification centre.',
+    web: 'Web Push. Chrome, Edge and Firefox have shipped it across desktop and Android since 2016. Safari shipped it for installed home-screen PWAs in iOS 16.4 (March 2023). The capability is at parity now, with the iOS-installed caveat.',
+    status: 'shipped'
+  },
+  {
+    name: 'App icon badging',
+    native: 'UIApplicationIconBadgeNumber on iOS, ShortcutBadger / launcher integration on Android.',
+    web: 'Badging API (navigator.setAppBadge). Chrome and Edge since 2020. Safari shipped it for installed PWAs in iOS 16.4. Firefox does not ship it.',
+    status: 'partial'
+  },
+  {
+    name: 'Install / Home Screen presence',
+    native: 'App Store install. The system manages install, updates, uninstall, and metadata. Discovery happens through store search and ranking.',
+    web: 'Web App Manifest plus service worker. Chrome and Edge offer a browser install prompt via beforeinstallprompt. Firefox dropped its install prompt. iOS Safari requires the user to manually Add to Home Screen from the share sheet, with no prompt.',
+    status: 'partial'
+  },
+  {
+    name: 'Offline-first / works without network',
+    native: 'Developer caches data locally. App launches without a network connection.',
+    web: 'Service Worker plus Cache API plus IndexedDB. Shipped in all three major engines since 2018. This is the part of PWA that actually became mainstream.',
+    status: 'shipped'
+  },
+  {
+    name: 'USB device access',
+    native: 'Direct USB device communication via system APIs.',
+    web: 'WebUSB. Chrome / Edge only. Firefox and Safari oppose.',
+    status: 'partial'
+  },
+  {
+    name: 'Bluetooth peripheral pairing + GATT',
+    native: 'Connect to a heart rate monitor, a light bulb, a beacon, any GATT peripheral.',
+    web: 'Web Bluetooth. Chrome / Edge only. Firefox and Safari oppose.',
+    status: 'partial'
+  },
+  {
+    name: 'Local file open / save dialogs',
+    native: 'Standard system file pickers. Read and write any file the user grants.',
+    web: 'File System Access (showOpenFilePicker / showSaveFilePicker). Chrome / Edge only. Firefox + Safari ship only OPFS, the origin-private sandbox.',
+    status: 'partial'
+  },
+  {
+    name: 'System-wide hotkey',
+    native: 'Global keyboard shortcut that works even when your app is not focused.',
+    web: 'No equivalent. The page must be focused to receive keyboard events.',
+    status: 'none'
+  },
+  {
+    name: 'NFC tag scanning',
+    native: 'Read or write NFC tags via Core NFC / android.nfc.',
+    web: 'Web NFC. Chrome on Android only.',
+    status: 'partial'
+  },
+  {
+    name: 'Background ML inference',
+    native: 'Schedule ML inference work to run on the device NPU when the system has slack.',
+    web: 'Built-in AI APIs run in the foreground only. No system-scheduled background slot.',
+    status: 'partial'
+  },
+  {
+    name: 'AR / spatial computing',
+    native: 'ARKit, ARCore, visionOS spatial frameworks. Full hand and eye tracking on Vision Pro.',
+    web: 'WebXR ships AR/VR scenes but cannot reach the spatial primitives Vision Pro offers natively.',
+    status: 'partial'
+  },
+  {
+    name: 'Discovery + URL + zero install',
+    native: 'You ship a binary to an app store. The user finds you through store search and ranking.',
+    web: 'A URL in any context (search, email, message, social) is the install. AI agents and crawlers read your pages directly.',
+    status: 'shipped'
+  },
+  {
+    name: 'Silent updates',
+    native: 'User receives an "update available" prompt, decides whether to take it.',
+    web: 'The bytes the server returned this request are the app. No version skew, no migration path needed.',
+    status: 'shipped'
+  },
+  {
+    name: 'Embedding in other contexts',
+    native: 'Limited. iOS extensions, Android intents, but the receiving surface is constrained.',
+    web: 'iframes, custom elements, oEmbed, fenced frames. The web is built to be embedded.',
+    status: 'shipped'
+  },
+];
+
+const list = document.getElementById('list');
+const detail = document.getElementById('detail');
+
+const render = (index) => {
+  list.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === index));
+  const c = CAPABILITIES[index];
+  const statusLabel = c.status === 'none' ? 'Web: no equivalent' : c.status === 'partial' ? 'Web: partial / Chrome-only' : 'Web: web wins this one';
+  detail.innerHTML = `
+    <h3>${c.name}</h3>
+    <div class="label">Native</div>
+    <div class="body">${c.native}</div>
+    <div class="label">Web</div>
+    <div class="body">${c.web}</div>
+    <span class="status ${c.status}">${statusLabel}</span>
+  `;
+};
+
+CAPABILITIES.forEach((c, i) => {
+  const b = document.createElement('button');
+  b.textContent = c.name;
+  b.addEventListener('click', () => render(i));
+  list.appendChild(b);
+});
+
+render(0);
+</script>
+</body>
+</html>
