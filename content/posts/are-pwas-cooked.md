@@ -9,9 +9,9 @@ authors:
 
 I'm 45 years old and using cooked to mean something that it never meant. I don't know when it happened, but I'm also thinking of writing everything in lowercase and using numbers like 6 and 7 in an amusing way.
 
-Just for avoidance of doubt, this is a personal opinion and muesing.
+This post is all personal opinion.
 
-I just want to ground some of this article in the definition of a PWA. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app) has a good overview.
+Before we go too deep, I just want to ground some of this article in the definition of a PWA. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app) has a good overview.
 
 > "A progressive web app (PWA) is an app that's built using web platform technologies, but that provides a user experience like that of a platform-specific app." 
 
@@ -23,31 +23,27 @@ One of the sites that I helpt to run [web.dev](https://web.dev/pwa), says this
 
 See: https://web.dev/articles/what-are-pwas
 
-Before we get going, here's where your current browser stands on the capabilities this post is about, where we talk about Reliability and Capabilitye etc.
-
-But what does the actual support look like?
+But what does the actual support look like? I pulled together he following that is my best attempt to accurately try and summarize and categorize PWA capabilties from Core "what the og definition said", through to "device APIs" that Chrome lead with.
 
 {{< iframe "/pwa-cooked-baseline.html" "1280" >}}
 
-That support matrix doesn't look great. The core of the original techjnical requirements are mostly supported (Service Worker, Cache and instalability), but the further that you go into the capabilities that people wanted or expect a "platform application" might have are increasingly not supported across the web.
+That support matrix doesn't look great. The core of the original techjnical requirements are mostly supported (Service Worker, Cache and instalability), but the further that you go into the capabilities that people might expect a "platform application" to have are increasingly not supported across the web.
 
 Now you can argue that Device Capabilites like USB, Serial, HID and Bluetooth should never be on the web, but when I look at the last decade [going back to Frances Berriman and Alex Russell's original 2015 framing](https://infrequently.org/2015/06/progressive-apps-escaping-tabs-without-losing-our-soul/), the case for PWAs as a target for serious application development rested on one bet: the web platform is good enough to host and run the majority of experiences that a business or developer would want to run. Implied in that bet was that we could close the gap with native fast enough that developers wouldn't have to write four codebases (iOS, Android, Mac and Windows).
-
-We never closed the capability gap on the platform and you can now build four codebases that are deeply integrated into the hosts that they run on quickly and to a high-quality.
-
-The clean version of the argument is straightforward. iOS Safari currently scores [86/100 against Chrome Android's 97](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide) on PWA support. The Chromium-only [Fugu surface](https://fugu-tracker.web.app/) (USB, Serial, HID, Bluetooth, File System Access, Window Controls Overlay, Local Fonts, Idle Detection, Compute Pressure) is six years into Safari and Firefox rejection. Mozilla has published "negative" positions on [WebUSB](https://github.com/mozilla/standards-positions/issues/100), [WebHID](https://github.com/mozilla/standards-positions/issues/459), [Web Bluetooth](https://github.com/mozilla/standards-positions/issues/95), [Web NFC](https://github.com/mozilla/standards-positions/issues/238) and [File System Access](https://github.com/mozilla/standards-positions/issues/154) in their standards-positions repo. [Apple's 2026 stance on device APIs](https://webkit.org/tracking-prevention/) is more entrenched than it was in 2022, not less. Web Push on iOS took [from the W3C Push API First Public Working Draft in October 2012](https://www.w3.org/TR/2012/WD-push-api-20121018/) to [declarative shipping in iOS 16.4 in March 2023](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/): just over ten years. The [Baseline transition window](https://web.dev/baseline) from Newly Available to Widely Available is 30 months, which means anything that lands today is not safely usable everywhere until late 2028.
 
 I've tried to pull together as best I can, the shipping history for the full API surface that makes up a what people think a PWA is, grouped into the same bands as above dividing it into: core, engagement, background work, system integration, and device. Blue dots are Chrome, orange are Firefox, grey are Safari. The open circles are "still not shipped".
 
 {{< iframe "/pwa-cooked-timeline.html" "980" >}}
 
-The pattern by band tells you a lot and I expect each Browser vendor will have their own take that supports their stance. 
+We never closed the capability gap on the platform and now with LLMs you can build four platform-specific codebases that are deeply integrated into the hosts that they run on quickly and to a high-quality.
+
+I think the pattern by band tells you a lot and I expect each Browser vendor will have their own take that supports their stance. 
 
 * **Core PWA** (Service Worker, Web App Manifest, Cache API) is the one band where every engine shipped. This is the foundation, and it works everywhere. 
 * **Engagement** (Notifications, Push, beforeinstallprompt, App Badging) is a half-shipped surface. [Safari got Push and Notifications in iOS 16.4 (March 2023) but only for installed home-screen PWAs](https://webkit.org/blog/13878/web-push-for-web-apps-on-ios-and-ipados/), and beforeinstallprompt is still Chromium-only (iirc [Firefox removed its Site Specific Browser (the closest thing it had to a PWA install) in Firefox 86, February 2021](https://bugzilla.mozilla.org/show_bug.cgi?id=1682593)) and [Safari has no equivalent prompt; installation is manual via the share sheet](https://web.dev/learn/pwa/installation-prompt). 
 * **Background work** (Background Sync, Background Fetch, Periodic Background Sync) is the band where the cross-engine story collapses entirely. Every API in it is Chromium-only and has been for years. [Mozilla's position on Background Sync is "negative"](https://github.com/mozilla/standards-positions/issues/173), and so is [its position on Periodic Background Sync](https://github.com/mozilla/standards-positions/issues/214). Background Fetch is still [under review](https://github.com/mozilla/standards-positions/issues/30) and Mozilla has not committed to shipping it. 
 * **System integration** (Web Share, Web Share Target, File Handling, Launch Handler, Manifest Shortcuts, Window Controls Overlay) is mostly Chromium-only, with Web Share as the one partial exception. 
-* **Device / Fugu** (Bluetooth, USB, NFC, Serial, File System Access, HID, Idle Detection, Local Fonts, Compute Pressure) is the famous case: six years of Safari and Firefox rejection, no movement.
+* **Device / Fugu** (Bluetooth, USB, NFC, Serial, File System Access, HID, Idle Detection, Local Fonts, Compute Pressure) - 0 progress.
 
 The point of breaking it down this way is that "PWA on the open web" was never just a Fugu story. Fugu is the surface that gets quoted because we excitedly promoted it and at the same time the rejections are loudest. For me thee broader gap is in engagement and system integration work, the things developers most associate with what a PWA *is* - it should feel like it's part of the system. If you cannot run a Web Push notification, badge the icon, or sync data in the background on every engine the same way, the PWA-as-app metaphor doesn't hold. The Core PWA band is the only one where the metaphor still works and even then installabilty is a big missing gap.
 
