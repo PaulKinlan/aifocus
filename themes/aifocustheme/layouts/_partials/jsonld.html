@@ -102,7 +102,7 @@
   {{- end -}}
   {{- $descr := "" -}}
   {{- with .Description -}}
-    {{- $descr = . -}}
+    {{- $descr = . | plainify | htmlUnescape | chomp -}}
   {{- else -}}
     {{- with .Summary -}}{{- $descr = . | plainify | htmlUnescape | chomp | truncate 200 -}}{{- end -}}
   {{- end -}}
@@ -152,7 +152,15 @@
 {{- else if or (eq .Kind "term") (eq .Kind "taxonomy") (eq .Kind "section") -}}
   {{- $parts := slice -}}
   {{- range .Pages -}}
-    {{- $parts = $parts | append (dict "@id" (printf "%s#article" .Permalink)) -}}
+    {{- $childID := "" -}}
+    {{- if .IsPage -}}
+      {{- $childID = printf "%s#article" .Permalink -}}
+    {{- else if and (eq .Kind "term") (eq .Type "authors") -}}
+      {{- $childID = printf "%s#profilepage" .Permalink -}}
+    {{- else -}}
+      {{- $childID = printf "%s#collection" .Permalink -}}
+    {{- end -}}
+    {{- $parts = $parts | append (dict "@id" $childID) -}}
   {{- end -}}
   {{- $coll := dict
       "@type" "CollectionPage"
