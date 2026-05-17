@@ -1,15 +1,14 @@
 ---
 title: are pwas cooked?
-date: 2026-05-11T09:00:00.000Z
+date: 2026-05-17T08:00:00.000Z
 slug: are-pwas-cooked
-draft: true
 authors:
   - paulkinlan
 ---
 
-I'm 45 years old and using cooked to mean something that it never meant. I don't know when it happened, but I'm also thinking of writing everything in lowercase and using numbers like 6 and 7 in an amusing way.
+I'm 45 years old and using cooked to mean something that it never meant. I don't know when it happened, but it's out there along with vibe.
 
-This post is all personal opinion.
+Anyway... This post is all personal opinion.
 
 Before we go too deep, I just want to ground some of this article in the definition of a PWA. [MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/What_is_a_progressive_web_app) has a good overview.
 
@@ -17,13 +16,13 @@ Before we go too deep, I just want to ground some of this article in the definit
 
 There's a lot more detail on MDN where they discuss "Platform Specific Apps" and the benefits of using the web. 
 
-One of the sites that I helpt to run [web.dev](https://web.dev/pwa), says this
+One of the sites that I help to run [web.dev](https://web.dev/pwa), says this
 
 > Progressive Web Apps (PWA) are web apps built and enhanced with modern APIs to provide enhanced capabilities while still reaching any web user on any device with a single codebase. They combine the broad reach of web apps with the rich capabilities of platform-specific apps to enhance the user experience.
 
 See: https://web.dev/articles/what-are-pwas
 
-But what does the actual support look like? I pulled together he following that is my best attempt to accurately try and summarize and categorize PWA capabilties from Core "what the og definition said", through to "device APIs" that Chrome lead with.
+But what does the actual support look like? I pulled together he following that is my best attempt to accurately try and summarize and categorize PWA capabilties from Core "what the og definition said", through to "device APIs" that Chrome has pushed on with a lot of enthusiasm.
 
 {{< iframe "/pwa-cooked-baseline.html" "1280" >}}
 
@@ -47,7 +46,7 @@ I think the pattern by band tells you a lot and I expect each Browser vendor wil
 
 The point of breaking it down this way is that "PWA on the open web" was never just a Fugu story. Fugu is the surface that gets quoted because we excitedly promoted it and at the same time the rejections are loudest. For me thee broader gap is in engagement and system integration work, the things developers most associate with what a PWA *is* - it should feel like it's part of the system. If you cannot run a Web Push notification, badge the icon, or sync data in the background on every engine the same way, the PWA-as-app metaphor doesn't hold. The Core PWA band is the only one where the metaphor still works and even then installabilty is a big missing gap.
 
-Set against that, native development getting dramatically cheaper. [Xcode 26 with Claude Agent SDK + Predictive Code Completion is reporting ~60% time reduction on SwiftUI projects](https://medium.com/@osmandemiroz/reduce-ios-development-time-by-60-with-claude-code-86a4e9d864ca). Apple's [Predictive Code Completion runs on-device](https://lickability.com/blog/xcode-predictive-code-completion/) on the NPU, trained on Swift and the Apple SDKs. [Anthropic's Agent SDK is integrated into Xcode 26.3](https://www.anthropic.com/news/apple-xcode-claude-agent-sdk). [Compose Multiplatform iOS reached Stable](https://www.jetbrains.com/lp/compose-multiplatform/) last year. [React Native New Architecture](https://reactnative.dev/architecture/landing-page) shipped with the bridge removed. [Tauri 2](https://v2.tauri.app/) covers six targets including iOS and Android. [Lynx](https://thenewstack.io/cross-platform-ui-framework-lynx-competes-with-react-native/) is in TikTok production at 2.5× React Native startup. The cost differential between "ship native iOS" and "ship a PWA" has gotten ever and ever closer.
+Set against that, native development getting dramatically cheaper. [Xcode 26 with Claude Agent SDK + Predictive Code Completion is reporting ~60% time reduction on SwiftUI projects](https://medium.com/@osmandemiroz/reduce-ios-development-time-by-60-with-claude-code-86a4e9d864ca). Apple's [Predictive Code Completion runs on-device](https://lickability.com/blog/xcode-predictive-code-completion/) on the NPU, trained on Swift and the Apple SDKs. [Anthropic's Agent SDK is integrated into Xcode 26.3](https://www.anthropic.com/news/apple-xcode-claude-agent-sdk). [Compose Multiplatform iOS reached Stable](https://www.jetbrains.com/lp/compose-multiplatform/) last year. [React Native New Architecture](https://reactnative.dev/architecture/landing-page) shipped with the bridge removed. [Tauri 2](https://v2.tauri.app/) covers six targets including iOS and Android. [Lynx](https://thenewstack.io/cross-platform-ui-framework-lynx-competes-with-react-native/) is in TikTok production at 2.5× React Native startup. The cost differential between "ship native iOS + Android + Desktop" and "ship a PWA" is getting ever closer.
 
 My worry is that the web is shipping the same APIs across browsers significantly more slowly than native is becoming cheap. The gap is widening on the things developers actually want a PWA *for* (install and system integration, and to a far lesser extent, hardware access), and the alternative is materially less expensive than it even 6 months ago.
 
@@ -83,4 +82,8 @@ The fourth is embedding + composition + portability. I do however think we're mi
 
 The fifth is making content experiences even stronger. There's been great work on things like [view transitions](https://developer.chrome.com/docs/web-platform/view-transitions/), [popover](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/popover), [anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning), [scroll-driven animations](https://developer.chrome.com/docs/css-ui/scroll-driven-animations) to make it easier to build very rich experiences. And when I look at things like HTML in Canvas and what they can enable, that I can't imagine these being easy to ship across native platforms. But as an industry we have to think about making it easier for everyone to create, publish and share amazing experiences to make the web something people want to keep coming back to.
 
-i'm personally not optimnistic about pwa (is cope the word?). but with a lot of work the web's still cooking. i am interested in hearing how you think the platform needs to evolve.
+The 6th is distribution. The web has no gatekeepers and no approvals process. The biggest things slowing down apps is the time it's taking to land, the approval process for app stores and the gatekeeping that comes with that. Maybe theres a world where the app review times get so long because so many people are submitting apps to the stores that it's clear the web is a winner here.
+
+i'm personally not optimnistic about pwa outside of the core set of features (SW, Cache, and Manifest), ignore the device apis, there's a lot that is still needed. but at the same time I came across [this post just before publishing](https://justsitandgrin.im/posts/native-all-the-way-until-you-need-text/) that gives me hope we have a bit of time. 
+
+I am interested in hearing how you think the platform needs to evolve.
