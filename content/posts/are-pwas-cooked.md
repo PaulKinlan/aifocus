@@ -84,6 +84,6 @@ The fifth is making content experiences even stronger. There's been great work o
 
 The 6th is distribution. The web has no gatekeepers and no approvals process. The biggest things slowing down apps is the time it's taking to land, the approval process for app stores and the gatekeeping that comes with that. Maybe theres a world where the app review times get so long because so many people are submitting apps to the stores that it's clear the web is a winner here.
 
-i'm personally not optimnistic about pwa outside of the core set of features (SW, Cache, and Manifest), ignore the device apis, there's a lot that is still needed. but at the same time I came across [this post just before publishing](https://justsitandgrin.im/posts/native-all-the-way-until-you-need-text/) that gives me hope we have a bit of time. 
+i'm personally not optimnistic about pwa outside of the core set of features (SW, Cache, and Manifest), ignore the device apis, there's a lot that is still needed. but at the same time i came across [this post just before publishing](https://justsitandgrin.im/posts/native-all-the-way-until-you-need-text/) that gives me hope we have a bit of time. 
 
 I am interested in hearing how you think the platform needs to evolve.

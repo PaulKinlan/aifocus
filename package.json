@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "hugo": "hugo",
-    "dev": "hugo server --disableFastRender -D",
+    "dev": "hugo server --disableFastRender -D --bind 0.0.0.0 --port 1313",
     "build": "hugo --minify"
   },
   "keywords": [],
