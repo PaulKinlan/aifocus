@@ -18,6 +18,8 @@ The dashed dots are predictions. For each series I sort drops chronologically, c
 
 It's a pretty naive heuristic, but its as follows: A one-drop series gets no prediction. A two-drop series uses its single gap. From three drops up, only the trailing three count, so the prediction tracks *current* cadence rather than a long-run average. The "predicted next drop per series" table sorts ascending, so anything in the past is overdue, and the dashed segments in the timeline connect each series's last shipped drop to its predicted next.
 
+On reflection, model halflife really doesnt make much sense and it's just a bit of a buzzword to mean that models now ship faster. If you look at the release the releases in the charts above you see that things have up-ticked and there is more activitiy but we're not halving the release time every 6 months...
+
 While it's fun to predict when a model might be launched, unless we have a lot of data points then the predictions are pretty weak... GPT OSS at the end of 2027??? I mean, maybe...
 
 The data file is at [/model-drops.tsv](/model-drops.tsv). If I have got dates or series wrong, file an issue or just tell me.
