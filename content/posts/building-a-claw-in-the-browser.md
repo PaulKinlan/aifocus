@@ -37,11 +37,11 @@ What follows is a deep dive into the actual architecture, capabilities, and mech
 At its heart, Chaos is packaged as a Chrome Extension. I’ve written before about how [Chrome extensions are the closest thing we have to a declarative agent packaging format](/shipping-a-prompt/). They declare their permissions upfront in a manifest, their lifecycle is event-driven, and they run inside V8 isolation. 
 
 To achieve this cleanly, Chaos is built as a **decoupled monorepo** using npm workspaces. Modularity is exceptionally high, splitting codebase concerns into separate, cohesive packages:
-*   `packages/extension`: The Chrome extension host client (background script, OPFS integration, app UI).
-*   `packages/agent-loop`: A provider-agnostic autonomous execution loop wrapping [agent-do](/agent-do-my-agent-loop/).
-*   `packages/sdk`: A shared TypeScript library containing an API surface for the Hooks and Channels that are a layer above the agent-loop, type definitions, and protocol schemas.
-*   `packages/tui`: A terminal-based React Ink dashboard to show the concept working without the extension
-*   `packages/server`: Deno Deploy relay server.
+*   [`packages/extension`](https://github.com/paulkinlan/chaos/tree/main/packages/extension): The Chrome extension host client (background script, OPFS integration, app UI).
+*   [`packages/agent-loop`](https://github.com/paulkinlan/chaos/tree/main/packages/agent-loop): A provider-agnostic autonomous execution loop wrapping [agent-do](/agent-do/).
+*   [`packages/sdk`](https://github.com/paulkinlan/chaos/tree/main/packages/sdk): A shared TypeScript library containing an API surface for the Hooks and Channels that are a layer above the agent-loop, type definitions, and protocol schemas.
+*   [`packages/tui`](https://github.com/paulkinlan/chaos/tree/main/packages/tui): A terminal-based React Ink dashboard to show the concept working without the extension.
+*   [`packages/server`](https://github.com/paulkinlan/chaos/tree/main/packages/server): Deno Deploy relay server.
 
 Chaos structures this environment to act like a mini-OS, split between a Chrome extension frontend and a Deno Deploy relay server:
 
@@ -86,7 +86,7 @@ I flippin love TweetDeck style interface. A long time ago [I worked on the proto
 
 {{< figure src="/images/claw-browser/chat.png" alt="A TweetDeck style UI but Claws" caption="A TweetDeck style UI but Claws" >}}
 
-And because Chaos is structurally modular, this side-by-side experience isn't confined to Chrome. `packages/tui` implements an **Ink-based interactive terminal TUI** right in your console! It compiles a highly polished, responsive dashboard leveraging React Ink, letting you manage your columns, execute code reviews, and track task checklists straight from your workspace command line.
+And because Chaos is structurally modular, this side-by-side experience isn't confined to Chrome. [`packages/tui`](https://github.com/paulkinlan/chaos/tree/main/packages/tui) implements an **Ink-based interactive terminal TUI** right in your console! It compiles a highly polished, responsive dashboard leveraging React Ink, letting you manage your columns, execute code reviews, and track task checklists straight from your workspace command line.
 
 ### 3. Background Jobs & Shared Task Boards
 AI loops shouldn't require you to sit and watch them stream. Chaos introduces a shared **Jobs and Tasks Board** where long-running or scheduled tasks are tracked. Since the agents operate asynchronously inside the Manifest V3 service worker (or offscreen document), they can check in on their assigned tasks, update their progress metrics, and log details to the global task pool.
@@ -263,7 +263,7 @@ What about you? Would you trust a browser-based agent operating system to manage
 
 ### Links
 
-* [Chaos](https://github.com/paulkinlan/chaos)
-* [Agent-do](/agent-do-my-agent-loop/)
-* [Agent-do Source](https://github.com/paulkinlan/agent-do) - agent loop sdk
-* [Journal](https://github.com/paulkinlan/journal) - my self modifying agent prompt
+* [Chaos Repository](https://github.com/paulkinlan/chaos) - the Chrome Agent Operating System monorepo
+* [Agent-do](/agent-do-my-agent-loop) - detailed post about my agent harness
+* [Agent-do Source](https://github.com/paulkinlan/agent-do) - the provider-agnostic agent loop SDK
+* [Journal](https://github.com/paulkinlan/journal) - my self-modifying agent prompt repository
