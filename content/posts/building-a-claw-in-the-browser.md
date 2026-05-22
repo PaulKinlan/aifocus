@@ -2,7 +2,6 @@
 title: building a claw in the browser
 date: 2026-05-22T20:05:00.000Z
 slug: building-a-claw-in-the-browser
-draft: true
 authors:
   - paulkinlan
 ---
@@ -115,8 +114,6 @@ A skill (like *Frontend Design* or *Web Artifacts Builder*) is a package contain
 
 {{< figure src="/images/claw-browser/agent-skills-browse-top.png" alt="Browsing the Chaos library to install specialized skills like Frontend Design or Web Artifacts Builder" caption="Browsing the Chaos library to install specialized skills like Frontend Design or Web Artifacts Builder" >}}
 
-{{< figure src="/images/claw-browser/agent-skills-browse-bottom.png" alt="Viewing additional skills in the Chaos library including System Administrator and Code Reviewer" caption="Viewing additional skills in the Chaos library including System Administrator and Code Reviewer" >}}
-
 ### 6. A Massive Tool Chest (69+ Built-In Tools)
 To give agents "hands," Chaos implements a pluggable tool system assembled per-agent and whitelisted/blacklisted dynamically. These are divided into core families:
 *   **Chrome APIs (31 tools)**: Managing tabs, windows, cookies, and reading list entries.
@@ -151,13 +148,13 @@ When an event fires, the background service worker captures it, resolves the con
 
 {{< figure src="/images/claw-browser/hooks-new-trigger.png" alt="Granular browser-level events available as triggers when creating a new reactive hook" caption="Granular browser-level events available as triggers when creating a new reactive hook" >}}
 
-### Programmatic Senses: The Dynamic Hooks & Recursive Loop
+### Dynamic Hooks
 
 Standard trigger events like standard bookmarks or page navigations are cool, but they only scratch the surface of what an in-browser agent framework can actually achieve when its tool chest and execution loops are natively linked. Because the agent loop has direct access to the extension's capabilities, the boundaries of how it senses and reacts to the browser become incredibly fluid.
 
 Here are a few ways we can leverage this to make the agent feel truly integrated into your daily workflow:
 
-#### 1. Dynamic UI Senses (Creating Context Menus on the Fly)
+#### 1. Creating Context Menus on the Fly
 Usually, context menus in browser extensions are static—defined once on installation and left untouched. But in Chaos, the agent loop itself can dynamically call `chrome.contextMenus.create` or `chrome.contextMenus.update` based on its own state or active goals. 
 
 If an agent is running a deep research project on "advanced sandboxing", it can dynamically register a new context menu option: *"Send to Sandbox Research Folder"*. When you highlight text on any page and click that option, it fires a `context-menu` trigger that feeds that specific text straight back into the researcher agent's memory. Once the task is finished, the agent dynamically cleans up after itself and destroys the menu item. The agent essentially constructs its own UI senses on the fly to match its active work context.
@@ -167,7 +164,7 @@ Time itself can be a powerful reactive trigger. Instead of relying on a bloated 
 
 Because the agent can parse natural language, you can simply tell it: *"Check the status of my Deno deploy queue every 3 hours while I'm active."* The agent invokes a tool that registers a `chrome.alarms` trigger under the hood. When the alarm fires, the background service worker wakes up the agent, runs the check, and logs a status update to the shared task board. This turns a static prompt into a self-sustaining background cron job running locally in your browser.
 
-#### 3. Recursive Hooks (Hooks that Spawn Hooks)
+#### 3. Hooks that Spawn Hooks
 Because all the tools that configure and control the extension's internal state are exposed directly to the agent as standard tool definitions, **an agent can register its own hooks**. A hook can literally create a hook.
 
 For example, if you ask the Master agent: *"Monitor my downloads, and if I download a PDF containing the word 'security', summarize it."* 
