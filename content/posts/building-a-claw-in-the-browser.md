@@ -245,7 +245,7 @@ Modern browser extension guidelines (specifically Manifest V3) are extremely str
 
 However, when we run an agent loop using `agent-do`, the LLM generates a series of tool calls and text steps. The system prompt is a markdown document written in plain prose. Is a prompt "code"? In a very real sense, yes—prose is the new programming language, and the LLM is the compiler. The agent-loop evaluates this prose dynamically to determine which actions to take. 
 
-Because of this, shipping a highly capable, dynamically self-modifying agent environment like Chaos through the official Chrome Web Store is incredibly difficult. Google's review processes are not yet equipped to distinguish between a malicious remote script injection and an LLM choosing to call a local, sandboxed file-write tool.
+Because of this, shipping a highly capable, dynamically self-modifying agent environment like Chaos through the official Chrome Web Store is incredibly difficult.
 
 {{< warning >}}
 **Warning:** Because of these strict V3 execution policies, Chaos is not published on the Chrome Web Store. It remains an open-source research experiment that you must download and load locally in Chrome Developer Mode. Exercise extreme caution and review permissions when granting LLMs access to sensitive filesystem or browser APIs.
