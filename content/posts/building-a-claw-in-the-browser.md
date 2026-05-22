@@ -190,14 +190,6 @@ These channels fall into two classifications:
     *   *Examples*: `telegram`, `discord`, `email`.
     *   *Flow*: The platform dispatches an event (Telegram update, Discord interaction, inbound email) which is stored and sent to the extension. When the agent replies, the relay intercepts it and **immediately dispatches the reply** back to the active chat context using that platform's native API.
 
-### The Inbound Sync: Fast Path vs. Slow Path
-Chrome extensions running under Manifest V3 operate with event-driven background service workers (`background.ts`) which Chrome terminates aggressively (typically after 30 seconds of idle time) to save memory and battery. This makes maintaining a persistent, long-lived WebSocket connection to the relay incredibly difficult. 
-
-To overcome this MV3 limitation, Chaos implements a **Persistent Offscreen Document Bridge** combined with a dual-mode communication engine:
-
-*   **The Fast Path (WebSocket via Offscreen Document)**: When the extension starts, the background worker uses the `chrome.offscreen` API to spin up an offscreen document (`src/offscreen-parser.html`). Because Chrome allows offscreen documents to stay alive when performing certain operations (we use the `DOM_PARSER` reason as a valid justification), this offscreen DOM context acts as a persistent host for our WebSocket client (`ws-client.ts`). When an inbound message hits the Deno relay, Deno's `Deno.kv.watch()` detects it across isolates, pushes the payload down the WebSocket, and the offscreen document immediately forwards it to the service worker via `chrome.runtime.sendMessage`, waking it up instantly to launch the agentic loop.
-*   **The Slow Path (Chrome Alarm Polling)**: When the laptop is asleep or the WebSocket is disconnected, the relay buffers messages in Deno KV (capped at 100 messages, retained for 24 hours). The extension runs a fallback Chrome Alarm that wakes up periodically (every 1 minute when offline, 5 minutes when online) to poll `GET /messages?since={timestamp}` and pull down any queued triggers.
-
 ### MCP and Tunneling
 One of the most powerful architectural patterns in Chaos is its ability to turn the local browser into a host for external environments. 
 
