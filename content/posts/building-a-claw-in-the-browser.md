@@ -204,7 +204,7 @@ To bridge this gap, Chaos integrates with a public-facing **Relay Server** (buil
  +-----------------+          +-----------------------------------+          +------------------------------+
 ```
 
-### Routing Constraints: One-Way vs. Bidirectional
+### One-Way vs. Bidirectional communication
 To maintain as tight a security boundary that I can muster, the Relay Server **only ever routes agent replies back through the exact channel that ingested the original trigger**. The extension dispatches a reply carrying the original `channelId` and `channelType`, which the relay uses to resolve the correct outbound path.
 
 These channels fall into two classifications:
@@ -229,7 +229,7 @@ What if you want to use the browser-manipulation tools (like tab reading, list m
 4.  **Local Execution**: The browser wakes up, executes the requested action locally (e.g. searching bookmarks or reading the active page), packages the results, and posts a `mcp-response` back up the WebSocket carrying the matching `correlationId`.
 5.  **HTTP Stream Resolution**: The relay matches the incoming ID, resolves the pending HTTP promise, and returns the response payload back to the external IDE or CLI as a standard JSON-RPC stream.
 
-This elegant tunneling system gives IDE-based agents local browser capabilities without opening vulnerable desktop ports or requiring native platform binaries.
+This tunneling system gives IDE-based agents local browser capabilities without opening vulnerable desktop ports or requiring native platform binaries.
 
 ### Cryptographic Security Boundaries
 I want to avoid handling accounts or user data as much as possible. And because your local agent has powerful capabilities (like reading and writing to your local OPFS drive), security on the relay is critical. I've made Chaos enforce **ECDSA Request Signing**:
