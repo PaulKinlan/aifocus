@@ -260,3 +260,10 @@ Building Chaos has made one thing abundantly clear: **the web platform already h
 By combining V8 sandboxing, declarative manifests, reactive event hooks, and local file storage, we can build agents that have "hands" without giving them the keys to our castle. 
 
 What about you? Would you trust a browser-based agent operating system to manage your tabs, bookmarks, and research? Let me know what you think!
+
+### Links
+
+* [Chaos](https://github.com/paulkinlan/chaos)
+* [Agent-do](/agent-do-my-agent-loop/)
+* [Agent-do Source](https://github.com/paulkinlan/agent-do) - agent loop sdk
+* [Journal](https://github.com/paulkinlan/journal) - my self modifying agent prompt
