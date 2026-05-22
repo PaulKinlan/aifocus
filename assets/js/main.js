@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             format: "plain-text",
             length: "medium",
             expectedInputLanguages: ["en", "en-GB", "en-US"],
-            moitor: (m) => {
+            monitor: (m) => {
               m.addEventListener("downloadprogress", (e) => {
                 summaryElement.textContent = `Downloading model... ${Math.round(
                   e.loaded * 100
