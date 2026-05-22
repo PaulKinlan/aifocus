@@ -1,6 +1,6 @@
 ---
 title: where agents actually run
-date: 2026-05-05T09:40:00.000Z
+date: 2026-05-22T09:40:00.000Z
 slug: where-agents-actually-run
 draft: true
 authors:
@@ -27,7 +27,9 @@ Let me walk through what's actually out there, with links so you can poke at any
 
 **Multi-agent orchestrators** are where the patterns are still moving. [LangGraph](https://gurusup.com/blog/best-multi-agent-frameworks-2026) is now ahead of CrewAI in stars. [CrewAI Flows](https://dev.to/emperorakashi20/crewai-vs-langgraph-vs-autogen-which-multi-agent-framework-should-you-use-in-2026-5h2f) lean role-based and event-driven. [AutoGen / AG2](https://pratikpathak.com/langgraph-vs-crewai-vs-autogen-2026/) ships a GroupChat selector pattern. The [Anthropic Agent SDK orchestrator/subagent shape](https://www.anthropic.com/engineering/building-agents-with-the-claude-agent-sdk) is increasingly the reference.
 
-That is the landscape. Three things jump out when I look at it.
+Anything missing? Hit me up.
+
+Three things jump out when I look at it.
 
 The first is the daemon layer is genuinely thin and the bottleneck is security, not interest. People want a personal agent that lives on their box. Hermes, AIdaemon, OpenClaw, CheetahClaws, my own docker-agent-test are all proof of demand. Nobody has cracked the security story for "an LLM that runs as my user with my keys and my filesystem". That gap is the same gap Apple's `launchd` filled for system services in 2005, and nobody owns it yet. If you want to build something defensible in this field, that is where I would look.
 
