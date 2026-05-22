@@ -193,6 +193,78 @@ article {
     }
   }
 
+  .warning-banner {
+    background-color: #fff9e6; /* Warm cream/yellow paper background */
+    border: 2px solid #000000; /* Bold solid black border */
+    color: #000000;
+    padding: 2em 1.5em 1.5em 1.5em;
+    margin: 2.5em 0;
+    border-radius: 0; /* Pure flat print aesthetic */
+    font-family: Georgia, "Times New Roman", Times, serif; /* Classic editorial font */
+    font-size: 1.1rem;
+    line-height: 1.6;
+    clear: both;
+    position: relative;
+  }
+
+  .warning-banner::before {
+    content: "ATTENTION / WARNING";
+    display: inline-block;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #ffffff;
+    background-color: #e11d48; /* Vibrant printed crimson/red alert badge */
+    padding: 0.25em 0.8em;
+    position: absolute;
+    top: -13px;
+    left: 20px;
+    border: 1.5px solid #000000;
+  }
+
+  .warning-content {
+    p {
+      margin-top: 0;
+      margin-bottom: 0.75em;
+      font-size: 1.1rem;
+      font-family: Georgia, "Times New Roman", Times, serif;
+      color: #000000;
+      line-height: 1.6;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    strong {
+      color: #000000;
+      font-weight: bold;
+    }
+
+    code {
+      background-color: rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #000000;
+      padding: 0.1em 0.3em;
+      border-radius: 2px;
+      font-size: 0.9em;
+      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      outline: none;
+    }
+
+    a {
+      color: #000000;
+      text-decoration: underline;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: none;
+    }
+  }
+
   figure {
     margin: 1em 0;
     text-align: center;
@@ -203,8 +275,6 @@ article {
       max-width: 100%;
       height: auto;
       border-radius: 10px; /* Rounded corners */
-      box-shadow: #000000 0px 0px 10px; /* Shadow effect */
-      background-color: black;
     }
 
     video {
