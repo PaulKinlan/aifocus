@@ -1,7 +1,7 @@
 ---
 title: shipping a prompt
 date: 2026-05-22T11:10:00.000Z
-slug: where-prompts-run
+slug: shipping-a-prompt
 authors:
   - paulkinlan
 ---
