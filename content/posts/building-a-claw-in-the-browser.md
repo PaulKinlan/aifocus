@@ -79,7 +79,7 @@ Chaos structures this environment to act like a mini-OS, split between a Chrome 
 Chaos does not rely on a single agent. Instead, it implements a hierarchical master-worker system.
 *   **The Master Agent**: The first agent initialized on installation is the Master. It has exclusive access to system-management tools (like `create_agent`, `assign_task`, `find_agent`, and `delete_agent`) to coordinate sub-agents.
 *   **Role Templates**: There are specialized role templates (master, researcher, coder, writer, planner, reviewer, and general-purpose neutral). Each role is provisioned with a distinct persona loaded directly from templates into the agent's isolated directory.
-*   **Self-Evolving Personalities**: I modelled [self-modification from my journal idea](/prompt-is-the-program/) so that agents are empowered to edit their own `CLAUDE.md` instructions in their OPFS directories as they interact with you, adapting their behavior and learning your preferences over time.
+*   **Self-Evolving**: I modelled [self-modification from my journal idea](/prompt-is-the-program/) so that agents are empowered to edit their own `CLAUDE.md` instructions in their OPFS directories as they interact with you, adapting their behavior and learning your preferences over time.
 
 ### 2. TweetDeck-Style Multi-Column Chat
 
