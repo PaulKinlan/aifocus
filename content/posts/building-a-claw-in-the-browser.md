@@ -38,7 +38,7 @@ At its heart, Chaos is packaged as a Chrome Extension. I’ve written before abo
 
 To achieve this cleanly, Chaos is built as a **decoupled monorepo** using npm workspaces. Modularity is exceptionally high, splitting codebase concerns into separate, cohesive packages:
 *   [`packages/extension`](https://github.com/paulkinlan/chaos/tree/main/packages/extension): The Chrome extension host client (background script, OPFS integration, app UI).
-*   [`packages/agent-loop`](https://github.com/paulkinlan/chaos/tree/main/packages/agent-loop): A provider-agnostic autonomous execution loop wrapping [agent-do](/agent-do/).
+*   [`packages/agent-loop`](https://github.com/paulkinlan/chaos/tree/main/packages/agent-loop): A provider-agnostic autonomous execution loop wrapping [agent-do](/agent-do-my-agent-loop/.
 *   [`packages/sdk`](https://github.com/paulkinlan/chaos/tree/main/packages/sdk): A shared TypeScript library containing an API surface for the Hooks and Channels that are a layer above the agent-loop, type definitions, and protocol schemas.
 *   [`packages/tui`](https://github.com/paulkinlan/chaos/tree/main/packages/tui): A terminal-based React Ink dashboard to show the concept working without the extension.
 *   [`packages/server`](https://github.com/paulkinlan/chaos/tree/main/packages/server): Deno Deploy relay server.
