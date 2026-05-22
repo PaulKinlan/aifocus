@@ -149,29 +149,9 @@ When an event fires, the background service worker captures it, resolves the con
 
 {{< figure src="/images/claw-browser/hooks-new-trigger.png" alt="Granular browser-level events available as triggers when creating a new reactive hook" caption="Granular browser-level events available as triggers when creating a new reactive hook" >}}
 
----
+## Channels that can break into the browser
 
-## Under the Hood: Pluggable Power with `agent-do`
-
-Chaos runs its agent loops using **agent-do**—the provider-agnostic, event-driven agent harness I built as glue around Vercel's AI SDK. 
-
-Because `agent-do` abstracts the core LLM loop, Chaos can swap models on the fly (Gemini 2.5 Pro, Claude 3.5 Sonnet, GPT-4o, or OpenRouter models) and stream progress events directly to the columns. 
-
-One of the most critical challenges of multi-step loops is token bloat. If an agent executes 10 tool calls in a row, repeating the large outputs of those tools in the history quickly exhausts the context window. To solve this, `agent-do` implements **History Hygiene**:
-```
-Turn 1: [User] -> [Model] -> Call: read_file -> [Result: 1000 lines of code] -> [Model]
-                                                                                   |
-                                                                        (History Hygiene fires)
-                                                                                   v
-Turn 2: [User] -> [Model] -> Call: edit_file -> [Result: Edited] -> [Model] (Turn 1 Result becomes <tool_output redacted="stale">)
-```
-Between loop steps, older `<tool_output>` blocks in the conversation history are replaced with compact `redacted="stale"` self-closing markers. The agent retains the memory of *which* tool ran and on *what* path, but the huge payload is dropped, preventing malicious inputs in files from poisoning later steps and keeping token costs tightly bounded.
-
----
-
-## The Multi-Channel Bridge: Overcoming Browser Isolation
-
-{{< warning >}}This is probably the MOST dangerous part of the project. You are able to push data into Chaos from outside the browser - if{{</ warning >}}
+{{< warning >}} **This is probably the MOST dangerous part of the project.** You are able to push data into Chaos from outside the browser and because the way that the system is set up means that I would imagine bad actors would want to attack the infrastucture mentioned below putting you and your browser at risk. {{</ warning >}}
 
 A major hurdle for any browser-based agent system is accessibility. Because a Chrome extension is hosted locally, it lacks a public IP address, cannot open public ports, and is completely isolated behind the browser’s networking stack. How does a script running on an external server (like a GitHub Action) or a chat message on your phone reach your browser agent to trigger a task?
 
@@ -218,7 +198,7 @@ To overcome this MV3 limitation, Chaos implements a **Persistent Offscreen Docum
 *   **The Fast Path (WebSocket via Offscreen Document)**: When the extension starts, the background worker uses the `chrome.offscreen` API to spin up an offscreen document (`src/offscreen-parser.html`). Because Chrome allows offscreen documents to stay alive when performing certain operations (we use the `DOM_PARSER` reason as a valid justification), this offscreen DOM context acts as a persistent host for our WebSocket client (`ws-client.ts`). When an inbound message hits the Deno relay, Deno's `Deno.kv.watch()` detects it across isolates, pushes the payload down the WebSocket, and the offscreen document immediately forwards it to the service worker via `chrome.runtime.sendMessage`, waking it up instantly to launch the agentic loop.
 *   **The Slow Path (Chrome Alarm Polling)**: When the laptop is asleep or the WebSocket is disconnected, the relay buffers messages in Deno KV (capped at 100 messages, retained for 24 hours). The extension runs a fallback Chrome Alarm that wakes up periodically (every 1 minute when offline, 5 minutes when online) to poll `GET /messages?since={timestamp}` and pull down any queued triggers.
 
-### Double-Agent MCP Tunneling
+### MCP and Tunneling
 One of the most powerful architectural patterns in Chaos is its ability to turn the local browser into a host for external environments. 
 
 What if you want to use the browser-manipulation tools (like tab reading, list management, or sandboxed OPFS file lookups) inside your local IDE (like Cursor) or CLI tool (like Claude Code)? Chaos supports a secure **Double-Agent MCP (Model Context Protocol) Tunneling** bridge:
@@ -234,7 +214,7 @@ What if you want to use the browser-manipulation tools (like tab reading, list m
 This elegant tunneling system gives IDE-based agents local browser capabilities without opening vulnerable desktop ports or requiring native platform binaries.
 
 ### Cryptographic Security Boundaries
-Because your local agent has powerful capabilities (like reading and writing to your local OPFS drive), security on the relay is paramount. Chaos enforces **ECDSA Request Signing**:
+I don't want to handle accounts or any user-data as much as possible. And because your local agent has powerful capabilities (like reading and writing to your local OPFS drive), security on the relay is critical. I've made Chaos enforce **ECDSA Request Signing**:
 *   During registration, the extension and relay can exchange an ECDSA P-256 public key.
 *   All outgoing replies or updates from the extension are signed using the private key.
 *   The relay validates the signature along with `X-Timestamp` (within a 5-minute window) and a random `X-Nonce` header before taking any action, completely preventing session hijacking or payload spoofing.
