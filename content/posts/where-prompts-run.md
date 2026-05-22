@@ -1,13 +1,12 @@
 ---
 title: shipping a prompt
-date: 2026-04-24T11:10:00.000Z
+date: 2026-05-22T11:10:00.000Z
 slug: where-prompts-run
-draft: true
 authors:
   - paulkinlan
 ---
 
-If the majority of my app is just a prompt, then I have a very transportable program. The agent loop is the same everywhere ([I have my own one](/agent-do-my-agent-loop) but there are dozens). The memory is a few hundred kilobytes of files. The system prompt is a markdown document. I can take that bundle and run it on a server, in an email host, in a browser, on my laptop. The portability of the program isn't really in question.
+If the majority of my app is just a prompt, then I have a very transportable program. The agent loop is the same everywhere ([I have my own one](/agent-do/) but there are dozens). The memory is a few hundred kilobytes of files. The system prompt is a markdown document. I can take that bundle and run it on a server, in an email host, in a browser, on my laptop. The portability of the program isn't really in question.
 
 But shipping one is more than moving the prompt around. The prompt has dependencies. The skills it references live somewhere. The tool definitions need to be present at runtime. Any supplementary scripts the prompt expects to call have to ship with it. And before any of that runs, there is the question of what the program is allowed to touch on the host machine. A prompt I trust on my laptop is not a prompt I want a stranger's email server running with file-system access, no questions asked.
 
@@ -20,9 +19,9 @@ There's two areas I want to dig into:
 
 ## Sandboxing
 
-`codex`, `claude`, and `gemini-cli` all do their own sandboxing, and I really don't want it to be up to them. Maybe I was wrong about [the browser is the sandbox](/the-browser-is-the-sandbox). No other platform has put as much work into isolating arbitrary code from the real machine, but the web's permission model is permissive by default (you have to restrict, not open up) and it's tied to an origin. The tools an agent uses (search, file-write, send-email) aren't really *of* any origin in the sense of the web. The `WebFetch` and `WebSearch` tools are the offspring of `crossorigin=anonymous` and a proxy server that was birthed to get around a heap of the web's security model. Every agent I've built behaves more like a hyper-specialised User-Agent than a site. My browser already has access to all the sandboxes of the pages I visit and it mediates that access. The way I'm building agents right now, they need that same view across sessions, data sources, and tabs.
+`codex`, `claude`, and `gemini-cli` all do their own sandboxing, and I really don't want it to be up to them. Maybe I was wrong about [the browser is the sandbox](/the-browser-is-the-sandbox/). No other platform has put as much work into isolating arbitrary code from the real machine, but the web's permission model is permissive by default (you have to restrict, not open up) and it's tied to an origin. The tools an agent uses (search, file-write, send-email) aren't really *of* any origin in the sense of the web. The `WebFetch` and `WebSearch` tools are the offspring of `crossorigin=anonymous` and a proxy server that was birthed to get around a heap of the web's security model. Every agent I've built behaves more like a hyper-specialised User-Agent than a site. My browser already has access to all the sandboxes of the pages I visit and it mediates that access. The way I'm building agents right now, they need that same view across sessions, data sources, and tabs.
 
-V8 created an isolation boundary for untrusted JavaScript from any random page or script. It really does feel like we need a V8-shaped sandbox for the agent loop.
+V8 created an isolation boundary for untrusted JavaScript from any random page or script. It really does feel like we need a V8-shaped sandbox for the agent loop. (I've explored the details of how we can use the browser's own security boundaries—like the double-iframe technique and WebAssembly-in-Worker execution—to build this runtime in [the browser is the sandbox](/the-browser-is-the-sandbox)).
 
 It's worth holding the existing permission models up next to each other, because each of them gets part of this story right.
 
@@ -48,9 +47,13 @@ Given the correct security and privacy guardrails, we have a world where anyone 
 
 The more I play with CRX files, the more I wonder if the format itself is the right shape for packaging prompt-programs in general. A `.crx` is a signed zip with a manifest that declares entry points and permissions, and the browser already knows how to verify it, install it, update it, and enforce the boundary it declares. I don't have to ship a Dockerfile. I don't have to write sandboxing configuration. The distribution channel, the permission system, and the update mechanism are all there. A `.crx` with a prompt inside is a small self-contained statement of "here is what the agent should do, and here is what it's allowed to touch", and the host either accepts those permissions or refuses them. Other runtimes could, in principle, read the same bundle. You'd need a manifest the shell also understood, and you'd need each host to know how to enforce the permissions declared inside, but none of that is hypothetical. The hard parts already exist.
 
+But a `.crx` is still a relatively heavy, client-side construct. It makes perfect sense for interactive browser extension agents that hook into user events, but what about passive, server-to-server agents? In those cases, maybe we don't need a zipped bundle at all, but rather a purely declarative, web-native manifest hosted at a standard location—like `/.well-known/agent-card.json` or `llms.txt`.
+
 I just don't think we are there right now.
 
-Services today are starting to offer MCP servers to expose tools so agents can call them, and that works reasonably well, but it still seems one-way. My agent asks your service to do something. I want my agent to be told that something has changed. MCP has the concept of [notifications](https://modelcontextprotocol.io/docs/learn/architecture#notifications), but it isn't really used and it seems to be more about state changes to the server (such as tool list updates) than about changes to application state.
+Services today are starting to offer MCP servers to expose tools so agents can call them, and that works reasonably well, but it still seems one-way. My agent asks your service to do something. I want my agent to be told that something has changed. MCP has the concept of [notifications](https://modelcontextprotocol.io/docs/learn/architecture#notifications), but it isn't really used and it seems to be more about state changes to the server (such as tool list updates) than about changes to application state. Because standard MCP is built on client-initiated JSON-RPC over stateful transports, it struggles with true asynchronous, event-driven push notifications unless you keep expensive sockets alive—which fights against modern scale-to-zero serverless runtimes.
+
+This is where [WebMCP and Web Intents](/webmcp-is-the-new-web-intents) represent a huge leap forward: shifting the discovery of capabilities back to the browser, allowing the user's agent to dynamically match intents to resources on the page in a secure, origin-bounded way.
 
 I expect that the next level of agent integration is that apps and services will offer their own "agent-runtime", that is, you'll be able to extend an application like you can with Chrome Extensions or Google Apps Script, but instead of JavaScript you just include a prompt and the application's agent-runtime will work out which APIs to call and which events to listen to. Effectively, prompt-in-a-box becomes a pattern that many apps offer.
 
@@ -58,9 +61,9 @@ The final piece, and the one we're missing, is a way for my agent to receive upd
 
 It's almost like we need the concept of `<iframe>`, but for agents.
 
-After building agent-do, using it enough, and having a quiet shelf of small prompt-programs running in the background and learning the rhythm of how I work in the browser, I'm not going back. So I've tried to collate my beliefs.
+After building agent-do, using it enough, and having a quiet shelf of small prompt-programs running in the background and learning the rhythm of how I work in the browser, I really do think there is a future here. So I've tried to collate my beliefs.
 
-1. **The agent-loop is here to stay** and will be a major way most people build for their computers. What I haven't reconciled yet is whether people will expect consistent routines or self-adapting "emergent" behaviour. Will these prompts be more like a traditional deterministic program or macro, written in plain language and given enough freedom to handle changes in the system it's working on top of? Or will people want agents more like my journal app, where the prompt is written to encourage it to rewrite itself as it learns about the user, and adapts over time to the point of proactively offering things?
+1. **The agent-loop (or variation of) is here to stay** and will be a major way people build for their computers. What I haven't reconciled yet is whether people will expect consistent routines or self-adapting "emergent" behaviour. Will these prompts be more like a traditional deterministic program or macro, written in plain language and given enough freedom to handle changes in the system it's working on top of? Or will people want agents more like my journal app, where the prompt is written to encourage it to rewrite itself as it learns about the user, and adapts over time to the point of proactively offering things?
 2. **A portable agent format is needed**. The same primitives keep showing up across all of these projects. The agent loop. The system prompt, which is both the instructions and, for the more emergent agents, a description of how the program is meant to evolve. Memory, in whatever form. Skills and supplementary scripts. Hooks (timers, browser events, file changes, the kind of triggers I described earlier). Permissions. I want to be able to run them anywhere: in Chrome, on my machine, on a server so they're always on.
 3. **We need a way to embed and discover the user's system-agents** and communicate with them in a push and pull manner. There's no way I'm setting up webhooks for every service to get updates, and MCP isn't enough.
 
