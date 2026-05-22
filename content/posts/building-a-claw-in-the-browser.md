@@ -1,6 +1,6 @@
 ---
 title: building a claw in the browser
-date: 2026-05-22T17:05:00.000Z
+date: 2026-05-22T21:05:00.000Z
 slug: building-a-claw-in-the-browser
 draft: true
 authors:
