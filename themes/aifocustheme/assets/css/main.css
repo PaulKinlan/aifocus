@@ -1,6 +1,7 @@
 :root {
   --color: #000000;
   --background: #fdfcf8;
+  --bg-secondary: #f0eee6;
 }
 
 /* Visually hidden class */
@@ -576,8 +577,9 @@ footer {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color: #e0e0e0;
-    --background: #121212;
+    --color: #e8e4dc;
+    --background: #1c1a17;
+    --bg-secondary: #2a2723;
   }
   
   header .site-branding-header h1 a {
@@ -594,8 +596,8 @@ footer {
   }
   
   article code {
-    background-color: #2a2a2a;
-    outline: solid 2px #2a2a2a;
+    background-color: #2a2723;
+    outline: solid 2px #2a2723;
   }
   
   article h1,
@@ -715,9 +717,9 @@ footer {
   }
   
   input, button, textarea, select {
-    background-color: #2a2a2a;
-    color: #e0e0e0;
-    border: 1px solid #555555;
+    background-color: #2a2723;
+    color: #e8e4dc;
+    border: 1px solid #4d4841;
     padding: 0.5em;
     border-radius: 4px;
   }
@@ -728,10 +730,10 @@ footer {
   
   input[type="submit"], button {
     cursor: pointer;
-    background-color: #333333;
+    background-color: #3d3933;
   }
   
   input[type="submit"]:hover, button:hover {
-    background-color: #444444;
+    background-color: #4a453f;
   }
 }
