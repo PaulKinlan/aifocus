@@ -573,3 +573,132 @@ footer {
     width: 100%;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color: #e0e0e0;
+    --background: #121212;
+  }
+  
+  header .site-branding-header h1 a {
+    color: #ffffff;
+  }
+  
+  .about {
+    color: #aaaaaa;
+    border-bottom: 1px solid #444444;
+  }
+  
+  article {
+    border-bottom: 1px solid #333333;
+  }
+  
+  article code {
+    background-color: #2a2a2a;
+    outline: solid 2px #2a2a2a;
+  }
+  
+  article h1,
+  article h2,
+  article h3,
+  article h4,
+  article h5,
+  article h6 {
+    color: #ffffff;
+  }
+  
+  article aside {
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      #4a252b 2px,
+      #4a252b 4px
+    );
+  }
+  
+  article blockquote {
+    border-left: 4px solid #425b7a;
+  }
+  
+  article .warning-banner {
+    background-color: #3b3211;
+    border: 2px solid #a89445;
+    color: #e0e0e0;
+  }
+  
+  article .warning-banner::before {
+    background-color: #cc1840;
+    border: 1.5px solid #a89445;
+    color: #ffffff;
+  }
+  
+  article .warning-content p,
+  article .warning-content strong,
+  article .warning-content a {
+    color: #e0e0e0;
+  }
+  
+  article .warning-content code {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+  }
+  
+  article figure figcaption {
+    color: #aaaaaa;
+  }
+  
+  article figure video {
+    box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 10px;
+  }
+  
+  article div.metadata {
+    border-bottom: 1px solid #333333;
+  }
+  
+  footer {
+    border-top: 1px solid #333333;
+  }
+  
+  .site-branding-line {
+    border-bottom: 1px solid #555555;
+  }
+  
+  .new-post-indicator,
+  .post-number {
+    color: #aaaaaa;
+  }
+  
+  .site-branding-title {
+    color: #ffffff;
+  }
+  
+  .featured-text-content p {
+    color: #aaaaaa;
+  }
+  
+  .featured-post-title {
+    color: #ffffff;
+  }
+  
+  .share-container {
+    border-top: 1px solid #333333;
+    border-bottom: 1px solid #333333;
+  }
+  
+  .share-title {
+    color: #ffffff;
+  }
+  
+  .share-button {
+    border: 2px solid #555555;
+    background-color: transparent;
+  }
+  
+  .share-button:hover {
+    background-color: #e0e0e0;
+    color: #121212;
+    border-color: #e0e0e0;
+  }
+}

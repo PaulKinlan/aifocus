@@ -1,6 +1,7 @@
 baseURL = 'https://aifoc.us/'
 languageCode = 'en-us'
 title = 'AI Focus'
+description = 'A collection of essays and projects on how AI is changing the medium of the web and web development.'
 theme = 'aifocustheme'
 
 [params]
