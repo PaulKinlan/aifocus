@@ -701,4 +701,37 @@ footer {
     color: #121212;
     border-color: #e0e0e0;
   }
+  
+  a {
+    color: #8ab4f8;
+  }
+  
+  a:visited {
+    color: #c58af9;
+  }
+  
+  a:active {
+    color: #e8eaed;
+  }
+  
+  input, button, textarea, select {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #555555;
+    padding: 0.5em;
+    border-radius: 4px;
+  }
+  
+  input::placeholder, textarea::placeholder {
+    color: #aaaaaa;
+  }
+  
+  input[type="submit"], button {
+    cursor: pointer;
+    background-color: #333333;
+  }
+  
+  input[type="submit"]:hover, button:hover {
+    background-color: #444444;
+  }
 }
