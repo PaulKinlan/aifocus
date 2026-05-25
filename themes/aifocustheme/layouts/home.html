@@ -51,6 +51,14 @@
 {{ else }}
 
 {{ if eq $idx 1 }}
+<section class="subscribe-section" style="margin: 2rem 0; padding: 1.5rem; background: var(--bg-secondary, #f4f4f4); border-radius: 8px;">
+  <h2>Subscribe to the Newsletter</h2>
+  <p>Get the latest essays and projects on how AI is changing the medium of the web delivered straight to your inbox.</p>
+  <div class="subscribe-box">
+    {{ partial "subscribe.html" . }}
+  </div>
+</section>
+
 <section class="more-essays">
   <h2>More essays</h2>
   {{ end }}
@@ -64,13 +72,5 @@
   </article>
   {{ end }}
   {{ end }}
-</section>
-
-<section class="subscribe-section" style="margin: 2rem 0; padding: 1.5rem; background: var(--bg-secondary, #f4f4f4); border-radius: 8px;">
-  <h2>Subscribe to the Newsletter</h2>
-  <p>Get the latest essays and projects on how AI is changing the medium of the web delivered straight to your inbox.</p>
-  <div class="subscribe-box">
-    {{ partial "subscribe.html" . }}
-  </div>
 </section>
 {{ end }}
