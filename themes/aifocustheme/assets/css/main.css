@@ -75,8 +75,11 @@ footer {
   text-align: center;
   ul {
     list-style: none; /* Remove default list style */
+    margin-left: 0;
     padding: 0; /* Remove default padding */
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1em;
 
     a {
