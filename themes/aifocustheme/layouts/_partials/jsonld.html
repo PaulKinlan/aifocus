@@ -1,0 +1,180 @@
+{{- $base := strings.TrimRight "/" site.BaseURL -}}
+{{- $defaultAuthorKey := site.Params.defaultAuthor -}}
+{{- $configuredAuthors := site.Params.authors -}}
+{{- $lang := site.Language.LanguageCode | default "en" -}}
+{{- $websiteID := printf "%s/#website" $base -}}
+{{- $publisherRef := dict "@id" (printf "%s/authors/%s/#person" $base $defaultAuthorKey) -}}
+
+{{- $siteImage := "" -}}
+{{- with site.Params.images -}}
+  {{- $first := index . 0 -}}
+  {{- if hasPrefix $first "http" -}}
+    {{- $siteImage = $first -}}
+  {{- else -}}
+    {{- $siteImage = printf "%s/%s" $base (strings.TrimLeft "/" $first) -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $authorKeys := slice $defaultAuthorKey -}}
+{{- if .IsPage -}}
+  {{- with .Params.authors -}}
+    {{- range . -}}{{- $authorKeys = $authorKeys | append . -}}{{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if and (eq .Kind "term") (eq .Type "authors") -}}
+  {{- $authorKeys = $authorKeys | append (path.Base .RelPermalink) -}}
+{{- end -}}
+{{- $authorKeys = $authorKeys | uniq -}}
+
+{{- $persons := slice -}}
+{{- range $authorKeys -}}
+  {{- $key := . -}}
+  {{- with index $configuredAuthors $key -}}
+    {{- $authorPageURL := printf "%s/authors/%s/" $base $key -}}
+    {{- $sameAs := slice -}}
+    {{- with .twitter -}}{{- $sameAs = $sameAs | append . -}}{{- end -}}
+    {{- with .linkedin -}}{{- $sameAs = $sameAs | append . -}}{{- end -}}
+    {{- with .bluesky -}}{{- $sameAs = $sameAs | append . -}}{{- end -}}
+    {{- $person := dict
+        "@type" "Person"
+        "@id" (printf "%s#person" $authorPageURL)
+        "name" .name
+        "url" (.homepage | default $authorPageURL)
+        "mainEntityOfPage" (dict "@id" (printf "%s#profilepage" $authorPageURL))
+    -}}
+    {{- if $sameAs -}}{{- $person = merge $person (dict "sameAs" $sameAs) -}}{{- end -}}
+    {{- with .email -}}{{- $person = merge $person (dict "email" .) -}}{{- end -}}
+    {{- $imgPath := printf "images/%s.png" $key -}}
+    {{- with resources.Get $imgPath -}}
+      {{- $person = merge $person (dict "image" (printf "%s%s" $base .RelPermalink)) -}}
+    {{- end -}}
+    {{- with site.GetPage (printf "/authors/%s" $key) -}}
+      {{- with .Content -}}
+        {{- $bio := . | plainify | htmlUnescape | chomp -}}
+        {{- if $bio -}}{{- $person = merge $person (dict "description" $bio) -}}{{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $persons = $persons | append $person -}}
+  {{- end -}}
+{{- end -}}
+
+{{- $website := dict
+    "@type" "WebSite"
+    "@id" $websiteID
+    "name" site.Title
+    "url" (printf "%s/" $base)
+    "inLanguage" $lang
+    "publisher" $publisherRef
+-}}
+{{- with site.Params.about -}}
+  {{- $about := . | markdownify | plainify | htmlUnescape | chomp -}}
+  {{- $website = merge $website (dict "description" $about) -}}
+{{- end -}}
+
+{{- $graph := slice $website -}}
+{{- range $persons -}}{{- $graph = $graph | append . -}}{{- end -}}
+
+{{- if .IsHome -}}
+  {{- $recent := slice -}}
+  {{- range first 10 (where site.RegularPages "Section" "posts").ByDate.Reverse -}}
+    {{- $recent = $recent | append (dict "@id" (printf "%s#article" .Permalink)) -}}
+  {{- end -}}
+  {{- $blog := dict
+      "@type" "Blog"
+      "@id" (printf "%s/#blog" $base)
+      "name" site.Title
+      "url" (printf "%s/" $base)
+      "inLanguage" $lang
+      "publisher" $publisherRef
+      "author" $publisherRef
+      "isPartOf" (dict "@id" $websiteID)
+  -}}
+  {{- with site.Params.about -}}
+    {{- $blog = merge $blog (dict "description" (. | markdownify | plainify | htmlUnescape | chomp)) -}}
+  {{- end -}}
+  {{- if $recent -}}{{- $blog = merge $blog (dict "blogPost" $recent) -}}{{- end -}}
+  {{- $graph = $graph | append $blog -}}
+{{- else if .IsPage -}}
+  {{- $postAuthorKeys := .Params.authors | default (slice $defaultAuthorKey) -}}
+  {{- $authorRefs := slice -}}
+  {{- range $postAuthorKeys -}}
+    {{- $authorRefs = $authorRefs | append (dict "@id" (printf "%s/authors/%s/#person" $base .)) -}}
+  {{- end -}}
+  {{- $descr := "" -}}
+  {{- with .Description -}}
+    {{- $descr = . | plainify | htmlUnescape | chomp -}}
+  {{- else -}}
+    {{- with .Summary -}}{{- $descr = . | plainify | htmlUnescape | chomp | truncate 200 -}}{{- end -}}
+  {{- end -}}
+  {{- $img := $siteImage -}}
+  {{- with .Params.images -}}
+    {{- $first := index . 0 -}}
+    {{- if hasPrefix $first "http" -}}
+      {{- $img = $first -}}
+    {{- else -}}
+      {{- $img = printf "%s/%s" $base (strings.TrimLeft "/" $first) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $article := dict
+      "@type" "BlogPosting"
+      "@id" (printf "%s#article" .Permalink)
+      "isPartOf" (dict "@id" $websiteID)
+      "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+      "url" .Permalink
+      "headline" .Title
+      "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")
+      "dateModified" (.Lastmod.Format "2006-01-02T15:04:05Z07:00")
+      "author" $authorRefs
+      "publisher" $publisherRef
+      "inLanguage" $lang
+      "wordCount" .WordCount
+      "timeRequired" (printf "PT%dM" .ReadingTime)
+      "articleSection" .Section
+  -}}
+  {{- if $descr -}}{{- $article = merge $article (dict "description" $descr) -}}{{- end -}}
+  {{- if $img -}}{{- $article = merge $article (dict "image" $img) -}}{{- end -}}
+  {{- with .Params.tags -}}
+    {{- $article = merge $article (dict "keywords" .) -}}
+  {{- end -}}
+  {{- $graph = $graph | append $article -}}
+{{- else if and (eq .Kind "term") (eq .Type "authors") -}}
+  {{- $key := path.Base .RelPermalink -}}
+  {{- $profile := dict
+      "@type" "ProfilePage"
+      "@id" (printf "%s#profilepage" .Permalink)
+      "url" .Permalink
+      "name" .Title
+      "inLanguage" $lang
+      "isPartOf" (dict "@id" $websiteID)
+      "mainEntity" (dict "@id" (printf "%s/authors/%s/#person" $base $key))
+  -}}
+  {{- $graph = $graph | append $profile -}}
+{{- else if or (eq .Kind "term") (eq .Kind "taxonomy") (eq .Kind "section") -}}
+  {{- $parts := slice -}}
+  {{- range .Pages -}}
+    {{- $childID := "" -}}
+    {{- if .IsPage -}}
+      {{- $childID = printf "%s#article" .Permalink -}}
+    {{- else if and (eq .Kind "term") (eq .Type "authors") -}}
+      {{- $childID = printf "%s#profilepage" .Permalink -}}
+    {{- else -}}
+      {{- $childID = printf "%s#collection" .Permalink -}}
+    {{- end -}}
+    {{- $parts = $parts | append (dict "@id" $childID) -}}
+  {{- end -}}
+  {{- $coll := dict
+      "@type" "CollectionPage"
+      "@id" (printf "%s#collection" .Permalink)
+      "url" .Permalink
+      "name" .Title
+      "inLanguage" $lang
+      "isPartOf" (dict "@id" $websiteID)
+  -}}
+  {{- if $parts -}}{{- $coll = merge $coll (dict "hasPart" $parts) -}}{{- end -}}
+  {{- $graph = $graph | append $coll -}}
+{{- end -}}
+
+{{- $root := dict "@context" "https://schema.org" "@graph" $graph -}}
+<script type="application/ld+json">
+{{- $root | jsonify (dict "indent" "  ") | safeJS -}}
+</script>
