@@ -24,7 +24,7 @@ Mobile and the rise of native apps was one of those challenges that I believe wa
 
 Yes, Apple through Safari introduced many technologies that would let the web work well on mobile (e.g viewports, touch, multi-touch, media queries are probably the biggest innovations at the time) but web developers just didn't shift to match the expectation people had from their mobile devices.
 
-We needed a change in how we thought about the web and how it should be used it for this new context. From my own personal experience, it wasn't until a Google "mobile-first" push in 2015 that you really started to see a change in how the web was experienced on mobile.
+We needed a change in how we thought about the web and how it should be used for this new context. From my own personal experience, it wasn't until a Google "mobile-first" push in 2015 that you really started to see a change in how the web was experienced on mobile.
 
 As I look at my own usage of LLMs today, there is a change in how I use the web and I am uneasy, but it wasn't until recently that I was able to put my finger on it. Yes, as the cost of creating content drops because people use LLMs it enables a lot more low-quality content to be created and at the same time it is also enabling a lot of good experiences to be easily created (the structure of this very blog was made using an LLM), but the only way you get to discover and experience content is if you can navigate to it.
 
@@ -44,10 +44,10 @@ It feels like the directed edge that defines a link in this massive directed gra
 
 This directed graph nature of the web has been fundamental to how we experience the web. It enables things like Page Rank to exist, which to my understanding has the link imply some level of authority. Its unclear to me if this is of any importance to a LLM. Is the link just a way to point a web-crawler to another page so it can be ingested? If so, then is the only way to have an LLM not ingest your content is to make it undiscoverable? Maybe it's to put it behind a login wall. This feels like a big step backwards on both fronts, however with things like Substack and Medium, the latter seems to be the ways it's going.
 
-The link can still point to content in the open or content that is private behind a login and enable instant access to any experience. So we still have that for now, but in is a world where [LLMs become the super app](/super-apps/) because they can recall and generate content and functionality in an instant, then what next?
+The link can still point to content in the open or content that is private behind a login and enable instant access to any experience. So we still have that for now, but in a world where [LLMs become the super app](/super-apps/) because they can recall and generate content and functionality in an instant, then what next?
 
 I'm not sure if it's a technology problem (i.e, links need to change) or if like the mobile-first push we _just_ need to work out where the web fits in the grand scheme of things, but I don't believe that the "Web will always win" is a good enough answer.
 
 Maybe we always just need to ask LLMs to include citations. Maybe we need to redefine what a link is. Maybe we need to rethink the capabilities of the platform. Maybe we need to create more incentives for putting content on the open web and linking to it directly.
 
-This is something that I want to explore more in the future and I don't want to sit idly by and be react in 5 years like we did with mobile. I want to be proactive and help shape the future of the web.
+This is something that I want to explore more in the future and I don't want to sit idly by and react in 5 years like we did with mobile. I want to be proactive and help shape the future of the web.

@@ -6,7 +6,7 @@ authors:
   - paulkinlan
 ---
 
-As much as struggle with [on-device processing](/on-device/) and the quality of its output compared to server models, I am excited by some of the APIs that are being built into browsers that are backed by LLMs and other AI inference models.
+As much as I struggle with [on-device processing](/on-device/) and the quality of its output compared to server models, I am excited by some of the APIs that are being built into browsers that are backed by LLMs and other AI inference models.
 
 For example, the prompt API, along with a multi-modal version that can take any arbitrary combination of text, image, and audio and run prompts against them. These APIs are neat but not yet web-exposed and many developers struggle to know what to do with a generic prompt. It's not a solution that is natural to many people yet.
 
@@ -82,7 +82,7 @@ There's a lot of other user interface features that I could imagine that would b
 - A `<video describe>` attribute could automatically generate and voice an audio description of the visual events happening on screen, not just closed captions as a transcription.
 - A textarea could be enhanced with an attribute that hints at the type of content expected, like `<textarea suggestions="creative-writing">` or `<textarea suggestions="code-completion">`. Much like how you can tell the browser the type of [input mode](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Global_attributes/inputmode), the browser could then offer context-aware autocompletion or creative prompts to help the user.
 
-**Update** After posting this, I also experimented with an `<ai-date-component>` that let's you write a date in natural language and it will parse it into a date object.
+**Update** After posting this, I also experimented with an `<ai-date-component>` that lets you write a date in natural language and it will parse it into a date object.
 
 {{< figure src="/images/ai-date.gif" alt="AI Date Component Demo" caption="AI Date Component Demo" >}}
 
@@ -90,7 +90,7 @@ There's a lot of other user interface features that I could imagine that would b
 
 Should the default elements be imbued with AI capabilities? Or should these all just live in user-land as custom-elements or Components in the framework of your choice? We certainly are starting to get more of the technology to do this all in the browser, whether it's the improvements to Web Components or the new AI-based APIs, but I don't actually know the answer.
 
-I do believe that this is an that we need a lot more discussion around and is something browser vendors and spec authors should really starting to think about it too.
+I do believe that this is an area that we need a lot more discussion around and is something browser vendors and spec authors should really starting to think about it too.
 
 ---
 

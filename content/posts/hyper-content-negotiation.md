@@ -30,9 +30,9 @@ Content-Type: text/html
 
 Huh. What's Content-Type?
 
-Content-Type: text/html has literally been in my life for the the last 25-30 years, and yet I hardly ever think about what it might offer us and how it might be one of the most critical things for the future of the web (Btw - [http.dev](https://http.dev/) is such a good resource for all things HTTP headers).
+Content-Type: text/html has literally been in my life for the last 25-30 years, and yet I hardly ever think about what it might offer us and how it might be one of the most critical things for the future of the web (Btw - [http.dev](https://http.dev/) is such a good resource for all things HTTP headers).
 
-When I started web development I had no concept of content-negotiation and it's importance - for the unintroduced, on the request to the server you could tell the server what type of content that you can [accept](https://http.dev/accept) and the server has the option of serving any type of format back.
+When I started web development I had no concept of content-negotiation and its importance - for the unintroduced, on the request to the server you could tell the server what type of content that you can [accept](https://http.dev/accept) and the server has the option of serving any type of format back.
 
 ```
 GET /index.html HTTP/1.1
@@ -63,13 +63,13 @@ I recently spent some time wondering how we might have a more of a 'lean-back' e
 
 Flickity just made me think a lot about the future of the web being truly a multimodal hypermedia platform that is shaped to the user's preference.
 
-With LLMs we have the ability to convert almost any content into any form of content and I think this will be a super-power of the web and the browser. In [interception](https://aifoc.us/interception/) I explored what it might be like for the browser to mediate and control the response from a server (for example to only every summarize the content) - it was an interesting experiment in that it shows that the web is more flexible than we take for granted, but highlights that morphing content in the client has a lot of potential issues ranging from lack of developer control all the way to breaking expectations of how JavaScript might work.
+With LLMs we have the ability to convert almost any content into any form of content and I think this will be a super-power of the web and the browser. In [interception](https://aifoc.us/interception/) I explored what it might be like for the browser to mediate and control the response from a server (for example to only ever summarize the content) - it was an interesting experiment in that it shows that the web is more flexible than we take for granted, but highlights that morphing content in the client has a lot of potential issues ranging from lack of developer control all the way to breaking expectations of how JavaScript might work.
 
-We are starting to see services and web apps that transform content from one form to another: NotebookLM can create podcasts, videos, interactive quizzes, mindmaps out of pages and source content. [Google search has started to generate "interactives" inside the AI mode](https://research.google/blog/generative-ui-a-rich-custom-visual-interactive-user-experience-for-any-prompt/). Why isn't this something the browser can just do or at least the developer can indicate support for from the server? Why not make this available to every single site on the users behalf? HTML into video. HTML into an image. Static HTML into an interactive web app... Video into article; Audio file into vide... well, anything into anything else?
+We are starting to see services and web apps that transform content from one form to another: NotebookLM can create podcasts, videos, interactive quizzes, mindmaps out of pages and source content. [Google search has started to generate "interactives" inside the AI mode](https://research.google/blog/generative-ui-a-rich-custom-visual-interactive-user-experience-for-any-prompt/). Why isn't this something the browser can just do or at least the developer can indicate support for from the server? Why not make this available to every single site on the users behalf? HTML into video. HTML into an image. Static HTML into an interactive web app... Video into article; Audio file into video... well, anything into anything else?
 
 We have 30 years of being able to negotiate the content type and we have the technology via LLMs, having the two combined might be a powerful concept for the future of the web. In `ssgen` (my [experimental](https://aifoc.us/headless-stopgap/) "[CMS](https://github.com/PaulKinlan/ssgen)") I wanted to explore if I can offer a way to have the server return whatever preferred output format is.
 
-Today, web browsers have a pretty permissive Accept header, so there's nothing really stopping us from returning a format that we think is appropriate. What if we introduce more the ability for servers to determine the best way to return the content?
+Today, web browsers have a pretty permissive Accept header, so there's nothing really stopping us from returning a format that we think is appropriate. What if we introduce the ability for servers to determine the best way to return the content?
 
 If you want the page as a video, like in Flickity Web, you can:
 
