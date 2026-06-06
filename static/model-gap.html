@@ -105,6 +105,14 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       });
       function missedFor(m) { return milestones.filter(function (x) { return x.d > m.cut; }); }
 
+      // Time scale: a little before the earliest cutoff, to just after today.
+      var minCut = models.reduce(function (mn, x) { return x.cut < mn ? x.cut : mn; }, today);
+      var xMin = new Date(minCut.getTime() - 30 * 86400000);
+      var xMax = new Date(today.getTime() + 24 * 86400000);
+      // Only plot Chrome releases inside the visible window; earlier ones predate every
+      // model's cutoff (so are never "missed") and would render off the left of the axis.
+      milestones = milestones.filter(function (x) { return x.d >= xMin; });
+
       // Build the dropdown grouped by vendor.
       var byVendor = {};
       var vendorOrder = [];
@@ -124,10 +132,6 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       var defaultModel = models.filter(function (m) { return m.model === "Gemini 3 Pro"; })[0] || models[0];
       sel.value = defaultModel.model;
 
-      // Time scale.
-      var minCut = models.reduce(function (m, x) { return x.cut < m ? x.cut : m; }, today);
-      var xMin = new Date(minCut.getTime() - 30 * 86400000);
-      var xMax = new Date(today.getTime() + 24 * 86400000);
       var W = 820, LEFT = 158, RIGHT = 92, TOP = 86, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 48, AXIS_Y = 14;
 
       // Lay out rows grouped by vendor.
