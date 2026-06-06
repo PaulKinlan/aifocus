@@ -14,37 +14,26 @@ body {
   background: #fafafa;
   line-height: 1.45;
 }
-h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
+h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 .subhead { font-size: .85rem; color: #666; margin-bottom: 1rem; }
 .subhead strong { color: #1a1a1a; }
-.cards { display: grid; gap: .6rem; margin-bottom: 1rem; }
-.card {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: .5rem;
-  padding: .7rem .85rem;
+.legend {
+  display: flex;
+  gap: 1.1rem;
+  margin-bottom: .75rem;
+  font-size: .78rem;
+  align-items: center;
+  flex-wrap: wrap;
+  color: #444;
 }
-.card .top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
-.card .name { font-weight: 700; font-size: .95rem; }
-.card .name a { color: #1a1a1a; text-decoration: none; border-bottom: 1px dotted #aaa; }
-.card .name a:hover { border-bottom-style: solid; }
-.card .vendor { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #888; font-weight: 600; }
-.card .meta { font-size: .78rem; color: #666; margin: .15rem 0 .5rem; }
-.card .meta b { color: #1a1a1a; font-variant-numeric: tabular-nums; }
-.bar-wrap { display: flex; align-items: center; gap: .6rem; }
-.bar-track { flex: 1; background: #f0f0f2; border-radius: .25rem; height: 22px; overflow: hidden; position: relative; }
-.bar-fill { height: 100%; border-radius: .25rem; background: linear-gradient(90deg, #f2a900, #d34b2a); min-width: 2px; transition: width .4s ease; }
-.bar-num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: .95rem; white-space: nowrap; }
-.bar-num span { font-weight: 400; font-size: .72rem; color: #888; }
-.headline {
-  background: #fff7ed;
-  border: 1px solid #f3d9b0;
-  border-radius: .5rem;
-  padding: .8rem .95rem;
-  font-size: .9rem;
-  margin-bottom: 1rem;
-}
-.headline b { font-variant-numeric: tabular-nums; }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .35rem; vertical-align: middle; }
+.legend .dot.chrome { background: #3367d6; }
+.legend .dot.cutoff { background: #1a1a1a; }
+.legend .swatch { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: .35rem; vertical-align: middle; background: linear-gradient(90deg, #f7c948, #e8602c); }
+.chart { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: 1rem .75rem; overflow-x: auto; }
+.chart svg { width: 100%; height: auto; display: block; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.chart svg a text { fill: #1a5fb4; text-decoration: underline; text-underline-offset: 2px; }
+.chart svg a:hover text { fill: #0b3d80; }
 .note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.5; }
 .note a { color: #888; }
 .loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
@@ -53,21 +42,25 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
 </head>
 <body>
 <h2>The model gap</h2>
-<p class="subhead">How far behind the web each model's training data is, measured in Chrome stable releases shipped since its knowledge cutoff. As of <strong id="today">today</strong>, the current Chrome stable is <strong id="current-mstone">...</strong>.</p>
+<p class="subhead">Each model's brain is frozen at its knowledge cutoff (the dark dot). Every blue dot to the right of it is a Chrome stable release that shipped after it stopped learning. As of <strong id="today">today</strong>, the current stable is <strong id="current-mstone">...</strong>.</p>
 
-<div id="headline" class="headline" hidden></div>
-<div id="root"><div class="loading">Loading the gap...</div></div>
+<div class="legend">
+  <span><span class="dot chrome"></span>Chrome stable release</span>
+  <span><span class="dot cutoff"></span>model knowledge cutoff</span>
+  <span><span class="swatch"></span>the gap (releases the model never saw)</span>
+</div>
+
+<div class="chart" id="chart"><div class="loading">Loading the timeline...</div></div>
 
 <p class="note" id="note"></p>
 
 <script>
 (function () {
-  var root = document.getElementById("root");
+  var chart = document.getElementById("chart");
 
   function parseDate(s) { var p = s.split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
-  function fmtMonthYear(d) {
-    return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
-  }
+  function fmtMonthYear(d) { return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
   fetch("/model-gap.json")
     .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
@@ -76,68 +69,97 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
       var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
       document.getElementById("today").textContent = fmtMonthYear(today);
 
-      var shipped = data.chromeMilestones
+      var milestones = data.chromeMilestones
         .map(function (x) { return { m: x.m, d: parseDate(x.date) }; })
         .filter(function (x) { return x.d <= today; })
         .sort(function (a, b) { return a.d - b.d; });
-      var currentMstone = shipped.length ? shipped[shipped.length - 1].m : null;
+      var currentMstone = milestones.length ? milestones[milestones.length - 1].m : null;
       document.getElementById("current-mstone").textContent = currentMstone ? ("Chrome " + currentMstone) : "unknown";
 
       var models = data.models.map(function (mdl) {
         var cut = parseDate(mdl.cutoff);
-        var versions = shipped.filter(function (x) { return x.d > cut; });
-        var days = Math.round((today - cut) / 86400000);
-        return {
-          vendor: mdl.vendor, model: mdl.model, card: mdl.card,
-          cutoffLabel: mdl.cutoffLabel, cut: cut,
-          missed: versions.length,
-          firstMissed: versions.length ? versions[0].m : null,
-          months: Math.round(days / 30.44)
-        };
-      }).sort(function (a, b) { return b.cut - a.cut; });
+        var missed = milestones.filter(function (x) { return x.d > cut; });
+        return { vendor: mdl.vendor, model: mdl.model, card: mdl.card, cutoffLabel: mdl.cutoffLabel, cut: cut, missed: missed };
+      }).sort(function (a, b) { return a.cut - b.cut; }); // oldest cutoff at top
 
-      var maxMissed = models.reduce(function (m, x) { return Math.max(m, x.missed); }, 1);
-      var newest = models[0];
-      var oldest = models[models.length - 1];
+      // Time scale: a little before the earliest cutoff, to a little after today.
+      var minCut = models.reduce(function (m, x) { return x.cut < m ? x.cut : m; }, today);
+      var xMin = new Date(minCut.getTime() - 30 * 86400000);
+      var xMax = new Date(today.getTime() + 24 * 86400000);
 
-      var hl = document.getElementById("headline");
-      hl.hidden = false;
-      hl.innerHTML = "Even the most recent model here, <b>" + newest.model + "</b>, is <b>" +
-        newest.missed + "</b> Chrome releases behind the web. The oldest, <b>" + oldest.model +
-        "</b>, is <b>" + oldest.missed + "</b>. Every release in that gap shipped new platform features, samples, and Baseline support data that the model never saw.";
+      var W = 820, LEFT = 168, RIGHT = 96, TOP = 64, ROW_H = 34, BOTTOM = 26;
+      var chromeY = 40;
+      var H = TOP + models.length * ROW_H + BOTTOM;
+      var PLOT = W - LEFT - RIGHT;
+      function xd(d) { return LEFT + ((d - xMin) / (xMax - xMin)) * PLOT; }
 
-      var cards = document.createElement("div");
-      cards.className = "cards";
-      models.forEach(function (x) {
-        var card = document.createElement("div");
-        card.className = "card";
-        var name = x.card
-          ? '<a href="' + x.card + '" target="_blank" rel="noopener">' + x.model + "</a>"
-          : x.model;
-        var range = x.firstMissed ? (" (Chrome " + x.firstMissed + "–" + currentMstone + ")") : "";
-        card.innerHTML =
-          '<div class="top"><span class="name">' + name + '</span>' +
-          '<span class="vendor">' + x.vendor + "</span></div>" +
-          '<div class="meta">Knowledge cutoff <b>' + x.cutoffLabel + "</b> · about <b>" +
-          x.months + "</b> months ago</div>" +
-          '<div class="bar-wrap">' +
-          '<div class="bar-track"><div class="bar-fill" style="width:' +
-          Math.max(2, Math.round((x.missed / maxMissed) * 100)) + '%"></div></div>' +
-          '<div class="bar-num">' + x.missed + ' <span>Chrome versions' + range + "</span></div>" +
-          "</div>";
-        cards.appendChild(card);
+      var s = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Timeline of model knowledge cutoffs versus Chrome releases">';
+
+      // Quarter gridlines + labels across the top.
+      var q = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
+      while (q <= xMax) {
+        var qx = xd(q);
+        if (qx >= LEFT - 1) {
+          s += '<line x1="' + qx + '" y1="' + (TOP - 12) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="#f0f0f0" stroke-width="1" />';
+          s += '<text x="' + qx + '" y="' + (TOP - 18) + '" text-anchor="middle" font-size="10" fill="#999">' +
+               q.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: "UTC" }) + "</text>";
+        }
+        q = new Date(Date.UTC(q.getUTCFullYear(), q.getUTCMonth() + 3, 1));
+      }
+
+      // "today" vertical line.
+      var tx = xd(today);
+      s += '<line x1="' + tx + '" y1="' + (chromeY - 14) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3 3" />';
+      s += '<text x="' + tx + '" y="' + (chromeY - 20) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#c0392b">today</text>';
+
+      // Chrome release track.
+      s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="11" font-weight="700" fill="#3367d6">Chrome stable</text>';
+      s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + xd(today) + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
+      milestones.forEach(function (x) {
+        var cx = xd(x.d);
+        s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.4" fill="#3367d6"><title>Chrome ' + x.m + ", " +
+             x.d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) + "</title></circle>";
       });
-      root.innerHTML = "";
-      root.appendChild(cards);
+      // Label a few milestones so the axis is legible.
+      milestones.forEach(function (x, i) {
+        if (i % 3 === 0 || i === milestones.length - 1) {
+          s += '<text x="' + xd(x.d) + '" y="' + (chromeY + 16) + '" text-anchor="middle" font-size="8.5" fill="#9aa6bf">' + x.m + "</text>";
+        }
+      });
+
+      // Model rows.
+      models.forEach(function (mdl, i) {
+        var y = TOP + i * ROW_H + ROW_H / 2;
+        var cutX = xd(mdl.cut);
+        // baseline
+        s += '<line x1="' + LEFT + '" y1="' + y + '" x2="' + xd(today) + '" y2="' + y + '" stroke="#f4f4f4" stroke-width="1" />';
+        // the gap bar from cutoff to today
+        s += '<defs><linearGradient id="g' + i + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7c948"/><stop offset="1" stop-color="#e8602c"/></linearGradient></defs>';
+        s += '<rect x="' + cutX + '" y="' + (y - 5) + '" width="' + Math.max(1, (xd(today) - cutX)) + '" height="10" rx="3" fill="url(#g' + i + ')" opacity="0.85" />';
+        // missed Chrome dots sitting on the gap bar
+        mdl.missed.forEach(function (x) {
+          s += '<circle cx="' + xd(x.d) + '" cy="' + y + '" r="2.6" fill="#fff" stroke="#b3471f" stroke-width="1"><title>Chrome ' + x.m + " shipped after " + esc(mdl.model) + "'s cutoff</title></circle>";
+        });
+        // cutoff marker
+        s += '<circle cx="' + cutX + '" cy="' + y + '" r="5" fill="#1a1a1a"><title>' + esc(mdl.model) + " knowledge cutoff: " + esc(mdl.cutoffLabel) + "</title></circle>";
+        // model name (left, clickable)
+        var label = '<text x="' + (LEFT - 10) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11">' + esc(mdl.model) + "</text>";
+        s += mdl.card ? '<a target="_blank" rel="noopener" href="' + esc(mdl.card) + '">' + label + "</a>" : label;
+        // count at the right
+        s += '<text x="' + (xd(today) + 8) + '" y="' + (y + 4) + '" text-anchor="start" font-size="11" font-weight="700" fill="#b3471f">' + mdl.missed.length + "</text>";
+        s += '<text x="' + (xd(today) + 8) + '" y="' + (y + 14) + '" text-anchor="start" font-size="7.5" fill="#999">behind</text>';
+      });
+
+      s += "</svg>";
+      chart.innerHTML = s;
 
       document.getElementById("note").innerHTML =
-        "Cutoff dates are month-granular, taken from each model's published model card or docs (linked). " +
-        "Chrome stable dates are from the Chrome release schedule. Data last updated " +
-        data.updated + ". Recomputed against your browser's current date. " +
-        'Source data: <a href="/model-gap.json">/model-gap.json</a>.';
+        "Cutoff dates are month-granular, from each model's published model card or docs (click a model name). " +
+        "Chrome stable dates are from the Chrome release schedule. Last updated " + data.updated +
+        ", recomputed against your browser's date. Source data: <a href=\"/model-gap.json\">/model-gap.json</a>.";
     })
     .catch(function (e) {
-      root.innerHTML = '<div class="error">Could not load the data: ' + e.message + "</div>";
+      chart.innerHTML = '<div class="error">Could not load the data: ' + e.message + "</div>";
     });
 })();
 </script>
