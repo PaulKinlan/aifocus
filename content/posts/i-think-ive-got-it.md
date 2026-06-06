@@ -23,9 +23,9 @@ Install like this:
 }
 ```
 
-And when the agent opens a page, the relay asks DevTools to list the page's WebMCP tools, hands them straight back to the agent as callable MCP tools, and writes every one it sees into a local SQLite registry for future recall.
+And when the agent opens a page via the relay, the relay asks DevTools to list the page's WebMCP tools, hands them straight back to the agent as callable MCP tools, and writes every one it sees into a local SQLite registry for future recall.
 
-The tool surface is quite small:
+The tool surface is quite small so it shouldn't take up too much context:
 
 - `open_page` - try to make it super clear to use this tool to open web pages
 - `webmcp_refresh_tools`
@@ -34,9 +34,9 @@ The tool surface is quite small:
 - `webmcp_search_registry`
 - `webmcp_execute_registry_tool`
 
-I didn't want to include all of the page's tools, or the entire index of tools in the context, so I followed the idea I saw in [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/) which has a tool to look-up skills to include in the context, and in this case, your agent can query the local database of tools.
+I followed the idea I saw in [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/) which has a tool to look-up skills to include in the context, and in this case, your agent can query the local database of tools.
 
-An unglamorous log of the run for https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/
+You can see in this unglamorous log of an eval run for https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/ what it's doing behind the scenes:
 
 ```JSON
 {"time":"2026-06-06T20:34:18.377Z","level":"info","component":"devtools","event":"webmcp_tools.list.start"}
@@ -71,6 +71,6 @@ webmcp_a4b14c9df1412dcc  remove_topping   https://googlechromelabs.github.io  0 
 webmcp_16dc11bbcf96c478  manage_pizza     https://googlechromelabs.github.io  0     Manage pizza state                                                       https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/
 ```
 
-I find genuinely exciting. But the relay shouldn't have to exist. This should be built into every agent harness that has it's own tools to interact with a browser (built-in, or the users default browser). I really like the fact that the registry of tools builds itself as a side effect of normal use. While you can maintain the list of tools, you don't have to, its just the residue of the agent doing its job, and it best of all it lives on your machine.
+I find genuinely exciting. But the relay shouldn't have to exist. This should be built into every agent harness that has it's own tools to interact with a browser (built-in, or the users default browser). I really like the fact that the registry of tools builds itself as a side effect of normal use. While you can maintain the list of tools, you don't have to, its just the residue of the agent doing its job, and it best of all it lives on your machine (but could also call out to a centralised search like https://webmcp.cool/).
 
-Check out the [code](https://github.com/PaulKinlan/WebMCP-relay), give me feedback (It's rough). It's held together with sticky tape, Chrome Canary flags and a couple of SQLite files that are managed by nodejs (I don't know if it works with Bun or Deno yet). But you can see it working...
+Check out the [code](https://github.com/PaulKinlan/WebMCP-relay), give me feedback (It's rough. It works best with the included Skill). It's held together with sticky tape, Chrome Canary flags and a couple of SQLite files that are managed by nodejs (I don't know if it works with Bun or Deno yet). But you can see it working...
