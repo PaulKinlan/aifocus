@@ -128,7 +128,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       var minCut = models.reduce(function (m, x) { return x.cut < m ? x.cut : m; }, today);
       var xMin = new Date(minCut.getTime() - 30 * 86400000);
       var xMax = new Date(today.getTime() + 24 * 86400000);
-      var W = 820, LEFT = 158, RIGHT = 92, TOP = 56, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 36;
+      var W = 820, LEFT = 158, RIGHT = 92, TOP = 72, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 50, AXIS_Y = 14;
 
       // Lay out rows grouped by vendor.
       var rows = [], cursor = TOP, lastV = null;
@@ -148,17 +148,17 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
           var qx = xd(q);
           if (qx >= LEFT - 1) {
             var isYear = q.getUTCMonth() === 0;
-            s += '<line x1="' + qx + '" y1="' + (TOP - 10) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="' + (isYear ? "#e2e2e2" : "#f3f3f3") + '" stroke-width="1" />';
+            s += '<line x1="' + qx + '" y1="' + (AXIS_Y + 8) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="' + (isYear ? "#e2e2e2" : "#f3f3f3") + '" stroke-width="1" />';
             if (isYear || q.getUTCMonth() === 6) {
-              s += '<text x="' + qx + '" y="' + (TOP - 16) + '" text-anchor="middle" font-size="10" fill="' + (isYear ? "#777" : "#aaa") + '">' + fmtShort(q) + "</text>";
+              s += '<text x="' + qx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" fill="' + (isYear ? "#777" : "#aaa") + '">' + fmtShort(q) + "</text>";
             }
           }
           q = new Date(Date.UTC(q.getUTCFullYear(), q.getUTCMonth() + 3, 1));
         }
         // today line
         var tx = xd(today);
-        s += '<line x1="' + tx + '" y1="' + (chromeY - 12) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3 3" />';
-        s += '<text x="' + tx + '" y="' + (chromeY - 18) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#c0392b">today</text>';
+        s += '<line x1="' + tx + '" y1="' + (AXIS_Y + 8) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3 3" />';
+        s += '<text x="' + tx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" font-weight="700" fill="#c0392b">today</text>';
         // chrome track
         s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="#3367d6">Chrome</text>';
         s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
