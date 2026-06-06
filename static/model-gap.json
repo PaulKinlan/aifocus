@@ -12,6 +12,13 @@
     },
     {
       "vendor": "Anthropic",
+      "model": "Claude Opus 4.7",
+      "cutoff": "2026-01-31",
+      "cutoffLabel": "January 2026",
+      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+    },
+    {
+      "vendor": "Anthropic",
       "model": "Claude Sonnet 4.6",
       "cutoff": "2026-01-31",
       "cutoffLabel": "January 2026",
@@ -54,10 +61,24 @@
     },
     {
       "vendor": "OpenAI",
+      "model": "GPT-5.1",
+      "cutoff": "2024-09-30",
+      "cutoffLabel": "September 2024",
+      "card": "https://platform.openai.com/docs/models"
+    },
+    {
+      "vendor": "OpenAI",
       "model": "GPT-5",
       "cutoff": "2024-09-30",
       "cutoffLabel": "September 2024",
       "card": "https://platform.openai.com/docs/models/gpt-5"
+    },
+    {
+      "vendor": "Google",
+      "model": "Gemini 3.5 Flash",
+      "cutoff": "2025-01-31",
+      "cutoffLabel": "January 2025",
+      "card": "https://deepmind.google/models/gemini/flash/"
     },
     {
       "vendor": "Google",
@@ -75,10 +96,24 @@
     },
     {
       "vendor": "Google",
+      "model": "Gemini 3 Flash",
+      "cutoff": "2025-01-31",
+      "cutoffLabel": "January 2025",
+      "card": "https://deepmind.google/models/gemini/flash/"
+    },
+    {
+      "vendor": "Google",
       "model": "Gemini 2.5 Pro",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
       "card": "https://deepmind.google/models/gemini/pro/"
+    },
+    {
+      "vendor": "Google",
+      "model": "Gemini 2.5 Flash",
+      "cutoff": "2025-01-31",
+      "cutoffLabel": "January 2025",
+      "card": "https://deepmind.google/models/gemini/flash/"
     },
     {
       "vendor": "xAI",

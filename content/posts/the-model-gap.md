@@ -13,7 +13,7 @@ This is the thing that does not get said enough about the models we all use to w
 
 Here is what that gap actually looks like, measured in the only unit that matters for a web developer, which is Chrome releases shipped since the model last looked.
 
-{{< iframe "/model-gap.html" "960" >}}
+{{< iframe "/model-gap.html" "1120" >}}
 
 The numbers are bigger than people expect. A model with a January 2025 cutoff is missing more than fifteen Chrome stable releases. Each of those releases shipped new APIs, new CSS, new samples, new documentation, and crucially new Baseline support data telling you what is actually safe to use across browsers. None of it is in the model. The model will happily tell you a feature is not widely supported when it has in fact been Baseline for a year, because the support data baked into its weights is a year old.
 
