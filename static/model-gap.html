@@ -128,7 +128,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       var minCut = models.reduce(function (m, x) { return x.cut < m ? x.cut : m; }, today);
       var xMin = new Date(minCut.getTime() - 30 * 86400000);
       var xMax = new Date(today.getTime() + 24 * 86400000);
-      var W = 820, LEFT = 158, RIGHT = 92, TOP = 72, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 50, AXIS_Y = 14;
+      var W = 820, LEFT = 158, RIGHT = 92, TOP = 86, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 48, AXIS_Y = 14;
 
       // Lay out rows grouped by vendor.
       var rows = [], cursor = TOP, lastV = null;
@@ -162,10 +162,15 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
         // chrome track
         s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="#3367d6">Chrome</text>';
         s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
-        milestones.forEach(function (x) {
-          s += '<circle cx="' + xd(x.d) + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>Chrome ' + x.m + ", " +
+        milestones.forEach(function (x, i) {
+          var cx = xd(x.d);
+          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>Chrome ' + x.m + ", " +
             x.d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) +
             " (" + x.features.length + " features)</title></circle>";
+          // version number under each dot, interleaved across two levels to avoid overlap
+          var ly = chromeY + (i % 2 === 0 ? 11 : 21);
+          s += '<line x1="' + cx + '" y1="' + (chromeY + 4) + '" x2="' + cx + '" y2="' + (ly - 7) + '" stroke="#dbe4f7" stroke-width="1" />';
+          s += '<text x="' + cx + '" y="' + ly + '" text-anchor="middle" font-size="8.5" fill="#7e8aa6">' + x.m + "</text>";
         });
         // rows
         rows.forEach(function (row, i) {
