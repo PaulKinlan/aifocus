@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<title>The model gap: knowledge cutoffs vs Chrome releases</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a;
+  padding: 1.25rem;
+  background: #fafafa;
+  line-height: 1.45;
+}
+h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: 1rem; }
+.subhead strong { color: #1a1a1a; }
+.cards { display: grid; gap: .6rem; margin-bottom: 1rem; }
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: .5rem;
+  padding: .7rem .85rem;
+}
+.card .top { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.card .name { font-weight: 700; font-size: .95rem; }
+.card .name a { color: #1a1a1a; text-decoration: none; border-bottom: 1px dotted #aaa; }
+.card .name a:hover { border-bottom-style: solid; }
+.card .vendor { font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #888; font-weight: 600; }
+.card .meta { font-size: .78rem; color: #666; margin: .15rem 0 .5rem; }
+.card .meta b { color: #1a1a1a; font-variant-numeric: tabular-nums; }
+.bar-wrap { display: flex; align-items: center; gap: .6rem; }
+.bar-track { flex: 1; background: #f0f0f2; border-radius: .25rem; height: 22px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; border-radius: .25rem; background: linear-gradient(90deg, #f2a900, #d34b2a); min-width: 2px; transition: width .4s ease; }
+.bar-num { font-variant-numeric: tabular-nums; font-weight: 700; font-size: .95rem; white-space: nowrap; }
+.bar-num span { font-weight: 400; font-size: .72rem; color: #888; }
+.headline {
+  background: #fff7ed;
+  border: 1px solid #f3d9b0;
+  border-radius: .5rem;
+  padding: .8rem .95rem;
+  font-size: .9rem;
+  margin-bottom: 1rem;
+}
+.headline b { font-variant-numeric: tabular-nums; }
+.note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.5; }
+.note a { color: #888; }
+.loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
+.error { padding: 1rem; background: #fce4e4; color: #a02020; border-radius: .375rem; font-size: .85rem; }
+</style>
+</head>
+<body>
+<h2>The model gap</h2>
+<p class="subhead">How far behind the web each model's training data is, measured in Chrome stable releases shipped since its knowledge cutoff. As of <strong id="today">today</strong>, the current Chrome stable is <strong id="current-mstone">...</strong>.</p>
+
+<div id="headline" class="headline" hidden></div>
+<div id="root"><div class="loading">Loading the gap...</div></div>
+
+<p class="note" id="note"></p>
+
+<script>
+(function () {
+  var root = document.getElementById("root");
+
+  function parseDate(s) { var p = s.split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+  function fmtMonthYear(d) {
+    return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  }
+
+  fetch("/model-gap.json")
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (data) {
+      var now = new Date();
+      var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      document.getElementById("today").textContent = fmtMonthYear(today);
+
+      var shipped = data.chromeMilestones
+        .map(function (x) { return { m: x.m, d: parseDate(x.date) }; })
+        .filter(function (x) { return x.d <= today; })
+        .sort(function (a, b) { return a.d - b.d; });
+      var currentMstone = shipped.length ? shipped[shipped.length - 1].m : null;
+      document.getElementById("current-mstone").textContent = currentMstone ? ("Chrome " + currentMstone) : "unknown";
+
+      var models = data.models.map(function (mdl) {
+        var cut = parseDate(mdl.cutoff);
+        var versions = shipped.filter(function (x) { return x.d > cut; });
+        var days = Math.round((today - cut) / 86400000);
+        return {
+          vendor: mdl.vendor, model: mdl.model, card: mdl.card,
+          cutoffLabel: mdl.cutoffLabel, cut: cut,
+          missed: versions.length,
+          firstMissed: versions.length ? versions[0].m : null,
+          months: Math.round(days / 30.44)
+        };
+      }).sort(function (a, b) { return b.cut - a.cut; });
+
+      var maxMissed = models.reduce(function (m, x) { return Math.max(m, x.missed); }, 1);
+      var newest = models[0];
+      var oldest = models[models.length - 1];
+
+      var hl = document.getElementById("headline");
+      hl.hidden = false;
+      hl.innerHTML = "Even the most recent model here, <b>" + newest.model + "</b>, is <b>" +
+        newest.missed + "</b> Chrome releases behind the web. The oldest, <b>" + oldest.model +
+        "</b>, is <b>" + oldest.missed + "</b>. Every release in that gap shipped new platform features, samples, and Baseline support data that the model never saw.";
+
+      var cards = document.createElement("div");
+      cards.className = "cards";
+      models.forEach(function (x) {
+        var card = document.createElement("div");
+        card.className = "card";
+        var name = x.card
+          ? '<a href="' + x.card + '" target="_blank" rel="noopener">' + x.model + "</a>"
+          : x.model;
+        var range = x.firstMissed ? (" (Chrome " + x.firstMissed + "–" + currentMstone + ")") : "";
+        card.innerHTML =
+          '<div class="top"><span class="name">' + name + '</span>' +
+          '<span class="vendor">' + x.vendor + "</span></div>" +
+          '<div class="meta">Knowledge cutoff <b>' + x.cutoffLabel + "</b> · about <b>" +
+          x.months + "</b> months ago</div>" +
+          '<div class="bar-wrap">' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' +
+          Math.max(2, Math.round((x.missed / maxMissed) * 100)) + '%"></div></div>' +
+          '<div class="bar-num">' + x.missed + ' <span>Chrome versions' + range + "</span></div>" +
+          "</div>";
+        cards.appendChild(card);
+      });
+      root.innerHTML = "";
+      root.appendChild(cards);
+
+      document.getElementById("note").innerHTML =
+        "Cutoff dates are month-granular, taken from each model's published model card or docs (linked). " +
+        "Chrome stable dates are from the Chrome release schedule. Data last updated " +
+        data.updated + ". Recomputed against your browser's current date. " +
+        'Source data: <a href="/model-gap.json">/model-gap.json</a>.';
+    })
+    .catch(function (e) {
+      root.innerHTML = '<div class="error">Could not load the data: ' + e.message + "</div>";
+    });
+})();
+</script>
+</body>
+</html>

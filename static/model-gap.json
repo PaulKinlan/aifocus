@@ -1,0 +1,77 @@
+{
+  "updated": "2026-06-06",
+  "note": "Knowledge-cutoff dates are taken from each model's published model card / docs and are month-granular. Chrome stable dates are from the Chrome release schedule (chromiumdash / chromereleases blog). Edit this file to update; the widget recomputes everything against today's date in the browser.",
+  "models": [
+    {
+      "vendor": "Anthropic",
+      "model": "Claude Opus 4.8",
+      "cutoff": "2026-01-31",
+      "cutoffLabel": "January 2026",
+      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+    },
+    {
+      "vendor": "OpenAI",
+      "model": "GPT-5.5",
+      "cutoff": "2025-12-31",
+      "cutoffLabel": "December 2025",
+      "card": "https://developers.openai.com/api/docs/models"
+    },
+    {
+      "vendor": "xAI",
+      "model": "Grok 4.3",
+      "cutoff": "2025-12-31",
+      "cutoffLabel": "December 2025",
+      "card": "https://docs.x.ai/developers/release-notes"
+    },
+    {
+      "vendor": "OpenAI",
+      "model": "GPT-5.2",
+      "cutoff": "2025-08-31",
+      "cutoffLabel": "August 2025",
+      "card": "https://developers.openai.com/api/docs/models"
+    },
+    {
+      "vendor": "Google",
+      "model": "Gemini 3 Pro",
+      "cutoff": "2025-01-31",
+      "cutoffLabel": "January 2025",
+      "card": "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-Pro-Model-Card.pdf"
+    },
+    {
+      "vendor": "OpenAI",
+      "model": "GPT-5",
+      "cutoff": "2024-09-30",
+      "cutoffLabel": "September 2024",
+      "card": "https://developers.openai.com/api/docs/models/gpt-5"
+    }
+  ],
+  "chromeMilestones": [
+    { "m": 124, "date": "2024-04-16" },
+    { "m": 125, "date": "2024-05-14" },
+    { "m": 126, "date": "2024-06-11" },
+    { "m": 127, "date": "2024-07-23" },
+    { "m": 128, "date": "2024-08-20" },
+    { "m": 129, "date": "2024-09-17" },
+    { "m": 130, "date": "2024-10-15" },
+    { "m": 131, "date": "2024-11-12" },
+    { "m": 132, "date": "2025-01-14" },
+    { "m": 133, "date": "2025-02-04" },
+    { "m": 134, "date": "2025-03-04" },
+    { "m": 135, "date": "2025-04-01" },
+    { "m": 136, "date": "2025-04-29" },
+    { "m": 137, "date": "2025-05-27" },
+    { "m": 138, "date": "2025-06-24" },
+    { "m": 139, "date": "2025-08-05" },
+    { "m": 140, "date": "2025-09-02" },
+    { "m": 141, "date": "2025-09-30" },
+    { "m": 142, "date": "2025-10-28" },
+    { "m": 143, "date": "2025-12-02" },
+    { "m": 144, "date": "2026-01-13" },
+    { "m": 145, "date": "2026-02-10" },
+    { "m": 146, "date": "2026-03-10" },
+    { "m": 147, "date": "2026-04-07" },
+    { "m": 148, "date": "2026-05-05" },
+    { "m": 149, "date": "2026-06-02" },
+    { "m": 150, "date": "2026-06-30" }
+  ]
+}
