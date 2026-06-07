@@ -1,7 +1,7 @@
 ---
-title: "the model gap"
+title: "please mind the model gap"
 date: 2026-06-07T08:00:00.000Z
-slug: the-model-gap
+slug: please-mind-the-model-gap
 draft: true
 authors:
   - paulkinlan
