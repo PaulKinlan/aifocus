@@ -1,6 +1,6 @@
 ---
 title: "the model gap"
-date: 2026-06-06T18:00:00.000Z
+date: 2026-06-07T08:00:00.000Z
 slug: the-model-gap
 draft: true
 authors:
