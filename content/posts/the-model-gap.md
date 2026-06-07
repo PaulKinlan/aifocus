@@ -1,28 +1,46 @@
 ---
 title: "please mind the model gap"
-date: 2026-06-07T08:00:00.000Z
+date: 2026-06-07T18:00:00.000Z
 slug: please-mind-the-model-gap
-draft: true
 authors:
   - paulkinlan
 ---
 
-I asked a model the other day how to do something on the web that shipped in Chrome a few months ago. It confidently told me to do it the old way. Not wrong, exactly, just years out of date, reaching for a workaround for a problem the platform had already solved. And it had no idea, because the web it learned from is frozen somewhere back in early 2025.
+I'm building software every day at a rate that I've never done, even when I wasn't a manager. The tools (Claude, Codex, Antigravity) have unlocked a huge amount of potential and ability for me to experiment. However I constantly run into issues. I live at the cutting edge of the web platform. A lot of what I build is literally just landing in the browser so it kind of makes sense that data is not in the models.
 
-This is the thing that does not get said enough about the models we all use to write code now. Whether it is Gemini, Codex, or Claude, they were trained on a snapshot of the web, and that snapshot is old. The knowledge cutoff is not a footnote on the model card, it is the lens through which the model sees the entire platform. And the platform did not stop moving the day the training data was frozen.
+The models are good at stitching context together, so if I want to use HTML in Canvas ([like I did for my I/O talk](https://youtu.be/YuMdsHIXatY?list=PLNYkxOF6rcIBrquBiQhO2csae4Mi147Go)) ([source](https://github.com/PaulKinlan/3d-io-demo-26)), then I can throw in the spec, the explainer, reference materials and some examples and the tools can make a pretty good go. But I need to know all of these details which by their nature are mostly unknown.
+
+It gets worse though, because the models we use, Gemini, Codex, or Claude, they were trained on the web that was, not the web that is and this means that everything after the cut-off date has to be searched for to use. The agent's desire to search has to be higher than its weights' need to implement what it thinks is the answer.
+
+Here are some examples of issues that I constantly run into:
+
+- Baseline support for features. Many models have an outdated view (by at least a year) on what is Baseline widely available.
+- The Chrome Prompt API. Most models want to implement the code that was on the web prior to the API change (`window.ai` is the wrong API)
+- `alert` and `confirm` being preferred instead of the dialog element.
+- Any 3p library that is less than a year old.
+
+The knowledge cutoff is not a footnote on the model card, it is the lens through which the model sees the entire platform. And the platform did not stop moving the day the training data was frozen.
 
 Here is what that gap actually looks like, measured in the only unit that matters for a web developer, which is Chrome releases shipped since the model last looked.
 
 {{< iframe "/model-gap.html" "1120" >}}
 
-The numbers are bigger than people expect. A model with a January 2025 cutoff is missing more than fifteen Chrome stable releases. Each of those releases shipped new APIs, new CSS, new samples, new documentation, and crucially new Baseline support data telling you what is actually safe to use across browsers. None of it is in the model. The model will happily tell you a feature is not widely supported when it has in fact been Baseline for a year, because the support data baked into its weights is a year old.
+The numbers are bigger than people expect. A model with a January 2025 cutoff is missing more than fifteen Chrome stable releases (I know there are other browsers - this compounds the issue even more). Each of those releases shipped new APIs, new CSS, new samples, new documentation, and crucially new Baseline support data telling you what is actually safe to use across browsers. None of it is in the model. The model will happily tell you a feature is not widely supported when it has in fact been [Baseline](https://webstatus.dev/) for a year, because the support data baked into its weights is a year old.
 
 This is not really a Chrome problem, it is a web platform problem, and it is the reason my team built [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/) ([on GitHub](https://github.com/GoogleChrome/modern-web-guidance)). The idea is simple. If the models cannot keep up with the platform on their own, give them a way to pull the current truth into their context at the moment they need it. Up-to-date guidance, best practices, the use cases, the features that actually solve them, and the support data as it stands today, not as it stood whenever the model was last trained.
 
-The part I find most interesting is that it is deliberately not an API reference. A reference is organised the way the platform thinks, by interface and method and property. But a model writing code for someone is not starting from an API, it is starting from an intent. The user wants a sticky header, an image carousel that does not jank, a form that validates nicely, a view that transitions smoothly. The model already knows the shape of those use cases. What it does not reliably know is which current feature solves them, because the current feature might be newer than the model. So the guidance is organised around use cases, and it points from the thing you are trying to do to the modern way to do it. That turns out to be exactly the join the model is missing.
+I encourage everyone to watch my colleague Phil Walton's I/O talk "Unlock modern web capabilities in your AI coding workflows"
 
-And once you see it as a gap that has to be actively closed rather than waited out, the conclusion is uncomfortable. This is not a job only Chrome has. Every library, every framework, every API vendor is in the same position. Your docs are excellent and the model has read them, but it read last year's version. Every default the model reaches for, every "best practice" it confidently recites, is pinned to a cutoff date you do not control. If you ship anything developers build on, the model's mental picture of your project is already drifting out of date the moment you release, and the drift only grows.
+{{< youtube id=bo3i0FzDUYo >}}
+<br>
 
-Agents can search the web to patch around this, and they do. But search is an SEO game played at inference time, a few links skimmed under token pressure, and it is a poor substitute for something being deeply woven into the model's understanding of the world. The web inside the model is the thing developers actually inherit. Right now that web is a year stale and getting staler with every release, and the only real fix is for the people who build the platform, and the libraries on top of it, to hand the model the present on demand.
+What I love about this project is that it is deliberately _not an API reference_, but guidance written to solve common developer tasks. The user wants a sticky header, an image carousel that does not jank, a form that validates nicely, a view that transitions smoothly. The model frequently know the shape of those use cases. What it does not reliably know is which current feature solves them, how to stitch them together and how to provide fallbacks or progressive enhancements, because all of that information just doesn't yet exist in the models weights.
 
-The gap will never close on its own. The release cadence guarantees it. So the interesting question is not how to make the models fresher, it is who is going to take responsibility for handing each model the current version of their corner of the web, every time it sits down to write.
+And once you see it as a gap that has to be actively closed rather than waited out, the conclusions IMO are uncomfortable. Every library, every framework, every API vendor is in the same position. You might have great docs and the models might think they know what to do, but they read last year's version. If you ship anything developers build on, the model's mental picture of your project drifts out of date the moment you release, and the drift only grows.
+
+Coding Agents can search the web to patch around this, and they do, and it's no where near enough. 1) Search APIs cost you money in the agents, 2) Search APIs bloat your context as it checks all the pages, 3) search is an SEO game played at inference time, a few links skimmed under token pressure, and it is a poor substitute for something that should be deeply woven into the model's understanding of the world. The web inside the model is the thing developers actually inherit and this entire situation is compounding what I mentioned in the [Dead Framework Theory](/dead-framework-theory) (which I've heard from many library authors)
+
+The gap will never close on its own. The release cadence of the entire web ecosystem guarantees it. So what can we do?
+
+- Model owners need to build models that are vastly more up to date (I know this is a huge challenge),
+- In lieu of model owners doing better, every platform vendor, framework or library author should work to ensure that their ecosystems have access to the latest guidance and best practices in the most token-efficient ways possible. Take what we've done in Modern Web Guidance and build your own.
