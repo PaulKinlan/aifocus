@@ -8,7 +8,7 @@ authors:
 
 Just over a month ago I wrote that [WebMCP is the new web intents ... maybe](/webmcp-is-the-new-web-intents), but now I really do think that WebMCP is the new web intents (in a good way, not the "[the entire project crashed and burned](https://paul.kinlan.me/what-happened-to-web-intents/)" way). While the spec says that this is not the intended goal, I think we have a federated way for the web to declare its capabilities and for someone (ideally you) to keep an index of them, and then to have your tools recall and re-use those tools when they can match the user's (or their) intent with the capability of the page.
 
-[webmcp-relay](https://github.com/PaulKinlan/WebMCP-relay) is a a small MCP server that discovers the tools that a page exposes via "WebMCP" and can call them. You install it in your agent (Codex, Claude Code, whatever), and under the hood it uses [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) to actually run the browser.
+[webmcp-relay](https://github.com/PaulKinlan/WebMCP-relay) is a small MCP server that discovers the tools that a page exposes via "WebMCP" and can call them. You install it in your agent (Codex, Claude Code, whatever), and under the hood it uses [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) to actually run the browser.
 
 Install like this:
 
@@ -34,7 +34,7 @@ The tool surface is quite small so it shouldn't take up too much context:
 - `webmcp_search_registry`
 - `webmcp_execute_registry_tool`
 
-I followed the idea I saw in [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/) which has a tool to look-up skills to include in the context, and in this case, your agent can query the local database of tools.
+I followed the idea I saw in [Modern Web Guidance](https://developer.chrome.com/docs/modern-web-guidance/) which has a tool to look up skills to include in the context, and in this case, your agent can query the local database of tools.
 
 You can see in this unglamorous log of an eval run for https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/ what it's doing behind the scenes:
 
@@ -57,7 +57,7 @@ You can see in this unglamorous log of an eval run for https://googlechromelabs.
 
 The neat thing is that with these tools, every page the agent visits on the user's behalf leaves a record of what that page could do: its tools, their schemas, the site they came from. Over time you don't have a single page's tools, you now have a personal index of capabilities across every site you've ever touched. Ask for something you've done before and the agent can search the registry, reopen the right site, and run the tool, without you ever saying the words "WebMCP". You just say "book the thing" and it knows where the thing gets booked.
 
-Running `npx webmcp-relay registry list` would show a list of all the discovered tools, and as you can see, the description could be then used in the agent's look-up.
+Running `npx webmcp-relay registry list` would show a list of all the discovered tools, and as you can see, the description could then be used in the agent's look-up.
 
 ```
 id                       tool             origin                              uses  description                                                              url
@@ -71,8 +71,8 @@ webmcp_a4b14c9df1412dcc  remove_topping   https://googlechromelabs.github.io  0 
 webmcp_16dc11bbcf96c478  manage_pizza     https://googlechromelabs.github.io  0     Manage pizza state                                                       https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/
 ```
 
-I find genuinely exciting. But the relay shouldn't have to exist. This should be built into every agent harness that has it's own tools to interact with a browser (built-in, or the users default external browser). I really like the fact that the registry of tools builds itself as a side effect of normal use. While you can maintain the list of tools, you don't have to, its just the residue of the agent doing its job, and it best of all it lives on your machine (but could also call out to a centralised search like https://webmcp.cool/).
+I find this genuinely exciting. But the relay shouldn't have to exist. This should be built into every agent harness that has its own tools to interact with a browser (built-in, or the user's default external browser). I really like the fact that the registry of tools builds itself as a side effect of normal use. While you can maintain the list of tools, you don't have to, it's just the residue of the agent doing its job, and best of all it lives on your machine (but could also call out to a centralised search like https://webmcp.cool/).
 
-Allowing agent tools to interact across pages certainly changes how we think about the same-origin model in the browser. Data gathered from the output of one action on a page can be used as the input the next (or far future) action. This is not what we expect _in_ the browser today, but I think the expectation when I'm using Claude, ChatGPT or Gemini is starting to change as we reason about long-running tasks that have memory. That being said, even without WebMCP and using activation (i.e, simulated inputs and clicking), all of this is entirely possible today.
+Allowing agent tools to interact across pages certainly changes how we think about the same-origin model in the browser. Data gathered from the output of one action on a page can be used as the input to the next (or far future) action. This is not what we expect _in_ the browser today, but I think the expectation when I'm using Claude, ChatGPT or Gemini is starting to change as we reason about long-running tasks that have memory. That being said, even without WebMCP and using activation (i.e., simulated inputs and clicking), all of this is entirely possible today.
 
-Check out the [code](https://github.com/PaulKinlan/WebMCP-relay), give me feedback (It's rough. It works best with the included Skill). It's held together with sticky tape, Chrome Canary flags and a couple of SQLite files that are managed by nodejs (I don't know if it works with Bun or Deno yet). But you can see it working...
+Check out the [code](https://github.com/PaulKinlan/WebMCP-relay), give me feedback (It's rough. It works best with the included Skill). It's held together with sticky tape, Chrome Canary flags and a couple of SQLite files that are managed by Node.js (I don't know if it works with Bun or Deno yet). But you can see it working...
