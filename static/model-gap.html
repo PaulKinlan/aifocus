@@ -22,6 +22,17 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 .chart { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: 1rem .75rem; overflow-x: auto; }
 .chart svg { width: 100%; height: auto; display: block; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
 .chart svg a text { fill: #1a5fb4; text-decoration: underline; text-underline-offset: 2px; }
+.tip-target { cursor: help; }
+.tip-target:focus { outline: none; stroke: #111; stroke-width: 1.5; }
+.chart-tip {
+  position: fixed; z-index: 10; max-width: min(260px, calc(100vw - 16px));
+  padding: .45rem .55rem; border-radius: .35rem; background: #1f2937; color: #fff;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18); font-size: .74rem; line-height: 1.35;
+  pointer-events: none; opacity: 0; transform: translate(-50%, calc(-100% - 9px));
+  transition: opacity .12s ease;
+}
+.chart-tip[data-visible="true"] { opacity: 1; }
+.chart-tip[data-placement="bottom"] { transform: translate(-50%, 9px); }
 .controls { margin: 1rem 0 .6rem; font-size: .9rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .controls select { font: inherit; padding: .3rem .5rem; border: 1px solid #bbb; border-radius: .35rem; background: white; }
 .panel { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: .9rem 1rem; }
@@ -71,6 +82,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
   function parseDate(s) { var p = s.split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
   function fmtMonthYear(d) { return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }); }
   function fmtShort(d) { return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }); }
+  function fmtFull(d) { return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
   var ACRO = { css:"CSS", api:"API", apis:"APIs", html:"HTML", svg:"SVG", url:"URL", urls:"URLs", http:"HTTP",
@@ -143,6 +155,44 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       });
       var H = cursor + BOTTOM, PLOT = W - LEFT - RIGHT;
       function xd(d) { return LEFT + ((d - xMin) / (xMax - xMin)) * PLOT; }
+      function tipAttrs(text) {
+        return ' class="tip-target" tabindex="0" role="img" aria-label="' + esc(text) + '" data-tip="' + esc(text) + '"';
+      }
+      function showTip(el) {
+        var tip = document.getElementById("chart-tip");
+        if (!tip) return;
+        tip.textContent = el.getAttribute("data-tip") || "";
+        tip.hidden = false;
+        tip.setAttribute("data-visible", "true");
+        positionTip(el, tip);
+      }
+      function positionTip(el, tip) {
+        var r = el.getBoundingClientRect();
+        var half = Math.min(tip.offsetWidth / 2, (window.innerWidth - 16) / 2);
+        var left = Math.max(8 + half, Math.min(window.innerWidth - 8 - half, r.left + r.width / 2));
+        var bottom = r.top < tip.offsetHeight + 16;
+        tip.dataset.placement = bottom ? "bottom" : "top";
+        tip.style.left = left + "px";
+        tip.style.top = (bottom ? r.bottom : r.top) + "px";
+      }
+      function hideTip() {
+        var tip = document.getElementById("chart-tip");
+        if (!tip) return;
+        tip.removeAttribute("data-visible");
+        tip.hidden = true;
+      }
+      function bindTips() {
+        var tip = document.getElementById("chart-tip");
+        chart.querySelectorAll(".tip-target").forEach(function (el) {
+          el.addEventListener("mouseenter", function () { showTip(el); });
+          el.addEventListener("mousemove", function () { if (tip && !tip.hidden) positionTip(el, tip); });
+          el.addEventListener("mouseleave", hideTip);
+          el.addEventListener("focus", function () { showTip(el); });
+          el.addEventListener("blur", hideTip);
+        });
+      }
+      chart.addEventListener("scroll", hideTip);
+      window.addEventListener("resize", hideTip);
 
       function drawTimeline(selectedName) {
         var s = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Model knowledge cutoffs versus Chrome releases">';
@@ -168,9 +218,9 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
         s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
         milestones.forEach(function (x, i) {
           var cx = xd(x.d);
-          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>Chrome ' + x.m + ", " +
-            x.d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) +
-            " (" + x.features.length + " features)</title></circle>";
+          var releaseTip = "Chrome " + x.m + ", " + fmtFull(x.d) + " (" + x.features.length + " features)";
+          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>' + esc(releaseTip) + "</title></circle>";
+          s += '<circle' + tipAttrs(releaseTip) + ' cx="' + cx + '" cy="' + chromeY + '" r="8" fill="transparent" stroke="transparent" />';
           // version number under each dot, interleaved across two levels to avoid overlap
           var ly = chromeY + (i % 2 === 0 ? 11 : 21);
           s += '<line x1="' + cx + '" y1="' + (chromeY + 4) + '" x2="' + cx + '" y2="' + (ly - 7) + '" stroke="#dbe4f7" stroke-width="1" />';
@@ -188,14 +238,17 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
           s += '<line x1="' + LEFT + '" y1="' + y + '" x2="' + tx + '" y2="' + y + '" stroke="#f4f4f4" stroke-width="1" />';
           s += '<defs><linearGradient id="g' + i + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7c948"/><stop offset="1" stop-color="#e8602c"/></linearGradient></defs>';
           s += '<rect x="' + cutX + '" y="' + (y - 4) + '" width="' + Math.max(1, tx - cutX) + '" height="8" rx="2.5" fill="url(#g' + i + ')" opacity="' + (sel0 ? "1" : "0.6") + '" />';
-          s += '<circle cx="' + cutX + '" cy="' + y + '" r="' + (sel0 ? 5 : 4) + '" fill="#1a1a1a"><title>' + esc(m.model) + " cutoff: " + esc(m.cutoffLabel) + "</title></circle>";
+          var cutoffTip = m.model + " cutoff: " + m.cutoffLabel;
+          s += '<circle cx="' + cutX + '" cy="' + y + '" r="' + (sel0 ? 5 : 4) + '" fill="#1a1a1a"><title>' + esc(cutoffTip) + "</title></circle>";
+          s += '<circle' + tipAttrs(cutoffTip) + ' cx="' + cutX + '" cy="' + y + '" r="8" fill="transparent" stroke="transparent" />';
           var label = '<text x="' + (LEFT - 10) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10.5"' + (sel0 ? ' font-weight="700"' : "") + ">" + esc(m.model) + "</text>";
           s += m.card ? '<a target="_blank" rel="noopener" href="' + esc(m.card) + '">' + label + "</a>" : label;
           var miss = missedFor(m);
           s += '<text x="' + (tx + 7) + '" y="' + (y + 3) + '" font-size="10" font-weight="700" fill="' + (sel0 ? "#b3471f" : "#bbb") + '">' + miss.length + "</text>";
         });
         s += "</svg>";
-        chart.innerHTML = s;
+        chart.innerHTML = s + '<div class="chart-tip" id="chart-tip" role="tooltip" hidden></div>';
+        bindTips();
       }
 
       function renderPanel(selectedName) {
