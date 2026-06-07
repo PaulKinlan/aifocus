@@ -54,7 +54,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 </head>
 <body>
 <h2>The model gap</h2>
-<p class="subhead">Each model's brain is frozen at its knowledge cutoff. Every Chrome release after that, and every feature in it, shipped after the model stopped learning. Current stable is <strong id="current-mstone">...</strong>, as of <strong id="today">today</strong>.</p>
+<p class="subhead">Each model's view of the world is fixed at its published cutoff. Every Chrome release after that, and every feature in it, shipped after that cutoff. Current stable is <strong id="current-mstone">...</strong>, as of <strong id="today">today</strong>.</p>
 
 <div class="legend">
   <span><span class="dot chrome"></span>Chrome release</span>
@@ -258,7 +258,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
         var totalF = miss.reduce(function (a, x) { return a + x.features.length; }, 0);
         var html = '<div class="lead">Not in <b>' + esc(m.model) + "</b> (cutoff " + esc(m.cutoffLabel) +
           "): <b>" + miss.length + "</b> Chrome releases and at least <b>" + totalF +
-          "</b> platform features shipped after it stopped learning.</div>";
+          "</b> platform features shipped after its published cutoff.</div>";
         html += '<div class="verlist">';
         withFeats.forEach(function (x, vi) {
           var feats = x.features.map(prettify);
@@ -286,8 +286,9 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
       update();
 
       document.getElementById("note").innerHTML =
-        "Cutoffs are each model's published training-data cutoff (Anthropic's earlier 'reliable knowledge cutoff' would widen the Claude gaps). " +
-        "Chrome dates from the release schedule; feature lists are the demos catalogued in " +
+        "Cutoffs use each model's published knowledge cutoff, training-data cutoff, or closest published equivalent. " +
+        "Month-only dates use the last day of the month so the chart is conservative; exact day-level cutoffs use the published date. " +
+        "Anthropic's earlier reliable knowledge cutoff would widen the Claude gaps. Chrome dates from the release schedule; feature lists are the demos catalogued in " +
         '<a href="https://github.com/PaulKinlan/chrome-platform-showcase" target="_blank" rel="noopener">chrome-platform-showcase</a>, ' +
         "so they are a representative sample, not every change in each release. Last updated " + data.updated +
         '. Source data: <a href="/model-gap.json">/model-gap.json</a>.';

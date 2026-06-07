@@ -1,55 +1,55 @@
 {
-  "updated": "2026-06-06",
-  "cutoffBasis": "training data cutoff",
-  "note": "Cutoff = the model's published training-data cutoff (month granularity), the most comparable single figure across vendors. Anthropic also publishes an earlier 'reliable knowledge cutoff' which would widen each Claude gap. Chrome stable dates are from the Chrome release schedule (chromiumdash / chromereleases blog). Edit this file to update; the widget recomputes against today's date in the browser.",
+  "updated": "2026-06-07",
+  "cutoffBasis": "published knowledge or training-data cutoff",
+  "note": "Cutoff = the model's published knowledge cutoff, training-data cutoff, or closest published equivalent. When a source only publishes month granularity, the date uses the last day of that month so the chart is conservative; exact day-level cutoffs use the published date. Anthropic publishes both training-data and earlier reliable knowledge cutoffs; this file uses training-data cutoff where available, while the reliable cutoff would widen those Claude gaps. Chrome stable dates are from the Chrome release schedule (chromiumdash / chromereleases blog). Feature lists are the demos catalogued in chrome-platform-showcase, so they are a representative sample, not every platform change. Edit this file to update; the widget recomputes against today's date in the browser.",
   "models": [
     {
       "vendor": "Anthropic",
       "model": "Claude Opus 4.8",
       "cutoff": "2026-01-31",
       "cutoffLabel": "January 2026",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-opus-4-8-system-card"
     },
     {
       "vendor": "Anthropic",
       "model": "Claude Opus 4.7",
       "cutoff": "2026-01-31",
       "cutoffLabel": "January 2026",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-opus-4-7-system-card"
     },
     {
       "vendor": "Anthropic",
       "model": "Claude Sonnet 4.6",
       "cutoff": "2026-01-31",
       "cutoffLabel": "January 2026",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-sonnet-4-6-system-card"
     },
     {
       "vendor": "Anthropic",
       "model": "Claude Opus 4.6",
       "cutoff": "2025-08-31",
       "cutoffLabel": "August 2025",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-opus-4-6-system-card"
     },
     {
       "vendor": "Anthropic",
       "model": "Claude Sonnet 4.5",
       "cutoff": "2025-07-31",
       "cutoffLabel": "July 2025",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-sonnet-4-5-system-card"
     },
     {
       "vendor": "Anthropic",
       "model": "Claude Haiku 4.5",
       "cutoff": "2025-07-31",
       "cutoffLabel": "July 2025",
-      "card": "https://platform.claude.com/docs/en/about-claude/models/overview"
+      "card": "https://anthropic.com/claude-haiku-4-5-system-card"
     },
     {
       "vendor": "OpenAI",
       "model": "GPT-5.5",
-      "cutoff": "2025-12-31",
-      "cutoffLabel": "December 2025",
+      "cutoff": "2025-12-01",
+      "cutoffLabel": "December 1, 2025",
       "card": "https://developers.openai.com/api/docs/models/gpt-5.5"
     },
     {
@@ -57,84 +57,84 @@
       "model": "GPT-5.2",
       "cutoff": "2025-08-31",
       "cutoffLabel": "August 2025",
-      "card": "https://platform.openai.com/docs/models"
+      "card": "https://developers.openai.com/api/docs/models/gpt-5.2"
     },
     {
       "vendor": "OpenAI",
       "model": "GPT-5.1",
       "cutoff": "2024-09-30",
       "cutoffLabel": "September 2024",
-      "card": "https://platform.openai.com/docs/models"
+      "card": "https://developers.openai.com/api/docs/models/gpt-5.1"
     },
     {
       "vendor": "OpenAI",
       "model": "GPT-5",
       "cutoff": "2024-09-30",
       "cutoffLabel": "September 2024",
-      "card": "https://platform.openai.com/docs/models/gpt-5"
+      "card": "https://developers.openai.com/api/docs/models/gpt-5"
     },
     {
       "vendor": "Google",
       "model": "Gemini 3.5 Flash",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://deepmind.google/models/gemini/flash/"
+      "card": "https://deepmind.google/models/model-cards/gemini-3-5-flash/"
     },
     {
       "vendor": "Google",
       "model": "Gemini 3.1 Pro",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://deepmind.google/models/gemini/pro/"
+      "card": "https://deepmind.google/models/model-cards/gemini-3-1-pro/"
     },
     {
       "vendor": "Google",
       "model": "Gemini 3 Pro",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-3-Pro-Model-Card.pdf"
+      "card": "https://deepmind.google/models/model-cards/gemini-3-pro/"
     },
     {
       "vendor": "Google",
       "model": "Gemini 3 Flash",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://deepmind.google/models/gemini/flash/"
+      "card": "https://deepmind.google/models/model-cards/gemini-3-flash/"
     },
     {
       "vendor": "Google",
       "model": "Gemini 2.5 Pro",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://deepmind.google/models/gemini/pro/"
+      "card": "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Pro-Model-Card.pdf"
     },
     {
       "vendor": "Google",
       "model": "Gemini 2.5 Flash",
       "cutoff": "2025-01-31",
       "cutoffLabel": "January 2025",
-      "card": "https://deepmind.google/models/gemini/flash/"
+      "card": "https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Flash-Model-Card.pdf"
     },
     {
       "vendor": "xAI",
       "model": "Grok 4.3",
       "cutoff": "2025-12-31",
       "cutoffLabel": "December 2025",
-      "card": "https://docs.x.ai/docs/models"
+      "card": "https://docs.x.ai/developers/models/grok-4.3"
     },
     {
       "vendor": "xAI",
       "model": "Grok 4",
       "cutoff": "2024-11-30",
       "cutoffLabel": "November 2024",
-      "card": "https://docs.x.ai/docs/models"
+      "card": "https://docs.x.ai/developers/models/grok-4"
     },
     {
       "vendor": "DeepSeek",
       "model": "DeepSeek V3",
       "cutoff": "2024-07-31",
       "cutoffLabel": "July 2024",
-      "card": "https://api-docs.deepseek.com/"
+      "card": "https://huggingface.co/deepseek-ai/DeepSeek-V3"
     },
     {
       "vendor": "Meta",
