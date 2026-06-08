@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';">
+<title>The model gap: knowledge cutoffs vs Chrome releases and features</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1a1a1a; padding: 1.25rem; background: #fafafa; line-height: 1.45;
+}
+h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+.subhead { font-size: .85rem; color: #666; margin-bottom: .9rem; }
+.subhead strong { color: #1a1a1a; }
+.legend { display: flex; gap: 1.1rem; margin-bottom: .7rem; font-size: .76rem; align-items: center; flex-wrap: wrap; color: #444; }
+.legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .35rem; vertical-align: middle; }
+.legend .dot.chrome { background: #3367d6; }
+.legend .dot.cutoff { background: #1a1a1a; }
+.legend .swatch { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: .35rem; vertical-align: middle; background: linear-gradient(90deg, #f7c948, #e8602c); }
+.chart { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: 1rem .75rem; overflow-x: auto; }
+.chart svg { width: 100%; height: auto; display: block; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+.chart svg a text { fill: #1a5fb4; text-decoration: underline; text-underline-offset: 2px; }
+.tip-target { cursor: help; }
+.tip-target:focus { outline: none; stroke: #111; stroke-width: 1.5; }
+.chart-tip {
+  position: fixed; z-index: 10; max-width: min(260px, calc(100vw - 16px));
+  padding: .45rem .55rem; border-radius: .35rem; background: #1f2937; color: #fff;
+  box-shadow: 0 8px 22px rgba(0,0,0,.18); font-size: .74rem; line-height: 1.35;
+  pointer-events: none; opacity: 0; transform: translate(-50%, calc(-100% - 9px));
+  transition: opacity .12s ease;
+}
+.chart-tip[data-visible="true"] { opacity: 1; }
+.chart-tip[data-placement="bottom"] { transform: translate(-50%, 9px); }
+.controls { margin: 1rem 0 .6rem; font-size: .9rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+.controls select { font: inherit; padding: .3rem .5rem; border: 1px solid #bbb; border-radius: .35rem; background: white; }
+.panel { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: .9rem 1rem; }
+.panel .lead { font-size: .92rem; margin-bottom: .75rem; }
+.panel .lead b { font-variant-numeric: tabular-nums; }
+.verlist { max-height: 360px; overflow-y: auto; }
+.ver { border-top: 1px solid #eee; padding: .55rem 0; }
+.ver:first-child { border-top: none; }
+.ver .vh { font-size: .82rem; font-weight: 700; color: #3367d6; margin-bottom: .25rem; }
+.ver .vh .vdate { color: #999; font-weight: 400; font-size: .76rem; }
+.ver ul { list-style: none; display: flex; flex-wrap: wrap; gap: .3rem .4rem; }
+.ver li { font-size: .76rem; background: #f4f6fb; border: 1px solid #e2e8f5; color: #2a3550; border-radius: .3rem; padding: .12rem .4rem; }
+.ver .more { font-size: .74rem; color: #1a5fb4; cursor: pointer; background: none; border: none; padding: .12rem .2rem; text-decoration: underline; }
+.note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.5; }
+.note a { color: #888; }
+.loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
+.error { padding: 1rem; background: #fce4e4; color: #a02020; border-radius: .375rem; font-size: .85rem; }
+</style>
+</head>
+<body>
+<h2>The model gap</h2>
+<p class="subhead">Each model's view of the world is fixed at its published cutoff. Every Chrome release after that, and every feature in it, shipped after that cutoff. Current stable is <strong id="current-mstone">...</strong>, as of <strong id="today">today</strong>.</p>
+
+<div class="legend">
+  <span><span class="dot chrome"></span>Chrome release</span>
+  <span><span class="dot cutoff"></span>knowledge cutoff</span>
+  <span><span class="swatch"></span>the gap</span>
+  <span style="color:#999">hover any dot for detail</span>
+</div>
+
+<div class="chart" id="chart"><div class="loading">Loading the timeline...</div></div>
+
+<div class="controls">
+  <label for="model">Show the gap for:</label>
+  <select id="model"></select>
+</div>
+<div class="panel" id="panel"></div>
+
+<p class="note" id="note"></p>
+
+<script>
+(function () {
+  var chart = document.getElementById("chart");
+  var sel = document.getElementById("model");
+  var panel = document.getElementById("panel");
+
+  function parseDate(s) { var p = s.split("-"); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+  function fmtMonthYear(d) { return d.toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }); }
+  function fmtShort(d) { return d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }); }
+  function fmtFull(d) { return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }); }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  var ACRO = { css:"CSS", api:"API", apis:"APIs", html:"HTML", svg:"SVG", url:"URL", urls:"URLs", http:"HTTP",
+    https:"HTTPS", ui:"UI", ux:"UX", pwa:"PWA", ai:"AI", ml:"ML", cpu:"CPU", gpu:"GPU", webgpu:"WebGPU",
+    webgl:"WebGL", wasm:"WASM", webassembly:"WebAssembly", idl:"IDL", tls:"TLS", rws:"RWS", dom:"DOM",
+    mcp:"MCP", json:"JSON", rtc:"RTC", webrtc:"WebRTC", webaudio:"WebAudio", webauthn:"WebAuthn",
+    fedcm:"FedCM", ime:"IME", mvp:"MVP", os:"OS", id:"ID", ids:"IDs", usb:"USB", webusb:"WebUSB",
+    nfc:"NFC", hid:"HID", webhid:"WebHID", indexeddb:"IndexedDB", sqlite:"SQLite", av1:"AV1", hdr:"HDR",
+    coop:"COOP", csp:"CSP", srgb:"sRGB", oklch:"OKLCH", cssom:"CSSOM", h1:"H1" };
+  function prettify(slug) {
+    var parts = slug.split("-").map(function (t) { return ACRO[t] || t; });
+    var s = parts.join(" ");
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  fetch("/model-gap.json")
+    .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(function (data) {
+      var now = new Date();
+      var today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      document.getElementById("today").textContent = fmtMonthYear(today);
+
+      var milestones = data.chromeMilestones
+        .map(function (x) { return { m: x.m, d: parseDate(x.date), features: x.features || [] }; })
+        .filter(function (x) { return x.d <= today; })
+        .sort(function (a, b) { return a.d - b.d; });
+      var currentMstone = milestones.length ? milestones[milestones.length - 1].m : null;
+      document.getElementById("current-mstone").textContent = currentMstone ? ("Chrome " + currentMstone) : "unknown";
+
+      var models = data.models.map(function (mdl) {
+        return { vendor: mdl.vendor, model: mdl.model, card: mdl.card, cutoffLabel: mdl.cutoffLabel, cut: parseDate(mdl.cutoff) };
+      });
+      function missedFor(m) { return milestones.filter(function (x) { return x.d > m.cut; }); }
+
+      // Time scale: a little before the earliest cutoff, to just after today.
+      var minCut = models.reduce(function (mn, x) { return x.cut < mn ? x.cut : mn; }, today);
+      var xMin = new Date(minCut.getTime() - 30 * 86400000);
+      var xMax = new Date(today.getTime() + 24 * 86400000);
+      // Only plot Chrome releases inside the visible window; earlier ones predate every
+      // model's cutoff (so are never "missed") and would render off the left of the axis.
+      milestones = milestones.filter(function (x) { return x.d >= xMin; });
+
+      // Build the dropdown grouped by vendor.
+      var byVendor = {};
+      var vendorOrder = [];
+      models.forEach(function (m) { if (!byVendor[m.vendor]) { byVendor[m.vendor] = []; vendorOrder.push(m.vendor); } byVendor[m.vendor].push(m); });
+      vendorOrder.forEach(function (v) {
+        var og = document.createElement("optgroup"); og.label = v;
+        byVendor[v].forEach(function (m) {
+          var miss = missedFor(m);
+          var fc = miss.reduce(function (a, x) { return a + x.features.length; }, 0);
+          var o = document.createElement("option");
+          o.value = m.model;
+          o.textContent = m.model + " (" + miss.length + " releases, " + fc + " features)";
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
+      });
+      var defaultModel = models.filter(function (m) { return m.model === "Gemini 3 Pro"; })[0] || models[0];
+      sel.value = defaultModel.model;
+
+      var W = 820, LEFT = 158, RIGHT = 92, TOP = 86, ROW_H = 22, GROUP_GAP = 9, BOTTOM = 22, chromeY = 48, AXIS_Y = 14;
+
+      // Lay out rows grouped by vendor.
+      var rows = [], cursor = TOP, lastV = null;
+      models.forEach(function (m) {
+        if (lastV !== null && m.vendor !== lastV) cursor += GROUP_GAP;
+        rows.push({ m: m, y: cursor + ROW_H / 2, vStart: m.vendor !== lastV ? m.vendor : null });
+        cursor += ROW_H; lastV = m.vendor;
+      });
+      var H = cursor + BOTTOM, PLOT = W - LEFT - RIGHT;
+      function xd(d) { return LEFT + ((d - xMin) / (xMax - xMin)) * PLOT; }
+      function tipAttrs(text) {
+        return ' class="tip-target" tabindex="0" role="img" aria-label="' + esc(text) + '" data-tip="' + esc(text) + '"';
+      }
+      function showTip(el) {
+        var tip = document.getElementById("chart-tip");
+        if (!tip) return;
+        tip.textContent = el.getAttribute("data-tip") || "";
+        tip.hidden = false;
+        tip.setAttribute("data-visible", "true");
+        positionTip(el, tip);
+      }
+      function positionTip(el, tip) {
+        var r = el.getBoundingClientRect();
+        var half = Math.min(tip.offsetWidth / 2, (window.innerWidth - 16) / 2);
+        var left = Math.max(8 + half, Math.min(window.innerWidth - 8 - half, r.left + r.width / 2));
+        var bottom = r.top < tip.offsetHeight + 16;
+        tip.dataset.placement = bottom ? "bottom" : "top";
+        tip.style.left = left + "px";
+        tip.style.top = (bottom ? r.bottom : r.top) + "px";
+      }
+      function hideTip() {
+        var tip = document.getElementById("chart-tip");
+        if (!tip) return;
+        tip.removeAttribute("data-visible");
+        tip.hidden = true;
+      }
+      function bindTips() {
+        var tip = document.getElementById("chart-tip");
+        chart.querySelectorAll(".tip-target").forEach(function (el) {
+          el.addEventListener("mouseenter", function () { showTip(el); });
+          el.addEventListener("mousemove", function () { if (tip && !tip.hidden) positionTip(el, tip); });
+          el.addEventListener("mouseleave", hideTip);
+          el.addEventListener("focus", function () { showTip(el); });
+          el.addEventListener("blur", hideTip);
+        });
+      }
+      chart.addEventListener("scroll", hideTip);
+      window.addEventListener("resize", hideTip);
+
+      function drawTimeline(selectedName) {
+        var s = '<svg viewBox="0 0 ' + W + " " + H + '" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin meet" role="img" aria-label="Model knowledge cutoffs versus Chrome releases">';
+        // quarter gridlines + year labels
+        var q = new Date(Date.UTC(xMin.getUTCFullYear(), Math.floor(xMin.getUTCMonth() / 3) * 3, 1));
+        while (q <= xMax) {
+          var qx = xd(q);
+          if (qx >= LEFT - 1) {
+            var isYear = q.getUTCMonth() === 0;
+            s += '<line x1="' + qx + '" y1="' + (AXIS_Y + 8) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="' + (isYear ? "#e2e2e2" : "#f3f3f3") + '" stroke-width="1" />';
+            if (isYear || q.getUTCMonth() === 6) {
+              s += '<text x="' + qx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" fill="' + (isYear ? "#777" : "#aaa") + '">' + fmtShort(q) + "</text>";
+            }
+          }
+          q = new Date(Date.UTC(q.getUTCFullYear(), q.getUTCMonth() + 3, 1));
+        }
+        // today line
+        var tx = xd(today);
+        s += '<line x1="' + tx + '" y1="' + (AXIS_Y + 8) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3 3" />';
+        s += '<text x="' + tx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" font-weight="700" fill="#c0392b">today</text>';
+        // chrome track
+        s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="#3367d6">Chrome</text>';
+        s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
+        milestones.forEach(function (x, i) {
+          var cx = xd(x.d);
+          var releaseTip = "Chrome " + x.m + ", " + fmtFull(x.d) + " (" + x.features.length + " features)";
+          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>' + esc(releaseTip) + "</title></circle>";
+          s += '<circle' + tipAttrs(releaseTip) + ' cx="' + cx + '" cy="' + chromeY + '" r="8" fill="transparent" stroke="transparent" />';
+          // version number under each dot, interleaved across two levels to avoid overlap
+          var ly = chromeY + (i % 2 === 0 ? 11 : 21);
+          s += '<line x1="' + cx + '" y1="' + (chromeY + 4) + '" x2="' + cx + '" y2="' + (ly - 7) + '" stroke="#dbe4f7" stroke-width="1" />';
+          s += '<text x="' + cx + '" y="' + ly + '" text-anchor="middle" font-size="8.5" fill="#7e8aa6">' + x.m + "</text>";
+        });
+        // rows
+        rows.forEach(function (row, i) {
+          var m = row.m, y = row.y, cutX = xd(m.cut), sel0 = m.model === selectedName;
+          if (row.vStart) {
+            s += '<text x="6" y="' + (y + 3) + '" font-size="8.5" font-weight="700" fill="#aaa" letter-spacing="0.03em" style="text-transform:uppercase">' + esc(row.vStart) + "</text>";
+          }
+          if (sel0) {
+            s += '<rect x="0" y="' + (y - ROW_H / 2) + '" width="' + W + '" height="' + ROW_H + '" fill="#fff7ed" />';
+          }
+          s += '<line x1="' + LEFT + '" y1="' + y + '" x2="' + tx + '" y2="' + y + '" stroke="#f4f4f4" stroke-width="1" />';
+          s += '<defs><linearGradient id="g' + i + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7c948"/><stop offset="1" stop-color="#e8602c"/></linearGradient></defs>';
+          s += '<rect x="' + cutX + '" y="' + (y - 4) + '" width="' + Math.max(1, tx - cutX) + '" height="8" rx="2.5" fill="url(#g' + i + ')" opacity="' + (sel0 ? "1" : "0.6") + '" />';
+          var cutoffTip = m.model + " cutoff: " + m.cutoffLabel;
+          s += '<circle cx="' + cutX + '" cy="' + y + '" r="' + (sel0 ? 5 : 4) + '" fill="#1a1a1a"><title>' + esc(cutoffTip) + "</title></circle>";
+          s += '<circle' + tipAttrs(cutoffTip) + ' cx="' + cutX + '" cy="' + y + '" r="8" fill="transparent" stroke="transparent" />';
+          var label = '<text x="' + (LEFT - 10) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10.5"' + (sel0 ? ' font-weight="700"' : "") + ">" + esc(m.model) + "</text>";
+          s += m.card ? '<a target="_blank" rel="noopener" href="' + esc(m.card) + '">' + label + "</a>" : label;
+          var miss = missedFor(m);
+          s += '<text x="' + (tx + 7) + '" y="' + (y + 3) + '" font-size="10" font-weight="700" fill="' + (sel0 ? "#b3471f" : "#bbb") + '">' + miss.length + "</text>";
+        });
+        s += "</svg>";
+        chart.innerHTML = s + '<div class="chart-tip" id="chart-tip" role="tooltip" hidden></div>';
+        bindTips();
+      }
+
+      function renderPanel(selectedName) {
+        var m = models.filter(function (x) { return x.model === selectedName; })[0];
+        var miss = missedFor(m).slice().sort(function (a, b) { return b.d - a.d; });
+        var withFeats = miss.filter(function (x) { return x.features.length; });
+        var totalF = miss.reduce(function (a, x) { return a + x.features.length; }, 0);
+        var html = '<div class="lead">Not in <b>' + esc(m.model) + "</b> (cutoff " + esc(m.cutoffLabel) +
+          "): <b>" + miss.length + "</b> Chrome releases and at least <b>" + totalF +
+          "</b> platform features shipped after its published cutoff.</div>";
+        html += '<div class="verlist">';
+        withFeats.forEach(function (x, vi) {
+          var feats = x.features.map(prettify);
+          var head = '<div class="vh">Chrome ' + x.m + ' <span class="vdate">' + fmtShort(x.d) + " · " + feats.length + " features</span></div>";
+          var shown = feats.slice(0, 6), rest = feats.slice(6);
+          var lis = shown.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("");
+          var restLis = rest.map(function (f) { return "<li>" + esc(f) + "</li>"; }).join("");
+          html += '<div class="ver">' + head + "<ul>" + lis +
+            (rest.length ? '<span id="rest-' + vi + '" hidden>' + restLis + '</span>' : "") + "</ul>" +
+            (rest.length ? '<button class="more" data-rest="rest-' + vi + '">+' + rest.length + " more</button>" : "") +
+            "</div>";
+        });
+        html += "</div>";
+        panel.innerHTML = html;
+        panel.querySelectorAll(".more").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var sp = document.getElementById(b.getAttribute("data-rest"));
+            if (sp) { sp.hidden = false; b.remove(); }
+          });
+        });
+      }
+
+      function update() { drawTimeline(sel.value); renderPanel(sel.value); }
+      sel.addEventListener("change", update);
+      update();
+
+      document.getElementById("note").innerHTML =
+        "Cutoffs use each model's published knowledge cutoff, training-data cutoff, or closest published equivalent. " +
+        "Month-only dates use the last day of the month so the chart is conservative; exact day-level cutoffs use the published date. " +
+        "Anthropic's earlier reliable knowledge cutoff would widen the Claude gaps. Chrome dates from the release schedule; feature lists are the demos catalogued in " +
+        '<a href="https://github.com/PaulKinlan/chrome-platform-showcase" target="_blank" rel="noopener">chrome-platform-showcase</a>, ' +
+        "so they are a representative sample, not every change in each release. Last updated " + data.updated +
+        '. Source data: <a href="/model-gap.json">/model-gap.json</a>.';
+    })
+    .catch(function (e) {
+      chart.innerHTML = '<div class="error">Could not load the data: ' + e.message + "</div>";
+    });
+})();
+</script>
+</body>
+</html>

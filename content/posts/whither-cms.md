@@ -13,7 +13,7 @@ I'm interested in the health of the web and I think that LLMs will help make it 
 
 I decided to try and do some analysis on the usage of certain tools across the ecosystem and I wanted to see what the adoption is of certain technology stacks such as CMSes and framework mapped against how people use on the web.
 
-It's incredibly hard to get this data publicly so what I am about to show you has a number number of leaps to try and interpret the data. So, without further ado, let's go a leapin'
+It's incredibly hard to get this data publicly so what I am about to show you has a number of leaps to try and interpret the data. So, without further ado, let's go a leapin'
 
 First up is time spent on the web. [SimilarWeb's ranking of the top 100 sites,](https://pro.similarweb.com/#/digitalsuite/markets/webmarketanalysis/mapping/All/999/3m?webSource=Total) includes both the average time spent and number of navigations per month to each of the top 100 sites. It is the most useful data that I've found and [you can see the number of navigations follows a trend that looks like zipf's-law](https://docs.google.com/spreadsheets/d/18cEessx2d291daGwFBQTIY_MqemTp6dWWQYXf8OSutI/edit?gid=0#gid=0) ([Parse.ly](https://www.parse.ly/zipfs-law-of-the-internet-explaining-online-behavior/) also had a good article from a couple of years ago). SimilarWeb only accounts for the top 100 sites and the web extends out to roughly [350 million origins](https://www.wix.com/blog/how-many-domains-are-there#:~:text=According%20to%20Domain%20Name%20Stat,increase%20from%20Q4%20of%202021.) (as of 2023) so we will have to do some extra work. It won't change the shape of the graph but it will change where we look at where the percentile of navigations happens.
 
@@ -23,7 +23,7 @@ First up is time spent on the web. [SimilarWeb's ranking of the top 100 sites,](
 
 _If_ we assume that this distribution is directionally accurate and use SimilarWeb's prediction for the top sites monthly traffic of 83,000,000,000 navigations, then you can compute the estimated monthly traffic for the 2nd most popular site.... Doing this all the way to 360 millionth web site you can infer that roughly 50% of the web's traffic is sent to the top 17 sites. The 75% percentile accounts for 451 sites, 90th percentile 27,219 sites, and 95th percentile is 426,494 sites.
 
-A more traditional way to look at the data is through the Top orders of magnitude. So, the Top 1000 sites accounts for 78.94% of navigations; the Top 10,000 is at 87.38%; Top 10,000 is 92.71% and the Top 1,000,000 is at 96.07%.
+A more traditional way to look at the data is through the Top orders of magnitude. So, the Top 1000 sites accounts for 78.94% of navigations; the Top 10,000 is at 87.38%; Top 100,000 is 92.71% and the Top 1,000,000 is at 96.07%.
 
 Kinda mind blowing think about where people spend their time (I should look at this data over time and see how quickly the web is centralizing).
 
@@ -134,7 +134,7 @@ I can also imagine improvements to instant iteration on entire site design and s
 
 Price is one area that I hope there is a lot of competition. It's one of the biggest reasons I hear for people not to put a presence online. Yes there are issues today with [tokens](/token-slinging/) as a unit of cost, but the costs of generation are coming down. At the same time the [latency](https://aifoc.us/latency/) is improving so much that it's not just the cost of running the service, the cost to the person using the tool drops dramatically (I can try 10 designs in an hour vs 1 in an evening)
 
-Domain names might also be another opportunity for improvement a the recurring annual cost and a point of confusion for many people.
+Domain names might also be another opportunity for improvement at the recurring annual cost and a point of confusion for many people.
 
 I'm not in the CMS business directly, so you can see that I'm short of specific ideas, other than I think we are going to see a lot more competition coming through and that I think this is good for the industry... mostly....
 

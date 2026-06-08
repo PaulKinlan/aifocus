@@ -28,7 +28,7 @@ const getSpaceData =
 
 const news = await getSpaceData();
 
-// Describe the data structure so the the UI prompt has a better idea of what to build.
+// Describe the data structure so the UI prompt has a better idea of what to build.
 
 const generateSchema =
   await f`Return a JSON Schema for a given object. The schema should be in the format defined in https://json-schema.org/understanding-json-schema/reference/object.html and should include all the properties of the object. The schema should include the type of the property, the format of the property, the required status of the property, and the description of the property. The schema should include all the properties of the object. The schema should include the type of the property, the format of the property, the required status of the property, and the description of the property.`;
@@ -66,7 +66,7 @@ HTML, CSS and JavaScript are the most expressive languages available today to re
 
 If you combine this with Agent communication protocols like MCP which are changing the way that we chain more complex apps and tasks together, it really feels like we are at the start of a major [transition](/transition/) in computation and user interaction.
 
-I argue pretty strongly that the web’s super power is the link. It lets anyone click on it and then navigate to an experience. App platforms would kill for this power because today their restrictive review process and restriction on what can run in their sandboxes (there are limits to what they allow developers to run dynamically - e.g, iOS relatively recently allowed none browsers to run dynamic JS). Tools like ChatGPT are doing an end-run around this restriction and to me the power of the link is in question. Who needs a link anymore when you can recall any text or will any experience into existence?
+I argue pretty strongly that the web’s super power is the link. It lets anyone click on it and then navigate to an experience. App platforms would kill for this power because today their restrictive review process and restriction on what can run in their sandboxes (there are limits to what they allow developers to run dynamically - e.g, iOS relatively recently allowed non-browsers to run dynamic JS). Tools like ChatGPT are doing an end-run around this restriction and to me the power of the link is in question. Who needs a link anymore when you can recall any text or will any experience into existence?
 
 HTML and JavaScript are the most expressive languages to render a UI. It’s not a stretch for a UI to be created to service the specific needs of a user request, or when an Agent wants some form of human input. If any application can do this, then what is the future for web apps? Will apps just live inside these apps like mini-apps live inside WeChat? Should the Web Platform engineers at browser companies invest more in in-app experiences (i.e, WebView)? Should we as an industry do more to enable any website in the browser to do the same?
 

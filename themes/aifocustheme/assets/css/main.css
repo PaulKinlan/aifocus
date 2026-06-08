@@ -27,8 +27,9 @@ ol {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
   line-height: 1.7;
   color: var(--color); /* Black text */
   background-color: var(--background); /* Light beige background */
@@ -47,6 +48,7 @@ header {
     font-size: 5em; /* Larger for header */
     font-family: Joan;
     font-display: swap;
+    text-align: center;
 
     a {
       color: #000000; /* Black text */
@@ -75,8 +77,11 @@ footer {
   text-align: center;
   ul {
     list-style: none; /* Remove default list style */
+    margin-left: 0;
     padding: 0; /* Remove default padding */
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1em;
 
     a {
@@ -112,7 +117,8 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: Georgia, "Times New Roman", Times, serif; /* Serif for headings */
+  font-family:
+    Georgia, "Times New Roman", Times, serif; /* Serif for headings */
 }
 
 .about {
@@ -181,7 +187,8 @@ article {
   }
 
   blockquote {
-    font-family: "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
+    font-family:
+      "Georgia", "Times New Roman", Times, serif; /* Serif for blockquote */
     clear: both;
     font-size: 1.2em;
     line-height: 1.5;
@@ -201,7 +208,8 @@ article {
     padding: 2em 1.5em 1.5em 1.5em;
     margin: 2.5em 0;
     border-radius: 0; /* Pure flat print aesthetic */
-    font-family: Georgia, "Times New Roman", Times, serif; /* Classic editorial font */
+    font-family:
+      Georgia, "Times New Roman", Times, serif; /* Classic editorial font */
     font-size: 1.1rem;
     line-height: 1.6;
     clear: both;
@@ -211,7 +219,8 @@ article {
   .warning-banner::before {
     content: "ATTENTION / WARNING";
     display: inline-block;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family:
+      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0.15em;
@@ -251,7 +260,8 @@ article {
       padding: 0.1em 0.3em;
       border-radius: 2px;
       font-size: 0.9em;
-      font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+      font-family:
+        SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
       outline: none;
     }
 
@@ -434,8 +444,9 @@ footer {
 
 .new-post-indicator,
 .post-number {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
   font-size: 0.8em;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -447,7 +458,7 @@ footer {
   font-size: 4.5em; /* Large size */
   line-height: 1;
   font-weight: normal;
-  text-align: left; /* As per image */
+  text-align: center; /* As per image */
   color: #000000;
   margin: 0; /* Remove default h1 margin */
 }
@@ -471,8 +482,9 @@ footer {
 }
 
 .featured-text-content p {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
   font-size: 0.9em;
   line-height: 1.6;
   color: #333;
@@ -540,7 +552,9 @@ footer {
   color: var(--color);
   border: 2px solid #000000;
   text-decoration: none;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
   font-size: 0.95em;
   font-weight: 500;
   cursor: pointer;
@@ -568,7 +582,7 @@ footer {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .share-button {
     justify-content: center;
     width: 100%;
@@ -581,25 +595,25 @@ footer {
     --background: #1c1a17;
     --bg-secondary: #2a2723;
   }
-  
+
   header .site-branding-header h1 a {
     color: #ffffff;
   }
-  
+
   .about {
     color: #aaaaaa;
     border-bottom: 1px solid #444444;
   }
-  
+
   article {
     border-bottom: 1px solid #333333;
   }
-  
+
   article code {
     background-color: #2a2723;
     outline: solid 2px #2a2723;
   }
-  
+
   article h1,
   article h2,
   article h3,
@@ -608,7 +622,7 @@ footer {
   article h6 {
     color: #ffffff;
   }
-  
+
   article aside {
     background: repeating-linear-gradient(
       45deg,
@@ -618,122 +632,128 @@ footer {
       #4a252b 4px
     );
   }
-  
+
   article blockquote {
     border-left: 4px solid #425b7a;
   }
-  
+
   article .warning-banner {
     background-color: #3b3211;
     border: 2px solid #a89445;
     color: #e0e0e0;
   }
-  
+
   article .warning-banner::before {
     background-color: #cc1840;
     border: 1.5px solid #a89445;
     color: #ffffff;
   }
-  
+
   article .warning-content p,
   article .warning-content strong,
   article .warning-content a {
     color: #e0e0e0;
   }
-  
+
   article .warning-content code {
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     color: #e0e0e0;
   }
-  
+
   article figure figcaption {
     color: #aaaaaa;
   }
-  
+
   article figure video {
     box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 10px;
   }
-  
+
   article div.metadata {
     border-bottom: 1px solid #333333;
   }
-  
+
   footer {
     border-top: 1px solid #333333;
   }
-  
+
   .site-branding-line {
     border-bottom: 1px solid #555555;
   }
-  
+
   .new-post-indicator,
   .post-number {
     color: #aaaaaa;
   }
-  
+
   .site-branding-title {
     color: #ffffff;
   }
-  
+
   .featured-text-content p {
     color: #aaaaaa;
   }
-  
+
   .featured-post-title {
     color: #ffffff;
   }
-  
+
   .share-container {
     border-top: 1px solid #333333;
     border-bottom: 1px solid #333333;
   }
-  
+
   .share-title {
     color: #ffffff;
   }
-  
+
   .share-button {
     border: 2px solid #555555;
     background-color: transparent;
   }
-  
+
   .share-button:hover {
     background-color: #e0e0e0;
     color: #121212;
     border-color: #e0e0e0;
   }
-  
+
   a {
     color: #8ab4f8;
   }
-  
+
   a:visited {
     color: #c58af9;
   }
-  
+
   a:active {
     color: #e8eaed;
   }
-  
-  input, button, textarea, select {
+
+  input,
+  button,
+  textarea,
+  select {
     background-color: #2a2723;
     color: #e8e4dc;
     border: 1px solid #4d4841;
     padding: 0.5em;
     border-radius: 4px;
   }
-  
-  input::placeholder, textarea::placeholder {
+
+  input::placeholder,
+  textarea::placeholder {
     color: #aaaaaa;
   }
-  
-  input[type="submit"], button {
+
+  input[type="submit"],
+  button {
     cursor: pointer;
     background-color: #3d3933;
   }
-  
-  input[type="submit"]:hover, button:hover {
+
+  input[type="submit"]:hover,
+  button:hover {
     background-color: #4a453f;
   }
 }

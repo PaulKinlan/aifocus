@@ -63,7 +63,7 @@ We'd still need to work out security and privacy too. The [same-origin model](ht
 
 In a world of instant generation, what is the browser vendors role in deciding what happens? Do we want them to decide on capabilities?
 
-* If we do then then web standards for high-level features still make sense and it's likely we go to a maximal extrame and the browser ships every feature (generated).
+* If we do then web standards for high-level features still make sense and it's likely we go to a maximal extreme and the browser ships every feature (generated).
 * If we don't then a likely path would take the browser to the minimal extreme, then web standards become the absolute minimum needed to make a secure and private runtime, and the runtime solves the rest.
 
 Maybe there's a third path and the browser vendors will provide "taste" (I really dislike the use of this term.)
@@ -76,7 +76,7 @@ But the web's promise was also that the same URL produced roughly the same exper
 
 Urgh. 
 
-I'm personally more interested in exploring the minimal browser and the generated future a lot more. In this world the runtime can then evolve faster than a standards process (as long as you solve the sandbox security and privacy expecations), and it's completely unexplored as a topic, so we would need to understand *all* of the issues and opportunities.
+I'm personally more interested in exploring the minimal browser and the generated future a lot more. In this world the runtime can then evolve faster than a standards process (as long as you solve the sandbox security and privacy expectations), and it's completely unexplored as a topic, so we would need to understand *all* of the issues and opportunities.
 
 This was a really fun thought experiment for me that I wanted to share. We are many years out from having local hardware quick enough to build a browser at runtime. I'm very interested to see how browsers, and not just web development, change as LLMs evolve, and I think there are some low-hanging fruits when it comes to feature development today.
 
