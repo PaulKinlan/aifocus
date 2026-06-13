@@ -48,7 +48,9 @@ header {
   text-align: center;
   margin: auto;
 
-  .site-branding-header h1 {
+  /* Branding is an h1 on the home page and a p elsewhere; target the class so
+     both render identically. */
+  .site-branding-title {
     font-size: 5em; /* Larger for header */
     font-family: Joan;
     font-display: swap;
@@ -332,7 +334,12 @@ article {
   }
 
   &.featured-post {
-    h1 {
+    /* The featured post heading is an h2 (the site branding is the page h1),
+       but it is the hero on the home page so keep the larger h1-scale size. */
+    h1,
+    h2.p-name {
+      font-size: 2.5em;
+      line-height: 1.2;
       margin-bottom: 0em;
     }
   }
@@ -600,7 +607,7 @@ footer {
     --bg-secondary: #2a2723;
   }
 
-  header .site-branding-header h1 a {
+  header .site-branding-header .site-branding-title a {
     color: #ffffff;
   }
 

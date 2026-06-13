@@ -18,8 +18,14 @@
     {{ end }}
   </div>
   {{ end }}
-  <h1 class="site-branding-title">
-    <a href="/">{{ with .Site.Params.branding_title }}{{ . | safeHTML }}{{ else }}{{ .Site.Title | safeHTML }}{{ end
-      }}</a>
-  </h1>
+  {{/* The site branding is the page's single h1 only on the home page. On
+       content pages the article/section title is the h1, so render branding as a
+       non-heading element to avoid a second h1 weakening the document outline. */}}
+  {{- $brandingMarkup := "" }}
+  {{- if .IsHome }}
+    {{- $brandingMarkup = printf `<h1 class="site-branding-title"><a href="/">%s</a></h1>` (or .Site.Params.branding_title .Site.Title) }}
+  {{- else }}
+    {{- $brandingMarkup = printf `<p class="site-branding-title"><a href="/">%s</a></p>` (or .Site.Params.branding_title .Site.Title) }}
+  {{- end }}
+  {{ $brandingMarkup | safeHTML }}
 </div>

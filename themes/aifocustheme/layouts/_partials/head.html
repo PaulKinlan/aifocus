@@ -5,7 +5,15 @@
      by prefers-color-scheme in main.css, so the user's light preference is honoured. */}}
 <meta name="color-scheme" content="light dark">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
-<meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ if .IsPage }}{{ .Summary }}{{ else }}{{ site.Params.description }}{{ end }}{{ end }}">
+{{/* Description resolution, most specific first:
+     page front-matter .Description -> page .Summary -> site params.description.
+     The site-level fallback (params.description in hugo.toml) keeps the
+     home and section pages from ever shipping a blank description. */}}
+{{- $siteDesc := site.Params.description }}
+{{- $desc := "" }}
+{{- with .Description }}{{ $desc = . }}
+{{- else }}{{ if and .IsPage .Summary }}{{ $desc = .Summary }}{{ else }}{{ $desc = $siteDesc }}{{ end }}{{ end }}
+<meta name="description" content="{{ $desc }}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{{ .Permalink }}">
 {{ partialCached "head/css.html" . }}

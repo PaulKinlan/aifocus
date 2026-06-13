@@ -36,7 +36,8 @@
 {{ range $idx, $page := site.RegularPages.ByDate.Reverse }}
 {{ if eq $idx 0 }}
 <article class="featured-post h-entry">
-  <h1 class="p-name"><a class="u-url" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h1>
+  {{/* h2 (not h1): on the home page the site branding in the header is the single h1. */}}
+  <h2 class="p-name"><a class="u-url" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
   <div class="metadata">
     {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
     {{ $dateHuman := .Date | time.Format ":date_long" }}
