@@ -1,0 +1,34 @@
+{{- /*
+  Local override of Hugo's internal youtube shortcode.
+
+  Differences from the built-in:
+  - Embeds via youtube-nocookie.com so no third-party cookies are set on load
+    (privacy-enhanced mode).
+  - Always emits a descriptive iframe title for assistive technology: the
+    `title` param if given, otherwise "YouTube video: <page title>".
+  - loading="lazy" so off-screen players are not fetched eagerly.
+
+  Params mirror the internal shortcode: id (or positional 0), class, title,
+  autoplay, controls, loop, mute, start, end.
+*/ -}}
+{{- $id := .Get "id" | default (.Get 0) -}}
+{{- with $id -}}
+  {{- $class := $.Get "class" -}}
+  {{- $title := $.Get "title" | default (printf "YouTube video: %s" $.Page.Title) -}}
+  {{- $autoplay := $.Get "autoplay" | default "0" -}}
+  {{- $controls := $.Get "controls" | default "1" -}}
+  {{- $loop := $.Get "loop" | default "0" -}}
+  {{- $mute := $.Get "mute" | default "0" -}}
+  {{- $start := $.Get "start" | default "0" -}}
+  {{- $end := $.Get "end" | default "0" -}}
+  {{- $src := printf "https://www.youtube-nocookie.com/embed/%s?autoplay=%s&controls=%s&end=%s&loop=%s&mute=%s&start=%s" . $autoplay $controls $end $loop $mute $start -}}
+  {{- if $class -}}
+  <div class="{{ $class }}">
+    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="{{ $src | safeURL }}" title="{{ $title }}"></iframe>
+  </div>
+  {{- else -}}
+  <div style="position: relative; min-height: 14rem;">
+    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="{{ $src | safeURL }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="{{ $title }}"></iframe>
+  </div>
+  {{- end -}}
+{{- end -}}
