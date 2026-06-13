@@ -1,4 +1,8 @@
 :root {
+  /* Support both schemes so native UI matches the palette and the user's
+     light/dark preference is honoured (the palette switches via the
+     prefers-color-scheme media query below). */
+  color-scheme: light dark;
   --color: #000000;
   --background: #fdfcf8;
   --bg-secondary: #f0eee6;

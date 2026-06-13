@@ -1,5 +1,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{/* Declare both schemes so native UI (scrollbars, form controls, canvas) is
+     themed and the initial canvas paints correctly; the palette itself is chosen
+     by prefers-color-scheme in main.css, so the user's light preference is honoured. */}}
+<meta name="color-scheme" content="light dark">
 <title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
 <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ if .IsPage }}{{ .Summary }}{{ else }}{{ site.Params.description }}{{ end }}{{ end }}">
 <meta name="robots" content="index, follow">
@@ -35,7 +39,8 @@
 {{ printf `
 <link rel="alternate" type=%q href=%q title="Markdown">` .MediaType.Type .RelPermalink | safeHTML }}
 {{ end }}
-<meta name="theme-color" content="#fdfcf8">
+<meta name="theme-color" content="#fdfcf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1c1a17" media="(prefers-color-scheme: dark)">
 <script type="speculationrules">
   {
     "prerender": [{ "where": { "href_matches": "/*" }, "eagerness": "moderate" }],
