@@ -43,15 +43,16 @@ I then had other tests, like descriptive URLs (MDN for example is very descripti
 
 My finding is that for the majority of URLs I tested there appears to be _no logical mapping between URL and the content at that URL_. Which means that my original hypothesis is incorrect and that having the URL present in the prompt can't activate some latent-space in the model based on the content at that URL and thus doesn't influence the output outside of a descriptive reading of the URL.
 
-More concretely, my analysis:
+My current read is: URLs are not magic context.
 
-- As shown by the recall of the same feature with `mdn-url` vs `opaque-url`. If a URL is descriptive: `https://somesite.com/always-use-react` the literal text of the URL string likely influences the output because the concept mentioned in the URL is encoded in the model.
-- Broadly URL -> Content mapping does not seem to be in the model for the all but the most popular URLs. To me, there seems to be no evidence to say the model output will be influenced by the content described at a URL for the majority of cases.
+For most ordinary opaque URLs I tested, I did not find evidence that the model reliably uses the content behind the URL. ChromeStatus feature URLs are a good example: the URL clearly says "this is Chrome/web related", but the numeric feature id does not reveal the feature, and models mostly failed to recover the right API from that number alone.
 
-I'm keen to do more research around this. A more comprehensive study would have probably seen me put a heap of URLs out on the web to be crawled and ingested with:
+There are two important exceptions.
 
-- A descriptive name - but the content is not about it - `https://somesite.com/always-use-react` => Best practices for Angular.
-- Completely opaque domain name - chromestatus.com clearly indicates it's web-related.
-- Completely opaque urls that I know are in the model and that point to the exact same content as on a 'descriptive url'
+First, descriptive URLs do influence output. If the URL contains words like `React`, `fetch`, or `text-justify`, those words are normal prompt text. The model can use them just like any other token.
+
+Second, some famous opaque identifiers do work. Landmark arXiv IDs, RFCs, and well-known CVEs can decode surprisingly well. That looks less like "the URL points to live content" and more like "this identifier/content pair is famous enough to be memorized."
+
+So the answer is not "URLs never matter." It is: a URL matters when it is readable text, or when the exact identifier is famous enough. For the long tail of opaque URLs, I would not rely on the URL alone as context.
 
 I think these are fun questions, but with the model lag, I don't know if I want to wait around. Also, the models seem pretty good at pulling in content and as context windows expand, this experiment might just be a costly way for me to have scratched an itch.
