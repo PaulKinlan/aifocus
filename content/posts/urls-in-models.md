@@ -47,6 +47,8 @@ My current read is: URLs are not magic context.
 
 For most ordinary opaque URLs I tested, I did not find evidence that the model reliably uses the content behind the URL. ChromeStatus feature URLs are a good example: the URL clearly says "this is Chrome/web related", but the numeric feature id does not reveal the feature, and models mostly failed to recover the right API from that number alone.
 
+My first thought was that ChromeStatus simply wasn't in the training data. It is. Those feature pages show up in Common Crawl at a higher rate than the arXiv papers that decode perfectly, and they still recover almost nothing. So it isn't whether the page was crawled. It's whether the exact identifier gets written down next to its content. People cite `arxiv.org/abs/1706.03762` in prose constantly, right beside a description of the paper, so the model learns the pairing. Nobody ever writes `chromestatus.com/feature/5157805733183488` next to "CSS gap decorations". That number only ever lives on the page itself, never in a sentence about the feature, so the association never forms even though the page was crawled.
+
 There are two important exceptions.
 
 First, descriptive URLs do influence output. If the URL contains words like `React`, `fetch`, or `text-justify`, those words are normal prompt text. The model can use them just like any other token.
