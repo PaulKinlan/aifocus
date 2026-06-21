@@ -1,6 +1,6 @@
 ---
 title: can a url influence an llm's output?
-description: Testing whether opaque URLs act as pointers to memorized content in model weights
+description: Testing whether opaque URLs act as pointers to memorized content, and finding that JavaScript-rendered sites may be missing from model training entirely
 date: 2026-06-18T21:47:22.638Z
 slug: influencing-model-output-with-urls
 draft: true
@@ -65,4 +65,10 @@ The flip side is the practical one. When I stopped pointing at the content and j
 
 So the answer is not "URLs never matter". It is: a URL matters when it's readable text, or when the exact identifier appeared often enough in training to be memorized along with its content. For the long tail of opaque URLs, I would not rely on the URL alone as context. Which is exactly the problem for the idea I started with: a `skills.sh/super-security-reviewer` pointer is, by definition, new and niche, the long-tail case where none of this works.
 
-I think these are fun questions, but with the model lag, I don't know if I want to wait around. Also, the models seem pretty good at pulling in content and as context windows expand, this experiment might just be a costly way for me to have scratched an itch.
+Here is the part that actually stuck with me, and it has nothing to do with URLs. ChromeStatus is a site whose entire job is to document the web platform, and it contributes almost nothing to what these models know, because it renders its content with JavaScript and the crawler only ever saw an empty shell. The page is public. It is crawled. Its robots.txt allows it. And it is still effectively absent from the model.
+
+If that is true for ChromeStatus, it is true for a large slice of the modern web. Single-page apps, JavaScript-rendered docs, anything that assembles its content in the browser: a crawler can fetch the URL and come away with nothing but a loading shell. Server-rendered sites like arXiv, Wikipedia, and MDN walk straight in. Client-rendered ones can be invisible, however good the content is. In a world where people increasingly ask a model instead of opening ten tabs, being absent from the training data is a real discoverability problem, and I don't think it is well understood yet. How widespread is it? Which frameworks and rendering setups are worst? Does it differ between providers, given some run search crawlers that do execute JavaScript? This deserves proper research, and I would be glad if it nudged someone to do it.
+
+So I went looking for what the model providers actually say about how they collect the web, and the honest answer is very little. [Anthropic](https://www.anthropic.com/claude-3-7-sonnet-system-card) describes a general-purpose crawler that follows robots.txt. [OpenAI](https://openai.com/index/gpt-4o-system-card/) says the model was trained on publicly available data, mostly from industry-standard datasets and web crawls. [Google](https://storage.googleapis.com/deepmind-media/gemini/gemini_1_report.pdf) says Gemini uses web documents and Common Crawl. Every one of them tells you they crawl the public web. Not one of them tells you whether the crawler runs JavaScript, and that single detail decides whether a huge part of the modern web makes it in at all. I would like to see that in the model cards.
+
+If you run a site and you care whether models know it exists, the safe move today is the boring one: server-render your content, or at least make sure the words are in the HTML before any JavaScript runs. The fancy version of your site might be the version the model never sees.
