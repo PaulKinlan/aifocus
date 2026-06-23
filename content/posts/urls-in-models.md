@@ -6,25 +6,25 @@ slug: influencing-model-output-with-urls
 draft: true
 ---
 
-At first, this was a really easy post to right but then I found some things out and it became one of the harder (and most expensive posts - the API costs were quite large).
+At first, this was a really easy post to right but then I discovered some things. Built a lot of things. Spent a lot of tokens... And it became one of the harder (and most expensive posts - the API costs were quite large).
 
 I've had this thing on my mind for ages and it started when I was thinking about how the mere presence of a technology name in a prompt seemed to bias the output to that technology.
 
 For example, I looked through a number of system prompts for Agentic tooling and they would include text like `(e.g. React)` and then it felt like these tools would output React code vs a similar prompt that didn't mention React.
 
-The last couple of days I've embarked on some research to try and help me scratch this itch of influencing prompt output. But before I get too far, I have a request for help. I'm not a researcher. I think what I have here is compelling information (or at least it taught me something), but I might have made a lot of mistakes or made assumptions that have biased the output. If you have any advice I would LOVE to hear from you. [Email me](mailto:paul@aifoc.us).
+For the last week I've embarked on some research to try and help me scratch this itch of influencing prompt output. But before I get too far, I have a request for help. I'm not a researcher. I think what I have here is compelling information (or at least it taught me something), but I might have made a lot of mistakes or made assumptions that have biased the output. If you have any advice I would LOVE to hear from you. [Email me](mailto:paul@aifoc.us).
 
 The question I had was: would the presence of a URL in a prompt influence the output of the LLM based on the content at that URL or the literal text of the URL? Or maybe more accurately, is there a mapping between a URL string in a prompt and the contents of that URL which would then influence the model's latent space in a way to produce output influenced by the content.
 
 If yes, then this could lead to us not having to embed lots of context into the prompt. For example, you might have a Skills file that is deeply integrated into the model's weights and by saying "use what you know about: https://skills.sh/super-security-reviewer do a deep analysis" then information in the model's latent space would bias the output towards the content encoded at that URL.
 
-I came away from this with a strong belief that if your site relies on JavaScript to load data, it is unlikely to be in the model.
+I came away from this with a strong belief that if your site relies on JavaScript to load data, that data is unlikely to be in the model (you might consider that a feature)
 
 What follows is the journey I took.
 
 ---
 
-First up, [I built an LLM-as-a-judge tool to help me test the hypothesis.](https://github.com/PaulKinlan/url-influence) My plan was:
+The first step that I thought I should take was to [build a system that can analyse a range of URLs across a range of models and use an LLM-as-a-judge to help me test the hypothesis.](https://github.com/PaulKinlan/url-influence) My plan was:
 
 1. to find each model's known "Knowledge Cut-off date"
 2. then find content on either side of that to test if the model could recall the data that I believe should be known in the model.
@@ -49,9 +49,9 @@ I then had other tests, like descriptive URLs (MDN for example is very descripti
 
 {{< iframe "https://paulkinlan.github.io/url-influence/results/dashboard.html" 900>}}
 
-My first hunch was that URLs are not magic context. The averaged numbers seemed to back that up. Adding a bare opaque URL to a prompt did almost nothing on average, and plenty of opaque URLs recovered nothing at all.
+My first hunch was that **URLs are not magic context**. The numbers seemed to back that up. Adding a bare opaque URL to a prompt did almost nothing on average, and plenty of opaque URLs recovered nothing at all.
 
-But there was all of these URLs that had really good recall.
+But then I had a lot of other URLs that had really good recall.
 
 For many of the ordinary opaque URLs I tested (notably Chromestatus ones), I did not find evidence that the model reliably uses the content behind the URL. ChromeStatus feature URLs are a good opaque URL. While the URL clearly says "this is Chrome/web related", the numeric feature id does not reveal the feature, and models mostly failed to recover the right API from that number alone.
 
@@ -104,6 +104,12 @@ In a world where people increasingly ask a model instead of opening ten tabs, be
 So I went looking for what the model providers actually say about how they collect the web, and the answer is very little. [Anthropic](https://support.claude.com/en/articles/8896518-does-anthropic-crawl-data-from-the-web-and-how-can-site-owners-block-the-crawler) describes a general-purpose crawler (ClaudeBot) that follows the robots.txt guidelines, but says nothing about whether ClaudeBot also downloads the JavaScript and CSS a page links to, and I suspect it does not. [OpenAI](https://cdn.openai.com/gpt-5-system-card.pdf) says its models are trained on publicly available data, alongside data from partners and from its own users. [Google](https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Pro-Model-Card.pdf) says Gemini is trained on publicly available web documents. Every one of them tells you they crawl the public web. Not one of them tells you whether the crawler runs JavaScript, and that single detail decides whether a huge part of the modern web makes it in at all. I would like to see that in the model cards.
 
 That last question, whether a crawler even fetches the subresources a page depends on, is one I am now testing directly. I put together a small site, [uatracer.com](https://uatracer.com), that hands every visit a unique set of asset URLs (images, CSS, JavaScript, fonts) and records which of them actually get requested, along with whether any of the on-page JavaScript runs at all. The idea is to watch a named crawler arrive and see, per agent, whether ClaudeBot or GPTBot or Googlebot pulls the whole page down and executes it, or just takes the HTML and leaves. It is early, but the logic is the same hole from the other side: if a crawler never fetches your JavaScript, it was never going to see anything that JavaScript renders.
+
+Early analysis is interesting.
+
+* ClaudeBot seems to fetch sub-resources, but doesn't run JS
+* GPTBot doesn't fetch any sub-resources
+* Googlebot ... TBD
 
 There is a gap that everyone are sleep-walking into. Developers ship sites that look perfect in a browser and are blank to a crawler, and never find out. Providers train on a web that quietly excludes a chunk of itself, and don't tell you which parts they can and can't see. Both halves are easy to miss, and both are fixable, but only once you know to look.
 
