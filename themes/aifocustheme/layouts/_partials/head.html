@@ -37,7 +37,7 @@
     crossorigin="anonymous" referrerpolicy="no-referrer" />
 </noscript>
 {{ template "_internal/opengraph.html" . }}
-{{ template "_internal/schema.html" . }}
+{{ partial "jsonld.html" . }}
 {{ template "_internal/twitter_cards.html" . }}
 {{ with .OutputFormats.Get "RSS" }}
 {{ printf `
