@@ -24,6 +24,7 @@ I came away from this with:
 2. It's really unclear how LLM providers are gathering data to be trained
 3. There's heaps of data that is not in the model
 4. I have a strong belief that if your site relies on JavaScript to load data, that data is unlikely to be in the model (you might consider that a feature) and that while some of the modern Bots request assets in a page when crawling, they are not (as far as I can tell) executing JavaScript.
+5. LLMs are expensive!
 
 What follows is the journey I took.
 
