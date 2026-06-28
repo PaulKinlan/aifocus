@@ -18,7 +18,12 @@ The question I had was: would the presence of a URL in a prompt influence the ou
 
 If yes, then this could lead to us not having to embed lots of context into the prompt. For example, you might have a Skills file that is deeply integrated into the model's weights and by saying "use what you know about: https://skills.sh/super-security-reviewer do a deep analysis" then information in the model's latent space would bias the output towards the content encoded at that URL.
 
-I came away from this with a strong belief that if your site relies on JavaScript to load data, that data is unlikely to be in the model (you might consider that a feature)
+I came away from this with:
+
+1. There seems to be a connection to the presence of a URL and it's content influencing the output generated from the model, if the URL has been included in the model
+2. It's really unclear how LLM providers are gathering data to be trained
+3. There's heaps of data that is not in the model
+4. I have a strong belief that if your site relies on JavaScript to load data, that data is unlikely to be in the model (you might consider that a feature) and that while some of the modern Bots request assets in a page when crawling, they are not (as far as I can tell) executing JavaScript.
 
 What follows is the journey I took.
 
