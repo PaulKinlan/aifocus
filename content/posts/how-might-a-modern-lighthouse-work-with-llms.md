@@ -4,7 +4,6 @@ date: 2026-07-03T16:30:00.000Z
 slug: how-might-a-modern-lighthouse-work-with-llms
 authors:
   - paulkinlan
-draft: true
 ---
 
 [Lighthouse](https://developer.chrome.com/docs/lighthouse/overview) is one of the most successful developer tools we've ever shipped, and I say that as someone who is genuinely proud of the work the team has done on it. But something has gnawed at me for a while. Our ability to help the developer ecosystem with it is ultimately capped by the number of tests we can physically create. Every audit is a hand-written piece of JavaScript. Someone has to sit down, understand a best practice, encode it as a deterministic check, ship it, and maintain it as the platform moves underneath it. A lot of rigor goes into that, and the rigor is a good thing, it is exactly what makes the scores trustworthy. But it is also a serious amount of time, which means you inevitably end up having to pick the highest-value tests to build, and whole categories of "is this any good" stay quietly out of reach because nobody could justify the cost of a check. The tool can only ever test what someone found the time to write a test for.
