@@ -1,14 +1,14 @@
 {{/*
-  Buttondown newsletter subscribe form. Pass an optional `label` to give the
-  form landmark a unique accessible name when it appears more than once.
-  Usage: {{ partial "subscribe.html" (dict "label" "Subscribe — intro") }}
+Buttondown newsletter subscribe form. Pass an optional `label` to give the
+form landmark a unique accessible name when it appears more than once.
+Usage: {{ partial "subscribe.html" (dict "label" "Subscribe — intro") }}
 */}}
 {{- $label := "Subscribe to the AI Focus newsletter" -}}
 {{- if reflect.IsMap . }}{{ with .label }}{{ $label = . }}{{ end }}{{ end -}}
 <form action="https://buttondown.com/api/emails/embed-subscribe/ai-focus" method="post" target="popupwindow"
   onsubmit="window.open('https://newsletter.aifoc.us', 'popupwindow')" class="embeddable-buttondown-form"
   aria-label="{{ $label }}">
-  <label class="visually-hidden">Email address
+  <label>Email address
     <input type="email" name="email" placeholder="Enter your email" autocomplete="email" required />
   </label>
   <input type="submit" value="Subscribe" />
