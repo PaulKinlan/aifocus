@@ -94,7 +94,7 @@ Here's an actual run so you can see it. The prompt asks for a security-talk sugg
 
 {{< iframe "https://paulkinlan.github.io/url-influence/results/implicit.html#cve-2024-3094-xz-backdoor:url:claude-opus-4-8" 900>}}
 
-(My favourite of these is [RFC 1149](https://paulkinlan.github.io/url-influence/results/implicit.html#rfc-1149-avian-carriers), the April Fools' standard for carrier pigeons: no model brings it up unprompted, and four out of five recall exactly what it is from the bare URL.)
+(My third favourite of these is [RFC 1149](https://paulkinlan.github.io/url-influence/results/implicit.html#rfc-1149-avian-carriers), the April Fools' standard for carrier pigeons: no model brings it up unprompted, and four out of five recall exactly what it is from the bare URL.)
 
 The controls make me more confident this is about memorized content and not the URL itself. In the ambient test an unrelated real URL sat at 6%, next to the 7% no-link baseline. And back in the direct tests, a fake URL of the same shape and an opaque-shaped fake identifier both scored near zero too. So it's not just having a URL in the prompt, or having one that looks right, it's whether the real content was in the training data.
 
