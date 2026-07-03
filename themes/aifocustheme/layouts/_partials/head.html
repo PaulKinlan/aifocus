@@ -1,5 +1,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{/* Google tag (gtag.js) — placed at the top of <head> per Google's guidance so the
+     site-tag assistant detects it. Single tag, loaded once on every page. */}}
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DJSEFL3CXG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-DJSEFL3CXG');
+</script>
 {{/* Declare both schemes so native UI (scrollbars, form controls, canvas) is
      themed and the initial canvas paints correctly; the palette itself is chosen
      by prefers-color-scheme in main.css, so the user's light preference is honoured. */}}
