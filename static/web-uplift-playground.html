@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>web-uplift playground: seeded issues the agent finds</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { color-scheme: light dark; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: light-dark(#fafafa, #14161a); color: light-dark(#1a1a1a, #e6e6e6); line-height: 1.5; }
+h2 { font-size: 1.02rem; font-weight: 700; }
+.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
+.subhead a, .note a { color: light-dark(#1a5fb4, #8ab4f8); }
+.legend { display: flex; gap: .8rem; font-size: .72rem; margin-bottom: .9rem; flex-wrap: wrap; color: light-dark(#666, #9aa0a6); }
+.legend .tag { font-weight: 600; }
+.legend .planted { color: light-dark(#1a5fb4, #8ab4f8); }
+.legend .extra { color: light-dark(#8a6300, #d9a441); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .6rem; }
+.card { background: light-dark(#fff, #1c1f25); border: 1px solid light-dark(#e3e3e3, #2c3036); border-radius: .5rem; padding: .65rem .75rem; position: relative; }
+.card .tag { position: absolute; top: .55rem; right: .55rem; font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; padding: .1rem .35rem; border-radius: 999px; }
+.tag.planted { background: light-dark(#e8f0fe, #1e2a4a); color: light-dark(#1a5fb4, #8ab4f8); }
+.tag.extra { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
+.card .sc { font-size: .62rem; font-family: ui-monospace, monospace; color: light-dark(#1a5fb4, #8ab4f8); }
+.card .pr { font-size: .68rem; color: light-dark(#888, #9aa0a6); margin: .05rem 0 .25rem; }
+.card .t { font-size: .82rem; font-weight: 600; margin-bottom: .2rem; padding-right: 3rem; }
+.card .e { font-size: .74rem; color: light-dark(#555, #9aa0a6); line-height: 1.4; }
+.card .e b { color: light-dark(#1a1a1a, #e6e6e6); }
+.note { font-size: .72rem; color: light-dark(#999, #777); margin-top: 1rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h2>the playground: a tiny site with deliberately broken things</h2>
+<p class="subhead">The eval fixture. Six modern-UX issues are planted and labelled. A successful audit recalls all six. This run found all six — plus three real ones I didn't plant.</p>
+
+<div class="legend">
+  <span><span class="tag planted">planted</span></span>
+  <span><span class="tag extra">extra</span> caught beyond the seed</span>
+</div>
+
+<div class="grid">
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#no-dark-mode</div><div class="pr">respect-user-preferences</div><div class="t">Ignores prefers-color-scheme: dark</div><div class="e">Under emulated dark mode the card stays <b>rgb(255,255,255)</b>; no <b>color-scheme: dark</b> declared.</div></div>
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#motion</div><div class="pr">respect-user-preferences</div><div class="t">Marquee still slides under reduced-motion</div><div class="e">Captured on video: the animation runs at full speed with <b>prefers-reduced-motion: reduce</b>.</div></div>
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#fixed-layout</div><div class="pr">adapt-to-the-form-factor</div><div class="t">Fixed-width layout overflows at 360px</div><div class="e">Hero clips off-screen at mobile width; no responsive units.</div></div>
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#poor-focus</div><div class="pr">be-inclusive</div><div class="t">No visible focus outline</div><div class="e">Keyboard-only screenshot shows <b>no focus ring</b> on the button.</div></div>
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#layout-shift</div><div class="pr">be-fast-and-stable</div><div class="t">Late banner causes layout shift</div><div class="e">Layout metrics show a measurable CLS jump after load.</div></div>
+  <div class="card"><span class="tag planted">planted</span><div class="sc">#no-container-queries</div><div class="pr">adapt-to-the-form-factor</div><div class="t">Component doesn't adapt to its container</div><div class="e">Reused at multiple widths; flex-direction never flips.</div></div>
+  <div class="card"><span class="tag extra">extra</span><div class="sc">contrast</div><div class="pr">be-inclusive</div><div class="t">Button fails colour contrast</div><div class="e">Caught by <b>Lighthouse + axe-core</b> (the model chose to run both).</div></div>
+  <div class="card"><span class="tag extra">extra</span><div class="sc">meta</div><div class="pr">be-discoverable</div><div class="t">Missing meta description</div><div class="e">No description for search or social previews.</div></div>
+  <div class="card"><span class="tag extra">extra</span><div class="sc">404</div><div class="pr">follow-best-practices</div><div class="t">Console 404 on a missing asset</div><div class="e">A referenced resource returns 404 on load.</div></div>
+</div>
+
+<p class="note">100% recall on the six planted issues, zero false positives, three genuine extras. After the fix loop: Lighthouse 91/96/90 → 100/100/100, axe 1 → 0. <a href="https://github.com/PaulKinlan/web-uplift" target="_blank" rel="noopener">web-uplift</a>.</p>
+</body>
+</html>

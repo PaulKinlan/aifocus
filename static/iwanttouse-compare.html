@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>web-uplift on iwanttouse.com: six findings to zero</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { color-scheme: light dark; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 1.25rem 1.25rem 1.5rem;
+  background: light-dark(#fafafa, #14161a);
+  color: light-dark(#1a1a1a, #e6e6e6);
+  line-height: 1.5;
+}
+h2 { font-size: 1.02rem; font-weight: 700; }
+.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
+.subhead a { color: light-dark(#1a5fb4, #8ab4f8); }
+
+/* the headline score */
+.scoreline {
+  display: flex; align-items: baseline; gap: .6rem; justify-content: center;
+  margin: .4rem 0 1.1rem; font-variant-numeric: tabular-nums;
+}
+.scoreline .num {
+  font-size: 2.6rem; font-weight: 800; line-height: 1;
+  color: light-dark(#c0392b, #e06c75);
+}
+.scoreline .num.after { color: light-dark(#1a8a3a, #57c97a); }
+.scoreline .arrow { font-size: 1.6rem; color: light-dark(#999, #777); font-weight: 300; }
+.scoreline .label { font-size: .72rem; color: light-dark(#888, #888); text-transform: uppercase; letter-spacing: .04em; }
+
+/* toggle */
+.toggle { display: flex; gap: .35rem; justify-content: center; margin-bottom: 1rem; }
+.toggle button {
+  font: inherit; font-size: .8rem; cursor: pointer; padding: .35rem .9rem;
+  border: 1px solid light-dark(#ccc, #3a3d44); border-radius: 999px;
+  background: light-dark(#fff, #1c1f25); color: inherit;
+  transition: background .15s, border-color .15s;
+}
+.toggle button[aria-pressed="true"] {
+  background: light-dark(#1a1a1a, #e6e6e6); color: light-dark(#fff, #14161a);
+  border-color: light-dark(#1a1a1a, #e6e6e6);
+}
+
+/* metric deltas */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .6rem; margin-bottom: 1.3rem; }
+.metric {
+  background: light-dark(#fff, #1c1f25); border: 1px solid light-dark(#e3e3e3, #2c3036);
+  border-radius: .5rem; padding: .7rem .75rem;
+}
+.metric .k { font-size: .68rem; color: light-dark(#888, #9aa0a6); text-transform: uppercase; letter-spacing: .03em; margin-bottom: .35rem; }
+.metric .v { display: flex; align-items: baseline; gap: .35rem; font-variant-numeric: tabular-nums; }
+.metric .before { font-size: .9rem; color: light-dark(#c0392b, #e06c75); text-decoration: line-through; text-decoration-color: light-dark(#e8a0a0, #6e3b3b); }
+.metric .after { font-size: 1.15rem; font-weight: 700; color: light-dark(#1a8a3a, #57c97a); }
+.metric .ok::after { content: ""; }
+
+/* findings table */
+h3 { font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; color: light-dark(#888, #9aa0a6); margin: 0 0 .5rem; }
+.findings { list-style: none; }
+.f {
+  display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: start;
+  border-top: 1px solid light-dark(#eee, #2a2e34); padding: .6rem 0;
+}
+.f:first-child { border-top: none; }
+.f .ico { font-size: 1rem; line-height: 1.2; margin-top: .05rem; }
+.f .body { min-width: 0; }
+.f .id { font-size: .68rem; font-family: ui-monospace, monospace; color: light-dark(#888, #888); }
+.f .t { font-size: .82rem; font-weight: 600; margin: .05rem 0 .15rem; }
+.f .how { font-size: .76rem; color: light-dark(#666, #9aa0a6); }
+.f .how b { color: light-dark(#1a8a3a, #57c97a); font-weight: 600; }
+.sev { font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; padding: .12rem .4rem; border-radius: 999px; white-space: nowrap; }
+.sev.med { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
+.sev.low { background: light-dark(#eef0f3, #2c3036); color: light-dark(#5a6068, #b0b6bd); }
+.note { font-size: .72rem; color: light-dark(#999, #777); margin-top: 1rem; line-height: 1.5; }
+.note a { color: light-dark(#1a5fb4, #8ab4f8); }
+</style>
+</head>
+<body>
+<h2>web-uplift on iwanttouse.com</h2>
+<p class="subhead">An autonomous audit-fix-reaudit loop on a single-page developer tool. Before run: live site. After run: <a href="https://github.com/PaulKinlan/iwanttouse.com" target="_blank" rel="noopener">local source, branch <code>web-uplift-fix</code></a>. Same model found, fixed, and verified every change.</p>
+
+<div class="scoreline">
+  <span class="num" id="b">6</span>
+  <span class="arrow">→</span>
+  <span class="num after" id="a">0</span>
+</div>
+<div class="scoreline" style="margin-top:-.8rem">
+  <span class="label">outstanding issues, cleared in one pass</span>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="k">crawl coverage</div><div class="v"><span class="before">6%</span><span class="after">100%</span></div></div>
+  <div class="metric"><div class="k">JS shell</div><div class="v"><span class="before">yes</span><span class="after">no</span></div></div>
+  <div class="metric"><div class="k">axe violations</div><div class="v"><span class="before">1</span><span class="after">0</span></div></div>
+  <div class="metric"><div class="k">contrast (worst)</div><div class="v"><span class="before">1.6:1</span><span class="after">4.0:1</span></div></div>
+  <div class="metric"><div class="k">overflow @780px</div><div class="v"><span class="before">21px</span><span class="after">0px</span></div></div>
+  <div class="metric"><div class="k">web app manifest</div><div class="v"><span class="before">absent</span><span class="after">present</span></div></div>
+</div>
+
+<h3>what it found, and how it fixed it</h3>
+<ul class="findings">
+  <li class="f">
+    <span class="ico">🔍</span>
+    <span class="body"><span class="id">F-DISC-SHELL · be-discoverable / be-agent-ready</span><span class="t">The whole feature dataset renders client-side, so crawlers and AI ingest see a 6% shell.</span><span class="how">Fix: <b>build pre-renders the 1082-feature grid into the HTML</b> → coverage 100%, no longer a JS shell.</span></span>
+    <span class="sev med">medium</span>
+  </li>
+  <li class="f">
+    <span class="ico">🎨</span>
+    <span class="body"><span class="id">F-INC-CONTRAST · be-inclusive</span><span class="t">Headline share figure bright green at ~1.6:1 on white.</span><span class="how">Fix: <b>per-scheme colours via light-dark()</b>. On verify, the model found the real failing node was the active filter button (2.42:1), not the figure — and fixed both. It corrected its own diagnosis while fixing.</span></span>
+    <span class="sev med">medium</span>
+  </li>
+  <li class="f">
+    <span class="ico">📱</span>
+    <span class="body"><span class="id">F-FORM-OFLOW · adapt-to-the-form-factor</span><span class="t">21px horizontal overflow in the gap between mobile and desktop.</span><span class="how">Fix: <b>overflow-wrap: anywhere</b> on feature names → 0px.</span></span>
+    <span class="sev low">low</span>
+  </li>
+  <li class="f">
+    <span class="ico">📲</span>
+    <span class="body"><span class="id">F-RESILIENT-MANIFEST · be-resilient</span><span class="t">Service worker registered, but no web app manifest.</span><span class="how">Fix: <b>added manifest + 192/512 icons</b> → installable.</span></span>
+    <span class="sev low">low</span>
+  </li>
+  <li class="f">
+    <span class="ico">🌀</span>
+    <span class="body"><span class="id">F-RMOTION · respect-user-preferences</span><span class="t">No prefers-reduced-motion handling; hover-lift still animates.</span><span class="how">Fix: <b>@media (prefers-reduced-motion: reduce)</b> + forced-colors block.</span></span>
+    <span class="sev low">low</span>
+  </li>
+  <li class="f">
+    <span class="ico">🏷️</span>
+    <span class="body"><span class="id">F-BP-THEMECOLOR · follow-best-practices</span><span class="t">No theme-color meta, so browser chrome ignores the palette.</span><span class="how">Fix: <b>&lt;meta name="theme-color"&gt;</b> light + dark.</span></span>
+    <span class="sev low">low</span>
+  </li>
+</ul>
+
+<p class="note">Core task (pick a feature → see its share) unchanged end to end. Performance unchanged: FCP/LCP 122ms, TBT 0, no new blocking resources. Built with <a href="https://github.com/PaulKinlan/web-uplift" target="_blank" rel="noopener">web-uplift</a>.</p>
+</body>
+</html>

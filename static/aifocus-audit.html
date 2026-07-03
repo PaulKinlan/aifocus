@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>web-uplift audit: aifoc.us</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { color-scheme: light dark; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: light-dark(#fafafa, #14161a); color: light-dark(#1a1a1a, #e6e6e6); line-height: 1.5; }
+h2 { font-size: 1.02rem; font-weight: 700; }
+.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
+.subhead a, .note a { color: light-dark(#1a5fb4, #8ab4f8); }
+.headline { display: flex; gap: 1.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.stat { }
+.stat .n { font-size: 1.7rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .n.bad { color: light-dark(#c0392b, #e06c75); }
+.stat .n.good { color: light-dark(#1a8a3a, #57c97a); }
+.stat .l { font-size: .68rem; color: light-dark(#888, #9aa0a6); text-transform: uppercase; letter-spacing: .03em; margin-top: .15rem; }
+h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: light-dark(#888, #9aa0a6); margin: 0 0 .5rem; }
+.findings { list-style: none; margin-bottom: 1.2rem; }
+.f { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; border-top: 1px solid light-dark(#eee, #2a2e34); padding: .55rem 0; }
+.f:first-child { border-top: none; }
+.f .id { font-size: .68rem; font-family: ui-monospace, monospace; color: light-dark(#888, #888); }
+.f .t { font-size: .82rem; font-weight: 600; margin: .05rem 0 .1rem; }
+.f .fix { font-size: .76rem; color: light-dark(#666, #9aa0a6); }
+.f .fix b { color: light-dark(#1a5fb4, #8ab4f8); font-weight: 600; }
+.sev { font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; padding: .12rem .4rem; border-radius: 999px; white-space: nowrap; height: fit-content; }
+.sev.high { background: light-dark(#fde2e2, #4a2323); color: light-dark(#a02020, #e06c75); }
+.sev.med { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
+.sev.low { background: light-dark(#eef0f3, #2c3036); color: light-dark(#5a6068, #b0b6bd); }
+.strengths { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip { font-size: .72rem; background: light-dark(#e8f5ec, #1e2d22); color: light-dark(#1a8a3a, #57c97a); border: 1px solid light-dark(#bfe6c9, #2d4a35); border-radius: 999px; padding: .2rem .55rem; }
+.note { font-size: .72rem; color: light-dark(#999, #777); margin-top: 1rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h2>web-uplift audit: aifoc.us</h2>
+<p class="subhead">Report mode (audit only) on this very blog. The model gathered DOM, computed styles, a perf trace, HAR, and screenshots, then judged all seventeen principles. <a href="https://aifoc.us" target="_blank" rel="noopener">aifoc.us</a>.</p>
+
+<div class="headline">
+  <div class="stat"><div class="n bad">8</div><div class="l">issues found</div></div>
+  <div class="stat"><div class="n good">9</div><div class="l">principles pass</div></div>
+  <div class="stat"><div class="n">94</div><div class="l">a11y (Lighthouse)</div></div>
+</div>
+
+<h3>findings</h3>
+<ul class="findings">
+  <li class="f"><div><span class="id">F-SUST-FA · be-sustainable</span><div class="t">Font Awesome 6 (~290KB CSS + webfonts from cdnjs) loaded for ~12 icons.</div><div class="fix">Fix: <b>inline SVGs</b> for the handful of icons actually used.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">F-INC-IFRAME · be-inclusive</span><div class="t">Embedded demo iframes (e.g. /model-gap.html) have no title attribute.</div><div class="fix">Fix: <b>accessible title</b> on every iframe (the shortcode now defaults to one).</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">F-INC-FORMLABEL · be-inclusive</span><div class="t">Newsletter email input labelled only by its placeholder.</div><div class="fix">Fix: <b>visible &lt;label&gt;</b> (placeholders vanish on input and aren't screen-reader names).</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">F-SEC-ANALYTICS · be-private-and-secure</span><div class="t">Two analytics stacks load: Google Analytics (165KB, cookies) and Cloudflare Web Analytics.</div><div class="fix">Fix: <b>drop one</b>; keep the cookieless option.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">F-INC-LANDMARK · be-inclusive</span><div class="t">Two identical newsletter forms create duplicate, indistinguishable landmarks.</div><div class="fix">Fix: <b>aria-label</b> to differentiate, or render one.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">F-RMOTION · respect-user-preferences</span><div class="t">No prefers-reduced-motion handling; share-button transition still animates.</div><div class="fix">Fix: <b>@media (prefers-reduced-motion: reduce)</b>.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">F-SEC-HSTS · be-private-and-secure</span><div class="t">No Strict-Transport-Security header despite HTTPS-only hosting.</div><div class="fix">Fix: <b>HSTS header</b> in the deploy config.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">F-BP-SOFT404 · follow-best-practices</span><div class="t">Unknown paths return the homepage HTML with HTTP 200 (soft 404).</div><div class="fix">Fix: <b>real 404</b> route + template.</div></div><span class="sev low">low</span></li>
+</ul>
+
+<h3>credited strengths</h3>
+<div class="strengths">
+  <span class="chip">0 CLS</span>
+  <span class="chip">all images have alt text</span>
+  <span class="chip">single h1</span>
+  <span class="chip">color-scheme: light dark</span>
+  <span class="chip">HTTPS everywhere</span>
+</div>
+
+<p class="note">A real model run over raw CDP, not a canned checklist. Each finding comes with evidence and a Modern-Web-Guidance-backed fix. <a href="https://github.com/PaulKinlan/web-uplift" target="_blank" rel="noopener">web-uplift</a>.</p>
+</body>
+</html>

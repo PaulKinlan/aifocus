@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>web-uplift audit: paul.kinlan.me</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { color-scheme: light dark; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: light-dark(#fafafa, #14161a); color: light-dark(#1a1a1a, #e6e6e6); line-height: 1.5; }
+h2 { font-size: 1.02rem; font-weight: 700; }
+.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
+.subhead a, .note a { color: light-dark(#1a5fb4, #8ab4f8); }
+.headline { display: flex; gap: 1.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.stat .n { font-size: 1.7rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .n.bad { color: light-dark(#c0392b, #e06c75); }
+.stat .n.good { color: light-dark(#1a8a3a, #57c97a); }
+.stat .l { font-size: .68rem; color: light-dark(#888, #9aa0a6); text-transform: uppercase; letter-spacing: .03em; margin-top: .15rem; }
+.callout { background: light-dark(#fff7ed, #2a2118); border: 1px solid light-dark(#fed7aa, #4a3520); border-radius: .5rem; padding: .7rem .8rem; margin-bottom: 1.1rem; font-size: .8rem; }
+.callout b { color: light-dark(#c2410c, #f0a060); }
+h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: light-dark(#888, #9aa0a6); margin: 0 0 .5rem; }
+.findings { list-style: none; margin-bottom: 1.2rem; }
+.f { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; border-top: 1px solid light-dark(#eee, #2a2e34); padding: .55rem 0; }
+.f:first-child { border-top: none; }
+.f .id { font-size: .68rem; font-family: ui-monospace, monospace; color: light-dark(#888, #888); }
+.f .t { font-size: .82rem; font-weight: 600; margin: .05rem 0 .1rem; }
+.f .fix { font-size: .76rem; color: light-dark(#666, #9aa0a6); }
+.f .fix b { color: light-dark(#1a8a3a, #57c97a); font-weight: 600; }
+.sev { font-size: .62rem; text-transform: uppercase; letter-spacing: .04em; padding: .12rem .4rem; border-radius: 999px; white-space: nowrap; height: fit-content; }
+.sev.high { background: light-dark(#fde2e2, #4a2323); color: light-dark(#a02020, #e06c75); }
+.sev.med { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
+.sev.low { background: light-dark(#eef0f3, #2c3036); color: light-dark(#5a6068, #b0b6bd); }
+.strengths { display: flex; flex-wrap: wrap; gap: .35rem; }
+.chip { font-size: .72rem; background: light-dark(#e8f5ec, #1e2d22); color: light-dark(#1a8a3a, #57c97a); border: 1px solid light-dark(#bfe6c9, #2d4a35); border-radius: 999px; padding: .2rem .55rem; }
+.note { font-size: .72rem; color: light-dark(#999, #777); margin-top: 1rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h2>web-uplift audit: paul.kinlan.me</h2>
+<p class="subhead">Report mode on <a href="https://paul.kinlan.me" target="_blank" rel="noopener">paul.kinlan.me</a>, my other blog. The model found one architectural problem worth more than all the rest combined.</p>
+
+<div class="callout">The headline issue: styling the entire site with the <b>Tailwind Play CDN</b> runtime, a render-blocking, not-for-prod script that generates the full Tailwind CSS in the browser on every visit. Lab LCP was <b>9.9s</b>. One fix (a build-time purged build) cleared the perf, resilience, and sustainability findings at once.</div>
+
+<div class="headline">
+  <div class="stat"><div class="n bad">12</div><div class="l">issues found</div></div>
+  <div class="stat"><div class="n">56</div><div class="l">perf (Lighthouse)</div></div>
+  <div class="stat"><div class="n good">100</div><div class="l">a11y · best-practices</div></div>
+</div>
+
+<h3>findings (grouped by the fix)</h3>
+<ul class="findings">
+  <li class="f"><div><span class="id">pk-tailwind-cdn · be-fast-and-stable</span><div class="t">Tailwind Play CDN runtime is large and render-blocking.</div><div class="fix">Fix: <b>build-time purged Tailwind build</b> (byte-identical CSS, shipped not PR'd).</div></div><span class="sev high">high</span></li>
+  <li class="f"><div><span class="id">pk-slow-lcp · be-fast-and-stable</span><div class="t">Lab FCP 9.2s, LCP 9.9s on mobile profile.</div><div class="fix">Resolves with the CDN removal above.</div></div><span class="sev high">high</span></li>
+  <li class="f"><div><span class="id">pk-tailwind-cdn-resilience · be-resilient</span><div class="t">All styling generated at runtime by a third-party CDN — unstyled if it fails.</div><div class="fix">Resolves with the build.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">pk-tailwind-cdn-weight · be-sustainable</span><div class="t">Full Tailwind CSS generated client-side on every visit, including unused utilities.</div><div class="fix">Resolves with the build.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">pk-no-h1 · be-inclusive</span><div class="t">No level-one heading; document outline has no primary landmark.</div><div class="fix">Fix: <b>a single h1</b>.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">pk-duplicate-banner · be-inclusive</span><div class="t">Multiple banner landmarks, none uniquely labelled.</div><div class="fix">Fix: <b>aria-label</b> each landmark.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">pk-region-landmarks · be-inclusive</span><div class="t">Some content sits outside any landmark region.</div><div class="fix">Fix: wrap in <b>main / region</b>.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">pk-no-dark-theme · respect-user-preferences</span><div class="t">Same light palette regardless of prefers-color-scheme.</div><div class="fix">Fix: <b>color-scheme + light-dark()</b>.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">pk-color-scheme-meta · respect-user-preferences</span><div class="t">No color-scheme meta; root resolves to light only.</div><div class="fix">Fix: <b>&lt;meta name="color-scheme"&gt;</b>.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">pk-empty-meta-description · be-discoverable</span><div class="t">Meta description present but empty.</div><div class="fix">Fix: <b>authored description</b> fallback.</div></div><span class="sev med">medium</span></li>
+  <li class="f"><div><span class="id">pk-link-text · be-discoverable</span><div class="t">Non-descriptive link text ("here", "More").</div><div class="fix">Fix: <b>descriptive links</b>.</div></div><span class="sev low">low</span></li>
+  <li class="f"><div><span class="id">pk-missing-security-headers · be-private-and-secure</span><div class="t">HTTPS + HSTS present, but no CSP, X-Content-Type-Options, or Referrer-Policy.</div><div class="fix">Fix: <b>security headers</b> in vercel.json.</div></div><span class="sev low">low</span></li>
+</ul>
+
+<h3>credited strengths</h3>
+<div class="strengths">
+  <span class="chip">a11y 100</span>
+  <span class="chip">best practices 100</span>
+  <span class="chip">0 CLS</span>
+  <span class="chip">view transitions</span>
+  <span class="chip">speculation rules</span>
+  <span class="chip">RSS</span>
+</div>
+
+<p class="note">The same audit found the problems and credited the wins in the same pass. <a href="https://github.com/PaulKinlan/web-uplift" target="_blank" rel="noopener">web-uplift</a>.</p>
+</body>
+</html>
