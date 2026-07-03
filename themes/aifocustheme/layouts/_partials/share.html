@@ -6,7 +6,7 @@
   <div class="share-buttons">
     <!-- Navigator.share button (shown only if supported) -->
     <button class="share-button share-native" aria-label="Share via native share menu" title="Share" style="display: none;">
-      <i class="fa-solid fa-share-nodes"></i>
+      {{ partial "icon.html" "share-nodes" }}
       <span>Share</span>
     </button>
     
@@ -17,7 +17,7 @@
        class="share-button share-twitter"
        aria-label="Share on X (Twitter)"
        title="Share on X">
-      <i class="fa-brands fa-x-twitter"></i>
+      {{ partial "icon.html" "x-twitter" }}
       <span>X</span>
     </a>
     
@@ -28,7 +28,7 @@
        class="share-button share-bluesky"
        aria-label="Share on Bluesky"
        title="Share on Bluesky">
-      <i class="fa-solid fa-cloud"></i>
+      {{ partial "icon.html" "bluesky" }}
       <span>Bluesky</span>
     </a>
     
@@ -38,7 +38,7 @@
             data-title="{{ $pageTitle }}"
             aria-label="Share on Mastodon"
             title="Share on Mastodon">
-      <i class="fa-brands fa-mastodon"></i>
+      {{ partial "icon.html" "mastodon" }}
       <span>Mastodon</span>
     </button>
     
@@ -47,7 +47,7 @@
        class="share-button share-email"
        aria-label="Share via Email"
        title="Share via Email">
-      <i class="fa-solid fa-envelope"></i>
+      {{ partial "icon.html" "envelope" }}
       <span>Email</span>
     </a>
   </div>

@@ -1,1 +1,7 @@
-<iframe src='{{ .Get 0 }}' width="100%"{{ with .Get 1 }} height="{{ . }}"{{ end }} style="border:none;"></iframe>
+{{/* Inline iframe with an accessible title (WCAG frame-title). Title is the 3rd
+     positional arg, defaulting to the src URL so an embed is never unlabeled.
+     Usage: {{< iframe "https://example.com" "600" "Title describing the iframe" >}} */}}
+{{- $src := .Get 0 -}}
+{{- $title := "" -}}
+{{- with .Get 2 }}{{ $title = . }}{{ else }}{{ $title = printf "Embedded content: %s" $src }}{{ end -}}
+<iframe src="{{ $src }}" width="100%"{{ with .Get 1 }} height="{{ . }}"{{ end }} title="{{ $title }}" style="border:none;"></iframe>

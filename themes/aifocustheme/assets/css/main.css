@@ -25,6 +25,17 @@
   box-sizing: border-box;
 }
 
+/* Inline SVG icons (replace the Font Awesome icon font). Inherit text colour
+   and scale with font-size; vertically aligned to the text baseline. */
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -0.125em;
+  display: inline-block;
+  flex: none;
+}
+
 ul,
 ol {
   margin-left: 1em;
@@ -579,7 +590,8 @@ footer {
   color: var(--background);
 }
 
-.share-button i {
+.share-button i,
+.share-button .icon {
   font-size: 1.1em;
 }
 
@@ -766,5 +778,28 @@ footer {
   input[type="submit"]:hover,
   button:hover {
     background-color: #4a453f;
+  }
+}
+
+/* --- Preference & forced-colour support -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  /* Keep links and form controls legible under a user's forced-colour palette. */
+  a {
+    forced-color-adjust: auto;
+  }
+  .share-button,
+  input[type="submit"],
+  button {
+    border: 2px solid ButtonText;
   }
 }

@@ -29,7 +29,7 @@
   <h2>Subscribe to the Newsletter</h2>
   <p>Get the latest essays and projects on how AI is changing the medium of the web delivered straight to your inbox.</p>
   <div class="subscribe-box">
-    {{ partial "subscribe.html" . }}
+    {{ partial "subscribe.html" (dict "label" "Subscribe to the AI Focus newsletter (intro)") }}
   </div>
 </section>
 
@@ -56,7 +56,7 @@
   <h2>Subscribe to the Newsletter</h2>
   <p>Get the latest essays and projects on how AI is changing the medium of the web delivered straight to your inbox.</p>
   <div class="subscribe-box">
-    {{ partial "subscribe.html" . }}
+    {{ partial "subscribe.html" (dict "label" "Subscribe to the AI Focus newsletter (after featured essay)") }}
   </div>
 </section>
 
