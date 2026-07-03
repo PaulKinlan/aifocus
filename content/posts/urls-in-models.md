@@ -6,7 +6,7 @@ slug: influencing-model-output-with-urls
 draft: true
 ---
 
-At first, this was a really easy post to write, but then I discovered some things. Built a lot of things. Spent a lot of tokens... And it became one of the harder, and most expensive, posts I've done (the API costs were not small).
+At first, this was a really easy post to write, but then I discovered some things. Built a lot of things. Spent a lot of tokens... And it became one of the harder, longest to create and most expensive posts I've done (the API costs were not small).
 
 I've had this thing on my mind for ages and it started when I was thinking about how the mere presence of a technology name in a prompt seemed to bias the output to that technology.
 
