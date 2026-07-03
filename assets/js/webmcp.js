@@ -216,9 +216,14 @@ const registerTools = (modelContext) => {
   });
 };
 
-if (typeof navigator !== "undefined" && navigator.modelContext) {
+// modelContext recently moved from navigator to document; prefer document.modelContext
+// and fall back to navigator.modelContext for older Chrome builds.
+const modelContext =
+  (typeof document !== "undefined" && document.modelContext) ||
+  (typeof navigator !== "undefined" && navigator.modelContext);
+if (modelContext) {
   try {
-    registerTools(navigator.modelContext);
+    registerTools(modelContext);
   } catch (err) {
     console.warn("WebMCP tool registration failed:", err);
   }

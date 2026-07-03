@@ -9,6 +9,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     const summaryContainer = document.querySelector(".e-summary");
+    // Pages without a summary section (e.g. the home listing) have nothing to
+    // summarise — bail out instead of throwing on null.classList.
+    if (!summaryContainer) {
+      return;
+    }
     summaryContainer.classList.add("visible");
 
     const summaryElementInitialText = "Expand to see summary";
@@ -30,6 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             format: "plain-text",
             length: "medium",
             expectedInputLanguages: ["en", "en-GB", "en-US"],
+            expectedOutputLanguages: ["en"],
             monitor: (m) => {
               m.addEventListener("downloadprogress", (e) => {
                 summaryElement.textContent = `Downloading model... ${Math.round(
