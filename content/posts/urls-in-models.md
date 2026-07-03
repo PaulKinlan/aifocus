@@ -1,9 +1,8 @@
 ---
 title: can a url influence an llm's output?
 description: Testing whether opaque URLs act as pointers to memorized content, and finding that JavaScript-rendered sites may be missing from model training entirely
-date: 2026-06-18T21:47:22.638Z
+date: 2026-07-03T09:00:00.000Z
 slug: influencing-model-output-with-urls
-draft: true
 ---
 
 At first, this was a really easy post to write, but then I discovered some things. Built a lot of things. Spent a lot of tokens... And it became one of the hardest, longest, and most expensive posts I've done (the API costs were not small).
