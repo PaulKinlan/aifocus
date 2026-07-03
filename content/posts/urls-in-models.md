@@ -21,7 +21,7 @@ If yes, then this could lead to us not having to embed lots of context into the 
 I came away from this with:
 
 1. A URL in the prompt does influence the output, but only when that URL and its content made it into the model's training data
-2. It's really unclear how LLM providers gather the data they train on and I think they need to be clearer.
+2. It's really unclear how LLM providers gather the data they train on, and I think they should tell us.
 3. There's heaps of data that is not in the models
 4. If your site relies on JavaScript to load its content, that content is very likely not in a model (you might consider that a feature). The training crawlers I could verify (ClaudeBot, GPTBot) fetch a page's assets but never execute the JavaScript; the only verified bot I've caught running JavaScript is OpenAI's search crawler, OAI-SearchBot.
 5. LLMs are expensive!
@@ -62,8 +62,6 @@ But then I had a lot of other URLs that had really good recall, and a lot of oth
 I went to look for what the models use to ingest data, and it's kinda hard to find the exact corpus of crawl data, but I did remember a podcast from a little while ago that discussed [Common Crawl](https://commoncrawl.org) being used as a source of a lot of data. So I went to check if Chromestatus was in the common crawl. It is. The pages show up in Common Crawl about as often as the arXiv papers that decode almost perfectly. But when I pulled the actual crawled bytes, there was no content in them!!!
 
 ChromeStatus is a JavaScript app (I remember it first being built with Polymer) and the crawler captured an empty shell. The saved page for CSS Gap Decorations is about 3KB of HTML with 22 characters of visible text, "Chrome Platform Status", and not one word about the feature ([here is the actual Common Crawl capture](https://paulkinlan.github.io/url-influence/results/cc-samples/chromestatus-css-gap-decorations.cc.html.txt)). I checked four features and they were all identical empty shells. The arXiv page, by contrast, is server-rendered, so the crawl holds the full title and abstract ([its capture](https://paulkinlan.github.io/url-influence/results/cc-samples/arxiv-attention.cc.html.txt)).
-
-It's incredibly hard to find out how the models actually get the data to ingest, and I think the fact that we don't know the source of "web data" for the models is concerning.
 
 _If_ Common Crawl is a source of data, then I'm going to flat out say that SPAs that require JS to get data to the user are very likely to not be in the models training data (that might be a feature for some folks - heh.) My evidence is that you can watch every model flatline on the bare ChromeStatus id, then recover the feature once handed the actual page, [in the per-test view here](https://paulkinlan.github.io/url-influence/results/dashboard.html#test=css-gap-decorations).
 
