@@ -57,6 +57,10 @@ Before I point it at anything real, the demo. I built a tiny site with six delib
 
 {{< iframe "/web-uplift-playground.html" "760" "web-uplift playground: seeded issues the agent finds and fixes" >}}
 
+And rather than describe the output, here is the verbatim report that run wrote, the same one you would get as a site author: the evidence it chose to gather, every finding with its screenshot or recording attached, the eval against the ground truth, and the prioritised task list at the end.
+
+{{< iframe "/web-uplift-report.html" "700" "the verbatim web-uplift audit report for the playground, artifacts inlined" >}}
+
 So does it actually work on something real? I ran it against my own sites, because they were conveniently broken and conveniently mine.
 
 [aifoc.us](https://aifoc.us), this blog, was the first. It came back with eight issues. The biggest was sustainability, not performance: I was loading all of Font Awesome 6, around 290KB of CSS and webfonts from a CDN, to render about twelve icons. Then a string of accessibility ones, the embedded demo iframes had no title attribute (including the model-gap widget further up this page), the newsletter input was labelled only by its placeholder, and there were duplicate form landmarks. It caught that I run two analytics stacks at once, that I have no reduced-motion handling, no HSTS header, and that unknown URLs soft-404 to the homepage. It also correctly credited the strengths: zero CLS, every image has alt text, a single h1, colour scheme declared, HTTPS everywhere. What I care about is not the list itself, it's that it found real things, on a real site, by looking.
