@@ -21,7 +21,7 @@ If yes, then this could lead to us not having to embed lots of context into the 
 I came away from this with:
 
 1. A URL in the prompt does influence the output, but only when that URL and its content made it into the model's training data
-2. It's really unclear how LLM providers gather the data they train on
+2. It's really unclear how LLM providers gather the data they train on and I think they need to be clearer.
 3. There's heaps of data that is not in the models
 4. If your site relies on JavaScript to load its content, that content is very likely not in a model (you might consider that a feature). Some modern bots fetch a page's assets when crawling, but as far as I can tell they don't execute the JavaScript.
 5. LLMs are expensive!
