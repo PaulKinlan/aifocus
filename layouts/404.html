@@ -1,7 +1,223 @@
 {{ define "main" }}
-<section class="not-found">
-  <h1 class="not-found-title">404</h1>
-  <p class="not-found-lede">Sorry, that page doesn't exist.</p>
-  <p><a class="not-found-home" href="/">Back to AI Focus</a></p>
+<style>
+.not-found-wrap { max-width: 820px; margin: 0 auto; padding: 2rem 1rem 3rem; text-align: center; }
+.not-found-code { font-family: Georgia, "Times New Roman", serif; font-size: clamp(3rem, 12vw, 5.5rem); line-height: 1; margin: 0; color: var(--accent, #4b3aff); }
+.not-found-lede { font-size: 1.05rem; color: var(--muted, #666); margin: .6rem 0 1.4rem; }
+.not-found-home { display: inline-block; margin-top: 1rem; padding: .5rem 1.1rem; border: 1px solid currentColor; border-radius: 999px; text-decoration: none; color: inherit; }
+.not-found-home:hover { background: var(--accent, #4b3aff); color: #fff; border-color: transparent; }
+.game-shell { position: relative; width: 100%; max-width: 760px; margin: 1.4rem auto 0; aspect-ratio: 8 / 3; border-radius: 14px; overflow: hidden; border: 1px solid rgba(127,127,127,.25); box-shadow: 0 10px 30px rgba(0,0,0,.12); background: #0b1020; }
+#ai404 { display: block; width: 100%; height: 100%; touch-action: none; }
+.game-hud { position: absolute; top: 8px; right: 12px; font: 700 .85rem/1 ui-monospace, monospace; color: #9ad; letter-spacing: .05em; text-shadow: 0 1px 2px #000; }
+.game-hud .label { color: #678; font-weight: 400; font-size: .65rem; display:block; text-align:right; }
+.game-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; color: #eef; background: radial-gradient(circle at 50% 40%, rgba(75,58,255,.25), rgba(11,16,32,.86)); text-align: center; padding: 1rem; }
+.game-overlay h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.game-overlay p { margin: 0; font-size: .8rem; color: #aab; }
+.game-overlay .score { font-size: 1.3rem; color: #fff; font-weight: 800; }
+.game-btn { margin-top: .4rem; padding: .5rem 1.2rem; border: 0; border-radius: 999px; background: #4b3aff; color: #fff; font: inherit; cursor: pointer; }
+.game-btn:hover { background: #6b5cff; }
+.game-hint { font-size: .72rem; color: var(--muted, #888); margin-top: .6rem; }
+@media (prefers-color-scheme: dark){ .not-found-lede{color:#9aa0a6;} }
+</style>
+
+<section class="not-found-wrap">
+  <h1 class="not-found-code">404</h1>
+  <p class="not-found-lede">This page wandered off. While you're here, help the little AI dodge the bugs.</p>
+
+  <div class="game-shell" id="shell">
+    <canvas id="ai404" aria-label="A small game: an AI character jumping over bugs. Press space, tap, or click to jump."></canvas>
+    <div class="game-hud"><span class="label">tokens</span><span id="score">0</span></div>
+    <div class="game-overlay" id="overlay">
+      <h2 id="ovTitle">Ready?</h2>
+      <p id="ovMsg">Jump the bugs. Stay alive. Earn tokens.</p>
+      <button class="game-btn" id="startBtn" type="button">▶ Run</button>
+    </div>
+  </div>
+  <p class="game-hint">Press <strong>Space</strong> / <strong>↑</strong> or tap the game to jump.</p>
+
+  <a class="not-found-home" href="/">← Back to AI Focus</a>
 </section>
+
+<script>
+(function(){
+  const canvas = document.getElementById('ai404');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovMsg = document.getElementById('ovMsg');
+  const startBtn = document.getElementById('startBtn');
+  const scoreEl = document.getElementById('score');
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0,H=0,DPR=1;
+
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = Math.max(1, Math.round(r.width*DPR));
+    canvas.height = Math.max(1, Math.round(r.height*DPR));
+    W = r.width; H = r.height;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  const ro = new ResizeObserver(resize); ro.observe(canvas); resize();
+
+  // world
+  const GROUND = () => H*0.82;
+  let player, bugs, speed, score, best=0, running=false, dead=false, spawnIn, t, sky;
+  function reset(){
+    player = { x: W*0.12, y: 0, w: 30, h: 34, vy: 0, onGround:true, blink:0, step:0 };
+    player.y = GROUND()-player.h;
+    bugs = []; speed = 5.2; score = 0; spawnIn = 80; t=0; sky=0; dead=false;
+  }
+
+  function jump(){
+    if(!running) return;
+    if(player.onGround){ player.vy = -12.2; player.onGround=false; }
+  }
+
+  function start(){
+    reset(); running=true; overlay.style.display='none'; loop();
+  }
+  function over(){
+    dead=true; running=false;
+    best = Math.max(best, Math.floor(score));
+    ovTitle.textContent = 'Game over';
+    ovMsg.innerHTML = 'You banked <span class="score">'+Math.floor(score)+' tokens</span>'+(best? ' · best '+best:'');
+    startBtn.textContent = '↻ Again';
+    overlay.style.display='flex';
+  }
+
+  function spawnBug(){
+    const variants = ['bug','err','glitch'];
+    const kind = variants[(Math.random()*variants.length)|0];
+    const h = 22 + Math.random()*16;
+    bugs.push({ x: W+10, y: GROUND()-h, w: 20+Math.random()*8, h, kind });
+  }
+
+  function loop(){
+    if(!running) return;
+    t++;
+    sky = (sky + 0.4) % 100000;
+    // player physics
+    player.vy += 0.62;                 // gravity
+    player.y += player.vy;
+    const g = GROUND()-player.h;
+    if(player.y >= g){ player.y=g; player.vy=0; player.onGround=true; player.step += speed*0.12; }
+    player.blink = (player.blink+1) % 140;
+    // speed up gently
+    speed = 5.2 + Math.min(7.5, score*0.012);
+    score += 0.18;
+    scoreEl.textContent = Math.floor(score);
+    // spawn
+    spawnIn -= 1;
+    if(spawnIn<=0){ spawnBug(); spawnIn = 46 + Math.random()*58 - Math.min(26, score*0.05); }
+    // move + cull + collide
+    for(const b of bugs){ b.x -= speed; }
+    bugs = bugs.filter(b=>b.x+b.w> -10);
+    for(const b of bugs){
+      if(player.x < b.x+b.w-4 && player.x+player.w-4 > b.x &&
+         player.y < b.y+b.h-4 && player.y+player.h-4 > b.y){ over(); break; }
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function draw(){
+    // sky
+    const grd = ctx.createLinearGradient(0,0,0,H);
+    grd.addColorStop(0,'#0b1020'); grd.addColorStop(1,'#161a33');
+    ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+    // stars / tokens drifting
+    ctx.fillStyle='rgba(180,200,255,0.5)';
+    for(let i=0;i<18;i++){
+      const sx=((i*53 - sky*0.5)%W+W)%W, sy=(i*37)%(H*0.7);
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+    // ground
+    const gy=GROUND();
+    ctx.strokeStyle='#3a3f6a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+    ctx.fillStyle='rgba(90,100,160,0.25)';
+    const off=(t*speed)%24;
+    for(let x=-off;x<W;x+=24){ ctx.fillRect(x, gy+3, 12, 2); }
+
+    // bugs
+    for(const b of bugs){ drawBug(b); }
+    // player
+    drawBot(player);
+  }
+
+  function drawBot(p){
+    const x=p.x, y=p.y, w=p.w, h=p.h;
+    // shadow
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(x+w/2, GROUND()+2, w*0.55, 4, 0,0,Math.PI*2); ctx.fill();
+    // antenna
+    ctx.strokeStyle='#9ad'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x+w/2, y+2); ctx.lineTo(x+w/2, y-7); ctx.stroke();
+    ctx.fillStyle = (Math.floor(t/6)%2)? '#7df9ff':'#4b3aff';
+    ctx.beginPath(); ctx.arc(x+w/2, y-9, 3, 0, Math.PI*2); ctx.fill();
+    // body
+    ctx.fillStyle='#e8ecff';
+    roundRect(x, y+4, w, h-4, 7); ctx.fill();
+    // face visor
+    ctx.fillStyle='#0b1020';
+    roundRect(x+5, y+9, w-10, 13, 4); ctx.fill();
+    // eye (blinks)
+    const blinking = p.blink>132;
+    ctx.fillStyle = blinking? '#3a3f6a' : '#7df9ff';
+    if(!blinking){
+      ctx.beginPath(); ctx.arc(x+w/2, y+15, 3.4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.fillRect(x+w/2-1, y+13, 1.5, 1.5);
+    } else {
+      ctx.fillRect(x+w/2-3, y+15, 6, 1.5);
+    }
+    // legs (running)
+    ctx.fillStyle='#9aa3d6';
+    const s = p.onGround? Math.sin(p.step)*3 : 0;
+    ctx.fillRect(x+6, y+h-3, 6, 4+s);
+    ctx.fillRect(x+w-12, y+h-3, 6, 4-s);
+  }
+
+  function drawBug(b){
+    const x=b.x,y=b.y,w=b.w,h=b.h;
+    ctx.fillStyle='rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.ellipse(x+w/2, GROUND()+2, w*0.45,3,0,0,Math.PI*2); ctx.fill();
+    // body
+    const col = b.kind==='err' ? '#ff5d73' : b.kind==='glitch' ? '#ffb13d' : '#b15dff';
+    ctx.fillStyle=col; roundRect(x,y,w,h,5); ctx.fill();
+    // eyes
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(x+w*0.32,y+h*0.4,2.4,0,Math.PI*2); ctx.arc(x+w*0.68,y+h*0.4,2.4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#0b1020';
+    ctx.beginPath(); ctx.arc(x+w*0.34,y+h*0.4,1.1,0,Math.PI*2); ctx.arc(x+w*0.70,y+h*0.4,1.1,0,Math.PI*2); ctx.fill();
+    // legs wiggle
+    ctx.strokeStyle=col; ctx.lineWidth=2;
+    const w2=Math.sin(t*0.5)*2;
+    ctx.beginPath();
+    ctx.moveTo(x+3,y+h-1); ctx.lineTo(x+1,y+h+3+w2);
+    ctx.moveTo(x+w-3,y+h-1); ctx.lineTo(x+w-1,y+h+3-w2);
+    ctx.stroke();
+  }
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // input
+  startBtn.addEventListener('click', start);
+  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); if(running) jump(); else if(dead) start(); });
+  window.addEventListener('keydown', function(e){
+    if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); if(running) jump(); else start(); }
+  });
+
+  // idle splash so it's not empty before start
+  reset(); draw();
+  if(reduce){ ovMsg.textContent='Tap Run, then jump with Space / ↑.'; }
+})();
+</script>
 {{ end }}
