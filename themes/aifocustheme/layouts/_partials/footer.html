@@ -3,7 +3,7 @@
       <span>Github</span></a></li>
   <li><a href="mailto:paul@aifoc.us" rel="me" title="Email Paul Kinlan">{{ partial "icon.html" "envelope" }}
       <span>Email me directly</span></a></li>
-  {{ with .OutputFormats.Get "RSS" }}<li><a href="{{ .RelPermalink }}" rel="alternate" type="application/rss+xml"
+  {{ with .Site.Home.OutputFormats.Get "RSS" }}<li><a href="{{ .RelPermalink }}" rel="alternate" type="application/rss+xml"
       title="RSS Feed">{{ partial "icon.html" "rss" }}<span>RSS</span></a></li>{{ end }}
   <li><a href="{{.Site.Params.discord}}" title="Discord for aifoc.us">{{ partial "icon.html" "discord" }}
       <span>Discord</span></a></li>

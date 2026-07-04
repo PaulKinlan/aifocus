@@ -41,7 +41,10 @@
 {{ template "_internal/opengraph.html" . }}
 {{ template "_internal/schema.html" . }}
 {{ template "_internal/twitter_cards.html" . }}
-{{ with .OutputFormats.Get "RSS" }}
+{{/* Site-level feed so EVERY page (posts included) advertises RSS discovery;
+     the per-page form only rendered on pages that have their own RSS output,
+     which silently dropped the link on posts. */}}
+{{ with .Site.Home.OutputFormats.Get "RSS" }}
 {{ printf `
 <link rel=%q type=%q href=%q title=%q>` .Rel .MediaType.Type .RelPermalink site.Title | safeHTML }}
 {{ end }}
