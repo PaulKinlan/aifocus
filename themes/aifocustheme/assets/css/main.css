@@ -159,6 +159,10 @@ article {
     font-family: "Georgia", "Times New Roman", Times, serif;
 
     font-size: 1.2rem;
+    /* Long unbreakable tokens (URLs, hyphenated code terms like
+       "opaque-url") must be allowed to wrap, otherwise they force a
+       horizontal scrollbar on narrow viewports. */
+    overflow-wrap: anywhere;
   }
 
   code {
@@ -179,9 +183,10 @@ article {
   }
 
   h1 {
-    font-size: 2.5em; /* Large size */
+    font-size: clamp(1.8rem, 6vw, 2.5em); /* Scale down on narrow viewports */
     line-height: 1.2;
     margin-bottom: 0.5em; /* Smaller bottom margin */
+    overflow-wrap: anywhere;
   }
 
   aside {
@@ -457,8 +462,10 @@ footer {
 
 .site-branding-line {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 0.25em 1em;
   border-bottom: 1px solid #000000;
   padding-bottom: 10px;
   margin-bottom: 20px;
@@ -475,9 +482,22 @@ footer {
   color: #333;
 }
 
+/* The post indicator can be a very long title. Let it shrink and wrap inside
+   the flex row so it never forces the header (and the page) wider than the
+   viewport on mobile. */
+.new-post-indicator {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.post-number {
+  flex: 0 0 auto;
+}
+
 .site-branding-title {
   font-family: Georgia, "Times New Roman", Times, serif;
-  font-size: 4.5em; /* Large size */
+  font-size: clamp(2.5rem, 12vw, 4.5em); /* Shrink on narrow viewports */
   line-height: 1;
   font-weight: normal;
   text-align: center; /* As per image */
@@ -601,6 +621,19 @@ footer {
 
 /* Responsive adjustments */
 @media (max-width: 600px) {
+  /* The site wordmark ("AI Focus") and the article h1 are designed for
+     desktop sizes; scale them down on phones so they don't dominate or
+     overflow a narrow viewport. */
+  .site-branding-title {
+    font-size: 3em;
+  }
+
+  h1,
+  h2.p-name {
+    font-size: 2em;
+    line-height: 1.2;
+  }
+
   .share-buttons {
     flex-direction: column;
     align-items: stretch;
