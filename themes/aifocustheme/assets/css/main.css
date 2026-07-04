@@ -461,16 +461,16 @@ footer {
 }
 
 .site-branding-line {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  /* 3-column grid: title left | #xx centred | empty right. The number sits
+     in the middle column under real layout (no transform), so it can never
+     overlap the title the way an absolutely-positioned+translated element does. */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 0.25em 1em;
   border-bottom: 1px solid #000000;
   padding-bottom: 10px;
   margin-bottom: 20px;
-  /* Anchor for the absolutely-centered .post-number (#xx). */
-  position: relative;
 }
 
 .new-post-indicator,
@@ -488,19 +488,14 @@ footer {
    the flex row so it never forces the header (and the page) wider than the
    viewport on mobile. */
 .new-post-indicator {
+  grid-column: 1;
   flex: 1 1 auto;
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
 .post-number {
-  /* Center the #xx in the top header row, independent of the title's
-     length. The title stays in the flex flow and wraps; the number floats
-     centered over it. */
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  grid-column: 2;
 }
 
 .site-branding-title {
