@@ -208,6 +208,39 @@
     ctx.closePath();
   }
 
+  // ---- WebMCP: let MCP-capable agents play the game (spec: webmachinelearning.github.io/webmcp/) ----
+  const mc = (typeof document!=="undefined" && document.modelContext) || (typeof navigator!=="undefined" && navigator.modelContext);
+  if (mc && mc.registerTool) {
+    const T = (text) => ({ content: [{ type: "text", text }] });
+    const stateJson = () => JSON.stringify({
+      running: running, gameOver: dead,
+      score: Math.floor(score), best: best, speed: Number(speed.toFixed(2)),
+      onGround: !!player.onGround, bugCount: bugs.length,
+      distanceToNextBug: bugs.length ? Math.round(Math.min.apply(null, bugs.map(function(b){return b.x-(player.x+player.w);}))) : null
+    });
+    try {
+      mc.registerTool({
+        name: "game_state",
+        description: "Read the live state of the aifoc.us 404 AI-runner game: tokens (score), best, speed, whether the robot is currently on the ground, number of bugs on screen, and the pixel distance to the nearest bug ahead. Use this to decide when to jump.",
+        inputSchema: { type: "object", properties: {} },
+        annotations: { readOnlyHint: true },
+        async execute() { return T(stateJson()); }
+      });
+      mc.registerTool({
+        name: "game_jump",
+        description: "Make the 404 game's little robot jump once. Returns the state immediately after. The game must be running; if it isn't, call game_restart first. Typical play loop: poll game_state, and when distanceToNextBug is small (roughly < 60) and onGround is true, call game_jump, then poll again.",
+        inputSchema: { type: "object", properties: {} },
+        async execute() { const was = player.onGround; if (running) jump(); return T(stateJson() + ' (jumped; wasOnGround:' + was + ')'); }
+      });
+      mc.registerTool({
+        name: "game_restart",
+        description: "Start or restart the aifoc.us 404 game from zero. Returns the initial state. Use this before playing, and again after gameOver becomes true.",
+        inputSchema: { type: "object", properties: {} },
+        async execute() { start(); return T(stateJson()); }
+      });
+    } catch (e) { console.warn("WebMCP game tool registration failed:", e); }
+  }
+
   // input
   startBtn.addEventListener('click', start);
   canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); if(running) jump(); else if(dead) start(); });
