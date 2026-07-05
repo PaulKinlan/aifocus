@@ -71,7 +71,7 @@
   // variable-height jump: tap = short hop, hold = full jump (cut handled in loop)
   function jump(){
     if(!running) return;
-    if(player.onGround){ player.vy = -13; player.onGround=false; }
+    if(player.onGround){ player.vy = -15.5; player.onGround=false; }
   }
 
   function start(){
@@ -101,12 +101,12 @@
     const f = dt*60;                // 60fps-normalised step → framerate-independent (no 120Hz speed-up)
     t += f;
     sky = (sky + 0.4*f) % 100000;
-    // Mario-style jump: gentle rise while held, cut short on release, snappy fall
+    // Mario-style jump: gentle rise while held (big arc), cut short on release (short hop), snappy fall
     const up = player.vy < 0;
     let g;
-    if(up && inputHeld) g = 1.1;       // rising + held  → full-height jump
-    else if(up) g = 2.5;               // rising + released → truncate (short hop)
-    else g = 1.6;                      // falling → faster descent (anti-float)
+    if(up && inputHeld) g = 0.85;      // rising + held   → full-height jump
+    else if(up) g = 2.8;               // rising + released → truncate (short hop)
+    else g = 1.5;                      // falling → faster descent (anti-float)
     player.vy += g*f;
     player.y += player.vy*f;
     const gr = GROUND()-player.h;
@@ -252,10 +252,12 @@
   }
 
   // input
-  startBtn.addEventListener('click', start);
-  // press = jump (and start holding); release = cut the jump (variable height)
-  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); inputHeld=true; if(running) jump(); else if(dead) start(); });
-  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ canvas.addEventListener(ev, function(){ inputHeld=false; }); });
+  startBtn.addEventListener('click', function(){ start(); if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); });
+  // press = jump (and start holding). Capture the pointer so the hold survives the finger/mouse
+  // moving off the canvas; only pointerup/cancel end the hold (not pointerleave, which fired
+  // spuriously and was cutting full jumps short in real browsers).
+  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); try{canvas.setPointerCapture(e.pointerId);}catch(_){} inputHeld=true; if(running) jump(); else if(dead) start(); });
+  ['pointerup','pointercancel'].forEach(function(ev){ canvas.addEventListener(ev, function(){ inputHeld=false; }); });
   window.addEventListener('keydown', function(e){
     if(e.code==='Space'||e.code==='ArrowUp'){
       e.preventDefault();
