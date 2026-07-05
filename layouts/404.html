@@ -61,20 +61,21 @@
 
   // world
   const GROUND = () => H*0.82;
-  let player, bugs, speed, score, best=0, running=false, dead=false, spawnIn, t, sky;
+  let player, bugs, speed, score, best=0, running=false, dead=false, spawnIn, t, sky, last=0, inputHeld=false;
   function reset(){
     player = { x: W*0.12, y: 0, w: 30, h: 34, vy: 0, onGround:true, blink:0, step:0 };
     player.y = GROUND()-player.h;
-    bugs = []; speed = 5.2; score = 0; spawnIn = 80; t=0; sky=0; dead=false;
+    bugs = []; speed = 4.5; score = 0; spawnIn = 80; t=0; sky=0; dead=false; last=0; inputHeld=false;
   }
 
+  // variable-height jump: tap = short hop, hold = full jump (cut handled in loop)
   function jump(){
     if(!running) return;
-    if(player.onGround){ player.vy = -12.4 - Math.min(2.5, speed*0.18); player.onGround=false; }
+    if(player.onGround){ player.vy = -13; player.onGround=false; }
   }
 
   function start(){
-    reset(); running=true; overlay.style.display='none'; loop();
+    reset(); running=true; overlay.style.display='none'; last=0; requestAnimationFrame(loop);
   }
   function over(){
     dead=true; running=false;
@@ -92,25 +93,34 @@
     bugs.push({ x: W+10, y: GROUND()-h, w: 20+Math.random()*8, h, kind });
   }
 
-  function loop(){
+  function loop(now){
     if(!running) return;
-    t++;
-    sky = (sky + 0.4) % 100000;
-    // player physics
-    player.vy += 0.62;                 // gravity
-    player.y += player.vy;
-    const g = GROUND()-player.h;
-    if(player.y >= g){ player.y=g; player.vy=0; player.onGround=true; player.step += speed*0.12; }
-    player.blink = (player.blink+1) % 140;
-    // speed up gently (softened for fair play on mobile)
+    if(!last) last = now;
+    let dt = (now - last)/1000; last = now;
+    if(dt>0.05) dt=0.05;            // clamp big gaps (tab refocus) so the world doesn't jump
+    const f = dt*60;                // 60fps-normalised step → framerate-independent (no 120Hz speed-up)
+    t += f;
+    sky = (sky + 0.4*f) % 100000;
+    // Mario-style jump: gentle rise while held, cut short on release, snappy fall
+    const up = player.vy < 0;
+    let g;
+    if(up && inputHeld) g = 1.1;       // rising + held  → full-height jump
+    else if(up) g = 2.5;               // rising + released → truncate (short hop)
+    else g = 1.6;                      // falling → faster descent (anti-float)
+    player.vy += g*f;
+    player.y += player.vy*f;
+    const gr = GROUND()-player.h;
+    if(player.y >= gr){ player.y=gr; player.vy=0; player.onGround=true; player.step += speed*0.12*f; }
+    player.blink += f; if(player.blink>140) player.blink -= 140;
+    // difficulty ramp
     speed = 4.5 + Math.min(5.5, score*0.007);
-    score += 0.18;
+    score += 0.18*f;
     scoreEl.textContent = Math.floor(score);
     // spawn
-    spawnIn -= 1;
+    spawnIn -= f;
     if(spawnIn<=0){ spawnBug(); spawnIn = 64 + Math.random()*70 - Math.min(22, score*0.035); }
     // move + cull + collide
-    for(const b of bugs){ b.x -= speed; }
+    for(const b of bugs){ b.x -= speed*f; }
     bugs = bugs.filter(b=>b.x+b.w> -10);
     for(const b of bugs){
       if(player.x < b.x+b.w-4 && player.x+player.w-4 > b.x &&
@@ -243,14 +253,19 @@
 
   // input
   startBtn.addEventListener('click', start);
-  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); if(running) jump(); else if(dead) start(); });
+  // press = jump (and start holding); release = cut the jump (variable height)
+  canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); inputHeld=true; if(running) jump(); else if(dead) start(); });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){ canvas.addEventListener(ev, function(){ inputHeld=false; }); });
   window.addEventListener('keydown', function(e){
     if(e.code==='Space'||e.code==='ArrowUp'){
       e.preventDefault();
-      if(e.repeat) return;            // ignore held-key auto-repeat: one jump per press
+      if(e.repeat) return;            // one jump per press (no held-key auto-repeat)
+      inputHeld=true;
       if(running) jump(); else start();
     }
   });
+  window.addEventListener('keyup', function(e){ if(e.code==='Space'||e.code==='ArrowUp') inputHeld=false; });
+  window.addEventListener('blur', function(){ inputHeld=false; });
 
   // idle splash so it's not empty before start
   reset(); draw();
