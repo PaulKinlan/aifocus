@@ -86,11 +86,32 @@
     overlay.style.display='flex';
   }
 
-  function spawnBug(){
+  window.__g={get bugs(){return bugs;},get score(){return score;},set score(v){score=v;},get running(){return running;},spawnObstacles:spawnObstacles,resetBugs:function(){bugs=[];}};
+
+  function spawnBug(x){
     const variants = ['bug','err','glitch'];
     const kind = variants[(Math.random()*variants.length)|0];
     const h = 22 + Math.random()*16;
-    bugs.push({ x: W+10, y: GROUND()-h, w: 20+Math.random()*8, h, kind });
+    bugs.push({ x: (x==null?W+10:x), y: GROUND()-h, w: 20+Math.random()*8, h, kind });
+  }
+  // flying drone: hovers high enough that a grounded player passes safely under it,
+  // but a jumping player collides → a "don't jump" dodge (opposite of the ground bugs).
+  function spawnFlyer(){
+    const w=36, h=20, gy=GROUND(), alt = 88 + Math.random()*36;
+    bugs.push({ x: W+12, y: gy-alt-h, w, h, kind:'drone', fly:true });
+  }
+  // sometimes spawn a cluster (2-3 bugs close together) so you need one long/well-timed jump
+  function spawnObstacles(){
+    const diff = Math.min(1, score/320);
+    const flyCh = score>120 ? (0.10 + 0.10*diff) : 0;     // drones appear after a warm-up
+    const grpCh = 0.18 + 0.22*diff;                       // clusters get more common over time
+    const r = Math.random();
+    if(r < flyCh){ spawnFlyer(); }
+    else if(r < flyCh + grpCh){
+      const n = 2 + (Math.random()<0.35?1:0);
+      let x = W+10;
+      for(let i=0;i<n;i++){ spawnBug(x); x += 44 + Math.random()*24; }
+    } else { spawnBug(W+10); }
   }
 
   function loop(now){
@@ -118,7 +139,7 @@
     scoreEl.textContent = Math.floor(score);
     // spawn
     spawnIn -= f;
-    if(spawnIn<=0){ spawnBug(); spawnIn = 64 + Math.random()*70 - Math.min(22, score*0.035); }
+    if(spawnIn<=0){ spawnObstacles(); spawnIn = 52 + Math.random()*86 - Math.min(18, score*0.03); }
     // move + cull + collide
     for(const b of bugs){ b.x -= speed*f; }
     bugs = bugs.filter(b=>b.x+b.w> -10);
@@ -187,7 +208,31 @@
     ctx.fillRect(x+w-12, y+h-3, 6, 4-s);
   }
 
+  function drawDrone(b){
+    const x=b.x,y=b.y,w=b.w,h=b.h, gy=GROUND();
+    // ground shadow (it's airborne)
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.beginPath(); ctx.ellipse(x+w/2, gy+2, w*0.4, 3, 0,0, Math.PI*2); ctx.fill();
+    // rotor blur (spinning)
+    ctx.strokeStyle='rgba(150,180,220,0.75)'; ctx.lineWidth=2;
+    const sp = Math.sin(t*0.9)*7;
+    ctx.beginPath();
+    ctx.moveTo(x+w*0.22,y+1); ctx.lineTo(x+w*0.22+sp,y-6);
+    ctx.moveTo(x+w*0.78,y+1); ctx.lineTo(x+w*0.78-sp,y-6);
+    ctx.stroke();
+    // arms
+    ctx.strokeStyle='#6f7bb0';
+    ctx.beginPath(); ctx.moveTo(x+w*0.22,y+2); ctx.lineTo(x+w*0.38,y+h*0.5);
+    ctx.moveTo(x+w*0.78,y+2); ctx.lineTo(x+w*0.62,y+h*0.5); ctx.stroke();
+    // body
+    ctx.fillStyle='#a9bdf0'; roundRect(x+w*0.22, y+h*0.25, w*0.56, h*0.7, 5); ctx.fill();
+    // scanning eye (blinks red)
+    ctx.fillStyle = (Math.floor(t/6)%2) ? '#ff5d73' : '#5a0018';
+    ctx.beginPath(); ctx.arc(x+w/2, y+h*0.6, 2.6, 0, Math.PI*2); ctx.fill();
+  }
+
   function drawBug(b){
+    if(b.kind==='drone'){ drawDrone(b); return; }
     const x=b.x,y=b.y,w=b.w,h=b.h;
     ctx.fillStyle='rgba(0,0,0,0.25)';
     ctx.beginPath(); ctx.ellipse(x+w/2, GROUND()+2, w*0.45,3,0,0,Math.PI*2); ctx.fill();
