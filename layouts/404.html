@@ -70,7 +70,7 @@
 
   function jump(){
     if(!running) return;
-    if(player.onGround){ player.vy = -12.2; player.onGround=false; }
+    if(player.onGround){ player.vy = -12.4 - Math.min(2.5, speed*0.18); player.onGround=false; }
   }
 
   function start(){
@@ -102,13 +102,13 @@
     const g = GROUND()-player.h;
     if(player.y >= g){ player.y=g; player.vy=0; player.onGround=true; player.step += speed*0.12; }
     player.blink = (player.blink+1) % 140;
-    // speed up gently
-    speed = 5.2 + Math.min(7.5, score*0.012);
+    // speed up gently (softened for fair play on mobile)
+    speed = 4.5 + Math.min(5.5, score*0.007);
     score += 0.18;
     scoreEl.textContent = Math.floor(score);
     // spawn
     spawnIn -= 1;
-    if(spawnIn<=0){ spawnBug(); spawnIn = 46 + Math.random()*58 - Math.min(26, score*0.05); }
+    if(spawnIn<=0){ spawnBug(); spawnIn = 64 + Math.random()*70 - Math.min(22, score*0.035); }
     // move + cull + collide
     for(const b of bugs){ b.x -= speed; }
     bugs = bugs.filter(b=>b.x+b.w> -10);
