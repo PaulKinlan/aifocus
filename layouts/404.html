@@ -212,7 +212,11 @@
   startBtn.addEventListener('click', start);
   canvas.addEventListener('pointerdown', function(e){ e.preventDefault(); if(running) jump(); else if(dead) start(); });
   window.addEventListener('keydown', function(e){
-    if(e.code==='Space'||e.code==='ArrowUp'){ e.preventDefault(); if(running) jump(); else start(); }
+    if(e.code==='Space'||e.code==='ArrowUp'){
+      e.preventDefault();
+      if(e.repeat) return;            // ignore held-key auto-repeat: one jump per press
+      if(running) jump(); else start();
+    }
   });
 
   // idle splash so it's not empty before start
