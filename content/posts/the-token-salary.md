@@ -1,5 +1,6 @@
 ---
 title: the token salary
+seotitle: "Paying for AI agents in tokens instead of salaries"
 date: 2026-03-27T20:00:00.000Z
 slug: the-token-salary
 draft: false

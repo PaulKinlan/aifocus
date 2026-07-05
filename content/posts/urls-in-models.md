@@ -1,5 +1,6 @@
 ---
 title: does a url in a prompt steer an llm's output toward its content?
+seotitle: "Can a URL in a prompt change an LLM's output?"
 description: Testing whether opaque URLs act as pointers to memorized content, and finding that JavaScript-rendered sites may be missing from model training entirely
 date: 2026-07-03T09:00:00.000Z
 slug: influencing-model-output-with-urls

@@ -1,5 +1,6 @@
 ---
 title: "how might a modern lighthouse work with large language models?"
+seotitle: "A Lighthouse-style web audit run by an LLM"
 date: 2026-07-03T16:30:00.000Z
 slug: how-might-a-modern-lighthouse-work-with-llms
 authors:

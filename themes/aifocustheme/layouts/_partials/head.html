@@ -13,7 +13,10 @@
      themed and the initial canvas paints correctly; the palette itself is chosen
      by prefers-color-scheme in main.css, so the user's light preference is honoured. */}}
 <meta name="color-scheme" content="light dark">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
+{{/* SEO <title>: an optional `seotitle` front-matter field overrides ONLY the
+     title tag (what search engines show), leaving the artful .Title as the H1.
+     Falls back to .Title when no seotitle is set. */}}
+<title>{{ if .IsHome }}{{ printf "%s — Paul Kinlan on how AI is changing the web" site.Title }}{{ else }}{{ printf "%s | %s" (or .Params.seotitle .Title) site.Title }}{{ end }}</title>
 {{/* Description resolution, most specific first:
      page front-matter .Description -> page .Summary -> site params.description.
      The site-level fallback (params.description in hugo.toml) keeps the

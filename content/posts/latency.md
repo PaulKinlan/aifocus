@@ -1,5 +1,6 @@
 ---
 title: latency
+seotitle: "What falling AI model latency means for the web"
 date: 2025-05-22T19:59:06.193Z
 slug: latency
 authors:

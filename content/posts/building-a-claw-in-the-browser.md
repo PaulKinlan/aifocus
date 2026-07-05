@@ -1,5 +1,6 @@
 ---
 title: building a claw in the browser
+seotitle: "Building an in-browser AI agent with full page access"
 date: 2026-05-22T20:05:00.000Z
 slug: building-a-claw-in-the-browser
 authors:

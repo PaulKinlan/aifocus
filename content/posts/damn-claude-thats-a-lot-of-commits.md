@@ -1,5 +1,6 @@
 ---
 title: damn claude, that's a lot of commits
+seotitle: "How much of the code on GitHub is now AI-written"
 date: 2026-03-30T20:00:00.000Z
 slug: damn-claude-thats-a-lot-of-commits
 draft: false

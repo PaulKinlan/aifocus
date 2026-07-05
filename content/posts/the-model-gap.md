@@ -1,5 +1,6 @@
 ---
 title: "please mind the model gap"
+seotitle: "Why AI models are always behind the live web"
 date: 2026-06-07T18:00:00.000Z
 slug: please-mind-the-model-gap
 authors:

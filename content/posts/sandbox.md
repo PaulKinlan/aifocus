@@ -1,5 +1,6 @@
 ---
 title: the browser is the sandbox
+seotitle: "The browser is the best sandbox for AI agents"
 description: The browser is the sandbox
 date: "2026-01-25T00:30:00.000Z"
 slug: the-browser-is-the-sandbox
