@@ -1,5 +1,5 @@
 ---
-title: "Mashups 2.0"
+title: ai agents make mashups worth revisiting
 seotitle: "AI website mashups: remixing services with agents"
 date: 2025-05-24T16:00:06.193Z
 slug: ai-powered-site-mashups

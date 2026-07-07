@@ -1,5 +1,5 @@
 ---
-title: dangerous
+title: calling apis from the browser shouldn't mean exposing keys
 date: 2025-08-22T00:00:00.000Z
 slug: dangerous
 authors:

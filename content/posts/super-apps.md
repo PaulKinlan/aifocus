@@ -1,5 +1,5 @@
 ---
-title: super-apps
+title: llms are becoming the new super-apps
 date: 2025-05-12T12:05:38.727Z
 slug: super-apps
 authors:

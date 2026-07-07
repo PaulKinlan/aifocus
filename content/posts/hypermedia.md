@@ -1,5 +1,5 @@
 ---
-title: hypermedia
+title: hypermedia was always the point
 date: 2025-08-18T00:00:00.000Z
 slug: hypermedia
 authors:

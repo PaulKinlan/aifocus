@@ -1,5 +1,5 @@
 ---
-title: model half-life
+title: how fast do ai models go stale?
 seotitle: "Model half-life: how fast do AI models go stale?"
 date: 2026-05-18T07:00:00.000Z
 slug: model-half-life

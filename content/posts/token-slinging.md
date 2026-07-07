@@ -1,5 +1,5 @@
 ---
-title: token slinging
+title: what token slinging taught me about ai costs
 date: 2025-06-30T10:00:06.193Z
 slug: token-slinging
 authors:

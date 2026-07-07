@@ -1,5 +1,5 @@
 ---
-title: on-device
+title: on-device ai needs a trust model
 date: 2025-06-12T23:00:00.000Z
 slug: on-device
 authors:

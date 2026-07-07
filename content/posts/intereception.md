@@ -1,5 +1,5 @@
 ---
-title: interception
+title: intercepting the web with an llm
 date: 2025-09-21T13:00:00.000Z
 slug: interception
 authors:

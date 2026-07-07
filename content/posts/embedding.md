@@ -1,5 +1,5 @@
 ---
-title: embedding
+title: embedding is the web's composability superpower
 date: 2025-05-28T10:59:06.193Z
 slug: embedding
 authors:

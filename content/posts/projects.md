@@ -1,5 +1,5 @@
 ---
-title: projects
+title: the projects behind my ai focus posts
 description:
 date: 2026-01-02T19:20:54.779Z
 slug: projects

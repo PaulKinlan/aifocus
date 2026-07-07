@@ -1,5 +1,5 @@
 ---
-title: Whither CMS?
+title: what happens to the cms when ai can build the site?
 description:
 date: 2025-07-05T21:47:22.638Z
 slug: whither-cms

@@ -1,5 +1,5 @@
 ---
-title: transition
+title: this transition feels different
 description:
 date: 2025-05-09T19:05:38.727Z
 slug: transition

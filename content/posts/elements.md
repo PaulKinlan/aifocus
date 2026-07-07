@@ -1,5 +1,5 @@
 ---
-title: elements
+title: web components are packaging for ai-generated ui
 seotitle: "Web components as packaging for AI-generated UI"
 date: 2025-07-16T17:00:00.000Z
 slug: elements
