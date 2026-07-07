@@ -18,6 +18,14 @@
 - When a relevant existing post, demo, or page on this blog clearly relates to the topic, include an internal link to it. Search the local content when needed instead of relying on memory.
 - When making article suggestions or edits, include concrete link opportunities and interactive-element ideas alongside prose recommendations.
 
+## Post Titles
+
+- When drafting, reviewing, or editing a post, always review the visible `title` against the post's actual argument, not just the opening anecdote.
+- If the title is vague, overly short, too clever, or not descriptive enough for someone browsing the site, suggest stronger alternatives.
+- Prefer titles that are lowercase, specific, and intriguing: clear enough to explain the post, but sharp enough to make someone want to click.
+- When a post has a `seotitle`, compare it with the visible `title`. Consider whether the SEO title should become the visible title, or whether the visible title needs a better human-facing version.
+- Preserve existing slugs unless Paul explicitly asks to change URLs.
+
 ## Website Debugging
 
 - Use Chrome DevTools MCP (`chrome-devtools-mcp`) only for website debugging.
