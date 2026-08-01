@@ -1,0 +1,62 @@
+{{- /*
+  BlogPosting — https://developers.google.com/search/docs/appearance/structured-data/article
+
+  Note on expectations: Google retired the general Article rich result, so
+  this produces no visible SERP decoration for a personal blog. It is here
+  so author, dates, and publisher parse unambiguously, and because it is a
+  prerequisite signal for Discover / Top Stories eligibility. Correctness,
+  not decoration.
+
+  Everything below is already computed elsewhere in the theme (head.html's
+  description cascade, authors.html's author resolution); this partial only
+  re-serialises it as JSON-LD.
+*/ -}}
+{{- if .IsPage -}}
+  {{- /* Authors: mirror _partials/authors.html exactly — page `authors`
+         front matter, else site defaultAuthor — so the visible byline and
+         the structured data can never disagree. */ -}}
+  {{- $authorKeys := .Params.authors | default (slice site.Params.defaultAuthor) -}}
+  {{- $authors := slice -}}
+  {{- range $authorKeys -}}
+    {{- $p := partial "schema/person.html" (dict "key" . "ctx" $) -}}
+    {{- if $p }}{{ $authors = $authors | append $p }}{{ end -}}
+  {{- end -}}
+
+  {{- /* Description: front matter first, else the generated summary.
+         .Summary is HTML: plainify strips the tags, htmlUnescape then turns
+         entities back into characters. Without the second step the JSON
+         carries literal "I&rsquo;m" instead of "I’m" — valid JSON, wrong
+         text. jsonify re-escapes anything script-breaking afterwards. */ -}}
+  {{- $desc := "" -}}
+  {{- with .Description }}{{ $desc = . }}
+  {{- else }}{{ $desc = .Summary | plainify | htmlUnescape | strings.TrimSpace }}{{ end -}}
+
+  {{- /* Image: per-post if set, else the site card. `images` (plural) is the
+         Hugo/OpenGraph convention this site already uses in hugo.toml. */ -}}
+  {{- $img := "" -}}
+  {{- with .Params.image }}{{ $img = . }}
+  {{- else }}{{ with (.Params.images | default site.Params.images) }}{{ $img = index . 0 }}{{ end }}{{ end -}}
+
+  {{- $data := dict
+    "@context" "https://schema.org"
+    "@type" "BlogPosting"
+    "mainEntityOfPage" (dict "@type" "WebPage" "@id" .Permalink)
+    "url" .Permalink
+    "inLanguage" (or site.Language.Locale site.Language.Lang "en")
+    "isAccessibleForFree" true
+    "publisher" (dict "@type" "Organization" "name" site.Title "url" site.Home.Permalink)
+  -}}
+
+  {{- /* headline: Google drops the entire object if this exceeds 110 chars. */ -}}
+  {{- with .Title }}{{ $data = merge $data (dict "headline" (substr . 0 110)) }}{{ end -}}
+  {{- with $desc }}{{ $data = merge $data (dict "description" .) }}{{ end -}}
+  {{- with $img }}{{ $data = merge $data (dict "image" (slice (absURL .))) }}{{ end -}}
+  {{- with $authors }}{{ $data = merge $data (dict "author" .) }}{{ end -}}
+  {{- if not .Date.IsZero -}}
+    {{- $data = merge $data (dict "datePublished" (.Date.Format "2006-01-02T15:04:05Z07:00")) -}}
+    {{- $mod := or .Lastmod .Date -}}
+    {{- $data = merge $data (dict "dateModified" ($mod.Format "2006-01-02T15:04:05Z07:00")) -}}
+  {{- end -}}
+  {{- with .WordCount }}{{ $data = merge $data (dict "wordCount" .) }}{{ end -}}
+<script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
+{{- end -}}

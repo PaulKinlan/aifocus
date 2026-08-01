@@ -42,7 +42,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Joan&display=swap" rel="stylesheet">
 </noscript>
 {{ template "_internal/opengraph.html" . }}
-{{ template "_internal/schema.html" . }}
+{{/* JSON-LD structured data. Replaces Hugo's _internal/schema.html, which
+     emitted <meta itemprop> tags with no enclosing itemscope/itemtype — inert
+     markup that no consumer could read. See _partials/schema.html. */}}
+{{ partial "schema.html" . }}
 {{ template "_internal/twitter_cards.html" . }}
 {{/* Site-level feed so EVERY page (posts included) advertises RSS discovery;
      the per-page form only rendered on pages that have their own RSS output,

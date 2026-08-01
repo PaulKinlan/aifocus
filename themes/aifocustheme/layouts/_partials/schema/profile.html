@@ -1,0 +1,30 @@
+{{- /*
+  ProfilePage — https://developers.google.com/search/docs/appearance/structured-data/profile-page
+
+  Applied to the /authors/<key>/ term pages, which are already marked up as
+  h-cards with rel="me" links. This is the JSON-LD translation of markup the
+  theme was already emitting for microformats consumers.
+
+  The Person node comes from schema/person.html — the same node the articles
+  cite as `author`, so Google sees one entity rather than two similar ones.
+*/ -}}
+{{- $key := "" -}}
+{{- /* Term pages: the last path segment is the author key
+       (/authors/paulkinlan/ -> paulkinlan). Mirrors layouts/authors/term.html. */ -}}
+{{- $parts := split (strings.TrimSuffix "/" .RelPermalink) "/" -}}
+{{- with $parts }}{{ $key = index . (sub (len .) 1) }}{{ end -}}
+
+{{- $person := partial "schema/person.html" (dict "key" $key "ctx" .) -}}
+{{- if $person -}}
+  {{- /* The term page's own body copy is the person's bio. plainify strips
+         tags, htmlUnescape converts entities back to real characters. */ -}}
+  {{- with .Content | plainify | htmlUnescape | strings.TrimSpace -}}
+    {{- $person = merge $person (dict "description" .) -}}
+  {{- end -}}
+
+  {{- $data := dict
+    "@context" "https://schema.org"
+    "@type" "ProfilePage"
+    "mainEntity" $person -}}
+<script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
+{{- end -}}

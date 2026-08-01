@@ -1,0 +1,41 @@
+{{- /*
+  BreadcrumbList — https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
+
+  Posts are permalinked flat at /:slug/, so the URL alone carries no
+  hierarchy. The section page (/posts/) is the real parent, so we read it
+  from .CurrentSection rather than parsing the path.
+
+  Google uses the LAST entry as the current page and expects it to have no
+  `item` — including one makes the final crumb a link to itself, which is
+  what most hand-rolled implementations get wrong.
+*/ -}}
+{{- if .IsPage -}}
+  {{- $items := slice (dict
+      "@type" "ListItem"
+      "position" 1
+      "name" "Home"
+      "item" site.Home.Permalink) -}}
+
+  {{- /* Parent section, when there is one that isn't the home page. */ -}}
+  {{- with .CurrentSection -}}
+    {{- if and .Permalink (ne .Permalink site.Home.Permalink) -}}
+      {{- $items = $items | append (dict
+          "@type" "ListItem"
+          "position" (add (len $items) 1)
+          "name" (or .LinkTitle .Title)
+          "item" .Permalink) -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- /* Current page: name only, no `item`. */ -}}
+  {{- $items = $items | append (dict
+      "@type" "ListItem"
+      "position" (add (len $items) 1)
+      "name" (or .LinkTitle .Title)) -}}
+
+  {{- $data := dict
+    "@context" "https://schema.org"
+    "@type" "BreadcrumbList"
+    "itemListElement" $items -}}
+<script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
+{{- end -}}

@@ -1,0 +1,27 @@
+{{- /*
+  Structured-data entry point. Replaces Hugo's {{ template "_internal/schema.html" }},
+  which emitted bare <meta itemprop> tags with no enclosing itemscope/itemtype —
+  syntactically present, semantically inert, and invisible to the Rich Results
+  test. Nothing on the site consumed it.
+
+  One page type -> one set of nodes:
+    regular page      -> BlogPosting + BreadcrumbList
+    /authors/<key>/   -> ProfilePage (wrapping the shared Person node)
+    home              -> Organization + WebSite (@graph)
+
+  Video (VideoObject) is deliberately not here: its required properties
+  (name, thumbnailUrl, uploadDate) aren't available at page level and must
+  come from the youtube shortcode with real per-video metadata. Emitting a
+  post's date as a video's uploadDate would be inaccurate structured data.
+*/ -}}
+{{- if .IsHome -}}
+  {{- partial "schema/organization.html" . -}}
+{{- else if .IsPage -}}
+  {{- partial "schema/article.html" . -}}
+  {{- partial "schema/breadcrumb.html" . -}}
+{{- else if eq .Kind "term" -}}
+  {{- /* Only the authors taxonomy describes people. */ -}}
+  {{- if eq .Type "authors" -}}
+    {{- partial "schema/profile.html" . -}}
+  {{- end -}}
+{{- end -}}

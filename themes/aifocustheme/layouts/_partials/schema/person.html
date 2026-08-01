@@ -1,0 +1,44 @@
+{{- /*
+  Build a schema.org Person node from an author key in `params.authors`.
+
+  Returns a dict (via `return`) rather than emitting markup, so both the
+  Article node (author) and the ProfilePage node (mainEntity) describe the
+  same person identically. Keeping one source avoids the classic failure
+  where an article's author and the author's own profile page disagree and
+  Google can't reconcile them into one entity.
+
+  Call: {{ $person := partial "schema/person.html" (dict "key" "paulkinlan" "ctx" .) }}
+
+  `url` points at the on-site author term page (the canonical identity for
+  this site); external profiles go in `sameAs`, which is exactly the
+  distinction schema.org draws.
+*/ -}}
+{{- $key := .key -}}
+{{- $ctx := .ctx -}}
+{{- $author := index site.Params.authors $key -}}
+{{- $person := dict -}}
+{{- with $author -}}
+  {{- /* sameAs: every off-site profile we know about, empties dropped and
+         deduped — some authors reuse one URL across fields (andreban's
+         homepage and bluesky are both bandarra.me), and repeating an
+         identifier in sameAs is meaningless noise. */ -}}
+  {{- $sameAs := slice -}}
+  {{- range (slice .homepage .twitter .linkedin .bluesky) -}}
+    {{- with . }}{{ $sameAs = $sameAs | append . }}{{ end -}}
+  {{- end -}}
+  {{- $sameAs = $sameAs | uniq -}}
+
+  {{- $person = dict
+    "@type" "Person"
+    "name" .name
+    "url" (printf "%sauthors/%s/" site.Home.Permalink $key)
+  -}}
+  {{- with $sameAs }}{{ $person = merge $person (dict "sameAs" .) }}{{ end -}}
+
+  {{- /* Author headshots live in assets/images/<key>.png; only reference one
+         that actually exists, so we never emit a 404 image URL. */ -}}
+  {{- with resources.Get (printf "images/%s.png" $key) -}}
+    {{- $person = merge $person (dict "image" .Permalink) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $person -}}

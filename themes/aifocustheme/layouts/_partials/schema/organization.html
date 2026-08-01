@@ -1,0 +1,45 @@
+{{- /*
+  WebSite + Organization for the home page.
+  https://developers.google.com/search/docs/appearance/structured-data/organization
+
+  Emitted as an @graph so the two nodes are explicitly linked (`publisher`
+  references the Organization by @id) instead of floating as two unrelated
+  objects. This is what lets Google treat "AI Focus" as one entity.
+
+  No `logo` is emitted: the only site-wide image is images/card.jpeg, which
+  is a social card, not a logo. Google expects a real logo here, and a wrong
+  one is worse than an absent optional property. Add a proper logo asset and
+  this partial can grow a `logo` node.
+*/ -}}
+{{- $siteId := printf "%s#website" site.Home.Permalink -}}
+{{- $orgId := printf "%s#organization" site.Home.Permalink -}}
+
+{{- $org := dict
+  "@type" "Organization"
+  "@id" $orgId
+  "name" site.Title
+  "url" site.Home.Permalink -}}
+{{- with site.Params.description }}{{ $org = merge $org (dict "description" .) }}{{ end -}}
+
+{{- /* The people behind the site, so the Organization links to the same
+       Person nodes the articles and profile pages use. */ -}}
+{{- $founders := slice -}}
+{{- range $key, $_ := site.Params.authors -}}
+  {{- $p := partial "schema/person.html" (dict "key" $key "ctx" $) -}}
+  {{- if $p }}{{ $founders = $founders | append $p }}{{ end -}}
+{{- end -}}
+{{- with $founders }}{{ $org = merge $org (dict "member" .) }}{{ end -}}
+
+{{- $website := dict
+  "@type" "WebSite"
+  "@id" $siteId
+  "url" site.Home.Permalink
+  "name" site.Title
+  "inLanguage" (or site.Language.Locale site.Language.Lang "en")
+  "publisher" (dict "@id" $orgId) -}}
+{{- with site.Params.description }}{{ $website = merge $website (dict "description" .) }}{{ end -}}
+
+{{- $data := dict
+  "@context" "https://schema.org"
+  "@graph" (slice $org $website) -}}
+<script type="application/ld+json">{{ $data | jsonify | safeJS }}</script>
