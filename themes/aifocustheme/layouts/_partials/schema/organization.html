@@ -35,7 +35,7 @@
   "@id" $siteId
   "url" site.Home.Permalink
   "name" site.Title
-  "inLanguage" (or site.Language.Locale site.Language.Lang "en")
+  "inLanguage" (or site.Language.Lang "en")
   "publisher" (dict "@id" $orgId) -}}
 {{- with site.Params.description }}{{ $website = merge $website (dict "description" .) }}{{ end -}}
 
