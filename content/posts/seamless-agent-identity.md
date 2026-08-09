@@ -23,7 +23,7 @@ CHAOS needed a way for me to talk to my agents when I wasn't at my keyboard. So 
 
 That pattern worked so well that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of an extension full of agents, it was my coding agent — a single pi session — that I could drive from Telegram. Same identity model, same relay server, narrower scope.
 
-The architecture is simple. At first setup, the agent generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
+The architecture is deliberately minimal. At first setup, the agent generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
 
 ![pi-chaos-relay authentication flow](/images/chaos-relay-auth-flow.svg)
 
