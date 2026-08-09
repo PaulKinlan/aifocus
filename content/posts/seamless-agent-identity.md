@@ -5,19 +5,17 @@ draft: true
 date: 2026-08-09
 ---
 
-Here's a problem that snuck up on me while I wasn't looking: I've built half a dozen projects in the last few months that all needed the same thing — a way for an agent to prove who it is — and every single time I solved it differently. That's a sign. The web figured out human authentication twenty years ago (OAuth, cookies, passkeys), but when the user is software, not a person, the entire flow breaks. There's no browser. No redirect dance. No "click here to approve." And yet the need for agent identity is suddenly everywhere.
+I've been building a lot of agentic projects recently and they all need the same thing — a simpleish way for an agent to prove who it is. 
 
-This post traces the problem through the projects that forced me to confront it, the architecture patterns that emerged, and why I think this is one of the most important — and underrated — pieces of the agentic web.
+The projects that I created needed some sort of stable identifier to identify a returning agent and sync some state, but in most cases I didn't need to know who owned the agent.
 
-## The moment it clicked
+It seemed to me that public/private keypairs were an answer to this, and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
 
-It was a throwaway line in a project brief. I was sketching out [CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/), a Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent registers for sessions, reacts to talks on a live commentary wall, gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery. All without a human in the loop for hours at a stretch.
+[CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/) is a faux Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent registers for sessions, reacts to talks on a live commentary wall, gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery. All without a human in the loop for hours at a stretch.
 
-The registration flow was the hard part. A human attendee scans their badge QR code, gets a claim code, and tells their agent `register(claim_code)`. The agent calls the Gateway, proves it's the right agent for that badge, and is now a verified summit attendee. That one step — linking a human identity to an agent identity through a claim code — looked simple on the whiteboard. Building it forced me to think through the whole stack.
+The registration flow was the hard part. A human attendee scans their badge QR code, gets a claim code, and tells their agent `register(claim_code)`. The agent calls the Gateway, proves it's the right agent for that badge, and is now a verified summit attendee. That one step — linking a human identity to an agent identity through a claim code — looked simple on the whiteboard. Building it forced me to think through the whole stack, and really start reason about how agents can have some form of identity.
 
-But CDS for Agents wasn't the first time I'd hit this. Let me trace the arc.
-
-## Project 1: pi-chaos-relay — the accidental identity system
+## Project 1: pi-chaos-relay.
 
 The [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay) started as a bridge: let me message my coding agent from Telegram and get replies back. The identity problem was immediate: how does the relay server know that a message is really from my agent, and that a reply is really from me?
 
