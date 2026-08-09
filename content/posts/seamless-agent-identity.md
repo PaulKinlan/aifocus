@@ -23,6 +23,8 @@ The [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay) started as a 
 
 The solution was accidental but elegant. At first setup, pi-chaos-relay generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
 
+![pi-chaos-relay authentication flow](/images/chaos-relay-auth-flow.svg)
+
 This worked so well that when I later added an admin UI (`/app`), authentication followed the same model: the CLI mints a one-time device-link token (signed), the browser redeems it for a 24-hour session. Still no accounts. Still keypair-driven.
 
 The architecture lesson: **a cryptographic keypair is the natural identity primitive for an agent**. It's machine-native, doesn't require a browser, doesn't require human presence, and the proof-of-possession is computationally cheap. For a personal agent operating on your behalf, this is the right default.
@@ -54,6 +56,8 @@ The Cairn architecture is comprehensive, but it's also heavy. Not every project 
 CDS for Agents uses a lighter touch. The identity problem is narrower: link a human attendee to their agent for the duration of a two-day summit.
 
 The flow: a human scans their badge QR code → receives a claim code → tells their agent `register(claim_code)`. The Gateway validates the code, binds the agent's identity to the attendee record, and issues a summit-scoped session. No keypairs. No OAuth. Just a one-time code, atomically consumed.
+
+![CDS for Agents enrollment flow](/images/cds-agents-auth-flow.svg)
 
 This is the pattern for **event-scoped, human-anchored agent identity**. It's less general than Cairn's cryptographic hierarchy, but it's exactly right for the use case. The agent gets exactly enough identity to participate in the summit, and no more. When the summit ends, the binding expires.
 
@@ -110,32 +114,7 @@ Auth0, Gravitee, and several others are converging on similar patterns. The dire
 
 Here's how I see the pieces composing, based on everything I've built and researched:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  DNS DISCOVERY                                          │
-│  _agent.pauls-site.dev  →  TXT "mcp https://..."       │
-│  /.well-known/agent-card.json                           │
-├─────────────────────────────────────────────────────────┤
-│  IDENTITY                                               │
-│  ECDSA/Ed25519 keypair (the agent)                      │
-│  Device key ← Owner key ← Recovery key(s)               │
-│  Enrollment via two-device ceremony + claim codes       │
-├─────────────────────────────────────────────────────────┤
-│  CAPABILITY GATEWAY (Cairn)                             │
-│  Agent requests operation → Gateway validates grant     │
-│  → Proxies request → Returns result                     │
-│  Agent never sees the token                             │
-├─────────────────────────────────────────────────────────┤
-│  AUTHORIZATION                                          │
-│  OAuth On-Behalf-Of (act claim in JWT)                  │
-│  Delegation chains with monotonic attenuation           │
-│  Policy engine (just-in-time, not static scopes)        │
-├─────────────────────────────────────────────────────────┤
-│  AUDIT & RECEIPTS                                       │
-│  Metadata-only: who, what, when, decision, outcome      │
-│  No tokens, no headers, no bodies in logs               │
-└─────────────────────────────────────────────────────────┘
-```
+![Cairn Gateway full architecture](/images/cairn-gateway-architecture.svg)
 
 The layers separate cleanly. DNS gets you to the right endpoint. A keypair proves you're the right agent. A capability gateway authorizes the specific operation. OAuth bridges the agent identity to the human user it represents. And audit receipts keep the whole thing accountable.
 

@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#7c3aed"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.12"/>
+    </filter>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+    @keyframes travelRight { 0% { opacity:0; transform:translate(0,0) } 10% { opacity:1 } 85% { opacity:1; transform:translate(80px,0) } 100% { opacity:0; transform:translate(80px,0) } }
+    @keyframes travelDown { 0% { opacity:0; transform:translate(0,0) } 10% { opacity:1 } 85% { opacity:1; transform:translate(0,60px) } 100% { opacity:0; transform:translate(0,60px) } }
+    @keyframes travelUp { 0% { opacity:0; transform:translate(0,60px) } 10% { opacity:1 } 85% { opacity:1; transform:translate(0,0) } 100% { opacity:0; transform:translate(0,0) } }
+    @keyframes highlight { 0%,100% { stroke:#cbd5e1; fill:white } 30%,70% { stroke:#7c3aed; fill:#f5f3ff } }
+    @keyframes verifyPulse { 0%,100% { fill:#f0fdf4; stroke:#86efac } 50% { fill:#dcfce7; stroke:#22c55e } }
+    @keyframes badgeGlow { 0%,100% { fill-opacity:0 } 50% { fill-opacity:0.15 } }
+
+    .t1 .scan-badge { animation: pulse 1.5s ease-in-out infinite }
+    .t1 .code-dot { animation: travelRight 2s ease-in-out infinite }
+    .t1 .human-label { animation: pulse 1.5s ease-in-out infinite 0.2s }
+
+    .t2 .give-code { animation: pulse 1.5s ease-in-out infinite }
+    .t2 .code-down { animation: travelDown 2s ease-in-out infinite }
+    .t2 .agent-label { animation: pulse 1.5s ease-in-out infinite 0.2s }
+
+    .t3 .register-call { animation: pulse 1.5s ease-in-out infinite }
+    .t3 .reg-dot { animation: travelRight 2s ease-in-out infinite }
+
+    .t4 .verify-step { animation: verifyPulse 2s ease-in-out infinite }
+    .t4 .bind-step { animation: pulse 1.5s ease-in-out infinite 0.4s }
+    .t4 .verified-badge { animation: badgeGlow 2s ease-in-out infinite }
+
+    .t5 .session-dot { animation: travelUp 2.2s ease-in-out infinite }
+    .t5 .attend-text { animation: pulse 1.5s ease-in-out infinite }
+  </style>
+
+  <!-- Background -->
+  <rect width="800" height="380" fill="#fafafa" rx="8"/>
+
+  <!-- Title -->
+  <text x="400" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">CDS for Agents · Identity Flow</text>
+  <text x="400" y="44" text-anchor="middle" font-size="10" fill="#94a3b8">claim-code enrollment for human→agent binding</text>
+
+  <!-- ============================================ -->
+  <!-- ACTORS -->
+  <!-- ============================================ -->
+
+  <!-- Human -->
+  <rect x="30" y="65" width="160" height="48" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="110" y="86" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">👤 Human Attendee</text>
+  <text x="110" y="103" text-anchor="middle" font-size="8.5" fill="#94a3b8">at Chrome Dev Summit</text>
+
+  <!-- Badge -->
+  <rect x="30" y="140" width="160" height="55" rx="8" fill="#fefce8" stroke="#fde047" stroke-width="1.2"/>
+  <text x="110" y="160" text-anchor="middle" font-size="10" font-weight="700" fill="#92400e">🏷️ Conference Badge</text>
+  <text x="110" y="176" text-anchor="middle" font-size="8.5" fill="#a16207">QR code with attendee ID</text>
+  <text x="110" y="190" text-anchor="middle" font-size="8" fill="#ca8a04">(physical badge or digital pass)</text>
+
+  <!-- Agent -->
+  <rect x="30" y="245" width="160" height="65" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="110" y="266" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">🤖 Your Agent</text>
+  <text x="110" y="283" text-anchor="middle" font-size="9" fill="#94a3b8">Claude Code / Gemini CLI / etc.</text>
+  <text x="110" y="298" text-anchor="middle" font-size="8.5" fill="#94a3b8">connects to Gateway via MCP</text>
+
+  <!-- Gateway -->
+  <rect x="560" y="130" width="210" height="180" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
+  <text x="665" y="152" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">🌐 CDS Agent Gateway</text>
+  <text x="665" y="168" text-anchor="middle" font-size="9" fill="#94a3b8">Deno Deploy · Deno KV</text>
+
+  <!-- Internal steps inside Gateway -->
+  <g class="t4">
+    <rect x="580" y="180" width="170" height="24" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1" class="verify-step"/>
+    <text x="665" y="196" text-anchor="middle" font-size="9" fill="#166534">✓ validate claim code</text>
+
+    <rect x="580" y="210" width="170" height="24" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1" class="bind-step"/>
+    <text x="665" y="226" text-anchor="middle" font-size="9" fill="#5b21b6">🔗 bind agent → attendee</text>
+
+    <rect x="580" y="240" width="170" height="24" rx="6" fill="#fefce8" stroke="#fde047" stroke-width="1" class="bind-step" style="animation-delay:0.8s"/>
+    <text x="665" y="256" text-anchor="middle" font-size="9" fill="#92400e">🎫 issue summit session</text>
+
+    <rect x="580" y="270" width="170" height="24" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1" class="verify-step"/>
+    <text x="665" y="286" text-anchor="middle" font-size="9" fill="#166534">✅ verified attendee</text>
+  </g>
+
+  <!-- Summit -->
+  <rect x="560" y="320" width="210" height="35" rx="8" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
+  <text x="665" y="342" text-anchor="middle" font-size="10" font-weight="700" fill="#5b21b6">🎪 Summit Experience</text>
+
+  <!-- ============================================ -->
+  <!-- FLOW STEPS (timeline) -->
+  <!-- ============================================ -->
+
+  <!-- Step indicators -->
+  <text x="250" y="78" font-size="9" font-weight="700" fill="#94a3b8">① SCAN</text>
+  <text x="250" y="160" font-size="9" font-weight="700" fill="#94a3b8">② CLAIM</text>
+  <text x="250" y="270" font-size="9" font-weight="700" fill="#94a3b8">③ REGISTER</text>
+
+  <!-- ============================================ -->
+  <!-- ARROWS & ANIMATIONS -->
+  <!-- ============================================ -->
+
+  <!-- ① Human → Badge (scan) -->
+  <g class="t1">
+    <line x1="192" y1="89" x2="192" y2="136" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowGray)"/>
+    <text x="210" y="115" font-size="8" fill="#94a3b8" class="scan-badge">scan</text>
+
+    <!-- Badge QR glow -->
+    <rect x="48" y="148" width="124" height="39" rx="4" fill="#7c3aed" opacity="0" class="verified-badge"/>
+  </g>
+
+  <!-- Claim code appears -->
+  <g class="t1">
+    <rect x="196" y="152" width="120" height="18" rx="4" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="0.8"/>
+    <text x="256" y="164" text-anchor="middle" font-size="8.5" font-weight="600" fill="#7c3aed">claim code: XK9M-4T2P</text>
+  </g>
+
+  <!-- ② Human → Agent (give code) -->
+  <g class="t2">
+    <line x1="192" y1="197" x2="192" y2="241" stroke="#7c3aed" stroke-width="1.2" stroke-dasharray="4,2" marker-end="url(#arrowPurple)"/>
+    <text x="210" y="222" font-size="8" fill="#7c3aed" class="give-code">give code</text>
+  </g>
+
+  <!-- ③ Agent → Gateway (register) -->
+  <g class="t3">
+    <line x1="192" y1="277" x2="556" y2="277" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowBlue)"/>
+    <rect x="300" y="264" width="140" height="20" rx="4" fill="#eff6ff" opacity="0.9"/>
+    <text x="370" y="278" text-anchor="middle" font-size="9" font-weight="600" fill="#2563eb" class="register-call">register(claim_code)</text>
+  </g>
+
+  <!-- Gateway → Summit (session) -->
+  <g class="t5">
+    <line x1="665" y1="312" x2="665" y2="316" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+    <text x="725" y="328" font-size="8.5" fill="#16a34a" class="attend-text">attend sessions</text>
+  </g>
+
+  <!-- ============================================ -->
+  <!-- KEY PROPERTIES CALLOUT -->
+  <!-- ============================================ -->
+  <g transform="translate(30, 340)">
+    <rect x="0" y="0" width="490" height="26" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
+    <text x="15" y="17" font-size="8.5" fill="#64748b">🔑</text>
+    <text x="35" y="17" font-size="8.5" fill="#64748b">one-time code · atomically consumed · binds agent to human · summit-scoped expiry · no passwords</text>
+  </g>
+
+</svg>
