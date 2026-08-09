@@ -10,10 +10,9 @@ authors:
 
 I think a lot of Web Development has changed almost overnight and I didn't quite realise it was happening. I know there is a lot of discussion about loops, graphs, goals and autoresearch, but general gist is that you give your LLM and agent harness an objective or some endstate and your tools will keep itterating until the goals have been achieved.
 
-I put this to test recently on a number of different projects and it's been pretty incredible and it's enabled me to change my level of engagement with my tools. I steer less.
+I put this to test recently on a number of different projects and it's been pretty incredible and it's enabled me to change my level of engagement with my tools. It feels like I'm watching Tom Cruise in Live, Die, Repeat, but with significantly fewer aliens.
 
-It feels like I'm watching Tom Cruise in Live, Die, Repeat, but with significantly fewer aliens.
-
+## Project 1: Chrome Platform Showcase
 The first project that I tried this on was a problem that we have on our team. Chrome updates every 4 weeks and there can be 30-40 changes to Chrome's view on the web-platform in every release. When Chrome moves to it's 2 week release cycle you would expect that that number might halve, but I expect everyone's favourite paradox (the Jeverons one) will come into play and we will eventually end up with the same number of changes every two weeks. For a developer relations team, the current state is already unsustainable. It's nearly impossible to create the requist examples and samples for every feature in every release.... So can I help the team?
 
 The [chrome-platform-showcase](https://chrome-platform-showcase.paulkinlan-ea.deno.net) is my experiment to create a complete directory of compelling samples, demos and tools for every feature that comes in to Chrome's web facing feature set. Chromestatus.com is our view on what we know about Chrome and it contains links to as much information we have about the state of the feature. So, if we have the links to the Spec (or the draft of it) that describes how it should work; the explainer which contains a more human-readble explanation and use-cases; links to the actual implementation in Chrome, as well as the change requests, bugs and feedback from the other browsers on the platform. We have a pretty good picture for how the feature works and what it was inteded to be used for, we can then prompt our favourite LLM and agent-harness to build what we think a developer (or their agent) might need and want to use.
@@ -24,14 +23,23 @@ I had to set out very clear goals and how to test. But the goal also included ho
 
 While there are some edge cases and issues, it's worked surprisingly well.
 
+## Project 2: WASM vs JS Benchmark
+I had a conversation with a friend in Chrome about WASM and that it outperforms JS quite frequently. The conversation turned to the use of LLMs and Agents and we asked the question: If people are starting to never look at the code the tools produce, why not just have them output straight to WASM? It was a fun conversation and it opens up a lot of other questions about one of the pillars of openness on the web, but we didn't even have a benchmark or any tests to validate our hypothesis that WASM is faster than JS. [wasm-vs-js](https://wasm-vs-js.paulkinlan-ea.deno.dev/) is my experiment to try and get to an answer. I had a hunch that given a comprehensive set of benchmarks that the tools would be able to get me the answer.
 
+This was a very interensting experiement. Firstly, I ran out of credits many times and had to move to less capable models. Secondly, I got to use the `pi-autoresearch` extension in two different scenarios.
+
+It took about 120 seconds to run the validation/testing phase of the build. I looked at this as a critical component because I was letting the tool just work with minimal supervisions and I needed a way to "ensure" that the LLM correctly implemented what I had asked, but it took far to long to complete. `/autoresearch make the build fastser` was enough for the tools to go through about 50 itterations and take the build from 120 seconds to about 12.
+
+Another area that I used autoresearch on was to help me answer a common complaint of performance benchmarks when comparing languages. Frequently when trying to create these types of benchmarks in the past is that idomatic code is not always the fast code. Well, it turns out `/autoresearch for every test create an optimized version. Keep the original so we can compare performance of original vs optimized in a benchmark run` works rather well. While the tools chew through tokens, it was incredible to watch the itteration towards more optimal versions with reasoning about what worked and what didn't.
+
+## Project 3: State of the Web using web-uplift
 * [state of the web](https://paulkinlan.github.io/state-of-the-web) - Using [webuplift](htttps://github.com/paulkinlan/webuplift) - you can take the report and optimize it.
 
+## Project 4: Web AI Showcase
 
+I have this hypothesis that many web developers, well, many people, struggle to see where AI models can be used for something useful for them. I've seen this happen for "Web AI", where we have a lot of the core technology but it's incredible hard to look at the portfolio of all the models on huggingface and know where you might want to use them for day-to-day tasks. So I decided to follow the example I had in from the `chrome-platform-showcase` example and task my LLM and Agent to itterate through each web-runnable model on huggingface and create a set of demo for each that highlight usecases for how they could be used in a more real-world scenario, and if possible create a demo combining multiple models.
 
-* [wasm-vs-js](https://wasm-vs-js.paulkinlan-ea.deno.dev/) - A side by side comparison of WebAssembly perforamnce and JavaScript
-* [webai.show](https://webai.show) - 
+[webai.show](https://webai.show/) is the site that pulls together over 230 different models each with between 3 and 4 usecase based examples.
 
-pi-auto-research - itterate until you reach a performance goal.
-  * For the WASM-vs-JS project, it took about 120 seconds to run the validation/testing phase of the build. It was a critical component because it helped me make sure that the LLM correctly implemented what I had asked. `/autoresearch make the build fastser` was enough for the tools to go through about 50 itterations and take the build from 120 seconds to about 12.
+This project was probably the smoothest of the set of demos as I didn't have to correct how I set up the goals or change constraints as new ideas came in to my head. It just chugged along for a while and burned up all my subscription quota.
 
