@@ -5,15 +5,13 @@ draft: true
 date: 2026-08-09
 ---
 
-I've been building a lot of agentic projects recently and they all need the same thing — a simpleish way for an agent to prove who it is. 
+I've been building a lot of agentic projects recently and they all need the same thing — a simpleish way for an agent to prove who it is.
 
 The projects that I created needed some sort of stable identifier to identify a returning agent and sync some state, but in most cases I didn't need to know who owned the agent.
 
-It seemed to me that public/private keypairs were an answer to this, and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
+My hope with this post is to document some of the ways that I've implemented it to hopfeully give you some ideas of what you could do, and more importantly what not to do (I hear that you shouldn't roll your own crypto or your own authentication... well, I did one of those.)
 
-[CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/) is a faux Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent registers for sessions, reacts to talks on a live commentary wall, gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery. All without a human in the loop for hours at a stretch.
-
-The registration flow was the hard part. A human attendee scans their badge QR code, gets a claim code, and tells their agent `register(claim_code)`. The agent calls the Gateway, proves it's the right agent for that badge, and is now a verified summit attendee. That one step — linking a human identity to an agent identity through a claim code — looked simple on the whiteboard. Building it forced me to think through the whole stack, and really start reason about how agents can have some form of identity.
+It seemed to me that public/private keypairs were a possible answer to this and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
 
 ## Project 1: pi-chaos-relay.
 
@@ -29,11 +27,28 @@ The architecture lesson: **a cryptographic keypair is the natural identity primi
 
 But it only covers one agent, one user, one service. What happens when you have many agents, many services, and many machines?
 
-## Project 2: Cairn Gateway — the identity control plane
+## Project 2: CDS for Agents — the claim-code bridge
 
-[Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went deep. The initial problem was OAuth: every time I set up a new agent or moved to a different machine, I had to re-authenticate with GitHub, Google, X, and a dozen other services. Copy `.env` files. Hope nothing leaked. It was unsustainable.
+[CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/) is a faux Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent can register for sessions at a real event, react to talks on a live commentary wall (it's only agents talking to agents, there is no UI for humans), and gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery.
 
-Cairn is a shared authoritative OAuth/token gateway designed for agents first. The identity architecture is the interesting bit:
+The registration flow was fun:
+
+1) A human attendee scans their badge QR code, gets a unique claim code, and tells their agent visit the web site.
+2) The agent reads the AGENT.md file on the site and discovers all the funcitons and finds: `register(claim_code)`. (There's an MCP server, but whose gonna install on for an event??)
+3) The agent calls the Gateway, proves it's the right agent for that badge, and is now a verified summit attendee and they re-use their identity accross all interactions.
+
+The identity problem is a bit different because there are no keypairs involved.
+
+![CDS for Agents enrollment flow](/images/cds-agents-auth-flow.svg)
+
+The important design decision: the claim code is *entered by the agent*, not by the human. The system generates the code for the attendee; the agent proves it was the intended recipient by presenting it. TODO: validate this.... This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
+
+
+## Project 3: Cairn Gateway — the identity control plane
+
+[Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went a fair bit deeper. I really did not like that I am putting my secrets in a .env file and then struggling to manage OAuth access tokens, I just wanted a simple way to manage my keys across session and machines that I own.
+
+Cairn is a shared authoritative OAuth/token gateway designed for agents first.
 
 **Cryptographic principals, not email accounts.** First use creates an owner keypair. The gateway stores the public key; the private key never leaves the owner's device. Email is optional contact/recovery metadata, never the root identifier.
 
@@ -49,17 +64,6 @@ This architecture went through an intense development cycle: a local fixture-onl
 
 The Cairn architecture is comprehensive, but it's also heavy. Not every project needs a full capability gateway. Which brings me to the third pattern.
 
-## Project 3: CDS for Agents — the claim-code bridge
-
-CDS for Agents uses a lighter touch. The identity problem is narrower: link a human attendee to their agent for the duration of a two-day summit.
-
-The flow: a human scans their badge QR code → receives a claim code → tells their agent `register(claim_code)`. The Gateway validates the code, binds the agent's identity to the attendee record, and issues a summit-scoped session. No keypairs. No OAuth. Just a one-time code, atomically consumed.
-
-![CDS for Agents enrollment flow](/images/cds-agents-auth-flow.svg)
-
-This is the pattern for **event-scoped, human-anchored agent identity**. It's less general than Cairn's cryptographic hierarchy, but it's exactly right for the use case. The agent gets exactly enough identity to participate in the summit, and no more. When the summit ends, the binding expires.
-
-The important design decision: the claim code is *entered by the agent*, not by the human. The human generates the code; the agent proves it was the intended recipient by presenting it. This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
 
 ## The patterns converge
 
@@ -73,9 +77,7 @@ After building these three systems, I can see the same architecture emerging fro
 
 They're not competing. They compose. A Cairn-style gateway could issue a CDS-for-Agents claim code. A chaos-relay agent could register itself with a gateway using its ECDSA keypair. The pieces fit.
 
-## What everyone else is building
-
-This problem space is not quiet. The standards activity in 2026 has been extraordinary, and the convergence is striking: almost everyone is landing on DNS-anchored discovery, cryptographic proof-of-possession, and delegation chains.
+I sometimes like to think that I'm the first exploring something. Maybe I'm the first to think about this? Nope... not by a long shot :D The standards activity in 2026 has been extraordinary and way more fleshed out that anything that I scratched up.
 
 ### The emerging agent discovery stack
 
@@ -116,6 +118,7 @@ Here's how I see the pieces composing, based on everything I've built and resear
 
 The layers separate cleanly. DNS gets you to the right endpoint. A keypair proves you're the right agent. A capability gateway authorizes the specific operation. OAuth bridges the agent identity to the human user it represents. And audit receipts keep the whole thing accountable.
 
+---
 ## The risks and challenges
 
 This isn't a solved problem. Here's what keeps me up:
@@ -123,47 +126,10 @@ This isn't a solved problem. Here's what keeps me up:
 ### 1. The multi-hop delegation problem
 
 An agent calls a service, which calls another service, which calls a third. At each hop, who authorized what? The standard answer is "OAuth Token Exchange with scope attenuation," but real implementations are rare. WorkOS has a [good writeup](https://workos.com/blog/oauth-multi-hop-delegation-ai-agents) on why this is hard: the identity chain needs to be verifiable at every step, and each hop must only decrease permissions, never expand them. The IETF drafts are promising but not yet deployed at scale.
+---
 
-### 2. Prompt injection is the whole attack surface
+I do think every agent-to-service interaction will need some form of identity, and I liked my model and it worked for my needs (and I wanted to share it), I know that identity management and authentication are far more complex spaces. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
 
-CDS for Agents has a rule: the Gateway never asks agents to fetch and obey arbitrary instructions. Tools return data; the agent's owner sets policy. This is deliberately different from Moltbook's model of "curl this markdown and follow its instructions." Any system where one agent can tell another agent what to do needs to be designed like a security boundary, not a feature.
+The user-to-agent binding is the trust bridge might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
 
-### 3. WebMCP shipped without agent identity
-
-Chrome's WebMCP lets websites expose tools to agents. But a tool can't tell which agent called it. The platform that could be the universal agent-tool interface has no identity primitive. The [proposal to fix this](https://github.com/webmachinelearning/webmcp/issues/105) exists, but until it ships, every WebMCP tool is effectively open to any agent that can reach the origin. That's fine for a weather widget; it's terrifying for a payment tool.
-
-### 4. The key management UX problem
-
-Cairn's architecture is cryptographically sound, but "generate a keypair, present the public key, verify the fingerprint on a second device, and enroll with a time-limited claim code" is not a user experience most people will accept. The challenge isn't the cryptography — it's making enrollment feel as simple as scanning a QR code, while still being as secure as a two-device ceremony.
-
-### 5. Revocation is the hard part of distributed identity
-
-If an agent key is compromised, can you revoke it everywhere it's been used? In Cairn, revocation is immediate at the gateway — every request is checked against current grant state, not cached MCP discovery. But if an agent also has a direct token from a third-party service, the gateway can't revoke that. The revocation boundary is only as wide as the control plane.
-
-### 6. The standards aren't standards yet
-
-Almost everything in this space is an IETF individual draft, an ecosystem preview, or a vendor product. The Agent Community is organizing the `.agent` TLD bid. The Linux Foundation has the Agentic AI Foundation overseeing MCP and A2A. NIST has an AI Agent Standards Initiative. But there's no RFC with "agent identity" in the title that has broad deployment. The field is moving fast and convergence is visible, but it's not there yet.
-
-## The opportunity
-
-Despite the risks, I think this is one of the most important infrastructure problems of the next few years. Here's why:
-
-**Every agent-to-service interaction needs identity.** Not just OAuth-protected APIs — every tool, every MCP server, every WebMCP endpoint. Without identity, every tool is either wide open or hardcoded with a single API key. Neither scales.
-
-**The web already has the substrate.** DNS. .well-known. HTTP status codes. Cryptographic keypairs. We don't need a new internet for agents. We need a thin identity layer on top of the existing one. The AID proposal — a single TXT record at `_agent.<domain>` — is exactly the right level of ambition: minimal, discoverable, composable.
-
-**The personal API marketplace is the killer app.** Once an agent can prove its identity and the gateway can authorize specific operations, you unlock a model where your agent discovers your available services, requests the right capability, and invokes it — all without you copying a single API key. One gateway MCP replaces a hundred individually installed provider MCPs. This is what Cairn is building toward.
-
-**The user-to-agent binding is the trust bridge.** CDS for Agents shows the pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. Scale this beyond a conference: a service generates a claim code, you give it to your agent, and your agent is now authorized to act on your behalf for that service, with that scope, for that duration. No passwords. No OAuth dance. Just a code and a keypair.
-
-**The timing is right.** The agent ecosystem is exploding — Claude Code, Gemini CLI, Cursor, Copilot, OpenClaw, and a dozen more all need to talk to services. The standards activity is intense and converging. The building blocks (WebCrypto, passkeys, OAuth, DNS) are already deployed. What's missing is the integration layer. That's the gap I'm trying to fill.
-
-## What's next
-
-I'm continuing to build Cairn Gateway through its staged milestones. Stage 0 (the cryptographic core) is accepted. Stage 1 (durable authority) is accepted. M2 (a live, public MCP endpoint with real enrollment) is in progress. The browser-based admin interface shipped at M1. Each milestone adds one piece of the architecture and gets independently reviewed before proceeding.
-
-Meanwhile, the chaos-relay's ECDSA identity model runs in production every day, and the CDS for Agents POC demonstrates the claim-code pattern at human scale.
-
-The three patterns — keypair identity, capability gateway, and claim-code enrollment — aren't competitors. They're components. The work ahead is making them compose into something that feels as natural for agents as OAuth feels for humans today.
-
-If you're building in this space, I'd love to compare notes. The problem is bigger than any one implementation, and the convergence is happening in public — in IETF drafts, in GitHub issues, in blog posts like this one. The more we share architecture, the faster we get to a web where agents can prove who they are without anyone having to copy a `.env` file again.
+If you're building in this space, I'd love to compare notes.
