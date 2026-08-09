@@ -68,69 +68,15 @@ This architecture went through an intense development cycle: a local fixture-onl
 
 The Cairn architecture is comprehensive, but it's also heavy. Not every project needs a full capability gateway. Which brings me to the third pattern.
 
-
-## The patterns converge
-
-After building these three systems, I can see the same architecture emerging from different angles:
-
-| Pattern | Example | Best for |
-|---|---|---|
-| **Cryptographic keypair** | pi-chaos-relay | Personal agents, long-lived identity, no accounts |
-| **Key hierarchy + capabilities** | Cairn Gateway | Multi-agent, multi-machine, OAuth brokering, audit |
-| **Claim-code enrollment** | CDS for Agents | Event-scoped, human-anchored, time-boxed |
-
-They're not competing. They compose. A Cairn-style gateway could issue a CDS-for-Agents claim code. A chaos-relay agent could register itself with a gateway using its ECDSA keypair. The pieces fit.
-
-I sometimes like to think that I'm the first exploring something. Maybe I'm the first to think about this? Nope... not by a long shot :D The standards activity in 2026 has been extraordinary and way more fleshed out that anything that I scratched up.
-
-### The emerging agent discovery stack
-
-The [Agent Community's discovery stack](https://agentcommunity.org/blog/emerging-agent-discovery-stack) maps the layers:
-
-1. **DNS-first bootstrap:** `_agent.<domain>` TXT records (AID), SVCB-based records (DNS-AID), or protocol-specific labels like `_mcp.<domain>`. The question is simple: given a domain, where's the agent entry point?
-2. **Rich description:** Agent Cards (`/.well-known/agent-card.json` for A2A), MCP Server Cards, manifests, registries. What can the agent do? What auth does it need?
-3. **Trust and authorization:** Who controls the namespace? Who controls the endpoint key? What may the agent do for this user?
-4. **Commerce:** x402 (HTTP 402 "Payment Required" for agent payments), Stripe/OpenAI's Agentic Commerce Protocol, Google's AP2 and UCP.
-
-This is still in flux — IETF drafts, Linux Foundation projects, and vendor products are all overlapping — but the shape is clear. The stack is separating into distinct responsibilities: routing, description, trust, authorization, and commerce are different layers.
-
-### Identity protocols in flight
-
-The IETF alone has over a dozen active drafts on agent identity and delegation. Here are the ones worth watching:
+I sometimes like to think that I'm the first exploring something. Maybe I'm the first to think about this? Nope... not by a long shot :D There are way more experienced people whose actual job is to work on this whose proposals are way more fleshed out than anything that I scratched up. I'll just quickly drop in some links:
 
 - **[AIP: Agent Identity Protocol](https://datatracker.ietf.org/doc/draft-singla-agent-identity-protocol/)** — DIDs, Ed25519-signed JWTs, capability manifests, signed delegation chains. Very aligned with Cairn's direction.
 - **[OAuth On-Behalf-Of for AI Agents](https://www.ietf.org/archive/id/draft-oauth-ai-agents-on-behalf-of-user-02.html)** — Extends the Authorization Code Grant with a `requested_actor` parameter. The agent gets an `act` claim in the JWT. Standard OAuth, agent-flavored.
 - **[AIDP: Agent Interaction & Delegation Protocol](https://datatracker.ietf.org/doc/draft-vandoulas-aidp/)** — Verifiable intent, auditable delegation chains, constrained execution boundaries.
 - **[Agent Trust Negotiation](https://datatracker.ietf.org/doc/draft-somoza-dmsc-atn-agent-trust-negotiation/)** — A handshake layer that binds capabilities, delegation, and provenance.
 - **[APKI: Agent Public Key Infrastructure](https://datatracker.ietf.org/doc/draft-sharif-apki-agent-pki/)** — X.509 certificates extended with agent-specific attributes: trust tiers, delegation chains.
-
-Meanwhile, [WebMCP](https://github.com/webmachinelearning/webmcp) — Chrome's early preview for websites exposing tools to agents — shipped *without* agent identity verification. The current `ModelContextClient` interface has no way for a tool to know which agent called it. There's an [active proposal](https://github.com/webmachinelearning/webmcp/issues/105) to add `agentId`, `grantedScopes`, and `correlationId`, but it's not there yet. This is a gap that needs closing.
-
-Microsoft's [Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/) and Auth0's [Agent as Principal](https://auth0.com/blog/agent-as-principal-purpose-built-identity-for-agents/) both argue for treating agents as first-class identity principals — not just API keys or service accounts, but entities with their own lifecycle, credentials, and policy.
-
-### The auth.md pattern
-
-An interesting development: [WorkOS's auth.md](https://workos.com/blog/teaching-your-api-to-onboard-ai-agents) proposes that services expose an `auth.md` file describing how agents should authenticate. An agent gets a 401, fetches `auth.md`, and follows the machine-readable instructions to register itself. It's the `robots.txt` for authentication — a discoverable, machine-readable declaration of how to get in.
-
-Auth0, Gravitee, and several others are converging on similar patterns. The direction is clear: **agent-native authentication means the service tells the agent how to authenticate, and the agent proves its identity cryptographically, without a browser in the loop.**
-
-## How the architecture fits together
-
-Here's how I see the pieces composing, based on everything I've built and researched:
-
-![Cairn Gateway full architecture](/images/cairn-gateway-architecture.svg)
-
-The layers separate cleanly. DNS gets you to the right endpoint. A keypair proves you're the right agent. A capability gateway authorizes the specific operation. OAuth bridges the agent identity to the human user it represents. And audit receipts keep the whole thing accountable.
-
----
-## The risks and challenges
-
-This isn't a solved problem. Here's what keeps me up:
-
-### 1. The multi-hop delegation problem
-
-An agent calls a service, which calls another service, which calls a third. At each hop, who authorized what? The standard answer is "OAuth Token Exchange with scope attenuation," but real implementations are rare. WorkOS has a [good writeup](https://workos.com/blog/oauth-multi-hop-delegation-ai-agents) on why this is hard: the identity chain needs to be verifiable at every step, and each hop must only decrease permissions, never expand them. The IETF drafts are promising but not yet deployed at scale.
----
+- **Microsoft's [Entra Agent ID](https://learn.microsoft.com/en-us/entra/agent-id/)** and Auth0's [Agent as Principal](https://auth0.com/blog/agent-as-principal-purpose-built-identity-for-agents/) both argue for treating agents as first-class identity principals — not just API keys or service accounts, but entities with their own lifecycle, credentials, and policy.
+- **[WorkOS's auth.md](https://workos.com/blog/teaching-your-api-to-onboard-ai-agents)** proposes that services expose an `auth.md` file describing how agents should authenticate. An agent gets a 401, fetches `auth.md`, and follows the machine-readable instructions to register itself. It's the `robots.txt` for authentication — a discoverable, machine-readable declaration of how to get in.
 
 I do think every agent-to-service interaction will need some form of identity, and I liked my model and it worked for my needs (and I wanted to share it), I know that identity management and authentication are far more complex spaces. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
 
