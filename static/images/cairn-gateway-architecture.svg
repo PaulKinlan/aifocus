@@ -1,200 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" font-family="system-ui, -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="system-ui, -apple-system, sans-serif">
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/>
+    <marker id="arrD" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5 Z" fill="#cbd5e1"/>
     </marker>
-    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.1"/>
-    </filter>
-    <filter id="shadowLg" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
-    </filter>
-    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-    <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#8b5cf6"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
-    </linearGradient>
-    <linearGradient id="amberGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
-    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#22c55e"/>
-      <stop offset="100%" stop-color="#16a34a"/>
-    </linearGradient>
-    <linearGradient id="redGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#ef4444"/>
-      <stop offset="100%" stop-color="#dc2626"/>
-    </linearGradient>
-    <linearGradient id="slateGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#64748b"/>
-      <stop offset="100%" stop-color="#475569"/>
-    </linearGradient>
+    <marker id="arrU" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrG" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5 Z" fill="#16a34a"/>
+    </marker>
   </defs>
 
-  <style>
-    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
-    @keyframes flowRight { 0% { opacity:0; transform:translate(0,0) } 15% { opacity:1 } 80% { opacity:1; transform:translate(35px,0) } 100% { opacity:0; transform:translate(35px,0) } }
-    @keyframes flowLeft { 0% { opacity:0; transform:translate(0,0) } 15% { opacity:1 } 80% { opacity:1; transform:translate(-35px,0) } 100% { opacity:0; transform:translate(-35px,0) } }
-    @keyframes flowUp { 0% { opacity:0; transform:translate(0,0) } 15% { opacity:1 } 80% { opacity:1; transform:translate(0,-30px) } 100% { opacity:0; transform:translate(0,-30px) } }
-    @keyframes highlightBorder { 0%,100% { stroke:#cbd5e1 } 40%,60% { stroke:#7c3aed } }
+  <rect width="720" height="420" fill="#fafafa" rx="8"/>
 
-    .layer-gateway { animation: highlightBorder 4s ease-in-out infinite }
-    .dot-right { animation: flowRight 2.5s ease-in-out infinite }
-    .dot-left { animation: flowLeft 2.5s ease-in-out infinite 0.8s }
-    .dot-up { animation: flowUp 2.5s ease-in-out infinite 0.4s }
-    .pulse-label { animation: pulse 2s ease-in-out infinite }
-  </style>
+  <text x="360" y="28" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Cairn Gateway · Architecture</text>
 
-  <rect width="800" height="520" fill="#fafafa" rx="8"/>
+  <!-- ===== LAYER 1: OWNER ===== -->
+  <rect x="200" y="50" width="320" height="34" rx="7" fill="white" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="360" y="72" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b">Owner Keypair + Passkey + Recovery Kit</text>
 
-  <!-- Title -->
-  <text x="400" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">Cairn Gateway · Architecture</text>
-  <text x="400" y="44" text-anchor="middle" font-size="10" fill="#94a3b8">shared authoritative OAuth/token gateway for agents</text>
+  <!-- Lines down to devices -->
+  <line x1="280" y1="85" x2="140" y2="108" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="3,2" marker-end="url(#arrD)"/>
+  <line x1="360" y1="85" x2="360" y2="108" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="3,2" marker-end="url(#arrD)"/>
+  <line x1="440" y1="85" x2="580" y2="108" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="3,2" marker-end="url(#arrD)"/>
 
-  <!-- ============================================ -->
-  <!-- LAYER 0: IDENTITY ROOT -->
-  <!-- ============================================ -->
-  <g>
-    <rect x="280" y="62" width="240" height="42" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1" filter="url(#shadow)"/>
-    <text x="400" y="80" text-anchor="middle" font-size="9" font-weight="700" fill="#64748b">🔐 IDENTITY ROOT</text>
-    <text x="400" y="95" text-anchor="middle" font-size="8.5" fill="#94a3b8">Owner Keypair · Passkey · Recovery Kit</text>
-  </g>
+  <!-- ===== LAYER 2: DEVICES ===== -->
+  <rect x="50" y="110" width="180" height="38" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="140" y="127" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Laptop</text>
+  <text x="140" y="141" text-anchor="middle" font-size="8.5" fill="#94a3b8">Device Key A</text>
 
-  <!-- ============================================ -->
-  <!-- LAYER 1: DEVICES -->
-  <!-- ============================================ -->
-  <g>
-    <rect x="40" y="125" width="190" height="40" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1" filter="url(#shadow)"/>
-    <text x="135" y="143" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">💻 Laptop</text>
-    <text x="135" y="157" text-anchor="middle" font-size="8" fill="#94a3b8">Device Key A</text>
+  <rect x="270" y="110" width="180" height="38" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="360" y="127" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Home Server</text>
+  <text x="360" y="141" text-anchor="middle" font-size="8.5" fill="#94a3b8">Device Key B</text>
 
-    <rect x="305" y="125" width="190" height="40" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1" filter="url(#shadow)"/>
-    <text x="400" y="143" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">🖥️ Home Server</text>
-    <text x="400" y="157" text-anchor="middle" font-size="8" fill="#94a3b8">Device Key B</text>
+  <rect x="490" y="110" width="180" height="38" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="580" y="127" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Phone / tmux</text>
+  <text x="580" y="141" text-anchor="middle" font-size="8.5" fill="#94a3b8">Device Key C</text>
 
-    <rect x="570" y="125" width="190" height="40" rx="8" fill="white" stroke="#cbd5e1" stroke-width="1" filter="url(#shadow)"/>
-    <text x="665" y="143" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">📱 Phone / tmux</text>
-    <text x="665" y="157" text-anchor="middle" font-size="8" fill="#94a3b8">Device Key C</text>
-  </g>
+  <!-- Agent pills per device -->
+  <rect x="65" y="158" width="65" height="18" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6"/>
+  <text x="97" y="171" text-anchor="middle" font-size="8" fill="#94a3b8">Agent 1</text>
+  <rect x="138" y="158" width="65" height="18" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6"/>
+  <text x="170" y="171" text-anchor="middle" font-size="8" fill="#94a3b8">Agent 2</text>
+  <rect x="285" y="158" width="65" height="18" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6"/>
+  <text x="317" y="171" text-anchor="middle" font-size="8" fill="#94a3b8">Agent 3</text>
+  <rect x="505" y="158" width="65" height="18" rx="4" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6"/>
+  <text x="537" y="171" text-anchor="middle" font-size="8" fill="#94a3b8">Agent 4</text>
 
-  <!-- Arrows: Identity → Devices -->
-  <line x1="350" y1="105" x2="135" y2="121" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>
-  <line x1="400" y1="105" x2="400" y2="121" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>
-  <line x1="450" y1="105" x2="665" y2="121" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,2"/>
-  <text x="220" y="117" font-size="7.5" fill="#94a3b8">enrolls</text>
-  <text x="510" y="117" font-size="7.5" fill="#94a3b8">enrolls</text>
+  <!-- Agent → Gateway lines -->
+  <line x1="140" y1="178" x2="220" y2="208" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrU)"/>
+  <line x1="360" y1="178" x2="360" y2="208" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrU)"/>
+  <line x1="540" y1="178" x2="470" y2="208" stroke="#2563eb" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrU)"/>
 
-  <!-- ============================================ -->
-  <!-- LAYER 2: AGENTS (per device) -->
-  <!-- ============================================ -->
-  <g>
-    <rect x="55" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="92" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 1</text>
-    <rect x="140" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="177" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 2</text>
+  <!-- ===== LAYER 3: GATEWAY ===== -->
+  <rect x="110" y="210" width="500" height="86" rx="10" fill="white" stroke="#7c3aed" stroke-width="1.8"/>
+  <text x="360" y="234" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">Cairn Gateway</text>
+  <text x="360" y="250" text-anchor="middle" font-size="8.5" fill="#94a3b8">Deno Deploy · Deno KV · MCP 2026-07-28</text>
 
-    <rect x="320" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="357" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 3</text>
-    <rect x="405" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="442" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 4</text>
+  <!-- Three internal columns -->
+  <rect x="130" y="260" width="140" height="28" rx="5" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="0.8"/>
+  <text x="200" y="278" text-anchor="middle" font-size="9" font-weight="700" fill="#5b21b6">Policy Engine</text>
 
-    <rect x="585" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="622" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 5</text>
-    <rect x="670" y="185" width="75" height="28" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="707" y="202" text-anchor="middle" font-size="8" fill="#64748b">Agent 6</text>
-  </g>
+  <rect x="290" y="260" width="140" height="28" rx="5" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.8"/>
+  <text x="360" y="278" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">Operation Proxy</text>
 
-  <!-- ============================================ -->
-  <!-- CENTRAL: THE GATEWAY -->
-  <!-- ============================================ -->
-  <rect x="180" y="240" width="440" height="170" rx="12" fill="white" stroke="#7c3aed" stroke-width="2" filter="url(#shadowLg)" class="layer-gateway"/>
-  <text x="400" y="264" text-anchor="middle" font-size="12" font-weight="700" fill="#7c3aed">🌐 Cairn Gateway</text>
-  <text x="400" y="280" text-anchor="middle" font-size="8.5" fill="#94a3b8">Deno Deploy · Deno KV · MCP 2026-07-28</text>
+  <rect x="450" y="260" width="140" height="28" rx="5" fill="#f0fdf4" stroke="#86efac" stroke-width="0.8"/>
+  <text x="520" y="278" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">Audit Receipts</text>
 
-  <!-- Gateway internal components -->
-  <g>
-    <!-- Policy engine -->
-    <rect x="200" y="293" width="125" height="48" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
-    <text x="262" y="312" text-anchor="middle" font-size="9" font-weight="700" fill="#5b21b6">📋 Policy Engine</text>
-    <text x="262" y="328" text-anchor="middle" font-size="7.5" fill="#7c3aed">grant validation</text>
-    <text x="262" y="338" text-anchor="middle" font-size="7.5" fill="#7c3aed">call-time enforcement</text>
+  <!-- Gateway → Providers lines -->
+  <line x1="200" y1="298" x2="120" y2="330" stroke="#16a34a" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrG)"/>
+  <line x1="360" y1="298" x2="360" y2="330" stroke="#16a34a" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrG)"/>
+  <line x1="520" y1="298" x2="600" y2="330" stroke="#16a34a" stroke-width="0.9" stroke-dasharray="3,2" marker-end="url(#arrG)"/>
 
-    <!-- Operation proxy -->
-    <rect x="338" y="293" width="125" height="48" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-    <text x="400" y="312" text-anchor="middle" font-size="9" font-weight="700" fill="#1e40af">🔀 Operation Proxy</text>
-    <text x="400" y="328" text-anchor="middle" font-size="7.5" fill="#2563eb">brokered invoke</text>
-    <text x="400" y="338" text-anchor="middle" font-size="7.5" fill="#2563eb">short-lived delegation</text>
+  <!-- ===== LAYER 4: PROVIDERS ===== -->
+  <rect x="40" y="332" width="160" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="120" y="354" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">🐙 GitHub</text>
 
-    <!-- Audit & Receipts -->
-    <rect x="475" y="293" width="125" height="48" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-    <text x="537" y="312" text-anchor="middle" font-size="9" font-weight="700" fill="#166534">📊 Audit Receipts</text>
-    <text x="537" y="328" text-anchor="middle" font-size="7.5" fill="#16a34a">metadata-only logs</text>
-    <text x="537" y="338" text-anchor="middle" font-size="7.5" fill="#16a34a">no tokens in receipts</text>
-  </g>
+  <rect x="280" y="332" width="160" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="360" y="354" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">📧 Google</text>
 
-  <!-- Token custody -->
-  <rect x="250" y="352" width="300" height="30" rx="6" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
-  <text x="400" y="372" text-anchor="middle" font-size="9" font-weight="600" fill="#92400e">🔒 Token Custody Adapter (Nango · self-host · bring-your-own)</text>
+  <rect x="520" y="332" width="160" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="600" y="354" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">🐦 X</text>
 
-  <!-- MCP surface -->
-  <rect x="280" y="390" width="240" height="22" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-  <text x="400" y="405" text-anchor="middle" font-size="8.5" fill="#64748b">MCP: search_capabilities · describe_operation · invoke_operation</text>
-
-  <!-- Agent → Gateway arrows -->
-  <line x1="92" y1="214" x2="220" y2="306" stroke="url(#blueGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="357" y1="214" x2="350" y2="304" stroke="url(#blueGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="622" y1="214" x2="530" y2="304" stroke="url(#blueGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-
-  <!-- ============================================ -->
-  <!-- LAYER 3: PROVIDERS -->
-  <!-- ============================================ -->
-  <rect x="50" y="450" width="100" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
-  <text x="100" y="472" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">🐙 GitHub</text>
-
-  <rect x="175" y="450" width="100" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
-  <text x="225" y="472" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">📧 Google</text>
-
-  <rect x="300" y="450" width="100" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
-  <text x="350" y="472" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">🐦 X</text>
-
-  <rect x="425" y="450" width="100" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
-  <text x="475" y="472" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">📦 Deno</text>
-
-  <rect x="550" y="450" width="100" height="36" rx="7" fill="white" stroke="#e2e8f0" stroke-width="1" filter="url(#shadow)"/>
-  <text x="600" y="472" text-anchor="middle" font-size="9" font-weight="700" fill="#334155">📊 reMarkable</text>
-
-  <rect x="675" y="450" width="100" height="36" rx="7" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="3,2"/>
-  <text x="725" y="472" text-anchor="middle" font-size="8.5" fill="#94a3b8">+ more…</text>
-
-  <!-- Gateway → Provider arrows -->
-  <line x1="300" y1="410" x2="100" y2="446" stroke="url(#greenGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="370" y1="410" x2="225" y2="446" stroke="url(#greenGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="430" y1="410" x2="350" y2="446" stroke="url(#greenGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="480" y1="410" x2="475" y2="446" stroke="url(#greenGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-  <line x1="530" y1="410" x2="600" y2="446" stroke="url(#greenGrad)" stroke-width="1" stroke-dasharray="4,2"/>
-
-  <!-- Animation dots on key paths -->
-  <circle cx="145" cy="340" r="3.5" fill="url(#blueGrad)" class="dot-right" opacity="0.6"/>
-  <circle cx="280" cy="420" r="3.5" fill="url(#greenGrad)" class="dot-right" opacity="0.6" style="animation-delay:0.8s"/>
-
-  <!-- ============================================ -->
-  <!-- SECURITY INVARIANTS CALLOUT -->
-  <!-- ============================================ -->
-  <g transform="translate(30, 418)">
-    <rect x="0" y="0" width="745" height="24" rx="6" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.8"/>
-    <text x="15" y="16" font-size="8" fill="#dc2626">🛡️</text>
-    <text x="32" y="16" font-size="8" fill="#64748b">agent never sees tokens · per-request policy evaluation · independently revocable device keys · metadata-only audit trail</text>
-  </g>
-
-  <!-- Capability callout -->
-  <g class="pulse-label">
-    <rect x="210" y="235" width="380" height="5" rx="2.5" fill="#fbbf24" opacity="0.6"/>
-  </g>
-
-  <!-- Footer label -->
-  <text x="400" y="510" text-anchor="middle" font-size="9" fill="#94a3b8">Stage 0 accepted (90/90 tests, 84% branch coverage, 3 independent reviews) · Stage 1 accepted · M2 in progress</text>
+  <!-- Footer -->
+  <rect x="80" y="385" width="560" height="22" rx="5" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6"/>
+  <text x="360" y="400" text-anchor="middle" font-size="8.5" fill="#64748b">agents never see credentials · per-request grant enforcement · independently revocable keys · metadata-only audit</text>
 </svg>
