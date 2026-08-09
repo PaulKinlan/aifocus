@@ -11,7 +11,7 @@ The projects that I created needed some sort of stable identifier to identify a 
 
 My hope with this post is to document the ways I've implemented it — to give you some ideas of what you could do, and more importantly what not to do. (I hear that you shouldn't roll your own crypto or your own authentication... well, I did one of those.)
 
-Public/private keypairs kept being the answer. Here's how I've used them across three projects, culminating in an experimental "Web Developer Event for Agents."
+It seemed to me that public/private keypairs were a possible answer to this and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
 
 ## Project 1: pi-chaos-relay.
 
@@ -47,26 +47,17 @@ The identity problem is a bit different because there are no keypairs involved.
 
 The important design decision: the claim code is *entered by the agent*, not by the human. The system generates the code for the attendee; the agent proves it was the intended recipient by presenting it. This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
 
-
 ## Project 3: Cairn Gateway — the identity control plane
 
 [Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went a fair bit deeper. I was tired of putting secrets in `.env` files and juggling OAuth tokens across machines. I wanted one place to manage keys, one source of truth for which agent can do what.
 
 Cairn is a shared authoritative OAuth/token gateway designed for agents first.
 
-**Cryptographic principals, not email accounts.** First use creates an owner keypair. The gateway stores the public key; the private key never leaves the owner's device. Email is optional contact/recovery metadata, never the root identifier.
-
-**Device and agent keys are distinct and independently revocable.** Your laptop, your home server, your tmux session, and each agent process get their own subordinate key. One compromised device can be revoked without affecting the others. This is the lesson from chaos-relay taken to its logical conclusion: keypairs scale horizontally when they're structured as a hierarchy.
+I wanted the same principal as the pi-chaos-relay: I don't really care who creates the account, I just want the credentials to be secure; but I needed some way to be able to show a UI to configure keys and manage the oauth flow that didn't require the management of an account.
 
 **Enrollment is a two-device ceremony.** A new device creates a keypair, presents its public key, and displays a short code or QR. An already-authorized device verifies the same code and key fingerprint with a WebAuthn assertion. The enrollment consumes the codes atomically. No shared secrets. No pairing-code replay.
 
 **Capabilities, not tokens.** An agent doesn't get a reusable API token. It gets a five-minute capability bound to tenant, user, agent, device, connection, operation, JTI, expiry, and maximum calls. The gateway proxies the operation. The agent never sees a credential.
-
-**Metadata-only receipts.** Every operation is logged, but the log never contains tokens, Authorization headers, cookies, OAuth codes, or raw bodies. Just the identity chain, the operation, the decision, and the outcome. The receipts are the audit trail — and because the gateway is the single chokepoint, they're authoritative.
-
-This architecture went through an intense development cycle: a local fixture-only Stage 0 foundation, multiple correction rounds from independent security reviews, a durable authority layer, a browser-based admin interface, and a credential-free preview deployed to Deno Deploy. At the time of writing, the fixture core has 90/90 tests passing with 84% branch coverage, and three independent architecture, invariant, and identity-transaction reviews all returned **ACCEPT** with no blockers.
-
-The Cairn architecture is comprehensive, but it's also heavy. Not every project needs a full capability gateway. Which brings me to the third pattern.
 
 
 ## Of course I should have looked for prior art.
@@ -83,6 +74,6 @@ I sometimes like to think that I'm the first exploring something. Maybe I'm the 
 
 Sometimes I look at all these specifications, and like with OAuth I nope out. But realistically, once we are settled on patterns and practices our tools should just be able to build and integrate these types of interactions seamlessly.
 
-Every agent-to-service interaction will need some form of identity. My model worked for my needs — and I wanted to share it — but identity management and authentication are far more complex spaces than what I've scratched the surface of here. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
+Every agent-to-service interaction will need some form of identity. My model worked for my needs (and I wanted to share it) but identity management and authentication are far more complex spaces than what I've scratched the surface of here. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
 
-The user-to-agent binding — the trust bridge — might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
+The user-to-agent binding (the trust bridge) might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
