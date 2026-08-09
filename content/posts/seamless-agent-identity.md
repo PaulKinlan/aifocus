@@ -68,6 +68,9 @@ This architecture went through an intense development cycle: a local fixture-onl
 
 The Cairn architecture is comprehensive, but it's also heavy. Not every project needs a full capability gateway. Which brings me to the third pattern.
 
+
+## Of course I should have looked for prior art.
+
 I sometimes like to think that I'm the first exploring something. Maybe I'm the first to think about this? Nope... not by a long shot :D There are way more experienced people whose actual job is to work on this whose proposals are way more fleshed out than anything that I scratched up. I'll just quickly drop in some links:
 
 - **[AIP: Agent Identity Protocol](https://datatracker.ietf.org/doc/draft-singla-agent-identity-protocol/)** — DIDs, Ed25519-signed JWTs, capability manifests, signed delegation chains. Very aligned with Cairn's direction.
@@ -81,5 +84,3 @@ I sometimes like to think that I'm the first exploring something. Maybe I'm the 
 I do think every agent-to-service interaction will need some form of identity, and I liked my model and it worked for my needs (and I wanted to share it), I know that identity management and authentication are far more complex spaces. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
 
 The user-to-agent binding is the trust bridge might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
-
-If you're building in this space, I'd love to compare notes.
