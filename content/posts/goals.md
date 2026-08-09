@@ -23,7 +23,7 @@ I had to set out very clear goals and how to test. But the goal also included ho
 
 While there are some edge cases and issues, it's worked surprisingly well.
 
-## Project 2: WASM vs JS Benchmark
+## Project 2: WASM vs JS Performance Benchmark
 I had a conversation with a friend in Chrome about WASM and that it outperforms JS quite frequently. The conversation turned to the use of LLMs and Agents and we asked the question: If people are starting to never look at the code the tools produce, why not just have them output straight to WASM? It was a fun conversation and it opens up a lot of other questions about one of the pillars of openness on the web, but we didn't even have a benchmark or any tests to validate our hypothesis that WASM is faster than JS. [wasm-vs-js](https://wasm-vs-js.paulkinlan-ea.deno.dev/) is my experiment to try and get to an answer. I had a hunch that given a comprehensive set of benchmarks that the tools would be able to get me the answer.
 
 This was a very interensting experiement. Firstly, I ran out of credits many times and had to move to less capable models. Secondly, I got to use the `pi-autoresearch` extension in two different scenarios.
@@ -33,6 +33,7 @@ It took about 120 seconds to run the validation/testing phase of the build. I lo
 Another area that I used autoresearch on was to help me answer a common complaint of performance benchmarks when comparing languages. Frequently when trying to create these types of benchmarks in the past is that idomatic code is not always the fast code. Well, it turns out `/autoresearch for every test create an optimized version. Keep the original so we can compare performance of original vs optimized in a benchmark run` works rather well. While the tools chew through tokens, it was incredible to watch the itteration towards more optimal versions with reasoning about what worked and what didn't.
 
 ## Project 3: State of the Web using web-uplift
+
 * [state of the web](https://paulkinlan.github.io/state-of-the-web) - Using [webuplift](htttps://github.com/paulkinlan/webuplift) - you can take the report and optimize it.
 
 ## Project 4: Web AI Showcase
