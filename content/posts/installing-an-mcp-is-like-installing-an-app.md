@@ -14,8 +14,8 @@ TODO: find a post on paul.kinlan.me that I wrote about losing 20% of you users t
 
 * MCP servers are impossible to install
 * Given it's heavy and it takes a lot of context, who is going to install an MCP server for a random site.
-* Actually, why do you even need MCP for most things?
-* Why don't we have an `/agents.md` on our sites
+* Actually, why do you even need MCP for most things? No one is going to install your MCP server.
+* Why don't we have an `/agents.md` on our sites?
   * Example: https://cds-for-agents.paulkinlan-ea.deno.net/agents.md < TODO explain this.
     * For CDS for agents, explain how the prompt on the website tells the user what to paste to the agents
     * It works surprisingly well
