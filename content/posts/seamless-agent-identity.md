@@ -13,29 +13,27 @@ My hope with this post is to document the ways I've implemented it — to give y
 
 It seemed to me that public/private keypairs were a possible answer to this and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
 
-## Project 1: pi-chaos-relay.
+## Project 1: pi-chaos-relay
 
-Before pi-chaos-relay, there was [CHAOS](https://github.com/PaulKinlan/chaos) — Chrome Agent OS. A multi-agent Chrome extension where AI agents live in your browser, learn about you, and act on your behalf. Multiple agents, each with their own tools and personality, running inside a browser extension. It's ambitious and slightly unhinged, in the best way.
+Before pi-chaos-relay, there was [CHAOS](https://github.com/PaulKinlan/chaos) — Chrome Agent OS. A multi-agent Chrome extension where AI agents live in your browser, learn about you, and act on your behalf. Multiple agents, each with their own tools and personality, running inside a browser extension.
 
-CHAOS needed a way for me to talk to my agents when I wasn't at my keyboard. So I built a relay server — a Deno app that bridged Telegram, Discord, and email into the extension's WebSocket. And because the relay needed to know who was sending messages and who should receive replies, I gave it an identity model: an ECDSA P-256 keypair, generated on first run, with the public key sent to the server and every request cryptographically signed.
+CHAOS needed a way for me to talk to my agents when I wasn't at my keyboard. So I built a relay server — a Deno app that bridged Telegram, Discord, email and any future protocol that I want to support into the extension's WebSocket. And because the relay needed to tally the identity of what was sending messages and who should receive replies, I gave it a a simple identity model: an ECDSA P-256 keypair, generated on first run, with the public key sent to the server and every request cryptographically signed.
 
-The pattern held up well enough that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of an extension full of agents, it was my coding agent — a single pi session — that I could drive from Telegram. Same identity model, same relay server, narrower scope.
+The pattern held up well enough that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of a Chrome Extension full of agents, it was command line that was full of agents (i.e. pi), that I could drive from Telegram and email. I was quite happy that I could abstract the same functionality and port it to a new application. You can find more information about [pi-chaos-relay here](https://paulkinlan-ea.github.io/pi-chaos-relay/).
 
-The architecture is deliberately minimal. At first setup, the agent generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
+I tried to keep the architecture minimal. I don't want to know who is communicating through the relay or what they are communicating, it felt like a very important principal to not ask for any identity information. Obviously at some point this breaks down a bit because if you want to send an email, I need someway to validate that the email address we recieve is actually yours, but we can solve that with a one time token and a confirmation link and you could use a throw-away email address.
 
 ![pi-chaos-relay authentication flow](/images/chaos-relay-auth-flow.svg)
 
-This worked so well that when I later added an admin UI (`/app`), authentication followed the same model: the CLI mints a one-time device-link token (signed), the browser redeems it for a 24-hour session. Still no accounts. Still keypair-driven.
+I really liked this entire flow. After the you install the extension, the subsequent launch of `pi` will just register with the service and then you can create new channels (i.e, email) or change all the configuration (and even point to a self-hosted service) by issuing a `/chaos-relay configure` command/
 
-The architecture lesson: **a cryptographic keypair is the natural identity primitive for an agent**. It's machine-native, doesn't require a browser, doesn't require human presence, and the proof-of-possession is computationally cheap. For a personal agent operating on your behalf, this is the right default.
+An early piece of feedback that I had from users was that had was that people still like a traditional UI to set up and configure new channels, so I needed to work out a way to connect your session up to the relay. TODO: Add a brief detail on how the hand-off to the UI works and how we exchange a token without requiring an account or having the private key exposed.
 
-But it only covers one agent, one user, one service. What happens when you have many agents, many services, and many machines?
-
-## Project 2: CDS for Agents — the claim-code bridge
+## Project 2: CDS for Agents
 
 [CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/) is a faux Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent can register for sessions at a real event, react to talks on a live commentary wall (it's only agents talking to agents, there is no UI for humans), and gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery.
 
-The registration flow:
+The registration flow was fun to think about:
 
 1. A human attendee scans their badge QR code, gets a unique claim code, and tells their agent to visit the site.
 2. The agent reads the `AGENTS.md` file on the site, discovers the available tools, and calls `register(claim_code)`. (There's an MCP server too, but who's going to install one for an event?)
@@ -47,15 +45,19 @@ The identity problem is a bit different because there are no keypairs involved.
 
 The important design decision: the claim code is *entered by the agent*, not by the human. The system generates the code for the attendee; the agent proves it was the intended recipient by presenting it. This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
 
-## Project 3: Cairn Gateway — the identity control plane
+## Project 3: Cairn Gateway - 
 
-[Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went a fair bit deeper. I was tired of putting secrets in `.env` files and juggling OAuth tokens across machines. I wanted one place to manage keys, one source of truth for which agent can do what.
+I'm not sure if I will share this more broadly (i.e, there might be a website but I won't proactively share), but I'm getting more and more frustrated managing keys and OAuth callbacks and access tokens so that I can access services across agents and services. 
 
-Cairn is a shared authoritative OAuth/token gateway designed for agents first.
+I also liked how Deno sandboxes have their own HTTP proxy that substitutes your ENV keys and I wanted to see if there was a different way to think about interacting with external services that I am expecting my agent to access.
+
+The [Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is a shared authoritative OAuth/token gateway designed for agents first. I expect this to be something you would run your own instance of given a public global secret repository would be an attractive target.
 
 I wanted the same principal as the pi-chaos-relay: I don't really care who creates the account, I just want the credentials to be secure; but I needed some way to be able to show a UI to configure keys and manage the oauth flow that didn't require the management of an account.
 
-**Enrollment is a two-device ceremony.** A new device creates a keypair, presents its public key, and displays a short code or QR. An already-authorized device verifies the same code and key fingerprint with a WebAuthn assertion. The enrollment consumes the codes atomically. No shared secrets. No pairing-code replay.
+It exposes one MCP server that essentially has a `query` and `execute` tool, which looks for registered services that can match the intent of the user, and then exposes a set of capabiltieis back to the agent.
+
+
 
 **Capabilities, not tokens.** An agent doesn't get a reusable API token. It gets a five-minute capability bound to tenant, user, agent, device, connection, operation, JTI, expiry, and maximum calls. The gateway proxies the operation. The agent never sees a credential.
 
