@@ -17,9 +17,13 @@ The registration flow was the hard part. A human attendee scans their badge QR c
 
 ## Project 1: pi-chaos-relay.
 
-The [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay) started as a bridge: let me message my coding agent from Telegram and get replies back. The identity problem was immediate: how does the relay server know that a message is really from my agent, and that a reply is really from me?
+Before pi-chaos-relay, there was [CHAOS](https://github.com/PaulKinlan/chaos) — Chrome Agent OS. A multi-agent Chrome extension where AI agents live in your browser, learn about you, and act on your behalf. Multiple agents, each with their own tools and personality, running inside a browser extension. It's ambitious and slightly unhinged, in the best way.
 
-The solution was accidental but elegant. At first setup, pi-chaos-relay generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
+CHAOS needed a way for me to talk to my agents when I wasn't at my keyboard. So I built a relay server — a Deno app that bridged Telegram, Discord, and email into the extension's WebSocket. And because the relay needed to know who was sending messages and who should receive replies, I gave it an identity model: an ECDSA P-256 keypair, generated on first run, with the public key sent to the server and every request cryptographically signed.
+
+That pattern worked so well that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of an extension full of agents, it was my coding agent — a single pi session — that I could drive from Telegram. Same identity model, same relay server, narrower scope.
+
+The architecture is simple. At first setup, the agent generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
 
 ![pi-chaos-relay authentication flow](/images/chaos-relay-auth-flow.svg)
 
