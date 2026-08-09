@@ -1,167 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="system-ui, -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" font-family="system-ui, -apple-system, sans-serif">
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#555"/>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5 Z" fill="#64748b"/>
     </marker>
-    <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#1a8a4a"/>
-    </marker>
-    <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/>
-    </marker>
-    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
-      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.12"/>
-    </filter>
-    <linearGradient id="keyGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#fbbf24"/>
-      <stop offset="100%" stop-color="#f59e0b"/>
-    </linearGradient>
-    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#3b82f6"/>
-      <stop offset="100%" stop-color="#2563eb"/>
-    </linearGradient>
-    <linearGradient id="greenGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#22c55e"/>
-      <stop offset="100%" stop-color="#16a34a"/>
-    </linearGradient>
   </defs>
 
-  <style>
-    @keyframes generateKey { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
-    @keyframes sendPubKey { 0% { opacity:0; transform:translate(0,0) } 10% { opacity:1 } 90% { opacity:1; transform:translate(140px,0) } 100% { opacity:0; transform:translate(140px,0) } }
-    @keyframes storeKey { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
-    @keyframes signRequest { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
-    @keyframes sendSigned { 0% { opacity:0; transform:translate(0,0) } 10% { opacity:1 } 90% { opacity:1; transform:translate(140px,0) } 100% { opacity:0; transform:translate(140px,0) } }
-    @keyframes verify { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
-    @keyframes sendResponse { 0% { opacity:0; transform:translate(0,0) } 10% { opacity:1 } 90% { opacity:1; transform:translate(-140px,0) } 100% { opacity:0; transform:translate(-140px,0) } }
-    @keyframes pulseGreen { 0%,100% { stroke:#22c55e; fill:#dcfce7 } 50% { stroke:#16a34a; fill:#bbf7d0 } }
-    @keyframes appear { 0% { opacity:0; transform:translateY(6px) } 100% { opacity:1; transform:translateY(0) } }
+  <rect width="640" height="200" fill="#fafafa" rx="8"/>
 
-    .setup-phase .step-label { opacity:0 }
-    .setup-phase .step-label.show { animation: appear 0.5s ease-out forwards }
-    .setup-phase .key-gen { animation: generateKey 1.8s ease-in-out infinite }
-    .setup-phase .pub-key-dot { animation: sendPubKey 2.2s ease-in-out infinite }
-    .setup-phase .store-key { animation: storeKey 1.8s ease-in-out infinite 0.5s }
+  <text x="320" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">pi-chaos-relay · Identity Flow</text>
 
-    .runtime-phase .sign-icon { animation: signRequest 1.8s ease-in-out infinite }
-    .runtime-phase .signed-dot { animation: sendSigned 2.2s ease-in-out infinite }
-    .runtime-phase .verify-icon { animation: verify 1.8s ease-in-out infinite 0.5s }
-    .runtime-phase .resp-dot { animation: sendResponse 2.2s ease-in-out infinite 0.6s }
-    .runtime-phase .req-dot { animation: sendSigned 2.2s ease-in-out infinite }
-  </style>
+  <!-- Agent -->
+  <rect x="40" y="48" width="180" height="110" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="130" y="74" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">Your Machine</text>
+  <text x="130" y="92" text-anchor="middle" font-size="9.5" fill="#64748b">pi-chaos-relay agent</text>
 
-  <!-- Background -->
-  <rect width="720" height="420" fill="#fafafa" rx="8"/>
+  <rect x="60" y="106" width="140" height="18" rx="4" fill="#fffbeb" stroke="#fcd34d" stroke-width="0.8"/>
+  <text x="130" y="119" text-anchor="middle" font-size="8.5" fill="#92400e">ECDSA P-256 keypair</text>
 
-  <!-- Title -->
-  <text x="360" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">pi-chaos-relay · Identity Flow</text>
+  <rect x="60" y="130" width="140" height="18" rx="4" fill="#eff6ff" stroke="#93c5fd" stroke-width="0.8"/>
+  <text x="130" y="143" text-anchor="middle" font-size="8.5" fill="#1e40af">signs requests with private key</text>
 
-  <!-- ============================================ -->
-  <!-- PHASE 1: SETUP (first run) -->
-  <!-- ============================================ -->
+  <!-- Arrow -->
+  <line x1="222" y1="103" x2="368" y2="103" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)" stroke-dasharray="5,3"/>
+  <text x="295" y="95" text-anchor="middle" font-size="8.5" fill="#64748b">public key (once)</text>
+  <text x="295" y="118" text-anchor="middle" font-size="8.5" fill="#64748b">signed requests</text>
 
-  <text x="140" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">SETUP — FIRST RUN (ONCE)</text>
+  <!-- Server -->
+  <rect x="372" y="48" width="200" height="110" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2"/>
+  <text x="472" y="74" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">Relay Server</text>
+  <text x="472" y="92" text-anchor="middle" font-size="9.5" fill="#64748b">chaos-relay.com</text>
 
-  <!-- Agent box -->
-  <rect x="30" y="78" width="220" height="120" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="140" y="100" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">💻 Your Machine</text>
-  <text x="140" y="117" text-anchor="middle" font-size="9" fill="#94a3b8">pi-chaos-relay agent</text>
+  <rect x="392" y="106" width="160" height="18" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="0.8"/>
+  <text x="472" y="119" text-anchor="middle" font-size="8.5" fill="#166534">stores public key only</text>
 
-  <!-- Keypair generation animation -->
-  <g class="setup-phase">
-    <rect x="50" y="128" width="180" height="28" rx="6" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-    <text x="140" y="146" text-anchor="middle" font-size="10" fill="#92400e" class="key-gen">🔑 generate ECDSA P-256 keypair</text>
-  </g>
-
-  <!-- Public key traveling -->
-  <g class="setup-phase">
-    <circle cx="255" cy="155" r="4" fill="url(#keyGrad)" class="pub-key-dot"/>
-    <text x="140" y="176" text-anchor="middle" font-size="9" fill="#94a3b8" class="pub-key-dot" style="animation-delay:0.2s">pub key →</text>
-  </g>
-
-  <text x="140" y="192" text-anchor="middle" font-size="9" fill="#94a3b8" class="setup-phase">private key never leaves</text>
-
-  <!-- Relay Server box -->
-  <rect x="390" y="78" width="220" height="120" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="500" y="100" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">🖥️ Relay Server</text>
-  <text x="500" y="117" text-anchor="middle" font-size="9" fill="#94a3b8">chaos-relay.com</text>
-
-  <!-- Store key -->
-  <g class="setup-phase">
-    <rect x="410" y="128" width="180" height="28" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-    <text x="500" y="146" text-anchor="middle" font-size="10" fill="#166534" class="store-key">💾 store public key</text>
-  </g>
-
-  <g class="setup-phase">
-    <rect x="410" y="163" width="180" height="20" rx="4" fill="none" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="3,2"/>
-    <text x="500" y="177" text-anchor="middle" font-size="8.5" fill="#94a3b8">no accounts · no passwords · no email</text>
-  </g>
-
-  <!-- Arrow between agent and server (setup) -->
-  <line x1="252" y1="155" x2="386" y2="155" stroke="#94a3b8" stroke-width="1" stroke-dasharray="5,3" class="setup-phase"/>
-
-  <!-- ============================================ -->
-  <!-- DIVIDER -->
-  <!-- ============================================ -->
-  <line x1="40" y1="215" x2="680" y2="215" stroke="#e2e8f0" stroke-width="1"/>
-  <rect x="310" y="207" width="100" height="17" rx="9" fill="#f1f5f9"/>
-  <text x="360" y="219" text-anchor="middle" font-size="8.5" fill="#64748b" font-weight="600">EVERY REQUEST</text>
-
-  <!-- ============================================ -->
-  <!-- PHASE 2: RUNTIME (every request) -->
-  <!-- ============================================ -->
-
-  <!-- Agent box (runtime) -->
-  <rect x="30" y="235" width="220" height="155" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="140" y="257" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">💻 Your Machine</text>
-
-  <!-- Step 1: Sign request -->
-  <g class="runtime-phase">
-    <rect x="50" y="270" width="180" height="26" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-    <text x="140" y="287" text-anchor="middle" font-size="10" fill="#1e40af" class="sign-icon">✍️ sign request with private key</text>
-  </g>
-
-  <!-- Signed request traveling -->
-  <g class="runtime-phase">
-    <circle cx="255" cy="310" r="4" fill="url(#blueGrad)" class="signed-dot" style="animation-delay:0.3s"/>
-    <text x="140" y="325" text-anchor="middle" font-size="9" fill="#94a3b8">signed request →</text>
-  </g>
-
-  <text x="140" y="350" text-anchor="middle" font-size="8.5" fill="#94a3b8">(ECDSA signature + body hash)</text>
-
-  <!-- Response coming back -->
-  <g class="runtime-phase">
-    <text x="140" y="372" text-anchor="middle" font-size="9" fill="#94a3b8">← verified response</text>
-    <circle cx="25" cy="366" r="4" fill="url(#greenGrad)" class="resp-dot" style="animation-delay:1.0s"/>
-  </g>
-
-  <!-- Server box (runtime) -->
-  <rect x="390" y="235" width="220" height="155" rx="8" fill="white" stroke="#e2e8f0" stroke-width="1.2" filter="url(#shadow)"/>
-  <text x="500" y="257" text-anchor="middle" font-size="11" font-weight="700" fill="#334155">🖥️ Relay Server</text>
-
-  <!-- Step 2: Verify -->
-  <g class="runtime-phase">
-    <rect x="410" y="270" width="180" height="26" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-    <text x="500" y="287" text-anchor="middle" font-size="10" fill="#166534" class="verify-icon">🔍 verify with stored public key</text>
-  </g>
-
-  <!-- Process + respond -->
-  <g class="runtime-phase">
-    <rect x="410" y="305" width="180" height="22" rx="4" fill="none" stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="3,2"/>
-    <text x="500" y="320" text-anchor="middle" font-size="8.5" fill="#94a3b8">process request · send response</text>
-  </g>
-
-  <!-- Delivery -->
-  <g class="runtime-phase">
-    <rect x="410" y="340" width="180" height="34" rx="6" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
-    <text x="500" y="355" text-anchor="middle" font-size="9.5" fill="#854d0e">deliver to Telegram / Email / Discord</text>
-    <text x="500" y="369" text-anchor="middle" font-size="8" fill="#a16207">at-most-once delivery via KV CAS</text>
-  </g>
-
-  <!-- Arrows between (runtime) -->
-  <line x1="252" y1="310" x2="386" y2="310" stroke="url(#blueGrad)" stroke-width="1.5" marker-end="url(#arrowBlue)" class="runtime-phase"/>
-  <line x1="386" y1="366" x2="252" y2="366" stroke="url(#greenGrad)" stroke-width="1.5" marker-end="url(#arrow)" class="runtime-phase"/>
+  <rect x="392" y="130" width="160" height="18" rx="4" fill="#f0fdf4" stroke="#86efac" stroke-width="0.8"/>
+  <text x="472" y="143" text-anchor="middle" font-size="8.5" fill="#166534">verifies signature → responds</text>
 
   <!-- Footer -->
-  <text x="360" y="410" text-anchor="middle" font-size="9" fill="#94a3b8">no shared secrets · public-key auth · device-scoped identity</text>
+  <text x="320" y="185" text-anchor="middle" font-size="9" fill="#94a3b8">no accounts · no passwords · keypair is identity · private key never leaves the machine</text>
 </svg>
