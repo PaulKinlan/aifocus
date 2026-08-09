@@ -9,9 +9,9 @@ I've been building a lot of agentic projects recently and they all need the same
 
 The projects that I created needed some sort of stable identifier to identify a returning agent and sync some state, but in most cases I didn't need to know who owned the agent.
 
-My hope with this post is to document some of the ways that I've implemented it to hopfeully give you some ideas of what you could do, and more importantly what not to do (I hear that you shouldn't roll your own crypto or your own authentication... well, I did one of those.)
+My hope with this post is to document the ways I've implemented it — to give you some ideas of what you could do, and more importantly what not to do. (I hear that you shouldn't roll your own crypto or your own authentication... well, I did one of those.)
 
-It seemed to me that public/private keypairs were a possible answer to this and I thought it would be interesting to share how I've added them to a number of my projects, and how I've expanded on some of this for an experimental "Web Developer Event for Agents".
+Public/private keypairs kept being the answer. Here's how I've used them across three projects, culminating in an experimental "Web Developer Event for Agents."
 
 ## Project 1: pi-chaos-relay.
 
@@ -19,7 +19,7 @@ Before pi-chaos-relay, there was [CHAOS](https://github.com/PaulKinlan/chaos) �
 
 CHAOS needed a way for me to talk to my agents when I wasn't at my keyboard. So I built a relay server — a Deno app that bridged Telegram, Discord, and email into the extension's WebSocket. And because the relay needed to know who was sending messages and who should receive replies, I gave it an identity model: an ECDSA P-256 keypair, generated on first run, with the public key sent to the server and every request cryptographically signed.
 
-That pattern worked so well that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of an extension full of agents, it was my coding agent — a single pi session — that I could drive from Telegram. Same identity model, same relay server, narrower scope.
+The pattern held up well enough that I extracted it into a standalone pi extension: [pi-chaos-relay](https://github.com/PaulKinlan/pi-chaos-relay). Now instead of an extension full of agents, it was my coding agent — a single pi session — that I could drive from Telegram. Same identity model, same relay server, narrower scope.
 
 The architecture is deliberately minimal. At first setup, the agent generates an **ECDSA P-256 keypair**. The public key is sent to the relay server. Every subsequent request is signed with the private key. The server stores public keys, not passwords. No accounts. No email. No OAuth dance. The key *is* the identity.
 
@@ -35,22 +35,22 @@ But it only covers one agent, one user, one service. What happens when you have 
 
 [CDS for Agents](https://cds-for-agents.paulkinlan-ea.deno.net/) is a faux Chrome Dev Summit experience where the attendees are agents — your agent goes to the summit alongside you, or instead of you. An agent can register for sessions at a real event, react to talks on a live commentary wall (it's only agents talking to agents, there is no UI for humans), and gets a machine-readable challenge when the talk ends, builds a demo, and submits it to a gallery.
 
-The registration flow was fun:
+The registration flow:
 
-1) A human attendee scans their badge QR code, gets a unique claim code, and tells their agent visit the web site.
-2) The agent reads the AGENT.md file on the site and discovers all the funcitons and finds: `register(claim_code)`. (There's an MCP server, but whose gonna install on for an event??)
-3) The agent calls the Gateway, proves it's the right agent for that badge, and is now a verified summit attendee and they re-use their identity accross all interactions.
+1. A human attendee scans their badge QR code, gets a unique claim code, and tells their agent to visit the site.
+2. The agent reads the `AGENTS.md` file on the site, discovers the available tools, and calls `register(claim_code)`. (There's an MCP server too, but who's going to install one for an event?)
+3. The Gateway validates the code, binds the agent to the attendee record, and issues a summit-scoped session. The agent reuses that identity across all interactions.
 
 The identity problem is a bit different because there are no keypairs involved.
 
 ![CDS for Agents enrollment flow](/images/cds-agents-auth-flow.svg)
 
-The important design decision: the claim code is *entered by the agent*, not by the human. The system generates the code for the attendee; the agent proves it was the intended recipient by presenting it. TODO: validate this.... This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
+The important design decision: the claim code is *entered by the agent*, not by the human. The system generates the code for the attendee; the agent proves it was the intended recipient by presenting it. This prevents humans from pretending to be agents (which is what happened to Moltbook, the agent social network that inspired parts of CDS for Agents).
 
 
 ## Project 3: Cairn Gateway — the identity control plane
 
-[Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went a fair bit deeper. I really did not like that I am putting my secrets in a .env file and then struggling to manage OAuth access tokens, I just wanted a simple way to manage my keys across session and machines that I own.
+[Cairn Gateway](https://github.com/PaulKinlan/cairn-gateway) is where I went a fair bit deeper. I was tired of putting secrets in `.env` files and juggling OAuth tokens across machines. I wanted one place to manage keys, one source of truth for which agent can do what.
 
 Cairn is a shared authoritative OAuth/token gateway designed for agents first.
 
@@ -83,6 +83,6 @@ I sometimes like to think that I'm the first exploring something. Maybe I'm the 
 
 Sometimes I look at all these specifications, and like with OAuth I nope out. But realistically, once we are settled on patterns and practices our tools should just be able to build and integrate these types of interactions seamlessly.
 
-I do think every agent-to-service interaction will need some form of identity, and I liked my model and it worked for my needs (and I wanted to share it), I know that identity management and authentication are far more complex spaces. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
+Every agent-to-service interaction will need some form of identity. My model worked for my needs — and I wanted to share it — but identity management and authentication are far more complex spaces than what I've scratched the surface of here. For example, in my public-key scenario, blocking a key is pretty easy, however it's also incredibly easy for a malicious actor to just create a new key, yes they lose their state, but they could still spam.
 
-The user-to-agent binding is the trust bridge might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
+The user-to-agent binding — the trust bridge — might be more important than I thought. In the CDS for Agents pattern: a human generates a claim code, an agent presents it, and the binding is cryptographically verifiable. If you want to scale this beyond this one site/conference, well, I'm probably just re-inventing OAuth again.
