@@ -55,15 +55,22 @@ size_of() { stat -Lc %s -- "$1" 2>/dev/null || true; }
 # grandfathered, so the message names the rename as the fix rather than pretending it was recorded.
 unrepresentable() { case "$1" in *$'\n'*|*$'\t'*) return 0 ;; *) return 1 ;; esac; }
 
+# Validate the mode FIRST: a bad flag has to be refused even when the baseline is corrupt (aifocus-6xr
+# review round 2 - the baseline parse used to run before the flag check).
+MODE="${1:-}"
+case "$MODE" in ""|--update|--list) ;; *) usage; exit 2 ;; esac
+
 # Every path in the tree, tracked or new-and-unignored, NUL-separated so no path can be split.
 # public/ and node_modules/ are gitignored, so --exclude-standard keeps generated output out of this.
 git -C "$ROOT" ls-files --cached --others --exclude-standard -z > "$FILELIST"
 
-# The baseline is read once, and a malformed line is a hard error: a line without a usable byte count
-# used to make both `-gt`/`-lt` comparisons fail *inside an if*, which bash does not treat as fatal, so
-# an oversized file was declared OK (review P1 on c1352b0). Refuse the file instead of guessing. A
-# duplicate path is refused for the same reason: it makes `base[$p]` ambiguous and used to be counted as
-# two drops (aifocus-6xr).
+# The baseline is read once. A malformed line - no tab, no byte count, or an empty path - is a hard
+# error for a CHECK: a line without a usable byte count used to make both `-gt`/`-lt` comparisons fail
+# *inside an if*, which bash does not treat as fatal, so an oversized file was declared OK (review P1 on
+# c1352b0). A duplicate path is refused for the same reason: it makes `base[$p]` ambiguous and used to be
+# counted as two drops. `--update` is the REPAIR path, so there the same lines are reported and skipped:
+# it only needs the old sizes for its summary, and it rewrites the file from the tree (aifocus-6xr
+# review round 2: the check told the reader to run --update, which then refused the very file).
 declare -A base=()
 baseline_paths=()
 if [ -r "$BASELINE" ]; then
@@ -72,14 +79,22 @@ if [ -r "$BASELINE" ]; then
     lineno=$((lineno + 1))
     case "$line" in ''|'#'*) continue ;; esac
     p="${line%%$'\t'*}"; b="${line#*$'\t'}"
-    if [ "$b" = "$line" ] || ! [[ "$b" =~ ^[0-9]+$ ]]; then
+    if [ "$b" = "$line" ] || [ -z "$p" ] || ! [[ "$b" =~ ^[0-9]+$ ]]; then
       printf 'asset-size: malformed baseline line %d in %s: %s\n' "$lineno" "$BASELINE" "$line" >&2
-      printf 'asset-size: expected `path<TAB>bytes`; regenerate it with: bash tools/asset-size-check.sh --update\n' >&2
+      if [ "$MODE" = --update ]; then
+        printf 'asset-size: ignoring it - --update rewrites this file from the tree\n' >&2
+        continue
+      fi
+      printf 'asset-size: expected `path<TAB>bytes`; fix or delete that line, or run: bash tools/asset-size-check.sh --update\n' >&2
       exit 2
     fi
     if [ -n "${base[$p]+x}" ]; then
       printf 'asset-size: duplicate baseline entry for %s at line %d in %s\n' "$p" "$lineno" "$BASELINE" >&2
-      printf 'asset-size: the file is generated from the tree; regenerate it with: bash tools/asset-size-check.sh --update\n' >&2
+      if [ "$MODE" = --update ]; then
+        printf 'asset-size: keeping the first size and dropping the rest - --update rewrites this file from the tree\n' >&2
+        continue
+      fi
+      printf 'asset-size: the file is generated from the tree; fix or delete that line, or run: bash tools/asset-size-check.sh --update\n' >&2
       exit 2
     fi
     base["$p"]="$b"
@@ -87,7 +102,7 @@ if [ -r "$BASELINE" ]; then
   done < "$BASELINE"
 fi
 
-case "${1:-}" in
+case "$MODE" in
   --update)
     out="$TMP/baseline.tsv"
     {
