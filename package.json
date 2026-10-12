@@ -14,11 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "hugo-bin": "^0.144.2"
-  },
-  "overrides": {
-    "@xhmikosr/decompress": "10.2.2",
-    "http-cache-semantics": "4.3.0"
+    "hugo-bin": "^0.165.0"
   },
   "hugo-bin": {
     "buildTags": "extended",
