@@ -32,3 +32,10 @@
 - Inspect rendered pages, DOM state, console output, network requests, storage, screenshots, and performance behavior through Chrome DevTools MCP.
 - Do not use Playwright, Puppeteer, Selenium, Browserless, curl-only inspection, or ad hoc browser automation as the debugging path for websites.
 - If Chrome DevTools MCP is unavailable, say that website debugging is blocked and ask before using any alternative.
+
+## Dependencies
+
+- Nothing in `package.json` reaches the deployed site: there are no runtime `dependencies`, and `hugo-bin` is a devDependency that exists so the gate can run `hugo`.
+- `overrides` pin `@xhmikosr/decompress` to 10.2.2 and `http-cache-semantics` to 4.3.0, past two advisories in `hugo-bin`'s build-time downloader chain (critical GHSA-hrh2-vp3x-79xf, high GHSA-ch52-4w7c-c8xp). Both pins stay inside the ranges their dependents declare (`^10.2.0`, `^4.1.1`), so they are the versions a fresh resolve picks anyway (aifocus-3ik).
+- `npm audit` still reports moderate advisories in that same chain, and the only offered fix is a major `hugo-bin` bump that would change the Hugo version the site builds with. Treat `npm audit --omit=dev` (currently 0) as the runtime policy, and a Hugo version bump as a separate, deliberate change.
+- Do not add `npm audit` to the gate: it needs the npm registry over the network and the gate is budgeted at ~1.4 s (tools/check.conf).
