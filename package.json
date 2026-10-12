@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npm run build",
+    "check": "bash tools/check-cmd.sh",
     "hugo": "hugo",
     "dev": "hugo server --disableFastRender -D --bind 0.0.0.0 --port 1313",
     "build": "hugo --minify"
