@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run build",
+    "test": "bash tools/gate.sh",
     "check": "bash tools/check-cmd.sh",
     "hugo": "hugo",
     "dev": "hugo server --disableFastRender -D --bind 0.0.0.0 --port 1313",
