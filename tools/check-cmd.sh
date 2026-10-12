@@ -41,6 +41,13 @@ if [ "${1:-}" = "--install" ]; then
     echo "check-cmd: WARNING: overwriting $dest which was not stamped by aifocus (shared-HOME host)" >&2
   fi
 
+  # Review P3 (rev-1, 2026-10-12): build the file BESIDE the target and rename it into place. The
+  # deployed gate sources this file from every lane on this VM, and truncating it in place leaves a
+  # window where a concurrent fleet-check reads a half-written config — an empty CHECK_CMD, which is
+  # exactly the "gate ran a command nobody chose" failure this file exists to remove. A failing grep
+  # (no assignment lines) would also leave the truncation behind forever. mv is atomic within a
+  # filesystem, so a reader sees the old config or the new one, never a partial file.
+  tmp="$dest.tmp.$$"; trap 'rm -f "$tmp"' EXIT
   {
     printf '%s\n' "# Written by tools/check-cmd.sh --install from tools/check.conf (aifocus-c80)."
     printf '%s\n' "# Project: aifocus ($ROOT)"
@@ -49,7 +56,8 @@ if [ "${1:-}" = "--install" ]; then
     printf '%s\n' "# DO NOT HAND-EDIT FOR TUNING: a hand-edit and a stale install are indistinguishable"
     printf '%s\n' "# from the files alone. To tune, edit tools/check.conf and re-run --install."
     grep -E '^[A-Z_]+=' "$TRACKED"
-  } > "$dest"
+  } > "$tmp"
+  mv -f "$tmp" "$dest"; trap - EXIT
   echo "check-cmd: installed the project's gate command into $dest"
   exit 0
 fi
