@@ -2,8 +2,8 @@
 # tools/asset-size-check.sh - a size ratchet on the binary assets that go live verbatim.
 #
 # WHY (aifocus-ppk): Hugo publishes static/ byte-for-byte, so an oversized file there is paid for by
-# every clone, every deploy and every reader's data plan. 48 tracked files already exceed 512 KiB and
-# static/ is ~43 MiB, mostly screenshots. That cannot be undone by fiat - the images are the content -
+# every clone, every deploy and every reader's data plan. 29 tracked files already exceed 512 KiB and
+# static/ is ~42 MiB, mostly screenshots. That cannot be undone by fiat - the images are the content -
 # but it must not GROW silently, which is what this check is for.
 #
 # RULES
@@ -15,6 +15,13 @@
 #
 # It scans tracked files AND new unignored ones, so an implementer sees a violation in their own
 # worktree instead of handing the merger a gate that goes red only once the file is committed.
+#
+# A FILE WITH A NEWLINE OR A TAB IN ITS PATH CANNOT BE RECORDED IN THE BASELINE (the format is
+# path<TAB>bytes, one record per line), so such a file is never grandfathered: if it is over the limit
+# it is reported as a violation and has to be renamed or optimised. Paths are carried NUL-separated
+# throughout, so spaces and newlines never split a path into two fragments that both go unscanned
+# (review P1 on c1352b0: the earlier version wrote the list newline-separated and silently skipped
+# such a file). stat -L dereferences symlinks, so a symlink cannot hide a large target's size.
 #
 # Usage: bash tools/asset-size-check.sh            check (exit 1 on a violation)
 #        bash tools/asset-size-check.sh --update   rewrite the baseline from the current tree
@@ -28,7 +35,7 @@ LIMIT="${ASSET_SIZE_LIMIT:-524288}"
 
 TMP="$(mktemp -d -t asset-size.XXXXXX)"
 trap 'rm -rf "$TMP"' EXIT
-FILELIST="$TMP/files"
+FILELIST="$TMP/files"   # NUL-separated paths
 
 human() { awk -v b="$1" 'BEGIN { if (b >= 1048576) printf "%.1f MiB", b / 1048576; else if (b >= 1024) printf "%.0f KiB", b / 1024; else printf "%d B", b }'; }
 
@@ -41,17 +48,33 @@ usage() {
     '  ASSET_SIZE_LIMIT=<bytes>  override the default 512 KiB limit for one run'
 }
 
-# Every path in the tree, tracked or new-and-unignored, NUL-separated so spaces and newlines survive.
-# public/ and node_modules/ are gitignored, so --exclude-standard keeps generated output out of this.
-while IFS= read -r -d '' f; do printf '%s\n' "$f"; done \
-  < <(git -C "$ROOT" ls-files --cached --others --exclude-standard -z) > "$FILELIST"
+# size_of <path> - bytes of the real file, symlinks dereferenced; empty if it cannot be stat'ed.
+size_of() { stat -Lc %s -- "$1" 2>/dev/null || true; }
 
-# One read of the baseline into an associative array plus an ordered list.
+# Paths that the baseline format cannot represent. Such a file is still scanned; it just cannot be
+# grandfathered, so the message names the rename as the fix rather than pretending it was recorded.
+unrepresentable() { case "$1" in *$'\n'*|*$'\t'*) return 0 ;; *) return 1 ;; esac; }
+
+# Every path in the tree, tracked or new-and-unignored, NUL-separated so no path can be split.
+# public/ and node_modules/ are gitignored, so --exclude-standard keeps generated output out of this.
+git -C "$ROOT" ls-files --cached --others --exclude-standard -z > "$FILELIST"
+
+# The baseline is read once, and a malformed line is a hard error: a line without a usable byte count
+# used to make both `-gt`/`-lt` comparisons fail *inside an if*, which bash does not treat as fatal, so
+# an oversized file was declared OK (review P1 on c1352b0). Refuse the file instead of guessing.
 declare -A base=()
 baseline_paths=()
 if [ -r "$BASELINE" ]; then
-  while IFS=$'\t' read -r p b; do
-    case "$p" in ''|'#'*) continue ;; esac
+  lineno=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    lineno=$((lineno + 1))
+    case "$line" in ''|'#'*) continue ;; esac
+    p="${line%%$'\t'*}"; b="${line#*$'\t'}"
+    if [ "$b" = "$line" ] || ! [[ "$b" =~ ^[0-9]+$ ]]; then
+      printf 'asset-size: malformed baseline line %d in %s: %s\n' "$lineno" "$BASELINE" "$line" >&2
+      printf 'asset-size: expected `path<TAB>bytes`; regenerate it with: bash tools/asset-size-check.sh --update\n' >&2
+      exit 2
+    fi
     base["$p"]="$b"
     baseline_paths+=("$p")
   done < "$BASELINE"
@@ -67,21 +90,35 @@ case "${1:-}" in
       printf '%s\n' "# Do not hand-edit: a hand-edit and a stale generation are indistinguishable from the file."
     } > "$out"
     : > "$TMP/body"
-    while IFS= read -r f; do
-      size=$(stat -c %s -- "$ROOT/$f" 2>/dev/null) || continue
-      [ "$size" -gt "$LIMIT" ] && printf '%s\t%s\n' "$f" "$size" >> "$TMP/body"
+    n_files=0 added=0 grew=0
+    while IFS= read -r -d '' f; do
+      n_files=$((n_files + 1))
+      size=$(size_of "$ROOT/$f"); [ -n "$size" ] || continue
+      [ "$size" -gt "$LIMIT" ] || continue
+      if unrepresentable "$f"; then
+        printf 'asset-size: refusing to record %q - a path with a newline or tab cannot be represented in the baseline; rename it\n' "$f" >&2
+        continue
+      fi
+      printf '%s\t%s\n' "$f" "$size" >> "$TMP/body"
+      if [ -z "${base[$f]+x}" ]; then
+        added=$((added + 1)); printf 'asset-size: recorded new entry %s (%s)\n' "$f" "$(human "$size")"
+      elif [ "$size" -gt "${base[$f]}" ]; then
+        grew=$((grew + 1)); printf 'asset-size: LOOSENED %s: %s -> %s (both recorded; say why in the commit)\n' "$f" "$(human "${base[$f]}")" "$(human "$size")"
+      fi
     done < "$FILELIST"
     sort "$TMP/body" >> "$out"
     mv -f "$out" "$BASELINE"
     entries=$(grep -vc '^#' "$BASELINE")
-    echo "asset-size: baseline rewritten from $(wc -l < "$FILELIST") files: $entries entries over $(human "$LIMIT") (the ratchet can only tighten from here)."
-    echo "asset-size: commit tools/asset-size-baseline.tsv with the change that altered it, or the next gate will disagree with this tree."
+    old_count=${#baseline_paths[@]}
+    printf 'asset-size: baseline rewritten from %d files: %d entries over %s (%d new, %d loosened, %d tightened or removed).\n' \
+      "$n_files" "$entries" "$(human "$LIMIT")" "$added" "$grew" "$((old_count - grew))"
+    printf 'asset-size: commit tools/asset-size-baseline.tsv with the change that altered it, or the next gate will disagree with this tree.\n'
     exit 0
     ;;
   --list)
     printf 'limit: %s (%s bytes); baseline: %s\n' "$(human "$LIMIT")" "$LIMIT" "$BASELINE"
     for p in "${baseline_paths[@]+${baseline_paths[@]}}"; do
-      size=$(stat -c %s -- "$ROOT/$p" 2>/dev/null || echo 0)
+      size=$(size_of "$ROOT/$p"); size=${size:-0}
       printf '%10s recorded %10s  %s\n' "$(human "$size")" "$(human "${base[$p]}")" "$p"
     done
     exit 0
@@ -95,8 +132,8 @@ if [ ! -r "$BASELINE" ]; then
 fi
 
 scanned=0 total=0 new_bad=0 grown=0 shrunk=0 stale=0 seen=""
-while IFS= read -r f; do
-  size=$(stat -c %s -- "$ROOT/$f" 2>/dev/null) || continue
+while IFS= read -r -d '' f; do
+  size=$(size_of "$ROOT/$f"); [ -n "$size" ] || continue
   scanned=$((scanned + 1))
   total=$((total + size))
   if [ -n "${base[$f]+x}" ]; then
@@ -110,6 +147,7 @@ while IFS= read -r f; do
     fi
   elif [ "$size" -gt "$LIMIT" ]; then
     printf 'FAIL %s: %s, over the %s limit and not in the baseline\n' "$f" "$(human "$size")" "$(human "$LIMIT")"
+    unrepresentable "$f" && printf '     (this path has a newline or tab, so it cannot be recorded at all - rename it)\n'
     new_bad=$((new_bad + 1))
   fi
 done < "$FILELIST"
