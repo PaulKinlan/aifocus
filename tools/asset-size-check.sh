@@ -55,13 +55,22 @@ size_of() { stat -Lc %s -- "$1" 2>/dev/null || true; }
 # grandfathered, so the message names the rename as the fix rather than pretending it was recorded.
 unrepresentable() { case "$1" in *$'\n'*|*$'\t'*) return 0 ;; *) return 1 ;; esac; }
 
+# Validate the mode FIRST: a bad flag has to be refused even when the baseline is corrupt (aifocus-6xr
+# review round 2 - the baseline parse used to run before the flag check).
+MODE="${1:-}"
+case "$MODE" in ""|--update|--list) ;; *) usage; exit 2 ;; esac
+
 # Every path in the tree, tracked or new-and-unignored, NUL-separated so no path can be split.
 # public/ and node_modules/ are gitignored, so --exclude-standard keeps generated output out of this.
 git -C "$ROOT" ls-files --cached --others --exclude-standard -z > "$FILELIST"
 
-# The baseline is read once, and a malformed line is a hard error: a line without a usable byte count
-# used to make both `-gt`/`-lt` comparisons fail *inside an if*, which bash does not treat as fatal, so
-# an oversized file was declared OK (review P1 on c1352b0). Refuse the file instead of guessing.
+# The baseline is read once. A malformed line - no tab, no byte count, or an empty path - is a hard
+# error for a CHECK: a line without a usable byte count used to make both `-gt`/`-lt` comparisons fail
+# *inside an if*, which bash does not treat as fatal, so an oversized file was declared OK (review P1 on
+# c1352b0). A duplicate path is refused for the same reason: it makes `base[$p]` ambiguous and used to be
+# counted as two drops. `--update` is the REPAIR path, so there the same lines are reported and skipped:
+# it only needs the old sizes for its summary, and it rewrites the file from the tree (aifocus-6xr
+# review round 2: the check told the reader to run --update, which then refused the very file).
 declare -A base=()
 baseline_paths=()
 if [ -r "$BASELINE" ]; then
@@ -70,9 +79,22 @@ if [ -r "$BASELINE" ]; then
     lineno=$((lineno + 1))
     case "$line" in ''|'#'*) continue ;; esac
     p="${line%%$'\t'*}"; b="${line#*$'\t'}"
-    if [ "$b" = "$line" ] || ! [[ "$b" =~ ^[0-9]+$ ]]; then
+    if [ "$b" = "$line" ] || [ -z "$p" ] || ! [[ "$b" =~ ^[0-9]+$ ]]; then
       printf 'asset-size: malformed baseline line %d in %s: %s\n' "$lineno" "$BASELINE" "$line" >&2
-      printf 'asset-size: expected `path<TAB>bytes`; regenerate it with: bash tools/asset-size-check.sh --update\n' >&2
+      if [ "$MODE" = --update ]; then
+        printf 'asset-size: ignoring it - --update rewrites this file from the tree\n' >&2
+        continue
+      fi
+      printf 'asset-size: expected `path<TAB>bytes`; fix or delete that line, or run: bash tools/asset-size-check.sh --update\n' >&2
+      exit 2
+    fi
+    if [ -n "${base[$p]+x}" ]; then
+      printf 'asset-size: duplicate baseline entry for %s at line %d in %s\n' "$p" "$lineno" "$BASELINE" >&2
+      if [ "$MODE" = --update ]; then
+        printf 'asset-size: keeping the first size and dropping the rest - --update rewrites this file from the tree\n' >&2
+        continue
+      fi
+      printf 'asset-size: the file is generated from the tree; fix or delete that line, or run: bash tools/asset-size-check.sh --update\n' >&2
       exit 2
     fi
     base["$p"]="$b"
@@ -80,7 +102,7 @@ if [ -r "$BASELINE" ]; then
   done < "$BASELINE"
 fi
 
-case "${1:-}" in
+case "$MODE" in
   --update)
     out="$TMP/baseline.tsv"
     {
@@ -90,7 +112,11 @@ case "${1:-}" in
       printf '%s\n' "# Do not hand-edit: a hand-edit and a stale generation are indistinguishable from the file."
     } > "$out"
     : > "$TMP/body"
-    n_files=0 added=0 loosened=0 tightened=0 unchanged=0 seen_new=""
+    n_files=0 added=0 loosened=0 tightened=0 unchanged=0
+    # Membership is a set lookup, not a `|path|` string tested with a wildcard: the string was O(N^2)
+    # (~190 ms at 300 entries, ~23 s at 3000) and a path containing `|` could match another entry's
+    # boundary (aifocus-6xr, review round 3 of aifocus-ppk).
+    declare -A seen_new=()
     while IFS= read -r -d '' f; do
       n_files=$((n_files + 1))
       size=$(size_of "$ROOT/$f"); [ -n "$size" ] || continue
@@ -100,7 +126,7 @@ case "${1:-}" in
         continue
       fi
       printf '%s\t%s\n' "$f" "$size" >> "$TMP/body"
-      seen_new="$seen_new|$f|"
+      seen_new["$f"]=1
       # Counts are per entry class, never a subtraction: `old_count - loosened` called every unchanged
       # entry "tightened or removed", which is a false claim about a deliberate ratchet (review P2 on
       # 95e1fc7).
@@ -116,7 +142,7 @@ case "${1:-}" in
     done < "$FILELIST"
     removed=0
     for p in "${baseline_paths[@]+${baseline_paths[@]}}"; do
-      case "$seen_new" in *"|$p|"*) ;; *) removed=$((removed + 1)); printf 'asset-size: dropped %s from the baseline (no longer over the limit, or gone)\n' "$p" ;; esac
+      case "${seen_new[$p]+x}" in '') removed=$((removed + 1)); printf 'asset-size: dropped %s from the baseline (no longer over the limit, or gone)\n' "$p" ;; esac
     done
     sort "$TMP/body" >> "$out"
     mv -f "$out" "$BASELINE"
@@ -144,13 +170,14 @@ if [ ! -r "$BASELINE" ]; then
   printf 'asset-size: no baseline at %s - run `bash tools/asset-size-check.sh --update` to record the current tree\n' "$BASELINE"
 fi
 
-scanned=0 total=0 new_bad=0 grown=0 shrunk=0 stale=0 seen=""
+scanned=0 total=0 new_bad=0 grown=0 shrunk=0 stale=0
+declare -A seen=()
 while IFS= read -r -d '' f; do
   size=$(size_of "$ROOT/$f"); [ -n "$size" ] || continue
   scanned=$((scanned + 1))
   total=$((total + size))
   if [ -n "${base[$f]+x}" ]; then
-    seen="$seen|$f|"
+    seen["$f"]=1
     if [ "$size" -gt "${base[$f]}" ]; then
       printf 'FAIL %s: %s, over its recorded %s (the baseline grows only via --update)\n' \
         "$f" "$(human "$size")" "$(human "${base[$f]}")"
@@ -166,7 +193,7 @@ while IFS= read -r -d '' f; do
 done < "$FILELIST"
 
 for p in "${baseline_paths[@]+${baseline_paths[@]}}"; do
-  case "$seen" in *"|$p|"*) ;; *) stale=$((stale + 1)); printf 'info %s: in the baseline but not in this tree - delete its line\n' "$p" ;; esac
+  case "${seen[$p]+x}" in '') stale=$((stale + 1)); printf 'info %s: in the baseline but not in this tree - delete its line\n' "$p" ;; esac
 done
 [ "$shrunk" -gt 0 ] && printf 'info %d baseline file(s) shrank - re-run --update to tighten the ratchet\n' "$shrunk"
 
