@@ -90,7 +90,7 @@ case "${1:-}" in
       printf '%s\n' "# Do not hand-edit: a hand-edit and a stale generation are indistinguishable from the file."
     } > "$out"
     : > "$TMP/body"
-    n_files=0 added=0 grew=0
+    n_files=0 added=0 loosened=0 tightened=0 unchanged=0 seen_new=""
     while IFS= read -r -d '' f; do
       n_files=$((n_files + 1))
       size=$(size_of "$ROOT/$f"); [ -n "$size" ] || continue
@@ -100,18 +100,31 @@ case "${1:-}" in
         continue
       fi
       printf '%s\t%s\n' "$f" "$size" >> "$TMP/body"
+      seen_new="$seen_new|$f|"
+      # Counts are per entry class, never a subtraction: `old_count - loosened` called every unchanged
+      # entry "tightened or removed", which is a false claim about a deliberate ratchet (review P2 on
+      # 95e1fc7).
       if [ -z "${base[$f]+x}" ]; then
         added=$((added + 1)); printf 'asset-size: recorded new entry %s (%s)\n' "$f" "$(human "$size")"
       elif [ "$size" -gt "${base[$f]}" ]; then
-        grew=$((grew + 1)); printf 'asset-size: LOOSENED %s: %s -> %s (both recorded; say why in the commit)\n' "$f" "$(human "${base[$f]}")" "$(human "$size")"
+        loosened=$((loosened + 1)); printf 'asset-size: LOOSENED %s: %s -> %s (both recorded; say why in the commit)\n' "$f" "$(human "${base[$f]}")" "$(human "$size")"
+      elif [ "$size" -lt "${base[$f]}" ]; then
+        tightened=$((tightened + 1)); printf 'asset-size: tightened %s: %s -> %s\n' "$f" "$(human "${base[$f]}")" "$(human "$size")"
+      else
+        unchanged=$((unchanged + 1))
       fi
     done < "$FILELIST"
+    removed=0
+    for p in "${baseline_paths[@]+${baseline_paths[@]}}"; do
+      case "$seen_new" in *"|$p|"*) ;; *) removed=$((removed + 1)); printf 'asset-size: dropped %s from the baseline (no longer over the limit, or gone)\n' "$p" ;; esac
+    done
     sort "$TMP/body" >> "$out"
     mv -f "$out" "$BASELINE"
-    entries=$(grep -vc '^#' "$BASELINE")
-    old_count=${#baseline_paths[@]}
-    printf 'asset-size: baseline rewritten from %d files: %d entries over %s (%d new, %d loosened, %d tightened or removed).\n' \
-      "$n_files" "$entries" "$(human "$LIMIT")" "$added" "$grew" "$((old_count - grew))"
+    # grep exits 1 when it selects nothing, which under `set -e` killed --update outright as soon as no
+    # asset exceeded the limit (review P2 on 95e1fc7: `ASSET_SIZE_LIMIT=10000000` exited 1).
+    entries=$(grep -vc '^#' "$BASELINE" || true)
+    printf 'asset-size: baseline rewritten from %d files: %d entries over %s (%d new, %d loosened, %d tightened, %d dropped, %d unchanged).\n' \
+      "$n_files" "$entries" "$(human "$LIMIT")" "$added" "$loosened" "$tightened" "$removed" "$unchanged"
     printf 'asset-size: commit tools/asset-size-baseline.tsv with the change that altered it, or the next gate will disagree with this tree.\n'
     exit 0
     ;;
