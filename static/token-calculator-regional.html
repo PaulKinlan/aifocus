@@ -5,10 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Regional Token Calculator</title>
 <style>
+  :root {
+    /* Palette. Light values are the default; the prefers-color-scheme block
+       below references the --tc-*-dark names instead of re-pointing these, so
+       every token means exactly one colour and the dark rules stay explicit. */
+    --tc-text: #1a1a1a;
+    --tc-heading: #334155;
+    --tc-muted: #64748b;
+    --tc-subtle: #666;
+    --tc-note: #94a3b8;
+    --tc-surface: #fff;
+    --tc-surface-card: #f8fafc;
+    --tc-border: #e2e8f0;
+    --tc-border-hairline: #f1f5f9;
+    --tc-border-input: #ccc;
+    --tc-accent: #2563eb;
+    --tc-accent-strong: #1d4ed8;
+    --tc-negative: #dc2626;
+    /* Matrix cell tints. */
+    --tc-diagonal-tint: #f0f9ff;
+    --tc-better-tint: #f0fdf4;
+    --tc-worse-tint: #fef2f2;
+    /* Dark counterparts, referenced only inside the dark block. */
+    --tc-bg-dark: #0f172a;
+    --tc-text-dark: #e2e8f0;
+    --tc-muted-dark: #94a3b8;
+    --tc-surface-dark: #1e293b;
+    --tc-border-dark: #334155;
+    --tc-border-input-dark: #475569;
+    --tc-diagonal-tint-dark: #172554;
+    --tc-better-tint-dark: #14532d;
+    --tc-worse-tint-dark: #450a0a;
+    --tc-negative-text-dark: #fca5a5;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #1a1a1a;
+    color: var(--tc-text);
     padding: 1.5rem;
     line-height: 1.5;
   }
@@ -16,27 +50,27 @@
   .controls { margin-bottom: 1.5rem; }
   .control-group { margin-bottom: 1.25rem; }
   label { display: block; font-weight: 600; margin-bottom: 0.2rem; font-size: 0.9rem; }
-  .sublabel { font-weight: 400; font-size: 0.78rem; color: #666; margin-bottom: 0.4rem; }
+  .sublabel { font-weight: 400; font-size: 0.78rem; color: var(--tc-subtle); margin-bottom: 0.4rem; }
   .slider-row { display: flex; align-items: center; gap: 1rem; }
-  input[type="range"] { flex: 1; accent-color: #2563eb; height: 6px; }
+  input[type="range"] { flex: 1; accent-color: var(--tc-accent); height: 6px; }
   .value-display { min-width: 100px; text-align: right; font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-  select { width: 100%; padding: 0.45rem; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+  select { width: 100%; padding: 0.45rem; font-size: 0.9rem; border: 1px solid var(--tc-border-input); border-radius: 6px; background: var(--tc-surface); }
 
   h3.section-title {
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--tc-heading);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 1.5rem 0 0.5rem 0;
     padding-bottom: 0.4rem;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--tc-border);
   }
 
   h3.section-title:first-of-type { margin-top: 0; }
 
   .section-desc {
     font-size: 0.78rem;
-    color: #64748b;
+    color: var(--tc-muted);
     margin-bottom: 1rem;
     line-height: 1.4;
   }
@@ -49,34 +83,34 @@
   }
 
   .region-card {
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--tc-border);
     border-radius: 10px;
     padding: 0.6rem;
   }
 
-  .region-card.highlight { border-color: #2563eb; }
-  .region-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #334155; }
-  .region-salary { font-size: 0.72rem; color: #64748b; margin-bottom: 0.3rem; }
+  .region-card.highlight { border-color: var(--tc-accent); }
+  .region-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--tc-heading); }
+  .region-salary { font-size: 0.72rem; color: var(--tc-muted); margin-bottom: 0.3rem; }
 
   .region-stat {
     text-align: center;
     padding: 0.4rem 0;
     margin: 0.3rem 0;
-    background: #f8fafc;
+    background: var(--tc-surface-card);
     border-radius: 6px;
   }
-  .region-stat .number { font-size: 1.2rem; font-weight: 800; color: #1d4ed8; }
-  .region-stat .unit { font-size: 0.6rem; color: #64748b; }
+  .region-stat .number { font-size: 1.2rem; font-weight: 800; color: var(--tc-accent-strong); }
+  .region-stat .unit { font-size: 0.6rem; color: var(--tc-muted); }
 
   .region-row {
     display: flex;
     justify-content: space-between;
     padding: 0.2rem 0;
     font-size: 0.72rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--tc-border-hairline);
   }
   .region-row:last-child { border-bottom: none; }
-  .region-row-label { color: #64748b; }
+  .region-row-label { color: var(--tc-muted); }
   .region-row-value { font-weight: 700; font-variant-numeric: tabular-nums; }
 
   /* --- Matrix tables --- */
@@ -88,7 +122,7 @@
   .matrix-label {
     font-size: 0.78rem;
     font-weight: 700;
-    color: #334155;
+    color: var(--tc-heading);
     margin-bottom: 0.4rem;
   }
 
@@ -102,14 +136,14 @@
   table.matrix th, table.matrix td {
     padding: 0.4rem 0.35rem;
     text-align: center;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--tc-border);
     vertical-align: top;
   }
 
   table.matrix th {
-    background: #f8fafc;
+    background: var(--tc-surface-card);
     font-weight: 700;
-    color: #334155;
+    color: var(--tc-heading);
     font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 0.02em;
@@ -133,31 +167,31 @@
 
   table.matrix td .cost {
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--tc-muted);
     display: block;
   }
 
   table.matrix td .tokens {
     font-size: 0.62rem;
-    color: #94a3b8;
+    color: var(--tc-note);
     display: block;
   }
 
   table.matrix td.diagonal {
-    background: #f0f9ff;
+    background: var(--tc-diagonal-tint);
   }
 
   table.matrix td.better {
-    background: #f0fdf4;
+    background: var(--tc-better-tint);
   }
 
   table.matrix td.worse {
-    background: #fef2f2;
+    background: var(--tc-worse-tint);
   }
 
   table.matrix td.na {
-    background: #fef2f2;
-    color: #dc2626;
+    background: var(--tc-worse-tint);
+    color: var(--tc-negative);
     font-weight: 600;
   }
 
@@ -173,36 +207,36 @@
 
   .note {
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: var(--tc-note);
     margin-top: 1rem;
     line-height: 1.4;
   }
 
   @media (prefers-color-scheme: dark) {
-    body { background: #0f172a; color: #e2e8f0; }
-    select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
-    h3.section-title { color: #e2e8f0; border-color: #334155; }
-    .section-desc { color: #94a3b8; }
-    .region-card { background: #1e293b; border-color: #334155; }
-    .region-card.highlight { border-color: #2563eb; }
-    .region-name { color: #e2e8f0; }
-    .region-row { border-color: #334155; }
-    .region-row-label { color: #94a3b8; }
-    .region-stat { background: #0f172a; }
-    table.matrix th, table.matrix td { border-color: #334155; }
-    table.matrix th { background: #1e293b; color: #e2e8f0; }
-    table.matrix td.diagonal { background: #172554; }
-    table.matrix td.better { background: #14532d; }
-    table.matrix td.worse { background: #450a0a; }
-    table.matrix td.na { background: #450a0a; color: #fca5a5; }
-    .matrix-label { color: #e2e8f0; }
+    body { background: var(--tc-bg-dark); color: var(--tc-text-dark); }
+    select { background: var(--tc-surface-dark); color: var(--tc-text-dark); border-color: var(--tc-border-input-dark); }
+    h3.section-title { color: var(--tc-text-dark); border-color: var(--tc-border-dark); }
+    .section-desc { color: var(--tc-muted-dark); }
+    .region-card { background: var(--tc-surface-dark); border-color: var(--tc-border-dark); }
+    .region-card.highlight { border-color: var(--tc-accent); }
+    .region-name { color: var(--tc-text-dark); }
+    .region-row { border-color: var(--tc-border-dark); }
+    .region-row-label { color: var(--tc-muted-dark); }
+    .region-stat { background: var(--tc-bg-dark); }
+    table.matrix th, table.matrix td { border-color: var(--tc-border-dark); }
+    table.matrix th { background: var(--tc-surface-dark); color: var(--tc-text-dark); }
+    table.matrix td.diagonal { background: var(--tc-diagonal-tint-dark); }
+    table.matrix td.better { background: var(--tc-better-tint-dark); }
+    table.matrix td.worse { background: var(--tc-worse-tint-dark); }
+    table.matrix td.na { background: var(--tc-worse-tint-dark); color: var(--tc-negative-text-dark); }
+    .matrix-label { color: var(--tc-text-dark); }
   }
 </style>
 </head>
 <body>
 
 <div style="text-align: right; margin-bottom: 0.5rem;">
-  <a href="/token-calculator-regional.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: #2563eb; border: 1px solid #2563eb; border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
+  <a href="/token-calculator-regional.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: var(--tc-accent); border: 1px solid var(--tc-accent); border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
 </div>
 
 <div class="controls">
@@ -264,14 +298,14 @@
 </div>
 
 <p class="note">
-  Senior engineer total comp estimates from <a href="https://www.levels.fyi/t/software-engineer/levels/senior" target="_blank" style="color: #94a3b8;">levels.fyi</a> (2025-2026):
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/san-francisco-bay-area" target="_blank" style="color: #94a3b8;">Bay Area</a> $400K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-states" target="_blank" style="color: #94a3b8;">US avg</a> $250K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/greater-toronto-area" target="_blank" style="color: #94a3b8;">Canada</a> $170K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/london-gbr" target="_blank" style="color: #94a3b8;">UK London</a> $150K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/germany" target="_blank" style="color: #94a3b8;">Germany</a> $130K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-kingdom" target="_blank" style="color: #94a3b8;">UK other</a> $100K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/bengaluru-ind" target="_blank" style="color: #94a3b8;">India</a> $60K.
+  Senior engineer total comp estimates from <a href="https://www.levels.fyi/t/software-engineer/levels/senior" target="_blank" style="color: var(--tc-note);">levels.fyi</a> (2025-2026):
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/san-francisco-bay-area" target="_blank" style="color: var(--tc-note);">Bay Area</a> $400K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-states" target="_blank" style="color: var(--tc-note);">US avg</a> $250K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/greater-toronto-area" target="_blank" style="color: var(--tc-note);">Canada</a> $170K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/london-gbr" target="_blank" style="color: var(--tc-note);">UK London</a> $150K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/germany" target="_blank" style="color: var(--tc-note);">Germany</a> $130K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-kingdom" target="_blank" style="color: var(--tc-note);">UK other</a> $100K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/bengaluru-ind" target="_blank" style="color: var(--tc-note);">India</a> $60K.
   Jensen: salary + 50% in tokens. Steve: fire the engineer, redirect salary. In the matrix, savings from hiring in a cheaper region are redirected to tokens. Token prices are global. The arbitrage is real: same AI model, same quality engineer, dramatically different throughput depending on where you hire.
 </p>
 
