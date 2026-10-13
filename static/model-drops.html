@@ -110,6 +110,19 @@ th { background: var(--th-bg); font-weight: 700; font-size: .7rem; text-transfor
   </thead>
   <tbody id="stats-body"></tbody>
 </table>
+
+<!-- Cloned once per row by renderStats() so rows are built with DOM nodes
+     rather than re-parsed HTML strings. -->
+<template id="stats-row-template">
+  <tr>
+    <td data-cell="name"></td>
+    <td data-cell="vendor"></td>
+    <td class="num" data-cell="count"></td>
+    <td class="num" data-cell="median"></td>
+    <td data-cell="last"></td>
+    <td data-cell="predicted"></td>
+  </tr>
+</template>
 <p class="note">Predictions assume the median gap of the last 3 drops continues. A single-drop series gets no prediction. Data: <code>/model-drops.tsv</code>.</p>
 
 <script>
@@ -302,33 +315,55 @@ function renderStats(rows) {
       return a.name.localeCompare(b.name);
     });
 
+  const template = $('stats-row-template');
+  const frag = document.createDocumentFragment();
+
   for (const r of rowsArr) {
-    let predCell = '<span class="predicted-dash">—</span>';
-    if (r.pred) {
-      const now = new Date();
-      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-      const isDead = r.pred.date < threeMonthsAgo;
-      const isLate = r.pred.date < now && !isDead;
-      
-      if (isDead) {
-        predCell = `<span class="predicted dead">${fmtDate(r.pred.date)} <strong>(Dead?)</strong></span>`;
-      } else if (isLate) {
-        predCell = `<span class="predicted late">${fmtDate(r.pred.date)} <em>(Late)</em></span>`;
-      } else {
-        predCell = `<span class="predicted">${fmtDate(r.pred.date)}</span>`;
-      }
-    }
-    tbody.insertAdjacentHTML('beforeend', `
-      <tr>
-        <td>${r.name}</td>
-        <td>${r.vendor}</td>
-        <td class="num">${r.count}</td>
-        <td class="num">${r.med ?? '—'}</td>
-        <td>${fmtDate(r.last.dateObj)}</td>
-        <td>${predCell}</td>
-      </tr>
-    `);
+    const row = template.content.firstElementChild.cloneNode(true);
+    const cell = (name) => row.querySelector(`[data-cell="${name}"]`);
+    cell('name').textContent = r.name;
+    cell('vendor').textContent = r.vendor;
+    cell('count').textContent = r.count;
+    cell('median').textContent = r.med ?? '—';
+    cell('last').textContent = fmtDate(r.last.dateObj);
+    cell('predicted').append(predictedCell(r));
+    frag.appendChild(row);
   }
+
+  /* replaceChildren, not append: a repeat render now replaces the rows
+     instead of stacking a second copy onto the first. */
+  tbody.replaceChildren(frag);
+}
+
+/* Only the predicted cell needs conditional markup, so it is built as a DOM
+   node: a dash when there is no prediction, otherwise the date plus a
+   "(Dead?)" or "(Late)" marker. The colours come from the classes in the
+   stylesheet, not inline styles, so the dark scheme can restyle them. */
+function predictedCell(r) {
+  const span = document.createElement('span');
+  if (!r.pred) {
+    span.className = 'predicted-dash';
+    span.textContent = '—';
+    return span;
+  }
+
+  const now = new Date();
+  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+  const isDead = r.pred.date < threeMonthsAgo;
+  const isLate = r.pred.date < now && !isDead;
+
+  span.className = isDead ? 'predicted dead' : isLate ? 'predicted late' : 'predicted';
+  span.append(fmtDate(r.pred.date));
+  if (isDead) {
+    const strong = document.createElement('strong');
+    strong.textContent = '(Dead?)';
+    span.append(' ', strong);
+  } else if (isLate) {
+    const em = document.createElement('em');
+    em.textContent = '(Late)';
+    span.append(' ', em);
+  }
+  return span;
 }
 
 async function main() {
