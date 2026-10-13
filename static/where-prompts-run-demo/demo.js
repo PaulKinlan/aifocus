@@ -600,7 +600,15 @@ $('provider').addEventListener('change', (e) => {
   const url = PROVIDER_PAGES[target];
   if (url) window.location.href = url;
 });
-$('apiKey').addEventListener('input', updateSendEnabled);
+$('apiKey').addEventListener('input', () => {
+  // While opted in, what is stored has to follow the field. Otherwise a key the
+  // reader replaced stays readable on the origin, and a reload silently
+  // restores the old one. An empty field removes the stored key.
+  if ($('rememberKey').checked) {
+    persistKeyForThisDevice(getProviderId(), $('apiKey').value.trim());
+  }
+  updateSendEnabled();
+});
 $('rememberKey').addEventListener('change', (e) => {
   // Unchecking is itself a request to forget, so it takes effect on the spot
   // rather than at the next send.
@@ -628,15 +636,24 @@ $('userInput').addEventListener('keydown', (e) => {
 
 $('reset').addEventListener('click', async () => {
   if (!confirm('Clear every file in the demo sandbox and forget the stored API key on this device? This affects the OPFS bucket for this page and any key it kept in localStorage.')) return;
-  await opfsRemoveAll();
+  // Forget the key before touching OPFS and outside the OPFS try/catch: an
+  // unavailable or failing OPFS must not be able to leave a credential behind.
   forgetAllStoredKeys();
   forgetKeyFields();
-  $('transcript').innerHTML = '<div class="empty-transcript">Sandbox cleared.</div>';
-  $('viewer').className = 'viewer empty';
-  $('viewer').textContent = 'Click a file to view its contents.';
-  activeFile = null;
-  await refreshTree();
-  toast('sandbox cleared');
+  const viewer = $('viewer');
+  try {
+    await opfsRemoveAll();
+    $('transcript').innerHTML = '<div class="empty-transcript">Sandbox cleared.</div>';
+    viewer.className = 'viewer empty';
+    viewer.textContent = 'Click a file to view its contents.';
+    activeFile = null;
+    await refreshTree();
+    toast('sandbox cleared');
+  } catch (err) {
+    // The key is already gone; say why the files could not be.
+    appendTranscript('error', `Sandbox not cleared: ${err.message || err}`);
+    toast('API key forgotten; sandbox files remain', 'err');
+  }
 });
 
 $('resetPrompt').addEventListener('click', (e) => {
