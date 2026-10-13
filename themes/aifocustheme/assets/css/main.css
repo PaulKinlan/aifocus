@@ -110,8 +110,16 @@ footer {
         padding-left: 0.5em; /* Space between icon and text */
       }
 
-      &:hover span {
-        text-decoration: underline; /* Underline on hover */
+      &:is(:hover, :focus-visible) span {
+        text-decoration: underline; /* Underline on hover or keyboard focus */
+      }
+
+      &:focus-visible {
+        /* currentColor follows the link colour, so the ring is dark on the
+           light palette and light on the dark one. */
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+        border-radius: 2px;
       }
     }
   }
