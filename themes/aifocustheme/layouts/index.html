@@ -3,18 +3,18 @@
   {{/* Featured Post Section */}}
   {{ $featuredPost := first 1 (where .Site.RegularPages.ByDate.Reverse "Type" "posts") }}
   {{ if $featuredPost }}
-  {{ range $featuredPost }}
-  <article class="featured-post{{ if .Params.featured_image }} has-featured-image{{ end }}">
+  {{ range $post := $featuredPost }}
+  <article class="featured-post{{ if $post.Params.featured_image }} has-featured-image{{ end }}">
     <div class="featured-post-content-wrapper">
       <div class="featured-post-main-content">
-        {{ with .Params.featured_image }}
+        {{ with $post.Params.featured_image }}
         <div class="featured-image-small-container">
           <!-- Featured image (small) -->
           <img
             src='{{ . }}'
-            alt='{{ $.Params.featured_image_alt | default (printf "Featured image for %s" $.Title) }}'
-            width='{{ $.Params.featured_image_width | default 300 }}'
-            height='{{ $.Params.featured_image_height | default 200 }}'
+            alt='{{ $post.Params.featured_image_alt | default (printf "Featured image for %s" $post.Title) }}'
+            width='{{ $post.Params.featured_image_width | default 300 }}'
+            height='{{ $post.Params.featured_image_height | default 200 }}'
             fetchpriority="high"
             decoding="async"
             class="featured-image-small">
@@ -24,13 +24,13 @@
           {{ .Content }}
         </div>
       </div>
-      {{ with .Params.featured_image }}
+      {{ with $post.Params.featured_image }}
       <div class="featured-image-large-container">
         <!-- Featured image (large) -->
         <img src='{{ . }}'
-          alt='{{ $.Params.featured_image_alt | default (printf "Featured image for %s" $.Title) }}'
-          width='{{ $.Params.featured_image_large_width | default 350 }}'
-          height='{{ $.Params.featured_image_large_height | default 500 }}'
+          alt='{{ $post.Params.featured_image_alt | default (printf "Featured image for %s" $post.Title) }}'
+          width='{{ $post.Params.featured_image_large_width | default 350 }}'
+          height='{{ $post.Params.featured_image_large_height | default 500 }}'
           loading="lazy"
           decoding="async"
           class="featured-image-large">
