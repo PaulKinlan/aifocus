@@ -45,6 +45,16 @@
         $dateHuman }}; Reading time: {{ .ReadingTime }}
         minutes</time></p>
   </div>
+  {{ with $page.Params.featured_image }}
+  <div class="featured-image-small-container">
+    <img
+      src="{{ . }}"
+      alt="{{ $page.Params.featured_image_alt | default (printf "Featured image for %s" $page.Title) }}"
+      width="{{ $page.Params.featured_image_width | default 300 }}"
+      height="{{ $page.Params.featured_image_height | default 200 }}"
+      class="featured-image-small">
+  </div>
+  {{ end }}
   <div class="e-content">
     {{ .Content }}
   </div>
