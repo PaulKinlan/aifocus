@@ -80,8 +80,13 @@ function prefersMarkdown(header) {
   return markdownQ > htmlQ;
 }
 
-// Reject directory traversal segments, raw/encoded backslashes, encoded dots/slashes,
-// and control characters in client path input.
+// Defense-in-depth path safety guard.
+// Note on URL canonicalization: WHATWG Request parsing canonicalizes standard
+// dot-segments (/../) and slashes before request reaches Cloudflare Pages
+// middleware; canonicalized requests remain strictly bounded by isValidContentPath.
+// isUnsafePath operates on post-Request-normalization input as defense-in-depth,
+// explicitly rejecting encoded traversal (%2e%2e, %2e.), raw or encoded
+// backslashes (\, %5c), encoded slashes (%2f), nested encodings, and control characters.
 function isUnsafePath(rawUrl, pathname) {
   let urlObj;
   try {

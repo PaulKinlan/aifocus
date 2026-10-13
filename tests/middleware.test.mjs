@@ -199,51 +199,73 @@ test("onRequest: normalizes slashes for valid post request", async () => {
   assert.equal(res.status, 200);
 });
 
-test("onRequest: traversal and backslash guard prevents ASSETS.fetch independently of content-root check", async () => {
-  // URLs whose parsed pathname resolves to an allowed content root (/model-half-life/),
-  // meaning isValidContentPath(pathname) is TRUE.
-  // This asserts that the isUnsafePath guard—and not the content-root check—is the
-  // barrier preventing ASSETS.fetch from being called.
-  const rawAttackUrls = [
-    "https://aifocus.blog/foo/../model-half-life/",
-    "https://aifocus.blog/foo/%2e%2e/model-half-life/",
-    "https://aifocus.blog/foo/%2E%2E/model-half-life/",
-    "https://aifocus.blog/foo/..\\model-half-life/",
+test("onRequest: real Request canonicalizes dot-segments and stays confined to content root", async () => {
+  // WHATWG Request constructor normalizes dot segments (/../) in standard URLs.
+  // Verify that a real request with dot-segments resolves cleanly, isValidContentPath
+  // confines the target to an allowed content root, and ASSETS.fetch only fetches the valid slug sibling.
+  const req = new Request("https://aifocus.blog/foo/../model-half-life/", {
+    headers: { Accept: "text/markdown" },
+  });
+
+  assert.equal(req.url, "https://aifocus.blog/model-half-life/");
+  const parsedPath = new URL(req.url).pathname;
+  assert.equal(isValidContentPath(parsedPath), true);
+
+  const assetFetches = [];
+  const fakeEnv = {
+    ASSETS: {
+      fetch: async (assetReq) => {
+        assetFetches.push(new URL(assetReq.url).pathname);
+        return new Response("# Model Half-Life\nContent", { status: 200 });
+      },
+    },
+  };
+
+  const context = {
+    request: req,
+    next: async () => new Response("fallback"),
+    env: fakeEnv,
+  };
+
+  const res = await onRequest(context);
+  assert.equal(res.status, 200);
+  assert.equal(assetFetches.length, 1);
+  assert.equal(assetFetches[0], "/model-half-life/index.md");
+});
+
+test("onRequest: encoded traversal and backslashes are rejected without calling ASSETS.fetch", async () => {
+  // Non-canonicalized encoded traversal and backslash sequences retain their raw input
+  // in a real Request object; isUnsafePath ensures ASSETS.fetch is never called.
+  const attackUrls = [
+    "https://aifocus.blog/foo/..%2f_headers",
+    "https://aifocus.blog/..%2f..%2fstatic/_headers",
+    "https://aifocus.blog/foo%5cbar",
+    "https://aifocus.blog/foo%5Cbar",
+    "https://aifocus.blog/foo/%252e%252e/bar",
   ];
 
-  for (const rawUrl of rawAttackUrls) {
+  for (const attackUrl of attackUrls) {
     let assetFetchCalled = false;
     const fakeEnv = {
       ASSETS: {
         fetch: async () => {
           assetFetchCalled = true;
-          return new Response("markdown content", { status: 200 });
+          return new Response("sensitive data", { status: 200 });
         },
       },
     };
 
     let nextCalled = false;
-    // Create request with rawUrl preserved (using Object.defineProperty to bypass
-    // WHATWG Request constructor's immediate client-side URL normalization).
-    const req = new Request("https://aifocus.blog/model-half-life/", {
+    const req = new Request(attackUrl, {
       headers: { Accept: "text/markdown" },
     });
-    Object.defineProperty(req, "url", { value: rawUrl });
-
-    // Verify precondition: the parsed pathname is indeed an allowed content root!
-    const parsedPath = new URL(req.url).pathname;
-    assert.equal(
-      isValidContentPath(parsedPath),
-      true,
-      `Precondition failed: ${parsedPath} must be an allowed content path`
-    );
 
     const context = {
       request: req,
       next: async () => {
         nextCalled = true;
         return new Response("<html>Default response</html>", {
-          status: 200,
+          status: 404,
           headers: { "Content-Type": "text/html" },
         });
       },
@@ -254,14 +276,14 @@ test("onRequest: traversal and backslash guard prevents ASSETS.fetch independent
     assert.equal(
       assetFetchCalled,
       false,
-      `isUnsafePath must independently prevent ASSETS.fetch for: ${rawUrl}`
+      `ASSETS.fetch must never be called for traversal url: ${attackUrl}`
     );
     assert.equal(
       nextCalled,
       true,
-      `Must fall through to next() for: ${rawUrl}`
+      `Must fall through to next() for traversal url: ${attackUrl}`
     );
-    assert.equal(res.status, 200);
+    assert.equal(res.status, 404);
   }
 });
 
