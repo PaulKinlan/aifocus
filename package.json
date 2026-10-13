@@ -2,7 +2,7 @@
   "name": "aifocus",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "bash tools/gate.sh",
     "check": "bash tools/check-cmd.sh",
