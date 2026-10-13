@@ -21,6 +21,7 @@
   --pill-text: light-dark(#2a3550, #b0c2e8);
   --link-color: light-dark(#1a5fb4, #629fed);
   --link-hover: light-dark(#0b3d80, #9ec4f8);
+  --focus-outline: light-dark(#1a5fb4, #629fed);
   --input-bg: light-dark(#ffffff, #252528);
   --input-border: light-dark(#bbbbbb, #444444);
   --tip-bg: light-dark(#1f2937, #111827);
@@ -70,7 +71,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 .chart-tip[data-placement="bottom"] { transform: translate(-50%, 9px); }
 .controls { margin: 1rem 0 .6rem; font-size: .9rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .controls select { font: inherit; padding: .3rem .5rem; border: 1px solid var(--input-border); border-radius: .35rem; background: var(--input-bg); color: var(--text-main); }
-.controls select:focus-visible { outline: 2px solid #3367d6; outline-offset: 1px; }
+.controls select:focus-visible { outline: 2px solid var(--focus-outline); outline-offset: 1px; }
 .panel { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: .375rem; padding: .9rem 1rem; }
 .panel .lead { font-size: .92rem; margin-bottom: .75rem; }
 .panel .lead b { font-variant-numeric: tabular-nums; }
@@ -82,7 +83,13 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 .ver ul { list-style: none; display: flex; flex-wrap: wrap; gap: .3rem .4rem; }
 .ver li { font-size: .76rem; background: var(--pill-bg); border: 1px solid var(--pill-border); color: var(--pill-text); border-radius: .3rem; padding: .12rem .4rem; }
 .ver .more { font-size: .74rem; color: var(--link-color); cursor: pointer; background: none; border: none; padding: .12rem .2rem; text-decoration: underline; }
-.ver .more:hover, .ver .more:focus-visible { color: var(--link-hover); outline: none; }
+.ver .more:hover { color: var(--link-hover); }
+.ver .more:focus-visible {
+  color: var(--link-hover);
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 .note { font-size: .72rem; color: var(--text-subtle); margin-top: .85rem; line-height: 1.5; }
 .note a { color: var(--text-subtle); }
 .loading { padding: 2rem; text-align: center; color: var(--text-subtle); font-size: .9rem; }

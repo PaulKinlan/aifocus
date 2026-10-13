@@ -121,6 +121,20 @@ const PALETTE = [
   '#393b79', '#637939', '#8c6d31', '#843c39'
 ];
 
+const PALETTE_DARK = [
+  '#4ba3e3', '#ff9838', '#4ade80', '#f87171', '#b388eb',
+  '#c48477', '#f48fb1', '#a0a0a0', '#d4d738', '#38d9e8',
+  '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+  '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5',
+  '#8f94fb', '#86b049', '#c69d4d', '#d96b67'
+];
+
+function getColor(index) {
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const palette = isDark ? PALETTE_DARK : PALETTE;
+  return palette[index % palette.length];
+}
+
 const $ = (id) => document.getElementById(id);
 
 function parseTSV(text) {
@@ -231,7 +245,7 @@ function renderTimeline(rows) {
   // Series rows
   seriesList.forEach(([name, rs], i) => {
     const y = rowY(i);
-    const color = PALETTE[i % PALETTE.length];
+    const color = getColor(i);
 
     // Series label
     svg += `<text x="${LEFT_PAD - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--text-main)">${name}</text>`;
@@ -324,11 +338,18 @@ async function main() {
     const text = await res.text();
     const rows = parseTSV(text);
     if (rows.length === 0) throw new Error('No data rows.');
+    window._currentRows = rows;
     renderTimeline(rows);
     renderStats(rows);
   } catch (err) {
     $('timeline-chart').innerHTML = `<div class="error">Failed to load data: ${err.message}</div>`;
   }
+}
+
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (window._currentRows) renderTimeline(window._currentRows);
+  });
 }
 
 main();
