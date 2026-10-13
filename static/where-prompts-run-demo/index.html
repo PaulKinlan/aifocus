@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self';
              script-src 'self' 'unsafe-inline';
@@ -13,6 +14,7 @@
   <script>window.PROVIDER_ID = 'anthropic';</script>
   <style>
     :root {
+      color-scheme: dark;
       --bg: #0d1117;
       --bg-raised: #161b22;
       --bg-deep: #010409;
@@ -84,6 +86,14 @@
     input[type="password"] { width: 240px; }
     input[type="text"] { width: 170px; }
     select { min-width: 160px; }
+    .top-bar input[type="checkbox"] {
+      accent-color: var(--accent);
+      inline-size: 1.1em;
+      aspect-ratio: 1;
+      margin: 0;
+      cursor: pointer;
+    }
+    .top-bar label.label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
     @media (max-width: 700px) {
       input[type="password"], input[type="text"], select {
         width: 100%;
@@ -262,7 +272,7 @@
     <span>·</span>
     <span>OPFS storage</span>
     <span>·</span>
-    <span>key goes only to <strong id="endpointHint">api.anthropic.com</strong></span>
+    <span>key goes only to <strong id="endpointHint">api.anthropic.com</strong> and is not stored unless you opt in</span>
   </div>
 
   <div class="top-bar">
@@ -274,9 +284,11 @@
     </select>
     <span class="label">API key</span>
     <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off" />
+    <label class="label"><input id="rememberKey" type="checkbox" /> remember on this device</label>
     <span class="label">Model</span>
     <input id="model" type="text" value="claude-sonnet-4-6" />
     <button id="reset" class="danger">Clear sandbox</button>
+    <button id="forgetKey" class="danger">Forget API key</button>
     <span id="status" class="hint" style="margin-left: auto;"></span>
   </div>
 
