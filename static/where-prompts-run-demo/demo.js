@@ -616,6 +616,10 @@ $('forgetKey').addEventListener('click', () => {
 $('userInput').addEventListener('input', updateSendEnabled);
 $('send').addEventListener('click', handleSend);
 $('userInput').addEventListener('keydown', (e) => {
+  // Enter confirms an IME candidate, so a composing Enter must not submit the
+  // partially converted text. isComposing covers modern browsers; keyCode 229
+  // covers the ones that report a composition keydown that way.
+  if (e.isComposing || e.keyCode === 229) return;
   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();
     if (!$('send').disabled) handleSend();
