@@ -3,19 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com;">
 <title>What your browser supports</title>
 <style>
+:root {
+  color-scheme: light dark;
+  --bg-page: light-dark(#fafafa, #141414);
+  --bg-card: light-dark(#ffffff, #1e1e1e);
+  --text-main: light-dark(#1a1a1a, #e8e8e8);
+  --text-muted: light-dark(#666666, #b0b0b0);
+  --text-subtle: light-dark(#707070, #9e9e9e);
+  --border-head: light-dark(#dddddd, #3a3a3a);
+  --border-subtle: light-dark(#f0f0f0, #282828);
+  --border-group: light-dark(#e0e0e0, #333333);
+  --border-card: light-dark(#dddddd, #333333);
+  --you-bg: light-dark(#f4f4f8, #25252d);
+  --tick-color: light-dark(#1d8b3e, #4ade80);
+  --cross-color: light-dark(#cc3333, #f87171);
+  --warn-color: light-dark(#b87b00, #fbbf24);
+  --link-color: light-dark(#1a5fb4, #629fed);
+  --link-hover: light-dark(#0b3d80, #9ec4f8);
+  --focus-outline: light-dark(#1a5fb4, #629fed);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a;
+  color: var(--text-main);
   padding: 1.25rem;
-  background: #fafafa;
+  background: var(--bg-page);
   line-height: 1.45;
 }
 h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
-.subhead { font-size: .85rem; color: #666; margin-bottom: 1.1rem; }
+.subhead { font-size: .85rem; color: var(--text-muted); margin-bottom: 1.1rem; }
 .grid {
   display: grid;
   grid-template-columns: 1fr 50px 50px 50px 50px;
@@ -27,59 +47,68 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
   font-size: .68rem;
   text-transform: uppercase;
   letter-spacing: .05em;
-  color: #888;
+  color: var(--text-subtle);
   padding-bottom: .35rem;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--border-head);
   margin-bottom: .25rem;
   text-align: center;
 }
 .head.name { text-align: left; }
 .name-cell {
   padding: .35rem 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 .name-cell a {
-  color: #1a5fb4;
+  color: var(--link-color);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
-.name-cell a:hover { color: #0b3d80; text-decoration-thickness: 2px; }
+.name-cell a:hover,
+.name-cell a:focus-visible {
+  color: var(--link-hover);
+  text-decoration-thickness: 2px;
+}
+.name-cell a:focus-visible {
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
 .group-header {
   grid-column: 1 / -1;
   font-weight: 700;
   font-size: .62rem;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: #888;
+  color: var(--text-subtle);
   padding: .9rem 0 .3rem;
   margin-top: .25rem;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border-group);
 }
 .group-header:first-of-type { margin-top: 0; padding-top: .35rem; }
 .cell {
   text-align: center;
   padding: .35rem 0;
   font-weight: 700;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 .you {
-  background: #f4f4f8;
+  background: var(--you-bg);
   border-radius: 3px;
 }
-.tick { color: #1d8b3e; }
-.cross { color: #c33; }
-.warn { color: #b87b00; }
+.tick { color: var(--tick-color); }
+.cross { color: var(--cross-color); }
+.warn { color: var(--warn-color); }
 .summary {
   margin-top: 1.25rem;
   font-size: .9rem;
   padding: .85rem 1rem;
-  background: white;
+  background: var(--bg-card);
   border-radius: .375rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-card);
 }
-.summary strong { color: #1d8b3e; }
-.note { font-size: .72rem; color: #888; margin-top: .75rem; line-height: 1.4; }
+.summary strong { color: var(--tick-color); }
+.note { font-size: .72rem; color: var(--text-subtle); margin-top: .75rem; line-height: 1.4; }
 @media (max-width: 540px) {
   .grid { font-size: .75rem; grid-template-columns: 1fr 38px 38px 38px 38px; }
   .head { font-size: .6rem; }

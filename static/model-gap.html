@@ -3,30 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com;">
 <title>The model gap: knowledge cutoffs vs Chrome releases and features</title>
 <style>
+:root {
+  color-scheme: light dark;
+  --bg-page: light-dark(#fafafa, #141414);
+  --bg-card: light-dark(#ffffff, #1e1e1e);
+  --text-main: light-dark(#1a1a1a, #e8e8e8);
+  --text-muted: light-dark(#666666, #b0b0b0);
+  --text-subtle: light-dark(#707070, #9e9e9e);
+  --border-card: light-dark(#dddddd, #333333);
+  --border-subtle: light-dark(#eeeeee, #282828);
+  --pill-bg: light-dark(#f4f6fb, #222938);
+  --pill-border: light-dark(#e2e8f5, #2f3b52);
+  --pill-text: light-dark(#2a3550, #b0c2e8);
+  --link-color: light-dark(#1a5fb4, #629fed);
+  --link-hover: light-dark(#0b3d80, #9ec4f8);
+  --focus-outline: light-dark(#1a5fb4, #629fed);
+  --input-bg: light-dark(#ffffff, #252528);
+  --input-border: light-dark(#bbbbbb, #444444);
+  --tip-bg: light-dark(#1f2937, #111827);
+  --tip-border: light-dark(#374151, #4b5563);
+  --grid-year: light-dark(#e2e2e2, #2f2f2f);
+  --grid-quarter: light-dark(#f3f3f3, #222222);
+  --row-selected: light-dark(#fff7ed, #2d2418);
+  --cutoff-dot: light-dark(#1a1a1a, #e8e8e8);
+  --miss-active: light-dark(#b3471f, #f97316);
+  --miss-inactive: light-dark(#707070, #9e9e9e);
+  --chrome-track: light-dark(#dbe4f7, #243556);
+  --chrome-label: light-dark(#7e8aa6, #94a3b8);
+  --chrome-primary: light-dark(#1d57c7, #6ba1ff);
+  --today-text: light-dark(#c0392b, #f87171);
+  --error-bg: light-dark(#fce4e4, #3d1414);
+  --error-text: light-dark(#a02020, #f87171);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a; padding: 1.25rem; background: #fafafa; line-height: 1.45;
+  color: var(--text-main); padding: 1.25rem; background: var(--bg-page); line-height: 1.45;
 }
 h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
-.subhead { font-size: .85rem; color: #666; margin-bottom: .9rem; }
-.subhead strong { color: #1a1a1a; }
-.legend { display: flex; gap: 1.1rem; margin-bottom: .7rem; font-size: .76rem; align-items: center; flex-wrap: wrap; color: #444; }
+.subhead { font-size: .85rem; color: var(--text-muted); margin-bottom: .9rem; }
+.subhead strong { color: var(--text-main); }
+.legend { display: flex; gap: 1.1rem; margin-bottom: .7rem; font-size: .76rem; align-items: center; flex-wrap: wrap; color: var(--text-muted); }
 .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .35rem; vertical-align: middle; }
-.legend .dot.chrome { background: #3367d6; }
-.legend .dot.cutoff { background: #1a1a1a; }
+.legend .dot.chrome { background: var(--chrome-primary); }
+.legend .dot.cutoff { background: var(--cutoff-dot); }
 .legend .swatch { display: inline-block; width: 18px; height: 9px; border-radius: 2px; margin-right: .35rem; vertical-align: middle; background: linear-gradient(90deg, #f7c948, #e8602c); }
-.chart { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: 1rem .75rem; overflow-x: auto; }
+.chart { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: .375rem; padding: 1rem .75rem; overflow-x: auto; }
 .chart svg { width: 100%; height: auto; display: block; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
-.chart svg a text { fill: #1a5fb4; text-decoration: underline; text-underline-offset: 2px; }
+.chart svg a text { fill: var(--link-color); text-decoration: underline; text-underline-offset: 2px; }
+.chart svg a:hover text,
+.chart svg a:focus-visible text { fill: var(--link-hover); }
 .tip-target { cursor: help; }
-.tip-target:focus { outline: none; stroke: #111; stroke-width: 1.5; }
+.tip-target:focus { outline: none; stroke: var(--text-main); stroke-width: 1.5; }
 .chart-tip {
   position: fixed; z-index: 10; max-width: min(260px, calc(100vw - 16px));
-  padding: .45rem .55rem; border-radius: .35rem; background: #1f2937; color: #fff;
+  padding: .45rem .55rem; border-radius: .35rem; background: var(--tip-bg); color: #fff;
+  border: 1px solid var(--tip-border);
   box-shadow: 0 8px 22px rgba(0,0,0,.18); font-size: .74rem; line-height: 1.35;
   pointer-events: none; opacity: 0; transform: translate(-50%, calc(-100% - 9px));
   transition: opacity .12s ease;
@@ -34,22 +70,30 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 .chart-tip[data-visible="true"] { opacity: 1; }
 .chart-tip[data-placement="bottom"] { transform: translate(-50%, 9px); }
 .controls { margin: 1rem 0 .6rem; font-size: .9rem; display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
-.controls select { font: inherit; padding: .3rem .5rem; border: 1px solid #bbb; border-radius: .35rem; background: white; }
-.panel { background: white; border: 1px solid #ddd; border-radius: .375rem; padding: .9rem 1rem; }
+.controls select { font: inherit; padding: .3rem .5rem; border: 1px solid var(--input-border); border-radius: .35rem; background: var(--input-bg); color: var(--text-main); }
+.controls select:focus-visible { outline: 2px solid var(--focus-outline); outline-offset: 1px; }
+.panel { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: .375rem; padding: .9rem 1rem; }
 .panel .lead { font-size: .92rem; margin-bottom: .75rem; }
 .panel .lead b { font-variant-numeric: tabular-nums; }
 .verlist { max-height: 360px; overflow-y: auto; }
-.ver { border-top: 1px solid #eee; padding: .55rem 0; }
+.ver { border-top: 1px solid var(--border-subtle); padding: .55rem 0; }
 .ver:first-child { border-top: none; }
-.ver .vh { font-size: .82rem; font-weight: 700; color: #3367d6; margin-bottom: .25rem; }
-.ver .vh .vdate { color: #999; font-weight: 400; font-size: .76rem; }
+.ver .vh { font-size: .82rem; font-weight: 700; color: var(--chrome-primary); margin-bottom: .25rem; }
+.ver .vh .vdate { color: var(--text-subtle); font-weight: 400; font-size: .76rem; }
 .ver ul { list-style: none; display: flex; flex-wrap: wrap; gap: .3rem .4rem; }
-.ver li { font-size: .76rem; background: #f4f6fb; border: 1px solid #e2e8f5; color: #2a3550; border-radius: .3rem; padding: .12rem .4rem; }
-.ver .more { font-size: .74rem; color: #1a5fb4; cursor: pointer; background: none; border: none; padding: .12rem .2rem; text-decoration: underline; }
-.note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.5; }
-.note a { color: #888; }
-.loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
-.error { padding: 1rem; background: #fce4e4; color: #a02020; border-radius: .375rem; font-size: .85rem; }
+.ver li { font-size: .76rem; background: var(--pill-bg); border: 1px solid var(--pill-border); color: var(--pill-text); border-radius: .3rem; padding: .12rem .4rem; }
+.ver .more { font-size: .74rem; color: var(--link-color); cursor: pointer; background: none; border: none; padding: .12rem .2rem; text-decoration: underline; }
+.ver .more:hover { color: var(--link-hover); }
+.ver .more:focus-visible {
+  color: var(--link-hover);
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.note { font-size: .72rem; color: var(--text-subtle); margin-top: .85rem; line-height: 1.5; }
+.note a { color: var(--text-subtle); }
+.loading { padding: 2rem; text-align: center; color: var(--text-subtle); font-size: .9rem; }
+.error { padding: 1rem; background: var(--error-bg); color: var(--error-text); border-radius: .375rem; font-size: .85rem; }
 </style>
 </head>
 <body>
@@ -202,49 +246,49 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
           var qx = xd(q);
           if (qx >= LEFT - 1) {
             var isYear = q.getUTCMonth() === 0;
-            s += '<line x1="' + qx + '" y1="' + (AXIS_Y + 8) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="' + (isYear ? "#e2e2e2" : "#f3f3f3") + '" stroke-width="1" />';
+            s += '<line x1="' + qx + '" y1="' + (AXIS_Y + 8) + '" x2="' + qx + '" y2="' + (H - BOTTOM) + '" stroke="' + (isYear ? "var(--grid-year)" : "var(--grid-quarter)") + '" stroke-width="1" />';
             if (isYear || q.getUTCMonth() === 6) {
-              s += '<text x="' + qx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" fill="' + (isYear ? "#777" : "#aaa") + '">' + fmtShort(q) + "</text>";
+              s += '<text x="' + qx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" fill="' + (isYear ? "var(--text-muted)" : "var(--text-subtle)") + '">' + fmtShort(q) + "</text>";
             }
           }
           q = new Date(Date.UTC(q.getUTCFullYear(), q.getUTCMonth() + 3, 1));
         }
         // today line
         var tx = xd(today);
-        s += '<line x1="' + tx + '" y1="' + (AXIS_Y + 8) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3 3" />';
-        s += '<text x="' + tx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" font-weight="700" fill="#c0392b">today</text>';
+        s += '<line x1="' + tx + '" y1="' + (AXIS_Y + 8) + '" x2="' + tx + '" y2="' + (H - BOTTOM) + '" stroke="var(--today-text)" stroke-width="1.5" stroke-dasharray="3 3" />';
+        s += '<text x="' + tx + '" y="' + AXIS_Y + '" text-anchor="middle" font-size="10" font-weight="700" fill="var(--today-text)">today</text>';
         // chrome track
-        s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="#3367d6">Chrome</text>';
-        s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="#dbe4f7" stroke-width="2" />';
+        s += '<text x="' + (LEFT - 10) + '" y="' + (chromeY + 4) + '" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--chrome-primary)">Chrome</text>';
+        s += '<line x1="' + LEFT + '" y1="' + chromeY + '" x2="' + tx + '" y2="' + chromeY + '" stroke="var(--chrome-track)" stroke-width="2" />';
         milestones.forEach(function (x, i) {
           var cx = xd(x.d);
           var releaseTip = "Chrome " + x.m + ", " + fmtFull(x.d) + " (" + x.features.length + " features)";
-          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="#3367d6"><title>' + esc(releaseTip) + "</title></circle>";
+          s += '<circle cx="' + cx + '" cy="' + chromeY + '" r="3.2" fill="var(--chrome-primary)"><title>' + esc(releaseTip) + "</title></circle>";
           s += '<circle' + tipAttrs(releaseTip) + ' cx="' + cx + '" cy="' + chromeY + '" r="8" fill="transparent" stroke="transparent" />';
           // version number under each dot, interleaved across two levels to avoid overlap
           var ly = chromeY + (i % 2 === 0 ? 11 : 21);
-          s += '<line x1="' + cx + '" y1="' + (chromeY + 4) + '" x2="' + cx + '" y2="' + (ly - 7) + '" stroke="#dbe4f7" stroke-width="1" />';
-          s += '<text x="' + cx + '" y="' + ly + '" text-anchor="middle" font-size="8.5" fill="#7e8aa6">' + x.m + "</text>";
+          s += '<line x1="' + cx + '" y1="' + (chromeY + 4) + '" x2="' + cx + '" y2="' + (ly - 7) + '" stroke="var(--chrome-track)" stroke-width="1" />';
+          s += '<text x="' + cx + '" y="' + ly + '" text-anchor="middle" font-size="8.5" fill="var(--chrome-label)">' + x.m + "</text>";
         });
         // rows
         rows.forEach(function (row, i) {
           var m = row.m, y = row.y, cutX = xd(m.cut), sel0 = m.model === selectedName;
           if (row.vStart) {
-            s += '<text x="6" y="' + (y + 3) + '" font-size="8.5" font-weight="700" fill="#aaa" letter-spacing="0.03em" style="text-transform:uppercase">' + esc(row.vStart) + "</text>";
+            s += '<text x="6" y="' + (y + 3) + '" font-size="8.5" font-weight="700" fill="var(--text-subtle)" letter-spacing="0.03em" style="text-transform:uppercase">' + esc(row.vStart) + "</text>";
           }
           if (sel0) {
-            s += '<rect x="0" y="' + (y - ROW_H / 2) + '" width="' + W + '" height="' + ROW_H + '" fill="#fff7ed" />';
+            s += '<rect x="0" y="' + (y - ROW_H / 2) + '" width="' + W + '" height="' + ROW_H + '" fill="var(--row-selected)" />';
           }
-          s += '<line x1="' + LEFT + '" y1="' + y + '" x2="' + tx + '" y2="' + y + '" stroke="#f4f4f4" stroke-width="1" />';
+          s += '<line x1="' + LEFT + '" y1="' + y + '" x2="' + tx + '" y2="' + y + '" stroke="var(--grid-quarter)" stroke-width="1" />';
           s += '<defs><linearGradient id="g' + i + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f7c948"/><stop offset="1" stop-color="#e8602c"/></linearGradient></defs>';
           s += '<rect x="' + cutX + '" y="' + (y - 4) + '" width="' + Math.max(1, tx - cutX) + '" height="8" rx="2.5" fill="url(#g' + i + ')" opacity="' + (sel0 ? "1" : "0.6") + '" />';
           var cutoffTip = m.model + " cutoff: " + m.cutoffLabel;
-          s += '<circle cx="' + cutX + '" cy="' + y + '" r="' + (sel0 ? 5 : 4) + '" fill="#1a1a1a"><title>' + esc(cutoffTip) + "</title></circle>";
+          s += '<circle cx="' + cutX + '" cy="' + y + '" r="' + (sel0 ? 5 : 4) + '" fill="var(--cutoff-dot)"><title>' + esc(cutoffTip) + "</title></circle>";
           s += '<circle' + tipAttrs(cutoffTip) + ' cx="' + cutX + '" cy="' + y + '" r="8" fill="transparent" stroke="transparent" />';
-          var label = '<text x="' + (LEFT - 10) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10.5"' + (sel0 ? ' font-weight="700"' : "") + ">" + esc(m.model) + "</text>";
+          var label = '<text x="' + (LEFT - 10) + '" y="' + (y + 3) + '" text-anchor="end" font-size="10.5" fill="var(--text-main)"' + (sel0 ? ' font-weight="700"' : "") + ">" + esc(m.model) + "</text>";
           s += m.card ? '<a target="_blank" rel="noopener" href="' + esc(m.card) + '">' + label + "</a>" : label;
           var miss = missedFor(m);
-          s += '<text x="' + (tx + 7) + '" y="' + (y + 3) + '" font-size="10" font-weight="700" fill="' + (sel0 ? "#b3471f" : "#bbb") + '">' + miss.length + "</text>";
+          s += '<text x="' + (tx + 7) + '" y="' + (y + 3) + '" font-size="10" font-weight="700" fill="' + (sel0 ? "var(--miss-active)" : "var(--miss-inactive)") + '">' + miss.length + "</text>";
         });
         s += "</svg>";
         chart.innerHTML = s + '<div class="chart-tip" id="chart-tip" role="tooltip" hidden></div>';

@@ -3,19 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com;">
 <title>Device API timeline by engine</title>
 <style>
+:root {
+  color-scheme: light dark;
+  --bg-page: light-dark(#fafafa, #141414);
+  --bg-card: light-dark(#ffffff, #1e1e1e);
+  --text-main: light-dark(#1a1a1a, #e8e8e8);
+  --text-muted: light-dark(#666666, #b0b0b0);
+  --text-subtle: light-dark(#707070, #9e9e9e);
+  --border-card: light-dark(#dddddd, #333333);
+  --border-subtle: light-dark(#f0f0f0, #282828);
+  --link-color: light-dark(#1a5fb4, #629fed);
+  --link-hover: light-dark(#0b3d80, #9ec4f8);
+  --focus-outline: light-dark(#1a5fb4, #629fed);
+  --tick-line-edge: light-dark(#bbbbbb, #555555);
+  --tick-line: light-dark(#eeeeee, #262626);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a;
+  color: var(--text-main);
   padding: 1.25rem;
-  background: #fafafa;
+  background: var(--bg-page);
   line-height: 1.45;
 }
 h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
-.subhead { font-size: .85rem; color: #666; margin-bottom: 1.1rem; }
+.subhead { font-size: .85rem; color: var(--text-muted); margin-bottom: 1.1rem; }
 .legend {
   display: flex;
   gap: 1rem;
@@ -23,7 +39,7 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
   font-size: .8rem;
   align-items: center;
   flex-wrap: wrap;
-  color: #444;
+  color: var(--text-muted);
 }
 .legend .dot {
   display: inline-block;
@@ -35,24 +51,32 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
 }
 .dot.chrome  { background: #3367d6; }
 .dot.firefox { background: #e07b00; }
-.dot.safari  { background: #888; }
-.dot.open    { background: transparent; border: 2px solid #888; box-sizing: border-box; }
+.dot.safari  { background: #888888; }
+.dot.open    { background: transparent; border: 2px solid var(--text-subtle); box-sizing: border-box; }
 .chart {
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
   border-radius: .375rem;
   padding: 1rem;
 }
 .chart svg { width: 100%; height: auto; display: block; }
 .chart svg a { cursor: pointer; }
 .chart svg a text {
-  fill: #1a5fb4;
+  fill: var(--link-color);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
-.chart svg a:hover text { fill: #0b3d80; text-decoration-thickness: 2px; }
-.note { font-size: .72rem; color: #888; margin-top: .85rem; line-height: 1.4; }
+.chart svg a:hover text,
+.chart svg a:focus-visible text {
+  fill: var(--link-hover);
+  text-decoration-thickness: 2px;
+}
+.chart svg a:focus-visible {
+  outline: 2px solid var(--focus-outline);
+  outline-offset: 2px;
+}
+.note { font-size: .72rem; color: var(--text-subtle); margin-top: .85rem; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -149,19 +173,19 @@ let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" prese
 // year ticks + labels
 for (let y = YEAR_MIN; y <= YEAR_MAX; y++) {
   const x = yearX(y);
-  svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="${y === YEAR_MIN || y === YEAR_MAX ? '#bbb' : '#eee'}" stroke-width="1" />`;
+  svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="${y === YEAR_MIN || y === YEAR_MAX ? 'var(--tick-line-edge)' : 'var(--tick-line)'}" stroke-width="1" />`;
   if (y === YEAR_MIN || y === YEAR_MAX || y % 2 === 0) {
-    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="#666">${y}</text>`;
+    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="var(--text-muted)">${y}</text>`;
   }
 }
 
 // rows + dots
 rows.forEach(({ api, y, groupStart }) => {
   if (groupStart) {
-    svg += `<text x="6" y="${y + 4}" text-anchor="start" font-size="10" font-weight="700" fill="#888" letter-spacing="0.04em" style="text-transform: uppercase;">${GROUP_LABELS[groupStart]}</text>`;
+    svg += `<text x="6" y="${y + 4}" text-anchor="start" font-size="10" font-weight="700" fill="var(--text-subtle)" letter-spacing="0.04em" style="text-transform: uppercase;">${GROUP_LABELS[groupStart]}</text>`;
   }
   svg += `<a target="_blank" rel="noopener" href="${api.ref}"><text x="${LEFT_PAD - 10}" y="${y + 4}" text-anchor="end" font-size="11">${api.name}</text></a>`;
-  svg += `<line x1="${LEFT_PAD}" y1="${y}" x2="${W - RIGHT_PAD}" y2="${y}" stroke="#f0f0f0" stroke-width="1" />`;
+  svg += `<line x1="${LEFT_PAD}" y1="${y}" x2="${W - RIGHT_PAD}" y2="${y}" stroke="var(--border-subtle)" stroke-width="1" />`;
 
   // Place each engine dot on the row centerline. If two engines share an x position, nudge them apart so they don't overlap.
   let chromeX  = api.chrome  ? yearX(api.chrome)  : null;
