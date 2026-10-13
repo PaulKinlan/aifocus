@@ -1,11 +1,10 @@
 :root {
   /* Support both schemes so native UI matches the palette and the user's
-     light/dark preference is honoured (the palette switches via the
-     prefers-color-scheme media query below). */
+     light/dark preference is honoured using native light-dark() CSS tokens. */
   color-scheme: light dark;
-  --color: #000000;
-  --background: #fdfcf8;
-  --bg-secondary: #f0eee6;
+  --color: light-dark(#000000, #e8e4dc);
+  --background: light-dark(#fdfcf8, #1c1a17);
+  --bg-secondary: light-dark(#f0eee6, #2a2723);
 }
 
 /* Visually hidden class */
@@ -711,12 +710,6 @@ article.featured-post:has(.featured-image-large-container),
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color: #e8e4dc;
-    --background: #1c1a17;
-    --bg-secondary: #2a2723;
-  }
-
   header .site-branding-header .site-branding-title a {
     color: #ffffff;
   }
