@@ -41,7 +41,7 @@
       background: var(--bg-deep);
       border-bottom: 1px solid var(--border);
       padding: 8px 16px;
-      font-size: 11px;
+      font-size: 12px; /* 0.75rem floor: banner labels are text, not decoration */
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-dim);
@@ -72,7 +72,7 @@
       background: var(--bg-raised);
     }
     .top-bar .label {
-      font-size: 11px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-dim);
@@ -101,9 +101,9 @@
         width: 100%;
         min-width: 0;
       }
-      .top-bar > .label { font-size: 10px; }
+      .top-bar > .label { font-size: 12px; }
       .top-bar { padding: 10px 12px; }
-      .banner { font-size: 10px; padding: 6px 12px; }
+      .banner { font-size: 12px; padding: 6px 12px; }
     }
     button {
       background: var(--bg-deep);
@@ -115,6 +115,16 @@
       cursor: pointer;
     }
     button:hover:not(:disabled) { background: var(--bg); border-color: var(--accent); }
+    /* One ring for every keyboard-reachable control, so the demo does not mix
+       a custom ring on buttons with the UA ring on the fields. */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
     button.primary { background: var(--accent); color: var(--bg-deep); border-color: var(--accent); font-weight: 600; }
     button.primary:hover:not(:disabled) { filter: brightness(1.15); }
@@ -149,7 +159,7 @@
     .panel:last-child { border-right: none; }
     .panel h2,
     .panel > summary {
-      font-size: 11px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-dim);
@@ -168,7 +178,7 @@
       content: '▸';
       display: inline-block;
       margin-right: 4px;
-      font-size: 9px;
+      font-size: 12px;
       color: var(--text-dim);
       transform: translateY(-1px);
       transition: transform 0.12s;
@@ -176,7 +186,14 @@
     details[open].panel > summary::before { transform: rotate(90deg) translateX(-1px); }
     .panel:not([open]) { border-bottom: 1px solid var(--border); }
     .panel h2 small,
-    .panel > summary small { font-weight: normal; text-transform: none; letter-spacing: normal; color: var(--text-dim); }
+    .panel > summary small {
+      /* `small` is UA-reduced (~10px); keep the 0.75rem text floor. */
+      font-size: inherit;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: normal;
+      color: var(--text-dim);
+    }
     .panel-body { padding: 14px 16px; flex: 1; overflow: auto; }
 
     textarea {
@@ -242,7 +259,7 @@
     .msg.assistant { border-left-color: var(--ok); }
     .msg.error { border-left-color: var(--err); color: var(--err); }
     .msg .kind {
-      font-size: 10px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-dim);
@@ -253,7 +270,7 @@
       padding: 6px 8px;
       margin-top: 4px;
       border-radius: 2px;
-      font: 11px/1.4 ui-monospace, monospace;
+      font: 12px/1.4 ui-monospace, monospace;
       white-space: pre-wrap;
       word-break: break-word;
       overflow: auto;
@@ -261,7 +278,7 @@
     }
     .empty-transcript { color: var(--text-dim); font-style: italic; font-size: 12px; }
 
-    .hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+    .hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
     .hint code { background: var(--bg-deep); padding: 1px 4px; border-radius: 2px; }
   </style>
 </head>
@@ -298,7 +315,7 @@
     <details class="panel">
       <summary>
         <span>System prompt <small>(the program)</small></span>
-        <button id="resetPrompt" style="padding: 3px 8px; font-size: 11px;">reset to default</button>
+        <button id="resetPrompt" style="padding: 3px 8px; font-size: 12px;">reset to default</button>
       </summary>
       <div class="panel-body">
         <textarea id="systemPrompt" spellcheck="false"></textarea>
