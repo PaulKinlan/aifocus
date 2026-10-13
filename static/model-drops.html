@@ -22,6 +22,9 @@
   --tick-line: light-dark(#eaeaea, #2a2a2a);
   --today-line: light-dark(#bbbbbb, #666666);
   --pred-text: light-dark(#1d8b3e, #4ade80);
+  --pred-dead: light-dark(#c02626, #f87171);
+  --pred-late: light-dark(#b45309, #fbbf24);
+  --dash-muted: light-dark(#999999, #777777);
   --error-bg: light-dark(#fce4e4, #3d1414);
   --error-text: light-dark(#a02020, #f87171);
 }
@@ -74,6 +77,9 @@ th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid var(-
 th { background: var(--th-bg); font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--th-text); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 .predicted { color: var(--pred-text); font-weight: 600; }
+.predicted.dead { color: var(--pred-dead); }
+.predicted.late { color: var(--pred-late); }
+.predicted-dash { color: var(--dash-muted); }
 .note { font-size: .72rem; color: var(--text-subtle); margin-top: .75rem; line-height: 1.4; }
 .loading { padding: 2rem; text-align: center; color: var(--text-subtle); font-size: .9rem; }
 .error { padding: 1rem; background: var(--error-bg); color: var(--error-text); border-radius: .375rem; font-size: .85rem; }
@@ -283,7 +289,7 @@ function renderStats(rows) {
     });
 
   for (const r of rowsArr) {
-    let predCell = '<span style="color:#999;">—</span>';
+    let predCell = '<span class="predicted-dash">—</span>';
     if (r.pred) {
       const now = new Date();
       const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
@@ -291,9 +297,9 @@ function renderStats(rows) {
       const isLate = r.pred.date < now && !isDead;
       
       if (isDead) {
-        predCell = `<span class="predicted" style="color: #d62728;">${fmtDate(r.pred.date)} <strong>(Dead?)</strong></span>`;
+        predCell = `<span class="predicted dead">${fmtDate(r.pred.date)} <strong>(Dead?)</strong></span>`;
       } else if (isLate) {
-        predCell = `<span class="predicted" style="color: #ff7f0e;">${fmtDate(r.pred.date)} <em>(Late)</em></span>`;
+        predCell = `<span class="predicted late">${fmtDate(r.pred.date)} <em>(Late)</em></span>`;
       } else {
         predCell = `<span class="predicted">${fmtDate(r.pred.date)}</span>`;
       }
