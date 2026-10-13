@@ -371,8 +371,18 @@ const $ = (id) => document.getElementById(id);
 
 const LS_PROMPT = 'wpr_demo_prompt';
 const LS_PROVIDER = 'wpr_demo_provider';
-const LS_KEY = (p) => `wpr_demo_apikey_${p}`;
 const LS_MODEL = (p) => `wpr_demo_model_${p}`;
+
+// The provider key is a live bearer credential with billing authority, and
+// localStorage is origin-wide and readable by any script on the origin, so it
+// is NOT persisted unless the reader explicitly opts in (the "remember on this
+// device" checkbox). The opt-in flag is per provider, so a key written by an
+// older build — which persisted unconditionally — can be told apart from one a
+// reader asked to keep, and deleted rather than restored.
+const LS_KEY_PREFIX = 'wpr_demo_apikey_';
+const LS_KEY_REMEMBER_PREFIX = 'wpr_demo_key_remember_';
+const LS_KEY = (p) => `${LS_KEY_PREFIX}${p}`;
+const LS_KEY_REMEMBER = (p) => `${LS_KEY_REMEMBER_PREFIX}${p}`;
 
 // The page is provider-locked. window.PROVIDER_ID is set inline in the
 // HTML before this module runs. The provider dropdown is a navigator
@@ -391,9 +401,18 @@ function getProviderId() {
 function loadState() {
   const p = getProviderId();
   const def = PROVIDERS[p];
-  // Restore stored values for the current locked provider.
+  // Restore stored values for the current locked provider. The key is only
+  // restored if this device opted in; anything else is a credential left
+  // behind by an older build, so it is removed here rather than put in the form.
   const storedKey = localStorage.getItem(LS_KEY(p));
-  if (storedKey) $('apiKey').value = storedKey;
+  if (storedKey) {
+    if (localStorage.getItem(LS_KEY_REMEMBER(p)) === '1') {
+      $('apiKey').value = storedKey;
+      $('rememberKey').checked = true;
+    } else {
+      forgetStoredKey(p);
+    }
+  }
   const storedModel = localStorage.getItem(LS_MODEL(p));
   if (storedModel) $('model').value = storedModel;
   $('apiKey').placeholder = def.keyPlaceholder;
@@ -401,6 +420,39 @@ function loadState() {
   $('provider').value = p;
   const storedPrompt = localStorage.getItem(LS_PROMPT) ?? DEFAULT_PROMPT;
   $('systemPrompt').value = storedPrompt;
+  updateSendEnabled();
+}
+
+// Remove the stored key for one provider, including the opt-in flag, so a later
+// un-opt-in cannot resurrect it.
+function forgetStoredKey(providerId) {
+  localStorage.removeItem(LS_KEY(providerId));
+  localStorage.removeItem(LS_KEY_REMEMBER(providerId));
+}
+
+// Every provider page shares this origin, so a key kept for one provider is
+// still readable from the others. "Forget" means all of them.
+function forgetAllStoredKeys() {
+  const doomed = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const k = localStorage.key(i);
+    if (k && (k.startsWith(LS_KEY_PREFIX) || k.startsWith(LS_KEY_REMEMBER_PREFIX))) doomed.push(k);
+  }
+  doomed.forEach((k) => localStorage.removeItem(k));
+}
+
+function persistKeyForThisDevice(providerId, apiKey) {
+  if ($('rememberKey').checked && apiKey) {
+    localStorage.setItem(LS_KEY(providerId), apiKey);
+    localStorage.setItem(LS_KEY_REMEMBER(providerId), '1');
+  } else {
+    forgetStoredKey(providerId);
+  }
+}
+
+function forgetKeyFields() {
+  $('rememberKey').checked = false;
+  $('apiKey').value = '';
   updateSendEnabled();
 }
 
@@ -489,7 +541,7 @@ async function handleSend() {
   if (!apiKey || !userMessage) return;
 
   localStorage.setItem(LS_PROVIDER, providerId);
-  localStorage.setItem(LS_KEY(providerId), apiKey);
+  persistKeyForThisDevice(providerId, apiKey);
   localStorage.setItem(LS_MODEL(providerId), model);
   localStorage.setItem(LS_PROMPT, system);
 
@@ -549,6 +601,18 @@ $('provider').addEventListener('change', (e) => {
   if (url) window.location.href = url;
 });
 $('apiKey').addEventListener('input', updateSendEnabled);
+$('rememberKey').addEventListener('change', (e) => {
+  // Unchecking is itself a request to forget, so it takes effect on the spot
+  // rather than at the next send.
+  if (e.target.checked) persistKeyForThisDevice(getProviderId(), $('apiKey').value.trim());
+  else forgetStoredKey(getProviderId());
+});
+
+$('forgetKey').addEventListener('click', () => {
+  forgetAllStoredKeys();
+  forgetKeyFields();
+  toast('API key forgotten on this device');
+});
 $('userInput').addEventListener('input', updateSendEnabled);
 $('send').addEventListener('click', handleSend);
 $('userInput').addEventListener('keydown', (e) => {
@@ -559,8 +623,10 @@ $('userInput').addEventListener('keydown', (e) => {
 });
 
 $('reset').addEventListener('click', async () => {
-  if (!confirm('Clear every file in the demo sandbox? This only affects the OPFS bucket for this page.')) return;
+  if (!confirm('Clear every file in the demo sandbox and forget the stored API key on this device? This affects the OPFS bucket for this page and any key it kept in localStorage.')) return;
   await opfsRemoveAll();
+  forgetAllStoredKeys();
+  forgetKeyFields();
   $('transcript').innerHTML = '<div class="empty-transcript">Sandbox cleared.</div>';
   $('viewer').className = 'viewer empty';
   $('viewer').textContent = 'Click a file to view its contents.';
