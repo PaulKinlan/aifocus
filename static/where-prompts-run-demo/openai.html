@@ -115,7 +115,16 @@
       cursor: pointer;
     }
     button:hover:not(:disabled) { background: var(--bg); border-color: var(--accent); }
-    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    /* One ring for every keyboard-reachable control, so the demo does not mix
+       a custom ring on buttons with the UA ring on the fields. */
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
     button.primary { background: var(--accent); color: var(--bg-deep); border-color: var(--accent); font-weight: 600; }
     button.primary:hover:not(:disabled) { filter: brightness(1.15); }
