@@ -13,6 +13,27 @@ const MARKDOWN_TYPES = new Set([
   "application/markdown",
 ]);
 
+// Top-level paths that are not post or tutorial content roots and must never
+// trigger markdown negotiation.
+const RESERVED_ROOTS = new Set([
+  "",
+  "api",
+  "authors",
+  "categories",
+  "css",
+  "data",
+  "fonts",
+  "functions",
+  "images",
+  "js",
+  "posts",
+  "static",
+  "tags",
+  "training",
+  "tutorials",
+  "where-prompts-run-demo",
+]);
+
 // Rough heuristic matching Cloudflare's own "Markdown for Agents" behaviour:
 // ~4 characters per token for typical English prose. Good enough for clients
 // that want to budget context windows; not a substitute for a real tokenizer.
@@ -59,10 +80,113 @@ function prefersMarkdown(header) {
   return markdownQ > htmlQ;
 }
 
+// Reject directory traversal segments, raw/encoded backslashes, encoded dots/slashes,
+// and control characters in client path input.
+function isUnsafePath(rawUrl, pathname) {
+  let urlObj;
+  try {
+    urlObj = new URL(rawUrl);
+  } catch {
+    return true;
+  }
+
+  // Extract path portion from the raw URL before URL parser normalization
+  const hostIdx = rawUrl.indexOf(urlObj.host);
+  const pathAndSearch = hostIdx !== -1 ? rawUrl.slice(hostIdx + urlObj.host.length) : rawUrl;
+  const rawPath = pathAndSearch.split("?")[0].split("#")[0];
+
+  // 1. Raw path check for backslash or encoded traversal/slashes
+  if (/\\|%5[cC]/i.test(rawPath) || /\.\.|\/\.\/|%(?:2[eE]|2[fF])/i.test(rawPath)) {
+    return true;
+  }
+
+  // 2. Parsed pathname check
+  if (/\\|%5[cC]/i.test(pathname) || /\.\.|\/\.\/|%(?:2[eE]|2[fF])/i.test(pathname)) {
+    return true;
+  }
+
+  // 3. Iterative decode to catch nested percent-encoding (e.g. %252e%252e)
+  let decoded = pathname;
+  let iterations = 0;
+  while (decoded.includes("%")) {
+    if (++iterations > 5) return true; // runaway / deeply nested encoding
+    try {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    } catch {
+      return true; // malformed encoding
+    }
+  }
+
+  // 4. Decoded check for traversal, backslashes, or control characters
+  if (/\.\.|\/\.\/|\\|[\x00-\x1f\x7f]/.test(decoded)) {
+    return true;
+  }
+
+  return false;
+}
+
+// Normalize path: collapse consecutive slashes and ensure leading slash.
+function normalizePath(pathname) {
+  let normalized = pathname.replace(/\/+/g, "/");
+  if (!normalized.startsWith("/")) {
+    normalized = "/" + normalized;
+  }
+  return normalized;
+}
+
+// Restrict markdown negotiation to expected published content roots:
+// 1. Single-segment post slug: /:slug/ (or /:slug)
+// 2. Posts section slug: /posts/:slug/
+// 3. Tutorials section slug: /training/:slug/ or /tutorials/:slug/
+function isValidContentPath(normalizedPath) {
+  const trimmed = normalizedPath.replace(/^\/+|\/+$/g, "");
+  if (!trimmed) return false;
+
+  const segments = trimmed.split("/");
+
+  // 1. Root-level post slug: /:slug/
+  if (segments.length === 1) {
+    const slug = segments[0];
+    if (RESERVED_ROOTS.has(slug)) return false;
+    if (slug.startsWith(".") || slug.startsWith("_")) return false;
+    return /^[a-z0-9][a-z0-9-]*$/i.test(slug);
+  }
+
+  // 2. Posts section: /posts/:slug/
+  if (segments.length === 2 && segments[0] === "posts") {
+    const slug = segments[1];
+    if (slug.startsWith(".") || slug.startsWith("_")) return false;
+    return /^[a-z0-9][a-z0-9-]*$/i.test(slug);
+  }
+
+  // 3. Tutorials / training section: /training/:slug or /tutorials/:slug
+  if ((segments[0] === "training" || segments[0] === "tutorials") && segments.length >= 2) {
+    for (let i = 1; i < segments.length; i++) {
+      const seg = segments[i];
+      if (!seg || seg.startsWith(".") || seg.startsWith("_")) return false;
+      if (!/^[a-z0-9][a-z0-9-]*$/i.test(seg)) return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
 function markdownSiblingPath(pathname) {
   if (pathname.endsWith(".md")) return pathname;
   if (pathname.endsWith("/")) return pathname + "index.md";
   return pathname + "/index.md";
+}
+
+function appendVaryAccept(headers) {
+  const vary = headers.get("Vary");
+  if (!vary) {
+    headers.set("Vary", "Accept");
+  } else if (!vary.split(",").map((s) => s.trim().toLowerCase()).includes("accept")) {
+    headers.set("Vary", `${vary}, Accept`);
+  }
 }
 
 async function decorateMarkdown(response) {
@@ -75,7 +199,7 @@ async function decorateMarkdown(response) {
   headers.delete("content-encoding");
   headers.delete("content-length");
   headers.set("x-markdown-tokens", String(estimateTokens(text)));
-  headers.append("Vary", "Accept");
+  appendVaryAccept(headers);
   return new Response(text, {
     status: response.status,
     statusText: response.statusText,
@@ -87,10 +211,13 @@ export async function onRequest(context) {
   const { request, next, env } = context;
   const url = new URL(request.url);
 
-  // Direct `.md` request — serve as markdown with token count.
+  // Direct `.md` request — serve as markdown with token count if path is safe.
   if (url.pathname.endsWith(".md")) {
     const response = await next();
-    return decorateMarkdown(response);
+    if (!isUnsafePath(request.url, url.pathname)) {
+      return decorateMarkdown(response);
+    }
+    return response;
   }
 
   // Only consider GET/HEAD and only for paths that look like pages (trailing
@@ -99,31 +226,51 @@ export async function onRequest(context) {
   const looksLikePage =
     url.pathname.endsWith("/") || !/\.[a-z0-9]+$/i.test(url.pathname);
 
-  if ((method === "GET" || method === "HEAD") && looksLikePage &&
-      prefersMarkdown(request.headers.get("accept"))) {
-    const mdUrl = new URL(url);
-    mdUrl.pathname = markdownSiblingPath(url.pathname);
-    const assetRequest = new Request(mdUrl.toString(), {
-      method,
-      headers: request.headers,
-    });
-    // On Cloudflare Pages the static asset binding is exposed as env.ASSETS.
-    const fetcher = env && env.ASSETS ? env.ASSETS : null;
-    const mdResponse = fetcher
-      ? await fetcher.fetch(assetRequest)
-      : await fetch(assetRequest);
-    if (mdResponse.ok) {
-      return decorateMarkdown(mdResponse);
+  if (
+    (method === "GET" || method === "HEAD") &&
+    looksLikePage &&
+    prefersMarkdown(request.headers.get("accept")) &&
+    !isUnsafePath(request.url, url.pathname)
+  ) {
+    const normalized = normalizePath(url.pathname);
+    if (isValidContentPath(normalized)) {
+      const mdUrl = new URL(url);
+      mdUrl.pathname = markdownSiblingPath(normalized);
+      const assetRequest = new Request(mdUrl.toString(), {
+        method,
+        headers: request.headers,
+      });
+      // On Cloudflare Pages the static asset binding is exposed as env.ASSETS.
+      const fetcher = env && env.ASSETS ? env.ASSETS : null;
+      const mdResponse = fetcher
+        ? await fetcher.fetch(assetRequest)
+        : await fetch(assetRequest);
+      if (mdResponse.ok) {
+        return decorateMarkdown(mdResponse);
+      }
+      // Fall through to the HTML response if no markdown variant exists.
     }
-    // Fall through to the HTML response if no markdown variant exists.
   }
 
   const response = await next();
   const headers = new Headers(response.headers);
-  headers.append("Vary", "Accept");
+  appendVaryAccept(headers);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   });
 }
+
+export {
+  MARKDOWN_TYPES,
+  RESERVED_ROOTS,
+  estimateTokens,
+  parseAccept,
+  prefersMarkdown,
+  isUnsafePath,
+  normalizePath,
+  isValidContentPath,
+  markdownSiblingPath,
+  decorateMarkdown,
+};
