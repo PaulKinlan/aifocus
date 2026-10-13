@@ -533,7 +533,23 @@ function appendTranscript(kind, payload) {
     div.innerHTML = `<div class="kind">error</div><div>${escapeHtml(payload)}</div>`;
   }
   t.appendChild(div);
-  t.parentElement.scrollTop = t.parentElement.scrollHeight;
+  queueTranscriptScroll();
+}
+
+/* Autoscroll, batched into one frame. A turn appends many messages (streaming
+   chunks, tool calls, results), and reading scrollHeight straight after each
+   append forces a synchronous layout every time. Queuing the read and write for
+   the next frame both takes them out of the append path and collapses several
+   appends into a single scroll. */
+let scrollQueued = false;
+function queueTranscriptScroll() {
+  if (scrollQueued) return;
+  scrollQueued = true;
+  requestAnimationFrame(() => {
+    scrollQueued = false;
+    const box = $('transcript');
+    if (box && box.parentElement) box.parentElement.scrollTop = box.parentElement.scrollHeight;
+  });
 }
 
 function truncate(s, n) {
