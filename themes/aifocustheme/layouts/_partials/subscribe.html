@@ -2,12 +2,19 @@
 Buttondown newsletter subscribe form. Pass an optional `label` to give the
 form landmark a unique accessible name when it appears more than once.
 Usage: {{ partial "subscribe.html" (dict "label" "Subscribe — intro") }}
+
+The form is also annotated as a declarative WebMCP tool so an in-browser agent
+can fill and submit it natively. `toolautosubmit` is deliberately omitted: the
+browser pauses for the user to review before submitting. See
+https://webmachinelearning.github.io/webmcp/
 */}}
 {{- $label := "Subscribe to the AI Focus newsletter" -}}
 {{- if reflect.IsMap . }}{{ with .label }}{{ $label = . }}{{ end }}{{ end -}}
 <form action="https://buttondown.com/api/emails/embed-subscribe/ai-focus" method="post" target="popupwindow"
   onsubmit="window.open('https://newsletter.aifoc.us', 'popupwindow')" class="embeddable-buttondown-form"
-  aria-label="{{ $label }}">
+  aria-label="{{ $label }}"
+  toolname="subscribe_newsletter"
+  tooldescription="Subscribe an email address to the AI Focus newsletter.">
   <label>Email address
     <input type="email" name="email" placeholder="Enter your email" autocomplete="email" required />
   </label>
