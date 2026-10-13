@@ -199,16 +199,18 @@ test("onRequest: normalizes slashes for valid post request", async () => {
   assert.equal(res.status, 200);
 });
 
-test("onRequest: rejects traversal attempts without calling ASSETS.fetch", async () => {
+test("onRequest: rejects traversal attempts without calling ASSETS.fetch even when targeting valid post slugs", async () => {
+  // Test paths where the destination or base path is an otherwise valid post slug,
+  // ensuring traversal/backslash rejection fires independently of content-root rejection.
   const attackUrls = [
-    "https://aifocus.blog/../_headers",
-    "https://aifocus.blog/foo/../_headers",
-    "https://aifocus.blog/%2e%2e/_headers",
-    "https://aifocus.blog/%2E%2E/_headers",
+    "https://aifocus.blog/model-half-life/..%2fmodel-half-life/",
+    "https://aifocus.blog/model-half-life/%2e%2e%2fmodel-half-life/",
+    "https://aifocus.blog/model-half-life/%252e%252e%2fmodel-half-life/",
+    "https://aifocus.blog/model-half-life/foo%5cbar",
+    "https://aifocus.blog/model-half-life/foo%5Cbar",
+    "https://aifocus.blog/model-half-life%5c",
     "https://aifocus.blog/foo/..%2f_headers",
     "https://aifocus.blog/..%2f..%2fstatic/_headers",
-    "https://aifocus.blog/foo%5cbar",
-    "https://aifocus.blog/foo\\bar",
     "https://aifocus.blog/foo/%252e%252e/bar",
   ];
 
