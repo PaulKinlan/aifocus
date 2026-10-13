@@ -384,10 +384,11 @@ const LS_KEY_REMEMBER_PREFIX = 'wpr_demo_key_remember_';
 const LS_KEY = (p) => `${LS_KEY_PREFIX}${p}`;
 const LS_KEY_REMEMBER = (p) => `${LS_KEY_REMEMBER_PREFIX}${p}`;
 
-// The page is provider-locked. window.PROVIDER_ID is set inline in the
-// HTML before this module runs. The provider dropdown is a navigator
-// to the other provider's HTML page, not a runtime switch — each page
-// has its own strict CSP that allows only one provider's endpoint.
+// The page is provider-locked. The provider is declared as `data-provider` on
+// <html>, so the page needs no inline script of its own and the CSP can keep
+// script-src at 'self'. The provider dropdown is a navigator to the other
+// provider's HTML page, not a runtime switch — each page has its own strict
+// CSP that allows only one provider's endpoint.
 const PROVIDER_PAGES = {
   anthropic: './',
   google: './google.html',
@@ -395,7 +396,7 @@ const PROVIDER_PAGES = {
 };
 
 function getProviderId() {
-  return window.PROVIDER_ID;
+  return document.documentElement.dataset.provider;
 }
 
 function loadState() {
