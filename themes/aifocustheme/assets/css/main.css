@@ -527,10 +527,23 @@ footer {
   text-wrap: balance;
 }
 
+/* Two-column layout when featured post contains side image or main-content container */
+article.featured-post:has(.featured-post-main-content),
+article.featured-post:has(.featured-image-large-container),
+.featured-post-content-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
 .featured-post-main-content {
   flex: 2; /* Takes up more space */
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .featured-image-small-container {
@@ -541,6 +554,7 @@ footer {
 .featured-image-small {
   width: 100%;
   height: auto;
+  aspect-ratio: 300 / 200;
   border-radius: 10px; /* Rounded corners like image */
   object-fit: cover;
 }
@@ -560,13 +574,40 @@ footer {
   flex: 1;
   display: flex;
   align-items: flex-start; /* Align image to the top */
+  min-width: 0;
 }
 
 .featured-image-large {
   width: 100%;
   height: auto;
+  aspect-ratio: 350 / 500;
   max-height: 450px; /* Approximate from image */
   object-fit: cover;
+}
+
+@media (min-width: 769px) {
+  article.featured-post:has(.featured-image-large-container) .featured-image-small-container,
+  .featured-post-content-wrapper:has(.featured-image-large-container) .featured-image-small-container {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  article.featured-post:has(.featured-post-main-content),
+  article.featured-post:has(.featured-image-large-container),
+  .featured-post-content-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .featured-image-large-container {
+    display: none;
+  }
+
+  article.featured-post:has(.featured-image-large-container) .featured-image-small-container,
+  .featured-post-content-wrapper:has(.featured-image-large-container) .featured-image-small-container {
+    display: block;
+  }
 }
 
 .featured-post-title-container {
