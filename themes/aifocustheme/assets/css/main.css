@@ -541,6 +541,7 @@ footer {
 .featured-image-small {
   width: 100%;
   height: auto;
+  aspect-ratio: 300 / 200;
   border-radius: 10px; /* Rounded corners like image */
   object-fit: cover;
 }
@@ -565,6 +566,7 @@ footer {
 .featured-image-large {
   width: 100%;
   height: auto;
+  aspect-ratio: 350 / 500;
   max-height: 450px; /* Approximate from image */
   object-fit: cover;
 }
