@@ -4,32 +4,38 @@
   {{ $featuredPost := first 1 (where .Site.RegularPages.ByDate.Reverse "Type" "posts") }}
   {{ if $featuredPost }}
   {{ range $featuredPost }}
-  <article class="featured-post">
-    <div class="featured-post-main-content">
-      <div class="featured-image-small-container">
-        <!-- Featured image (small) -->
-        <img
-          src='{{ .Params.featured_image | default "https://via.placeholder.com/300x200/eee/ccc?text=Featured+Image"}}'
-          alt='{{ .Params.featured_image_alt | default (printf "Featured image for %s" .Title) }}'
-          width='{{ .Params.featured_image_width | default 300 }}'
-          height='{{ .Params.featured_image_height | default 200 }}'
-          fetchpriority="high"
+  <article class="featured-post{{ if .Params.featured_image }} has-featured-image{{ end }}">
+    <div class="featured-post-content-wrapper">
+      <div class="featured-post-main-content">
+        {{ with .Params.featured_image }}
+        <div class="featured-image-small-container">
+          <!-- Featured image (small) -->
+          <img
+            src='{{ . }}'
+            alt='{{ $.Params.featured_image_alt | default (printf "Featured image for %s" $.Title) }}'
+            width='{{ $.Params.featured_image_width | default 300 }}'
+            height='{{ $.Params.featured_image_height | default 200 }}'
+            fetchpriority="high"
+            decoding="async"
+            class="featured-image-small">
+        </div>
+        {{ end }}
+        <div class="featured-text-content">
+          {{ .Content }}
+        </div>
+      </div>
+      {{ with .Params.featured_image }}
+      <div class="featured-image-large-container">
+        <!-- Featured image (large) -->
+        <img src='{{ . }}'
+          alt='{{ $.Params.featured_image_alt | default (printf "Featured image for %s" $.Title) }}'
+          width='{{ $.Params.featured_image_large_width | default 350 }}'
+          height='{{ $.Params.featured_image_large_height | default 500 }}'
+          loading="lazy"
           decoding="async"
-          class="featured-image-small">
+          class="featured-image-large">
       </div>
-      <div class="featured-text-content">
-        {{ .Content }}
-      </div>
-    </div>
-    <div class="featured-image-large-container">
-      <!-- Featured image (large) -->
-      <img src='{{ .Params.featured_image | default "https://via.placeholder.com/350x500/ddd/aaa?text=Side+Image" }}'
-        alt='{{ .Params.featured_image_alt | default (printf "Featured image for %s" .Title) }}'
-        width='{{ .Params.featured_image_large_width | default 350 }}'
-        height='{{ .Params.featured_image_large_height | default 500 }}'
-        loading="lazy"
-        decoding="async"
-        class="featured-image-large">
+      {{ end }}
     </div>
   </article>
 
