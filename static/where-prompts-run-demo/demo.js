@@ -373,6 +373,9 @@ const LS_PROMPT = 'wpr_demo_prompt';
 const LS_PROVIDER = 'wpr_demo_provider';
 const LS_MODEL = (p) => `wpr_demo_model_${p}`;
 
+// The legacy un-suffixed key from early pre-release builds.
+const LS_LEGACY_DRAFT_KEY = 'wpr_demo_apikey';
+
 // The provider key is a live bearer credential with billing authority, and
 // localStorage is origin-wide and readable by any script on the origin, so it
 // is NOT persisted unless the reader explicitly opts in (the "remember on this
@@ -426,6 +429,7 @@ function loadState() {
 // left behind, and the provider pages share this origin. Flagged keys are left
 // alone wherever they are.
 function forgetLegacyStoredKeys() {
+  localStorage.removeItem(LS_LEGACY_DRAFT_KEY);
   const doomed = [];
   for (let i = 0; i < localStorage.length; i += 1) {
     const k = localStorage.key(i);
@@ -446,10 +450,11 @@ function forgetStoredKey(providerId) {
 // Every provider page shares this origin, so a key kept for one provider is
 // still readable from the others. "Forget" means all of them.
 function forgetAllStoredKeys() {
+  localStorage.removeItem(LS_LEGACY_DRAFT_KEY);
   const doomed = [];
   for (let i = 0; i < localStorage.length; i += 1) {
     const k = localStorage.key(i);
-    if (k && (k.startsWith(LS_KEY_PREFIX) || k.startsWith(LS_KEY_REMEMBER_PREFIX))) doomed.push(k);
+    if (k && (k === LS_LEGACY_DRAFT_KEY || k.startsWith(LS_KEY_PREFIX) || k.startsWith(LS_KEY_REMEMBER_PREFIX))) doomed.push(k);
   }
   doomed.forEach((k) => localStorage.removeItem(k));
 }

@@ -154,20 +154,21 @@ function isValidContentPath(normalizedPath) {
   // 1. Root-level post slug: /:slug/
   if (segments.length === 1) {
     const slug = segments[0];
-    if (RESERVED_ROOTS.has(slug)) return false;
+    if (RESERVED_ROOTS.has(slug.toLowerCase())) return false;
     if (slug.startsWith(".") || slug.startsWith("_")) return false;
     return /^[a-z0-9][a-z0-9-]*$/i.test(slug);
   }
 
   // 2. Posts section: /posts/:slug/
-  if (segments.length === 2 && segments[0] === "posts") {
+  if (segments.length === 2 && segments[0].toLowerCase() === "posts") {
     const slug = segments[1];
     if (slug.startsWith(".") || slug.startsWith("_")) return false;
     return /^[a-z0-9][a-z0-9-]*$/i.test(slug);
   }
 
   // 3. Tutorials / training section: /training/:slug or /tutorials/:slug
-  if ((segments[0] === "training" || segments[0] === "tutorials") && segments.length >= 2) {
+  const section = segments[0].toLowerCase();
+  if ((section === "training" || section === "tutorials") && segments.length >= 2) {
     for (let i = 1; i < segments.length; i++) {
       const seg = segments[i];
       if (!seg || seg.startsWith(".") || seg.startsWith("_")) return false;
