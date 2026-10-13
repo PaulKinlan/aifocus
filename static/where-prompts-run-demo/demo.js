@@ -402,17 +402,13 @@ function getProviderId() {
 function loadState() {
   const p = getProviderId();
   const def = PROVIDERS[p];
-  // Restore stored values for the current locked provider. The key is only
-  // restored if this device opted in; anything else is a credential left
-  // behind by an older build, so it is removed here rather than put in the form.
+  // Sweep credentials an older build left behind before restoring anything,
+  // then restore this provider's key only if this device opted in.
+  forgetLegacyStoredKeys();
   const storedKey = localStorage.getItem(LS_KEY(p));
-  if (storedKey) {
-    if (localStorage.getItem(LS_KEY_REMEMBER(p)) === '1') {
-      $('apiKey').value = storedKey;
-      $('rememberKey').checked = true;
-    } else {
-      forgetStoredKey(p);
-    }
+  if (storedKey && localStorage.getItem(LS_KEY_REMEMBER(p)) === '1') {
+    $('apiKey').value = storedKey;
+    $('rememberKey').checked = true;
   }
   const storedModel = localStorage.getItem(LS_MODEL(p));
   if (storedModel) $('model').value = storedModel;
@@ -422,6 +418,22 @@ function loadState() {
   const storedPrompt = localStorage.getItem(LS_PROMPT) ?? DEFAULT_PROMPT;
   $('systemPrompt').value = storedPrompt;
   updateSendEnabled();
+}
+
+// A key written by an older build has no opt-in flag. Those are swept for
+// EVERY provider, not just the one this page is locked to: the flag is what
+// separates a credential a reader asked us to keep from one an older build
+// left behind, and the provider pages share this origin. Flagged keys are left
+// alone wherever they are.
+function forgetLegacyStoredKeys() {
+  const doomed = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(LS_KEY_PREFIX)) continue;
+    const providerId = k.slice(LS_KEY_PREFIX.length);
+    if (localStorage.getItem(LS_KEY_REMEMBER(providerId)) !== '1') doomed.push(k);
+  }
+  doomed.forEach((k) => localStorage.removeItem(k));
 }
 
 // Remove the stored key for one provider, including the opt-in flag, so a later
