@@ -3,19 +3,38 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com;">
 <title>AI model drops: timeline + predicted next</title>
 <style>
+:root {
+  color-scheme: light dark;
+  --bg-page: light-dark(#fafafa, #141414);
+  --bg-card: light-dark(#ffffff, #1e1e1e);
+  --text-main: light-dark(#1a1a1a, #e8e8e8);
+  --text-muted: light-dark(#666666, #a0a0a0);
+  --text-subtle: light-dark(#888888, #777777);
+  --border-card: light-dark(#dddddd, #333333);
+  --border-subtle: light-dark(#eeeeee, #282828);
+  --th-bg: light-dark(#f4f4f6, #252528);
+  --th-text: light-dark(#555555, #bbbbbb);
+  --legend-text: light-dark(#444444, #cccccc);
+  --tick-line: light-dark(#eaeaea, #2a2a2a);
+  --today-line: light-dark(#bbbbbb, #666666);
+  --pred-text: light-dark(#1d8b3e, #4ade80);
+  --error-bg: light-dark(#fce4e4, #3d1414);
+  --error-text: light-dark(#a02020, #f87171);
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: #1a1a1a;
+  color: var(--text-main);
   padding: 1.25rem;
-  background: #fafafa;
+  background: var(--bg-page);
   line-height: 1.45;
 }
 h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
-.subhead { font-size: .85rem; color: #666; margin-bottom: 1rem; }
+.subhead { font-size: .85rem; color: var(--text-muted); margin-bottom: 1rem; }
 .legend {
   display: flex;
   gap: 1rem;
@@ -23,7 +42,7 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
   font-size: .78rem;
   align-items: center;
   flex-wrap: wrap;
-  color: #444;
+  color: var(--legend-text);
 }
 .legend .swatch {
   display: inline-block;
@@ -34,15 +53,15 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
   vertical-align: middle;
 }
 .legend .open {
-  background: white;
-  border: 1.5px dashed #888;
+  background: var(--bg-card);
+  border: 1.5px dashed var(--text-subtle);
 }
 .legend .closed {
-  background: #888;
+  background: var(--text-subtle);
 }
 .chart {
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
   border-radius: .375rem;
   padding: 1rem .5rem 1rem 1rem;
   overflow-x: auto;
@@ -50,14 +69,14 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
 }
 .chart svg { display: block; }
 h3 { font-size: .95rem; font-weight: 700; margin: 1.5rem 0 .5rem; }
-table { width: 100%; border-collapse: collapse; font-size: .78rem; background: white; border: 1px solid #ddd; border-radius: .375rem; overflow: hidden; }
-th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid #eee; }
-th { background: #f4f4f6; font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: #555; }
+table { width: 100%; border-collapse: collapse; font-size: .78rem; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: .375rem; overflow: hidden; }
+th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid var(--border-subtle); }
+th { background: var(--th-bg); font-weight: 700; font-size: .7rem; text-transform: uppercase; letter-spacing: .04em; color: var(--th-text); }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
-.predicted { color: #1d8b3e; font-weight: 600; }
-.note { font-size: .72rem; color: #888; margin-top: .75rem; line-height: 1.4; }
-.loading { padding: 2rem; text-align: center; color: #999; font-size: .9rem; }
-.error { padding: 1rem; background: #fce4e4; color: #a02020; border-radius: .375rem; font-size: .85rem; }
+.predicted { color: var(--pred-text); font-weight: 600; }
+.note { font-size: .72rem; color: var(--text-subtle); margin-top: .75rem; line-height: 1.4; }
+.loading { padding: 2rem; text-align: center; color: var(--text-subtle); font-size: .9rem; }
+.error { padding: 1rem; background: var(--error-bg); color: var(--error-text); border-radius: .375rem; font-size: .85rem; }
 </style>
 </head>
 <body>
@@ -191,16 +210,16 @@ function renderTimeline(rows) {
     const d = new Date(Date.UTC(y, 0, 1));
     if (d < minDate || d > chartMax) continue;
     const x = dateX(d);
-    svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="#eaeaea" stroke-width="1" />`;
-    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="#666">${y}</text>`;
+    svg += `<line x1="${x}" y1="${TOP_PAD - 8}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="var(--tick-line)" stroke-width="1" />`;
+    svg += `<text x="${x}" y="${TOP_PAD - 14}" text-anchor="middle" font-size="11" fill="var(--text-muted)">${y}</text>`;
   }
 
   // "Now" line
   const now = new Date();
   if (now >= minDate && now <= chartMax) {
     const x = dateX(now);
-    svg += `<line x1="${x}" y1="${TOP_PAD - 4}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="#bbb" stroke-width="1" stroke-dasharray="2,3" />`;
-    svg += `<text x="${x}" y="${H - BOTTOM_PAD + 18}" text-anchor="middle" font-size="10" fill="#999">today</text>`;
+    svg += `<line x1="${x}" y1="${TOP_PAD - 4}" x2="${x}" y2="${H - BOTTOM_PAD + 4}" stroke="var(--today-line)" stroke-width="1" stroke-dasharray="2,3" />`;
+    svg += `<text x="${x}" y="${H - BOTTOM_PAD + 18}" text-anchor="middle" font-size="10" fill="var(--text-subtle)">today</text>`;
   }
 
   // Series rows
@@ -209,7 +228,7 @@ function renderTimeline(rows) {
     const color = PALETTE[i % PALETTE.length];
 
     // Series label
-    svg += `<text x="${LEFT_PAD - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#1a1a1a">${name}</text>`;
+    svg += `<text x="${LEFT_PAD - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="var(--text-main)">${name}</text>`;
 
     // Connect line (faint)
     if (rs.length > 1) {
@@ -232,7 +251,7 @@ function renderTimeline(rows) {
       // Line from last to predicted (dashed)
       const lastX = dateX(rs[rs.length - 1].dateObj);
       svg += `<line x1="${lastX}" y1="${y}" x2="${x}" y2="${y}" stroke="${color}" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.7" />`;
-      svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="white" stroke="${color}" stroke-width="2" stroke-dasharray="2,1.5"><title>${name} predicted next: ${fmtDate(pred.date)} (median gap ${pred.gap} days)</title></circle>`;
+      svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--bg-card)" stroke="${color}" stroke-width="2" stroke-dasharray="2,1.5"><title>${name} predicted next: ${fmtDate(pred.date)} (median gap ${pred.gap} days)</title></circle>`;
     }
   });
 
