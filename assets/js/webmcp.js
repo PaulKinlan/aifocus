@@ -195,7 +195,25 @@ const registerTools = (modelContext) => {
     },
     annotations: { readOnlyHint: true },
     async execute({ url }) {
-      const resolved = new URL(url, window.location.origin);
+      // The url argument comes from an agent, so it is untrusted input: a
+      // malformed string would otherwise throw a TypeError out of the URL
+      // constructor and reject the tool call with an opaque runtime error.
+      if (typeof url !== "string" || url.trim() === "") {
+        return textResult(
+          "Invalid article URL: read_article needs a non-empty URL string, " +
+            "e.g. https://aifoc.us/a-link-is-all-you-need/ or " +
+            "/a-link-is-all-you-need/.",
+        );
+      }
+      let resolved;
+      try {
+        resolved = new URL(url, window.location.origin);
+      } catch {
+        return textResult(
+          `Invalid article URL: ${url.slice(0, 200)} could not be parsed. Pass ` +
+            "an absolute or site-relative URL, e.g. /a-link-is-all-you-need/.",
+        );
+      }
       if (resolved.origin !== window.location.origin) {
         throw new Error(
           `read_article only reads articles on ${window.location.origin}.`,
