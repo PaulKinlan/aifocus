@@ -115,6 +115,16 @@ test("isValidContentPath: validates allowed published content roots", () => {
   assert.equal(isValidContentPath("/js/main.js"), false);
   assert.equal(isValidContentPath("/where-prompts-run-demo/"), false);
 
+  // Rejected: uppercase reserved roots and section indexes
+  assert.equal(isValidContentPath("/POSTS/"), false);
+  assert.equal(isValidContentPath("/POSTS"), false);
+  assert.equal(isValidContentPath("/CSS/"), false);
+  assert.equal(isValidContentPath("/CSS"), false);
+  assert.equal(isValidContentPath("/Images/"), false);
+  assert.equal(isValidContentPath("/AUTHORS/"), false);
+  assert.equal(isValidContentPath("/STATIC/"), false);
+  assert.equal(isValidContentPath("/API/"), false);
+
   // Rejected: hidden files / dotfiles
   assert.equal(isValidContentPath("/_headers"), false);
   assert.equal(isValidContentPath("/.git/config"), false);
@@ -291,6 +301,9 @@ test("onRequest: rejects paths outside allowed content roots without calling ASS
   const restrictedPaths = [
     "https://aifocus.blog/",
     "https://aifocus.blog/posts/",
+    "https://aifocus.blog/POSTS/",
+    "https://aifocus.blog/CSS/",
+    "https://aifocus.blog/Images/",
     "https://aifocus.blog/authors/paulkinlan/",
     "https://aifocus.blog/images/logo.png",
     "https://aifocus.blog/images/logo",
