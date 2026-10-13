@@ -5,10 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Salary vs Tokens Calculator</title>
 <style>
+  :root {
+    /* Palette. Light values are the default; the prefers-color-scheme block
+       below references the --tc-*-dark names instead of re-pointing these, so
+       every token means exactly one colour and the dark rules stay explicit.
+       Ink that only the charts use lives in INK in the script, because canvas
+       cannot read custom properties. */
+    --tc-text: #1a1a1a;
+    --tc-heading: #334155;
+    --tc-muted: #64748b;
+    --tc-subtle: #666;
+    --tc-note: #94a3b8;
+    --tc-surface: #fff;
+    --tc-surface-card: #f8fafc;
+    --tc-border: #e2e8f0;
+    --tc-border-hairline: #f1f5f9;
+    --tc-border-input: #ccc;
+    --tc-accent: #2563eb;
+    --tc-accent-strong: #1d4ed8;
+    --tc-gold: #f59e0b;
+    --tc-gold-strong: #b45309;
+    --tc-negative: #dc2626;
+    --tc-positive: #16a34a;
+    /* Dark counterparts, referenced only inside the dark block. */
+    --tc-bg-dark: #0f172a;
+    --tc-text-dark: #e2e8f0;
+    --tc-muted-dark: #94a3b8;
+    --tc-surface-dark: #1e293b;
+    --tc-border-dark: #334155;
+    --tc-border-input-dark: #475569;
+    /* The shared-budget callout is dark in both schemes. */
+    --tc-callout-bg: #1e293b;
+    --tc-callout-border: #475569;
+    --tc-callout-text: #e2e8f0;
+    --tc-callout-value: #fff;
+    --tc-callout-meta: #cbd5e1;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #1a1a1a;
+    color: var(--tc-text);
     padding: 1.5rem;
     line-height: 1.5;
   }
@@ -30,7 +67,7 @@
   h2 {
     font-size: 1rem;
     margin-bottom: 1.25rem;
-    color: #334155;
+    color: var(--tc-heading);
   }
 
   .controls {
@@ -49,7 +86,7 @@
   .sublabel {
     font-weight: 400;
     font-size: 0.78rem;
-    color: #666;
+    color: var(--tc-subtle);
     margin-bottom: 0.4rem;
   }
 
@@ -61,7 +98,7 @@
 
   input[type="range"] {
     flex: 1;
-    accent-color: #2563eb;
+    accent-color: var(--tc-accent);
     height: 6px;
   }
 
@@ -77,9 +114,9 @@
     width: 100%;
     padding: 0.45rem;
     font-size: 0.9rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--tc-border-input);
     border-radius: 6px;
-    background: #fff;
+    background: var(--tc-surface);
   }
 
   .side-by-side {
@@ -90,13 +127,13 @@
   }
 
   .scenario-col {
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--tc-border);
     border-radius: 12px;
     padding: 1rem;
   }
 
-  .scenario-col.yegge { border-color: #f59e0b; }
-  .scenario-col.huang { border-color: #2563eb; }
+  .scenario-col.yegge { border-color: var(--tc-gold); }
+  .scenario-col.huang { border-color: var(--tc-accent); }
 
   .scenario-header {
     font-size: 0.85rem;
@@ -105,32 +142,32 @@
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--tc-border);
   }
 
-  .yegge .scenario-header { color: #b45309; }
-  .huang .scenario-header { color: #1d4ed8; }
+  .yegge .scenario-header { color: var(--tc-gold-strong); }
+  .huang .scenario-header { color: var(--tc-accent-strong); }
 
   .row {
     display: flex;
     justify-content: space-between;
     padding: 0.35rem 0;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--tc-border-hairline);
     font-size: 0.85rem;
   }
 
   .row:last-child { border-bottom: none; }
-  .row-label { color: #64748b; }
+  .row-label { color: var(--tc-muted); }
   .row-value { font-weight: 700; font-variant-numeric: tabular-nums; }
 
-  .row-value.yegge-accent { color: #b45309; }
-  .row-value.huang-accent { color: #1d4ed8; }
+  .row-value.yegge-accent { color: var(--tc-gold-strong); }
+  .row-value.huang-accent { color: var(--tc-accent-strong); }
 
   .big-stat {
     text-align: center;
     padding: 0.75rem 0;
     margin: 0.5rem 0;
-    background: #f8fafc;
+    background: var(--tc-surface-card);
     border-radius: 8px;
   }
 
@@ -140,26 +177,26 @@
     line-height: 1.2;
   }
 
-  .yegge .big-stat .number { color: #b45309; }
-  .huang .big-stat .number { color: #1d4ed8; }
+  .yegge .big-stat .number { color: var(--tc-gold-strong); }
+  .huang .big-stat .number { color: var(--tc-accent-strong); }
 
   .big-stat .unit {
     font-size: 0.7rem;
-    color: #64748b;
+    color: var(--tc-muted);
     margin-top: 0.15rem;
   }
 
   .summary-bar {
     margin-top: 1.25rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--tc-surface-card);
+    border: 1px solid var(--tc-border);
     border-radius: 10px;
     padding: 1rem;
   }
 
   .summary-bar h3 {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--tc-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.5rem;
@@ -172,10 +209,10 @@
     text-align: center;
   }
 
-  .summary-item .label { font-size: 0.72rem; color: #64748b; }
+  .summary-item .label { font-size: 0.72rem; color: var(--tc-muted); }
   .summary-item .val { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .summary-item .val.neg { color: #dc2626; }
-  .summary-item .val.pos { color: #16a34a; }
+  .summary-item .val.neg { color: var(--tc-negative); }
+  .summary-item .val.pos { color: var(--tc-positive); }
 
   .tasks-breakdown {
     margin: 0.25rem 0;
@@ -190,7 +227,7 @@
 
   .tasks-cell {
     text-align: center;
-    background: #f8fafc;
+    background: var(--tc-surface-card);
     border-radius: 6px;
     padding: 0.3rem 0.2rem;
   }
@@ -205,11 +242,11 @@
   .tasks-period {
     display: block;
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--tc-muted);
   }
 
   .charts-section {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--tc-border);
     border-radius: 12px;
     padding: 1rem;
   }
@@ -221,7 +258,7 @@
 
   .charts-section h3 {
     font-size: 0.8rem;
-    color: #64748b;
+    color: var(--tc-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
@@ -239,7 +276,7 @@
 
   .chart-wrap h4 {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--tc-muted);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-bottom: 0.5rem;
@@ -268,8 +305,8 @@
     vertical-align: middle;
   }
 
-  .chart-legend .leg-yegge::before { background: #f59e0b; }
-  .chart-legend .leg-huang::before { background: #2563eb; }
+  .chart-legend .leg-yegge::before { background: var(--tc-gold); }
+  .chart-legend .leg-huang::before { background: var(--tc-accent); }
 
   @media (max-width: 640px) {
     .charts-grid { grid-template-columns: 1fr; }
@@ -277,7 +314,7 @@
 
   .note {
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: var(--tc-note);
     margin-top: 1rem;
     line-height: 1.4;
   }
@@ -288,28 +325,28 @@
   }
 
   @media (prefers-color-scheme: dark) {
-    body { background: #0f172a; color: #e2e8f0; }
-    h2 { color: #94a3b8; }
-    select { background: #1e293b; color: #e2e8f0; border-color: #475569; }
-    .scenario-col { background: #1e293b; }
-    .scenario-col.yegge { border-color: #b45309; }
-    .scenario-col.huang { border-color: #2563eb; }
-    .row { border-color: #334155; }
-    .row-label { color: #94a3b8; }
-    .big-stat { background: #0f172a; }
-    .summary-bar { background: #1e293b; border-color: #334155; }
-    .summary-bar h3, .summary-item .label { color: #94a3b8; }
-    .tasks-cell { background: #0f172a; }
-    .tasks-period { color: #94a3b8; }
-    .charts-section { background: #1e293b; border-color: #334155; }
-    .charts-section h3, .chart-wrap h4 { color: #94a3b8; }
+    body { background: var(--tc-bg-dark); color: var(--tc-text-dark); }
+    h2 { color: var(--tc-muted-dark); }
+    select { background: var(--tc-surface-dark); color: var(--tc-text-dark); border-color: var(--tc-border-input-dark); }
+    .scenario-col { background: var(--tc-surface-dark); }
+    .scenario-col.yegge { border-color: var(--tc-gold-strong); }
+    .scenario-col.huang { border-color: var(--tc-accent); }
+    .row { border-color: var(--tc-border-dark); }
+    .row-label { color: var(--tc-muted-dark); }
+    .big-stat { background: var(--tc-bg-dark); }
+    .summary-bar { background: var(--tc-surface-dark); border-color: var(--tc-border-dark); }
+    .summary-bar h3, .summary-item .label { color: var(--tc-muted-dark); }
+    .tasks-cell { background: var(--tc-bg-dark); }
+    .tasks-period { color: var(--tc-muted-dark); }
+    .charts-section { background: var(--tc-surface-dark); border-color: var(--tc-border-dark); }
+    .charts-section h3, .chart-wrap h4 { color: var(--tc-muted-dark); }
   }
 </style>
 </head>
 <body>
 
 <div style="text-align: right; margin-bottom: 0.5rem;">
-  <a href="/token-calculator.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: #2563eb; border: 1px solid #2563eb; border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
+  <a href="/token-calculator.html" target="_blank" style="display: inline-block; padding: 0.4rem 0.8rem; font-size: 0.78rem; font-weight: 600; color: var(--tc-accent); border: 1px solid var(--tc-accent); border-radius: 6px; text-decoration: none; cursor: pointer;">Open in new tab &#8599;</a>
 </div>
 
 <div class="controls">
@@ -371,10 +408,10 @@
 
 <div class="side-by-side">
   <!-- Shared token budget callout -->
-  <div class="scenario-col" style="grid-column: 1 / -1; text-align: center; padding: 0.75rem; background: #1e293b; border-color: #475569;">
-    <div style="font-size: 0.75rem; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em;">Both approaches spend the same on tokens</div>
-    <div style="font-size: 1.4rem; font-weight: 800; margin: 0.25rem 0; color: #fff;" id="shared-token-budget">$3,500,000/yr</div>
-    <div style="font-size: 0.75rem; color: #cbd5e1;" id="shared-token-explain">Steve: 10 cut salaries redirected. Jensen: 50% of 20 salaries added on top.</div>
+  <div class="scenario-col" style="grid-column: 1 / -1; text-align: center; padding: 0.75rem; background: var(--tc-callout-bg); border-color: var(--tc-callout-border);">
+    <div style="font-size: 0.75rem; color: var(--tc-callout-text); text-transform: uppercase; letter-spacing: 0.05em;">Both approaches spend the same on tokens</div>
+    <div style="font-size: 1.4rem; font-weight: 800; margin: 0.25rem 0; color: var(--tc-callout-value);" id="shared-token-budget">$3,500,000/yr</div>
+    <div style="font-size: 0.75rem; color: var(--tc-callout-meta);" id="shared-token-explain">Steve: 10 cut salaries redirected. Jensen: 50% of 20 salaries added on top.</div>
   </div>
 
   <!-- Steve: Replace half -->
@@ -415,7 +452,7 @@
         <div class="tasks-cell"><span class="tasks-num" id="y-tasks-year">—</span><span class="tasks-period">/ year</span></div>
       </div>
     </div>
-    <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
+    <div class="row" style="border-top: 1px solid var(--tc-callout-text); margin-top: 0.25rem; padding-top: 0.5rem;">
       <span class="row-label">Total team tokens / year</span>
       <span class="row-value" id="y-total-tokens">554B</span>
     </div>
@@ -463,7 +500,7 @@
         <div class="tasks-cell"><span class="tasks-num" id="h-tasks-year">—</span><span class="tasks-period">/ year</span></div>
       </div>
     </div>
-    <div class="row" style="border-top: 1px solid #e2e8f0; margin-top: 0.25rem; padding-top: 0.5rem;">
+    <div class="row" style="border-top: 1px solid var(--tc-callout-text); margin-top: 0.25rem; padding-top: 0.5rem;">
       <span class="row-label">Total team tokens / year</span>
       <span class="row-value" id="h-total-tokens">554B</span>
     </div>
@@ -532,6 +569,18 @@
   const modelEl = document.getElementById('model');
   const inputRatioEl = document.getElementById('input-ratio');
   const tokensPerTaskEl = document.getElementById('tokens-per-task');
+
+  /* Canvas cannot read CSS custom properties, so the ink the charts draw is
+     mirrored here: the two series colours match the --tc-gold swatch and the
+     legend dot in the stylesheet, and the rest are the page colours each chart
+     draws its grid, labels and dots against, per scheme. */
+  const INK = {
+    yegge: '#f59e0b',
+    huang: '#3b82f6',
+    dotRing: { dark: '#0f172a', light: '#fff' },
+    grid: { dark: '#334155', light: '#e2e8f0' },
+    label: { dark: '#94a3b8', light: '#64748b' },
+  };
 
   function fmt(n) {
     if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
@@ -672,7 +721,7 @@
     ctx.fillStyle = color;
     ctx.fill();
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    ctx.strokeStyle = isDark ? '#0f172a' : '#fff';
+    ctx.strokeStyle = isDark ? INK.dotRing.dark : INK.dotRing.light;
     ctx.lineWidth = 2;
     ctx.stroke();
   }
@@ -681,14 +730,14 @@
     const pw = W - pad.left - pad.right;
     const ph = H - pad.top - pad.bottom;
 
-    ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
+    ctx.strokeStyle = isDark ? INK.grid.dark : INK.grid.light;
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const gy = pad.top + (ph / 4) * i;
       ctx.beginPath(); ctx.moveTo(pad.left, gy); ctx.lineTo(pad.left + pw, gy); ctx.stroke();
     }
 
-    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.fillStyle = isDark ? INK.label.dark : INK.label.light;
     ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
 
     // Y-axis labels
@@ -724,7 +773,7 @@
 
   function drawYAxisTitle(ctx, pad, H, isDark) {
     ctx.save();
-    ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+    ctx.fillStyle = isDark ? INK.label.dark : INK.label.light;
     ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
     ctx.translate(10, pad.top + (H - pad.top - pad.bottom) / 2);
     ctx.rotate(-Math.PI / 2);
@@ -742,13 +791,13 @@
     const hPts = steps.map(s => ({ x: s.nx, y: s.h / maxY }));
 
     drawGrid(c.ctx, c.W, c.H, pad, xLabels, maxY, xAxisLabel, isDark);
-    drawLine(c.ctx, yPts, '#f59e0b', c.W, c.H, pad);
-    drawLine(c.ctx, hPts, '#3b82f6', c.W, c.H, pad);
+    drawLine(c.ctx, yPts, INK.yegge, c.W, c.H, pad);
+    drawLine(c.ctx, hPts, INK.huang, c.W, c.H, pad);
 
     // Find current values by interpolating at curNx
     const idx = Math.min(steps.length - 1, Math.max(0, Math.round(curNx * (steps.length - 1))));
-    drawDot(c.ctx, curNx, steps[idx].y / maxY, '#f59e0b', c.W, c.H, pad);
-    drawDot(c.ctx, curNx, steps[idx].h / maxY, '#3b82f6', c.W, c.H, pad);
+    drawDot(c.ctx, curNx, steps[idx].y / maxY, INK.yegge, c.W, c.H, pad);
+    drawDot(c.ctx, curNx, steps[idx].h / maxY, INK.huang, c.W, c.H, pad);
 
     drawYAxisTitle(c.ctx, pad, c.H, isDark);
   }
