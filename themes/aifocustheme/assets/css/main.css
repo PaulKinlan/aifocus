@@ -463,6 +463,26 @@ article {
   }
 }
 
+/* /posts/ archive list (layouts/section.html). Each row is an article.h-entry.summary
+   — the homepage's own list markup — so the rows inherit the site's list treatment
+   (title and prose in the article's Georgia, the article's 1px separator, prose at
+   1.2rem with a 1rem paragraph gap). Measured on the built page 2026-10-14: rows sit
+   12px apart on top of the last paragraph's 1em margin and the separator; the gap is
+   identical for all 36 rows. Only two things are set here.
+   1. The date line under each title is metadata, not prose: it uses the site's body
+      size (1rem) rather than article prose's 1.2rem, so it recedes behind the
+      summary, and the .25em top margin keeps the title's underline off it.
+   2. It keeps the row's own box flush (.summary's margin/padding 0), so the archive's
+      rhythm is the homepage's list rhythm rather than the article-block rhythm. */
+.archive-list .summary h2 {
+  margin-bottom: 0.25em;
+}
+
+.archive-list .summary .metadata p {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
 footer {
   margin-top: 40px;
   padding-top: 20px;
