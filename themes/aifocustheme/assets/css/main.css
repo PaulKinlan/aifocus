@@ -152,11 +152,6 @@ h5,
 h6 {
   font-family:
     Georgia, "Times New Roman", Times, serif; /* Serif for headings */
-  text-wrap: balance;
-}
-
-p {
-  text-wrap: pretty;
 }
 
 .about {
@@ -184,7 +179,6 @@ article {
        "opaque-url") must be allowed to wrap, otherwise they force a
        horizontal scrollbar on narrow viewports. */
     overflow-wrap: anywhere;
-    text-wrap: pretty;
   }
 
   code {
@@ -202,7 +196,6 @@ article {
     margin-bottom: 0.7em;
     font-weight: normal;
     color: #000000; /* Black text */
-    text-wrap: balance;
   }
 
   h1 {
@@ -210,7 +203,6 @@ article {
     line-height: 1.2;
     margin-bottom: 0.5em; /* Smaller bottom margin */
     overflow-wrap: anywhere;
-    text-wrap: balance;
   }
 
   aside {
@@ -532,7 +524,6 @@ footer {
   text-align: center; /* As per image */
   color: #000000;
   margin: 0; /* Remove default h1 margin */
-  text-wrap: balance;
 }
 
 /* Two-column layout when featured post contains side image or main-content container */
@@ -575,7 +566,6 @@ article.featured-post:has(> .featured-image-large-container),
   line-height: 1.6;
   color: #333;
   margin-bottom: 1em;
-  text-wrap: pretty;
 }
 
 .featured-image-large-container {
@@ -631,7 +621,6 @@ article.featured-post:has(> .featured-image-large-container),
   color: #000000;
   text-transform: uppercase;
   margin: 0;
-  text-wrap: balance;
 }
 
 /* Share buttons styling */
