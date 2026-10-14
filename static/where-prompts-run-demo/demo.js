@@ -294,7 +294,7 @@ const PROVIDERS = {
       };
     },
     async step(ctx, apiKey, model) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
       const body = {
         contents: ctx.contents,
         systemInstruction: { parts: [{ text: ctx.system }] },
@@ -302,7 +302,10 @@ const PROVIDERS = {
       };
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`google ${res.status}: ${await res.text()}`);
