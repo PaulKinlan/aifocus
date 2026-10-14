@@ -5,7 +5,14 @@
   {{ end }}
   {{ .Content }}
   {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-    {{ .Summary }}
+    {{/* The <article> wrapper is what gives each summary the article body
+         typography: `article p` in main.css sets Georgia at 1.2rem. Without it
+         these paragraphs are bare children of <main> and inherit the body's
+         system sans — which is how the archive list came out smaller and
+         sans-serif. See aifocus-cei. */}}
+    <article class="h-entry summary">
+      <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+      {{ .Summary }}
+    </article>
   {{ end }}
 {{ end }}
