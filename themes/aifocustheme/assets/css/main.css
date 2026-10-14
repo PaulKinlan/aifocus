@@ -59,6 +59,21 @@ ol {
   margin-left: 1em;
 }
 
+/* aifocus-idw: one focus treatment for links. Before this, only the footer's
+   links carried the site's ring (the &:focus-visible rule in the footer block);
+   the nav, the branding link, links inside article text, the archive row titles
+   and the read-next list all fell back to the browser's default 1px ring.
+   currentColor keeps it correct in both schemes, and no border-radius is set
+   here so elements with their own radius keep it. .share-button is excluded
+   deliberately: those anchors are painted by Chrome's own box focus ring
+   (measured 3px auto, offset 0, on both the <a> and <button> variants), and an
+   author outline-style would flip that ring from auto to solid - a visible
+   change to controls nobody reported as inconsistent. */
+a:not(.share-button):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 /* Form controls are styled for both colour schemes. These rules used to live
    only inside the dark-scheme block, so in light mode the newsletter form fell
    back to browser defaults - a 19px-tall control with 13.3px text and an inset
@@ -605,9 +620,13 @@ footer {
   margin-top: 0.75em;
 }
 
-/* Two-column layout when featured post contains side image or main-content container */
-article.featured-post:has(> .featured-post-main-content),
-article.featured-post:has(> .featured-image-large-container),
+/* Two-column layout when featured post contains side image or main-content container.
+   aifocus-yd2: the plain selector is deliberately kept out of the :has() selector
+   list. CSS drops an entire selector list when one selector in it is unparseable,
+   so on an engine without :has() this rule disappeared completely and
+   .featured-post-content-wrapper lost its flex layout with two selectors it does
+   not need. The :has()-dependent variants stay, behind @supports, so they compute
+   exactly what they did before on an engine that supports them. */
 .featured-post-content-wrapper {
   display: flex;
   flex-direction: row;
@@ -615,6 +634,18 @@ article.featured-post:has(> .featured-image-large-container),
   align-items: flex-start;
   width: 100%;
   min-width: 0;
+}
+
+@supports selector(:has(*)) {
+  article.featured-post:has(> .featured-post-main-content),
+  article.featured-post:has(> .featured-image-large-container) {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 .featured-post-main-content {
@@ -660,11 +691,20 @@ article.featured-post:has(> .featured-image-large-container),
 }
 
 @media (max-width: 768px) {
-  article.featured-post:has(> .featured-post-main-content),
-  article.featured-post:has(> .featured-image-large-container),
+  /* aifocus-yd2: same decoupling as above - the plain selector must not share a
+     selector list with the :has() variants, or an engine without :has() drops
+     the whole rule and the wrapper keeps its desktop row direction. */
   .featured-post-content-wrapper {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  @supports selector(:has(*)) {
+    article.featured-post:has(> .featured-post-main-content),
+    article.featured-post:has(> .featured-image-large-container) {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 
   .featured-image-large-container {
