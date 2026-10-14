@@ -4,8 +4,23 @@
   <div class="about p-note">{{ .Site.Params.about | markdownify }}</div>
   {{ end }}
   {{ .Content }}
+  {{/* One row per essay. The markup is the homepage's own list row
+       (article.h-entry.summary, h2.p-name > a.u-url, div.metadata > time.dt-published)
+       so the archive's titles, date line and body copy are the site's existing list
+       treatment rather than a second set of rules for the same thing. The wrapper
+       scopes the archive's row spacing in main.css. */}}
+  <div class="archive-list">
   {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-    {{ .Summary }}
+    <article class="h-entry summary">
+      <h2 class="p-name"><a class="u-url" href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
+      <div class="metadata">
+        {{/* The post's own front-matter date, in the list format the homepage's rows
+             already use (2006-01-02), with the machine-readable value alongside. */}}
+        {{ $dateMachine := .Date | time.Format "2006-01-02T15:04:05-07:00" }}
+        <p><time class="dt-published" datetime="{{ $dateMachine }}">{{ .Date.Format "2006-01-02" }}</time></p>
+      </div>
+      {{ partial "list-summary.html" . }}
+    </article>
   {{ end }}
+  </div>
 {{ end }}
