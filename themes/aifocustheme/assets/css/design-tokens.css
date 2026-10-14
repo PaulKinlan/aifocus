@@ -1,0 +1,48 @@
+/* Design tokens and responsive refinements (aifocus-6q0, aifocus-fi6, aifocus-7p7) */
+
+/* aifocus-6q0: Semantic link/action color token */
+:root {
+  --link: #1a4fd6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --link: #8ab4f8;
+  }
+}
+
+@supports (color: light-dark(#000, #fff)) {
+  :root {
+    --link: light-dark(#1a4fd6, #8ab4f8);
+  }
+}
+
+a {
+  color: var(--link);
+}
+
+/* aifocus-fi6: Ensure header nav and footer links meet 24px minimum tap target (44px on nav) */
+.site-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 0.5rem;
+  box-sizing: border-box;
+}
+
+footer ul a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0.25rem 0.5rem;
+  box-sizing: border-box;
+}
+
+/* aifocus-7p7: On archive/section pages, scale down the about lede so h1 remains the dominant heading and essay titles appear in the first 390x844 viewport */
+.about.p-note:not(.h-card),
+main:not(:has(.featured-post)) .about {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+}
