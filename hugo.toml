@@ -27,7 +27,6 @@ theme = 'aifocustheme'
 
 [taxonomies]
   author = 'authors'
-  post = 'posts'
 
 [permalinks.page]
     posts = '/:slug/'
