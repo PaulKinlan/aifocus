@@ -20,24 +20,7 @@
       <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
       <author>{{ partial "authors_rss.html" .}}</author>
       <guid>{{ .Permalink }}</guid>
-      {{- $summary := .Summary -}}
-      {{- $voidTags := ",img,br,hr,input,meta,link,source,col,area,base,embed,track,wbr,param," -}}
-      {{- $stack := slice -}}
-      {{- range $tag := findRE `</?[a-zA-Z][^>]*>` $summary -}}
-        {{- $name := $tag | replaceRE `^</?` `` | replaceRE `[^a-zA-Z0-9].*$` `` | lower -}}
-        {{- if or (hasSuffix $tag "/>") (strings.Contains $voidTags (printf ",%s," $name)) -}}
-          {{- /* void element: never open */ -}}
-        {{- else if hasPrefix $tag "</" -}}
-          {{- if and $stack (eq (index $stack (sub (len $stack) 1)) $name) -}}
-            {{- $stack = first (sub (len $stack) 1) $stack -}}
-          {{- end -}}
-        {{- else -}}
-          {{- $stack = $stack | append $name -}}
-        {{- end -}}
-      {{- end -}}
-      {{- $closers := "" -}}
-      {{- range $stack -}}{{- $closers = printf "</%s>%s" . $closers -}}{{- end -}}
-      <description>{{ printf "%s%s" $summary $closers | html }}</description>
+      <description>{{ partial "list-summary.html" . | html }}</description>
       <content:encoded>{{- printf "<![CDATA[" | safeHTML }}
     {{- printf "%s" .Content | safeHTML }}
   {{- printf "]]>" | safeHTML }}</content:encoded>
