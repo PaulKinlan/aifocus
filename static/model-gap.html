@@ -334,11 +334,14 @@ h2 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
         "Month-only dates use the last day of the month so the chart is conservative; exact day-level cutoffs use the published date. " +
         "Anthropic's earlier reliable knowledge cutoff would widen the Claude gaps. Chrome dates from the release schedule; feature lists are the demos catalogued in " +
         '<a href="https://github.com/PaulKinlan/chrome-platform-showcase" target="_blank" rel="noopener">chrome-platform-showcase</a>, ' +
-        "so they are a representative sample, not every change in each release. Last updated " + data.updated +
+        "so they are a representative sample, not every change in each release. Last updated " + esc(data.updated) +
         '. Source data: <a href="/model-gap.json">/model-gap.json</a>.';
     })
     .catch(function (e) {
-      chart.innerHTML = '<div class="error">Could not load the data: ' + e.message + "</div>";
+      var errDiv = document.createElement("div");
+      errDiv.className = "error";
+      errDiv.textContent = "Could not load the data: " + (e && e.message ? e.message : String(e));
+      chart.replaceChildren(errDiv);
     });
 })();
 </script>
