@@ -6,6 +6,11 @@
   --color: #000000;
   --background: #fdfcf8;
   --bg-secondary: #f0eee6;
+  --line: #8a8577;
+  --control-bg: #e6e1d2;
+  --control-bg-hover: #d8d2bf;
+  --muted: #6b6b6b;
+  --radius: 6px;
 }
 
 @supports (color: light-dark(#000, #fff)) {
@@ -13,6 +18,11 @@
     --color: light-dark(#000000, #e8e4dc);
     --background: light-dark(#fdfcf8, #1c1a17);
     --bg-secondary: light-dark(#f0eee6, #2a2723);
+    --line: light-dark(#8a8577, #4d4841);
+    --control-bg: light-dark(#e6e1d2, #3d3933);
+    --control-bg-hover: light-dark(#d8d2bf, #4a453f);
+    --muted: light-dark(#6b6b6b, #aaaaaa);
+    --radius: 6px;
   }
 }
 
@@ -47,6 +57,50 @@
 ul,
 ol {
   margin-left: 1em;
+}
+
+/* Form controls are styled for both colour schemes. These rules used to live
+   only inside the dark-scheme block, so in light mode the newsletter form fell
+   back to browser defaults - a 19px-tall control with 13.3px text and an inset
+   ridge border - while dark mode looked intentional. Sizes and structure are
+   shared here; the palette comes from tokens, so each scheme keeps its own
+   colours. See aifocus-698. */
+input,
+button,
+select,
+textarea {
+  font: inherit; /* UA default is 13.3px; inherit the body's size and family */
+  min-height: 2.5rem; /* tap target: WCAG 2.2 SC 2.5.8 asks for 24px minimum */
+  padding: 0.5em 0.75em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background-color: var(--bg-secondary);
+  color: var(--color);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+input:focus-visible,
+button:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  /* The ring the nav links already use, so focus looks the same everywhere. */
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+input[type="submit"],
+button {
+  cursor: pointer;
+  background-color: var(--control-bg);
+}
+
+input[type="submit"]:hover,
+button:hover {
+  background-color: var(--control-bg-hover);
 }
 
 body {
@@ -727,6 +781,11 @@ article.featured-post:has(> .featured-image-large-container),
     --color: #e8e4dc;
     --background: #1c1a17;
     --bg-secondary: #2a2723;
+    --line: #4d4841;
+    --control-bg: #3d3933;
+    --control-bg-hover: #4a453f;
+    --muted: #aaaaaa;
+    --radius: 6px;
   }
 
   @supports (color: light-dark(#000, #fff)) {
@@ -734,6 +793,11 @@ article.featured-post:has(> .featured-image-large-container),
       --color: light-dark(#000000, #e8e4dc);
       --background: light-dark(#fdfcf8, #1c1a17);
       --bg-secondary: light-dark(#f0eee6, #2a2723);
+      --line: light-dark(#8a8577, #4d4841);
+      --control-bg: light-dark(#e6e1d2, #3d3933);
+      --control-bg-hover: light-dark(#d8d2bf, #4a453f);
+      --muted: light-dark(#6b6b6b, #aaaaaa);
+      --radius: 6px;
     }
   }
 
@@ -865,33 +929,6 @@ article.featured-post:has(> .featured-image-large-container),
 
   a:active {
     color: #e8eaed;
-  }
-
-  input,
-  button,
-  textarea,
-  select {
-    background-color: #2a2723;
-    color: #e8e4dc;
-    border: 1px solid #4d4841;
-    padding: 0.5em;
-    border-radius: 4px;
-  }
-
-  input::placeholder,
-  textarea::placeholder {
-    color: #aaaaaa;
-  }
-
-  input[type="submit"],
-  button {
-    cursor: pointer;
-    background-color: #3d3933;
-  }
-
-  input[type="submit"]:hover,
-  button:hover {
-    background-color: #4a453f;
   }
 }
 
