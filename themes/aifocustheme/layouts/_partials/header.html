@@ -28,4 +28,5 @@
     {{- $brandingMarkup = printf `<p class="site-branding-title"><a href="/">%s</a></p>` (or .Site.Params.branding_title .Site.Title) }}
   {{- end }}
   {{ $brandingMarkup | safeHTML }}
+  <nav class="site-navigation" aria-label="Site navigation"><a href="/posts/">All essays</a></nav>
 </div>

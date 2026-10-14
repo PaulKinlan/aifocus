@@ -213,9 +213,36 @@ async function decorateMarkdown(response) {
   });
 }
 
+// The Hugo home.latest.txt output uses the same published posts/date order as home.json.
+// Accept only a local post permalink, never an external URL or a section root.
+function isValidLatestPostPath(path) {
+  return /^\/(?:posts\/)?[a-z0-9][a-z0-9-]*\/$/i.test(path) &&
+    isValidContentPath(path);
+}
+
 export async function onRequest(context) {
   const { request, next, env } = context;
   const url = new URL(request.url);
+
+  if (url.pathname === "/" && (request.method === "GET" || request.method === "HEAD") && env?.ASSETS) {
+    try {
+      const assetUrl = new URL("/latest-post.txt", url.origin);
+      const latest = await env.ASSETS.fetch(new Request(assetUrl));
+      if (latest.ok) {
+        const path = (await latest.text()).trim();
+        if (isValidLatestPostPath(path)) {
+          const destination = new URL(path, url.origin);
+          destination.search = url.search;
+          return new Response(null, {
+            status: 302,
+            headers: { Location: destination.href, "Cache-Control": "no-store" },
+          });
+        }
+      }
+    } catch {
+      // Missing/unreadable build asset: keep serving the existing homepage.
+    }
+  }
 
   // Direct `.md` request — serve as markdown with token count if path is safe.
   if (url.pathname.endsWith(".md")) {
@@ -279,4 +306,5 @@ export {
   isValidContentPath,
   markdownSiblingPath,
   decorateMarkdown,
+  isValidLatestPostPath,
 };
