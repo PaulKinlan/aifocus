@@ -27,7 +27,6 @@ theme = 'aifocustheme'
 
 [taxonomies]
   author = 'authors'
-  post = 'posts'
 
 [permalinks.page]
     posts = '/:slug/'
@@ -36,6 +35,8 @@ theme = 'aifocustheme'
 [mediaTypes]
   [mediaTypes."text/markdown"]
     suffixes = ['md']
+  [mediaTypes."text/plain"]
+    suffixes = ['txt']
 
 [outputFormats]
   [outputFormats.markdown]
@@ -44,9 +45,14 @@ theme = 'aifocustheme'
     isPlainText = true
     permalinkable = true
     baseName = 'index'
+  [outputFormats.latest]
+    name = 'latest'
+    mediaType = 'text/plain'
+    isPlainText = true
+    baseName = 'latest-post'
 
 [outputs]
-  home = ['html', 'rss', 'json']
+  home = ['html', 'rss', 'json', 'latest']
   page = ['html', 'markdown']
   section = ['html', 'rss']
   taxonomy = ['html']

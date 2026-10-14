@@ -1,0 +1,2 @@
+{{- $posts := where site.RegularPages "Type" "posts" -}}
+{{- with $posts.ByDate.Reverse -}}{{- (index . 0).RelPermalink -}}{{- end -}}

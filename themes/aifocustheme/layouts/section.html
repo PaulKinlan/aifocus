@@ -1,5 +1,8 @@
 {{ define "main" }}
   <h1>{{ .Title }}</h1>
+  {{ if and (eq .Type "posts") .Site.Params.about }}
+  <div class="about p-note">{{ .Site.Params.about | markdownify }}</div>
+  {{ end }}
   {{ .Content }}
   {{ range .Pages }}
     <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>

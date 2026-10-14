@@ -526,6 +526,11 @@ footer {
   margin: 0; /* Remove default h1 margin */
 }
 
+.site-navigation {
+  text-align: center;
+  margin-top: 0.75em;
+}
+
 /* Two-column layout when featured post contains side image or main-content container */
 article.featured-post:has(> .featured-post-main-content),
 article.featured-post:has(> .featured-image-large-container),

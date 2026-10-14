@@ -8,6 +8,7 @@ import {
   markdownSiblingPath,
   prefersMarkdown,
   estimateTokens,
+  isValidLatestPostPath,
 } from "../functions/_middleware.js";
 
 test("isUnsafePath: rejects traversal and backslashes in raw and parsed paths", () => {
@@ -299,7 +300,6 @@ test("onRequest: encoded traversal and backslashes are rejected without calling 
 
 test("onRequest: rejects paths outside allowed content roots without calling ASSETS.fetch", async () => {
   const restrictedPaths = [
-    "https://aifocus.blog/",
     "https://aifocus.blog/posts/",
     "https://aifocus.blog/POSTS/",
     "https://aifocus.blog/CSS/",
@@ -421,4 +421,65 @@ test("onRequest: does not decorate unsafe direct .md requests", async () => {
   const res = await onRequest(context);
   assert.equal(res.status, 404);
   assert.equal(res.headers.has("x-markdown-tokens"), false);
+});
+
+test("isValidLatestPostPath: accepts post permalinks but not other destinations", () => {
+  for (const path of ["/model-half-life/", "/posts/model-half-life/"]) {
+    assert.equal(isValidLatestPostPath(path), true, path);
+  }
+  for (const path of ["", "/", "//evil.example/", "https://evil.example/post/", "/posts/", "/training/intro/", "/images/", "/post?x=1", "/post/#fragment", "/%2f%2fevil/", "/post/\nLocation: https://evil.example/"]) {
+    assert.equal(isValidLatestPostPath(path), false, path);
+  }
+});
+
+test("onRequest: redirects only GET/HEAD root to the Hugo-built latest post", async () => {
+  for (const method of ["GET", "HEAD"]) {
+    const fetched = [];
+    let nextCalled = false;
+    const response = await onRequest({
+      request: new Request("https://preview.pages.dev/?campaign=launch", { method, headers: { Accept: "text/markdown" } }),
+      env: { ASSETS: { fetch: async (request) => {
+        fetched.push([request.method, request.url]);
+        return new Response("/latest-essay/");
+      } } },
+      next: async () => { nextCalled = true; return new Response("homepage"); },
+    });
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get("Location"), "https://preview.pages.dev/latest-essay/?campaign=launch");
+    assert.equal(response.headers.get("Cache-Control"), "no-store");
+    assert.equal(await response.text(), "");
+    assert.deepEqual(fetched, [["GET", "https://preview.pages.dev/latest-post.txt"]]);
+    assert.equal(nextCalled, false);
+  }
+});
+
+test("onRequest: leaves homepage intact when latest post target is missing or invalid", async () => {
+  for (const asset of [new Response("", { status: 200 }), new Response("https://evil.example/", { status: 200 }), new Response("missing", { status: 404 }), new Error("asset failure")]) {
+    let nextCalled = false;
+    const response = await onRequest({
+      request: new Request("https://preview.pages.dev/"),
+      env: { ASSETS: { fetch: async () => {
+        if (asset instanceof Error) throw asset;
+        return asset;
+      } } },
+      next: async () => { nextCalled = true; return new Response("homepage"); },
+    });
+    assert.equal(await response.text(), "homepage");
+    assert.equal(response.status, 200);
+    assert.equal(nextCalled, true);
+  }
+});
+
+test("onRequest: leaves other methods and routes, including feed, JSON, archive and markdown, untouched", async () => {
+  for (const [path, method] of [["/", "POST"], ["/index.xml", "GET"], ["/index.json", "GET"], ["/posts/", "GET"], ["/older-essay/", "GET"], ["/older-essay/index.md", "GET"]]) {
+    let assetCalled = false;
+    const response = await onRequest({
+      request: new Request(`https://preview.pages.dev${path}`, { method }),
+      env: { ASSETS: { fetch: async () => { assetCalled = true; return new Response("/latest-essay/"); } } },
+      next: async () => new Response("existing route"),
+    });
+    assert.equal(response.status, 200, `${method} ${path}`);
+    assert.equal(await response.text(), "existing route", `${method} ${path}`);
+    assert.equal(assetCalled, false, `${method} ${path}`);
+  }
 });
