@@ -38,11 +38,19 @@ footer ul a {
   box-sizing: border-box;
 }
 
-/* aifocus-7p7: On archive/section pages, scale down the about lede so h1 remains the dominant heading and essay titles appear in the first 390x844 viewport */
-.about.p-note:not(.h-card),
-main:not(:has(.featured-post)) .about {
+/* aifocus-7p7, aifocus-tbk: On archive/section pages, scale down the about lede so h1 remains the dominant heading and essay titles appear in the first 390x844 viewport without depending on :has() */
+.about.p-note:not(.h-card) {
   font-size: 1.125rem;
   line-height: 1.6;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
+}
+
+@supports selector(:has(*)) {
+  main:not(:has(.featured-post)) .about {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+  }
 }
