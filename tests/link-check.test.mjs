@@ -1,0 +1,236 @@
+// Tests for tools/link-check.mjs - the gate step that refuses a build with a
+// dead internal link.
+//
+// Two things are pinned here, and they are the two ways this check could be
+// wrong rather than merely inconvenient:
+//
+//   1. it must not be fooled by an attribute whose name merely ends in "href".
+//      aifocus-r0b: the first version scanned for the substring, so a
+//      data-href could stand in for a real href - a dead link passed and a
+//      working one failed. Cases below cover attribute order, extra attributes,
+//      quoting styles, case and xlink:href.
+//   2. its documented exclusions must stay deliberate: script-generated hrefs,
+//      external/non-navigational hrefs and directory-index targets. If one of
+//      these changes behaviour, this file says so.
+//
+// Every case builds its own fixture in a fresh temp directory, so no test
+// depends on another test's order or on the state of the checkout.
+
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { test } from "node:test";
+
+import {
+  anchorTargets,
+  failureLines,
+  scanSite,
+  summaryLine,
+} from "../tools/link-check.mjs";
+
+const TOOL = fileURLToPath(new URL("../tools/link-check.mjs", import.meta.url));
+
+const page = (markup) => `<!doctype html><html><body>${markup}</body></html>`;
+
+/** Write a fixture site: { "path/name.html": markup } -> temp root directory. */
+function builtSite(t, pages) {
+  const root = mkdtempSync(join(tmpdir(), "aifocus-link-check-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const [name, markup] of Object.entries(pages)) {
+    const file = join(root, name);
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, markup);
+  }
+  return root;
+}
+
+const brokenTargets = (result) => [...result.broken.keys()].sort();
+
+test("anchorTargets reads attribute names whole, not as a substring", () => {
+  assert.deepEqual(
+    anchorTargets('<a data-href="/a" href="/b" xlink:href="/c" HREF="/d">'),
+    ["/b", "/c", "/d"],
+  );
+  assert.deepEqual(anchorTargets('<a data-href="/only-a-data-attribute">'), []);
+  assert.deepEqual(
+    anchorTargets('<a class="data-href" title="href=/nope/">'),
+    [],
+  );
+});
+
+test("a dead href fails even when a data-href precedes it (aifocus-r0b)", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a data-href="/exists/" href="/dead/">broken</a>'),
+    "exists/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), ["/dead/"]);
+  assert.equal(result.resolved, 0);
+  assert.equal(result.internal, 1);
+  assert.deepEqual(failureLines(result), [
+    "  /dead/  <- linked from /index.html",
+  ]);
+});
+
+test("a working href passes even when a dead data-href follows it", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a href="/exists/" data-href="/dead/">works</a>'),
+    "exists/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.resolved, 1);
+  assert.match(
+    summaryLine(result),
+    /1 internal anchors over 2 pages, 1 resolved/,
+  );
+});
+
+test("attribute order, extra attributes, quoting style and case do not matter", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      [
+        '<a class="post" title="a > b" href="/dead/">quoted value holding ></a>',
+        '<a href="/ok/" data-href="/also-dead/" rel="noopener">extra attributes</a>',
+        "<a id=x HREF=/dead-bare/ >unquoted and uppercase</a>",
+        "<a href='/dead-single/'>single quoted</a>",
+        '<a data-rel="external" data-href="/still-not-a-link/">data only</a>',
+      ].join(""),
+    ),
+    "ok/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), [
+    "/dead-bare/",
+    "/dead-single/",
+    "/dead/",
+  ]);
+  assert.equal(result.resolved, 1);
+  assert.equal(result.internal, 4);
+});
+
+test("an SVG anchor's xlink:href is a link", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      '<svg><a xlink:href="/dead/"><text>svg</text></a></svg>',
+    ),
+  });
+
+  assert.deepEqual(brokenTargets(scanSite(root)), ["/dead/"]);
+});
+
+test("script and style contents are excluded deliberately, and the rest still counts", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      [
+        '<a href="/ok/">real</a>',
+        // The shapes this repo actually has: template literals in the pwa-cooked
+        // pages and string concatenation in model-gap.html.
+        '<script>const s = `<a href="/${api.ref}">`;</script>',
+        "<script>s += '<a href=\"' + esc(m.card) + '\">';</script>",
+        '<style>/* <a href="/not-a-link-either/"> */</style>',
+      ].join(""),
+    ),
+    "ok/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.resolved, 1);
+  assert.equal(result.internal, 1);
+});
+
+test("external and non-navigational hrefs are counted, never resolved", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      [
+        '<a href="https://example.com/">external</a>',
+        '<a href="http://example.com/">external</a>',
+        '<a href="//example.com/">protocol relative</a>',
+        '<a href="mailto:someone@example.com">mail</a>',
+        '<a href="tel:+1234">phone</a>',
+        '<a href="data:text/plain,hello">data</a>',
+        '<a href="javascript:void(0)">javascript</a>',
+        '<a href="#top">fragment</a>',
+        '<a href="">empty</a>',
+        '<a href="/real/?query=1#fragment">real, with query and fragment</a>',
+      ].join(""),
+    ),
+    "real/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.external, 9);
+  assert.equal(result.internal, 1);
+  assert.equal(result.resolved, 1);
+});
+
+test("a target with no trailing slash resolves through the directory index", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      '<a href="/dir">no slash</a><a href="/feed.xml">file</a>',
+    ),
+    "dir/index.html": page("ok"),
+    "feed.xml": "<rss/>",
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.resolved, 2);
+  assert.equal(result.viaDirectoryIndex, 1);
+});
+
+test("a target with nothing behind it is named, with the page that links to it", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      '<a href="/missing/">gone</a><a href="/missing/">again</a>',
+    ),
+    "posts/index.html": page('<a href="/missing/">and from here</a>'),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(failureLines(result), [
+    "  /missing/  <- linked from /index.html",
+    "  /missing/  <- linked from /index.html",
+    "  /missing/  <- linked from /posts/index.html",
+  ]);
+});
+
+test("the CLI exits 1 and names the page and the target", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a data-href="/exists/" href="/dead/">broken</a>'),
+    "exists/index.html": page("ok"),
+  });
+
+  let status = 0;
+  let stderr = "";
+  try {
+    execFileSync(process.execPath, [TOOL, root], { encoding: "utf8" });
+  } catch (error) {
+    status = error.status;
+    stderr = error.stderr;
+  }
+
+  assert.equal(status, 1);
+  assert.match(stderr, /link-check: FAIL - 1 internal link target\(s\)/);
+  assert.match(stderr, /\/dead\/ {2}<- linked from \/index\.html/);
+});
+
+test("the CLI exits 0 when every internal link resolves", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a href="/exists/">fine</a>'),
+    "exists/index.html": page("ok"),
+  });
+
+  const stdout = execFileSync(process.execPath, [TOOL, root], {
+    encoding: "utf8",
+  });
+  assert.match(stdout, /^link-check: OK - 1 internal anchors over 2 pages/);
+});

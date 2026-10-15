@@ -18,14 +18,23 @@
  * too if latency.md had stayed outside its candidate set. This check reads the
  * built site, so it cannot miss that class.
  *
+ * WHEN THE SCANNER IS WRONG, IT IS WORSE THAN NO SCANNER
+ * aifocus-r0b: the first version of this file matched the substring `href`, so
+ * `data-href` was read as a link - a page with `<a data-href="/exists/"
+ * href="/dead/">` passed with the dead link unresolved, and reversing the values
+ * failed a working link. A checker that reports the wrong answer is trusted, so
+ * the anchor scan now reads the attribute *name* in full and tests/link-check.test.mjs
+ * pins that case, the attribute-order variants and the exclusions below.
+ *
  * WHAT IT DOES
- * Walks every built HTML page, extracts every <a href> - Hugo's minifier emits
- * unquoted attribute values, so quoted and unquoted forms are both parsed -
- * keeps the internal ones, resolves each against the generated file tree the way
- * a static host does (an exact file, or a directory holding index.html) and exits
- * non-zero, naming the page and the target, for anything that resolves to
- * nothing. Deterministic (sorted walk, no network, no browser) and fast: it reads
- * the built HTML and nothing else.
+ * Walks every built HTML page, extracts the link targets of every <a> - parsing
+ * attributes rather than searching for the substring "href", so attribute order,
+ * extra attributes and quoted values are all handled - keeps the internal ones,
+ * resolves each against the generated file tree the way a static host does (an
+ * exact file, or a directory holding index.html) and exits non-zero, naming the
+ * page and the target, for anything that resolves to nothing. Deterministic
+ * (sorted walk, no network, no browser) and fast: it reads the built HTML and
+ * nothing else.
  *
  * WHAT IT DELIBERATELY DOES NOT DO - the exclusions, stated so they are visible
  * and reviewable rather than silent skips:
@@ -53,23 +62,31 @@
  *      decorated /<slug>.md with no built file - are not recognised. No such
  *      link exists in the site today; if one is added, this check will name it
  *      and the correct fix is to link the built path.
+ *
+ *   5. An in-page anchor (#section) is checked only as a page; whether the
+ *      fragment exists on that page is a different check this tool does not do.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-
-const root = process.argv[2] ?? "public";
-
-if (!existsSync(root)) {
-  console.error(
-    `link-check: no build at ${root} - run the build first (npm run build)`,
-  );
-  process.exit(2);
-}
+import { pathToFileURL } from "node:url";
 
 const SCRIPT_OR_STYLE = /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi;
-const ANCHOR_HREF =
-  /<a\b[^>]*?\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
+
+// An <a ...> tag, allowing quoted attribute values to contain '>' (title="a > b")
+// so the tag does not end early. \b keeps <abbr>, <animate> and friends out.
+const ANCHOR_TAG = /<a\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
+
+// One attribute: a name, then an optional value in double quotes, single quotes
+// or bare. The name is captured whole, which is the point - `data-href` and
+// `xlink:href` must not be mistaken for `href` (aifocus-r0b).
+const ATTRIBUTE =
+  /([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+
+// SVG anchors carry their target in xlink:href. HTML attribute names are
+// case-insensitive, so `HREF=` counts too.
+const LINK_ATTRIBUTES = new Set(["href", "xlink:href"]);
+
 const EXTERNAL_OR_LOCAL_ONLY = /^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|\/\/|#|$)/;
 const ENTITIES = {
   "&amp;": "&",
@@ -87,6 +104,21 @@ function decode(value) {
   );
 }
 
+/** Every link target of every <a> in one page's markup, in document order. */
+export function anchorTargets(markup) {
+  // One global pass removes all script/style blocks; String.replace restarts
+  // from the beginning, so the lastIndex of a shared regex is not a hazard.
+  const scanned = markup.replace(SCRIPT_OR_STYLE, " ");
+  const targets = [];
+  for (const tag of scanned.matchAll(ANCHOR_TAG)) {
+    for (const attribute of tag[0].matchAll(ATTRIBUTE)) {
+      if (!LINK_ATTRIBUTES.has(attribute[1].toLowerCase())) continue;
+      targets.push(decode(attribute[2] ?? attribute[3] ?? attribute[4] ?? ""));
+    }
+  }
+  return targets;
+}
+
 function htmlPages(dir) {
   const pages = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -102,7 +134,7 @@ function htmlPages(dir) {
 
 // 'file': an exact generated file. 'dir': a directory that serves index.html,
 // which is what a static host resolves /foo and /foo/ to.
-function resolveTarget(pathname) {
+function resolveTarget(root, pathname) {
   const base = join(root, pathname.replace(/^\/+/, ""));
   try {
     if (statSync(base).isFile()) return "file";
@@ -117,81 +149,108 @@ function resolveTarget(pathname) {
   return null;
 }
 
-function sitePath(file) {
-  return `/${file.slice(root.length).replace(/^\/+/, "")}`;
-}
+/**
+ * Resolve every internal link in a built site.
+ * Returns { pages, internal, external, resolved, viaDirectoryIndex, broken },
+ * where broken maps an unresolvable target to the pages that link to it.
+ */
+export function scanSite(root) {
+  const pages = htmlPages(root);
+  const broken = new Map();
+  let internal = 0;
+  let external = 0;
+  let resolved = 0;
+  let viaDirectoryIndex = 0;
 
-let internal = 0;
-let external = 0;
-let resolved = 0;
-let viaDirectoryIndex = 0;
-const broken = new Map();
+  for (const page of pages) {
+    const where = `/${page.slice(root.length).replace(/^\/+/, "")}`;
+    for (const href of anchorTargets(readFileSync(page, "utf8"))) {
+      if (EXTERNAL_OR_LOCAL_ONLY.test(href)) {
+        external += 1;
+        continue;
+      }
 
-const pages = htmlPages(root);
+      // Strip the query and fragment before resolving: /foo/?q=1#x is /foo/.
+      const raw = href.split("#")[0].split("?")[0];
+      let pathname;
+      try {
+        pathname = decodeURIComponent(raw);
+      } catch {
+        // A malformed percent-escape is still a link: check it as written rather
+        // than letting one bad character crash the gate.
+        pathname = raw;
+      }
+      if (!pathname) {
+        external += 1;
+        continue;
+      }
 
-for (const page of pages) {
-  // One pass removes every script/style block: the regex is global, so it
-  // matches all of them and String.replace restarts from the beginning.
-  const markup = readFileSync(page, "utf8").replace(SCRIPT_OR_STYLE, " ");
-  const where = sitePath(page);
-  for (const match of markup.matchAll(ANCHOR_HREF)) {
-    const href = decode(match[1] ?? match[2] ?? match[3] ?? "");
-    if (EXTERNAL_OR_LOCAL_ONLY.test(href)) {
-      external += 1;
-      continue;
-    }
+      const absolute = pathname.startsWith("/")
+        ? pathname
+        : new URL(pathname, `http://x${where}`).pathname;
 
-    // Strip the query and fragment before resolving: a link to /foo/?q=1#x is a
-    // link to /foo/.
-    const raw = href.split("#")[0].split("?")[0];
-    let pathname;
-    try {
-      pathname = decodeURIComponent(raw);
-    } catch {
-      // A malformed percent-escape is still a link: check it as written rather
-      // than letting one bad character crash the gate.
-      pathname = raw;
-    }
-    if (!pathname) {
-      external += 1;
-      continue;
-    }
-
-    const absolute = pathname.startsWith("/")
-      ? pathname
-      : new URL(pathname, `http://x${where}`).pathname;
-
-    internal += 1;
-    const kind = resolveTarget(absolute);
-    if (kind === "file") {
-      resolved += 1;
-    } else if (kind === "dir") {
-      resolved += 1;
-      if (!absolute.endsWith("/")) viaDirectoryIndex += 1;
-    } else {
-      if (!broken.has(absolute)) broken.set(absolute, []);
-      broken.get(absolute).push(where);
+      internal += 1;
+      const kind = resolveTarget(root, absolute);
+      if (kind === "file") {
+        resolved += 1;
+      } else if (kind === "dir") {
+        resolved += 1;
+        if (!absolute.endsWith("/")) viaDirectoryIndex += 1;
+      } else {
+        if (!broken.has(absolute)) broken.set(absolute, []);
+        broken.get(absolute).push(where);
+      }
     }
   }
+
+  return { pages, internal, external, resolved, viaDirectoryIndex, broken };
 }
 
-const summary =
-  `${internal} internal anchors over ${pages.length} pages, ` +
-  `${resolved} resolved (${viaDirectoryIndex} of them through a directory index), ` +
-  `${broken.size} unresolved`;
-
-if (broken.size > 0) {
-  const named = [...broken.entries()].sort(([a], [b]) => (a < b ? -1 : 1));
-  console.error(
-    `link-check: FAIL - ${broken.size} internal link target(s) have no page in the build:`,
+export function summaryLine(result) {
+  return (
+    `${result.internal} internal anchors over ${result.pages.length} pages, ` +
+    `${result.resolved} resolved (${result.viaDirectoryIndex} of them through a directory index), ` +
+    `${result.broken.size} unresolved`
   );
-  for (const [target, from] of named) {
-    for (const page of from) {
-      console.error(`  ${target}  <- linked from ${page}`);
-    }
-  }
-  console.error(`link-check: ${summary}`);
-  process.exit(1);
 }
 
-console.log(`link-check: OK - ${summary}`);
+/** One line per dead link, naming the target and the page that links to it. */
+export function failureLines(result) {
+  const lines = [];
+  for (const [target, from] of [...result.broken.entries()].sort(([a], [b]) =>
+    a < b ? -1 : 1,
+  )) {
+    for (const page of from) lines.push(`  ${target}  <- linked from ${page}`);
+  }
+  return lines;
+}
+
+function main(argv) {
+  const root = argv[2] ?? "public";
+  if (!existsSync(root)) {
+    console.error(
+      `link-check: no build at ${root} - run the build first (npm run build)`,
+    );
+    return 2;
+  }
+
+  const result = scanSite(root);
+  if (result.broken.size > 0) {
+    console.error(
+      `link-check: FAIL - ${result.broken.size} internal link target(s) have no page in the build:`,
+    );
+    for (const line of failureLines(result)) console.error(line);
+    console.error(`link-check: ${summaryLine(result)}`);
+    return 1;
+  }
+
+  console.log(`link-check: OK - ${summaryLine(result)}`);
+  return 0;
+}
+
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  process.exit(main(process.argv));
+}
