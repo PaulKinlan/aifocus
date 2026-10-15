@@ -86,6 +86,11 @@
  *      (/foo -> /foo/index.html) is accepted, because a static host redirects it
  *      (verified live: /super-apps -> 308 -> /super-apps/ -> 200). The count is
  *      reported so canonical-form drift stays visible without failing the build.
+ *   9. Percent-encoding is decoded one level, as a host does: /a%20b/ resolves to
+ *      a directory named "a b", and %23 stays inside the path. An encoded slash
+ *      (%2F) therefore decodes to a path separator - a build cannot contain a
+ *      filename holding a literal "/", so this has no practical effect, but it
+ *      is the one place where decoding is lossy.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -173,18 +178,30 @@ export function scanSite(root) {
         continue;
       }
 
-      // Strip the query and fragment before resolving: /foo/?q=1#x is /foo/.
-      // Safe to split on '#' here because the parser has already decoded any
-      // entity, so a '#&#47;'-style value cannot masquerade as a fragment.
-      const pathname = href.split("#")[0].split("?")[0];
-      if (!pathname) {
+      // The URL layer, in the order a static host does it: split the query and
+      // fragment off the *encoded* value (safe, because the parser has already
+      // decoded entities, so a '#' cannot come from one), resolve it against the
+      // page, then percent-decode the resulting path for the filesystem lookup,
+      // because a host maps /a%20b/ onto a directory named "a b". Decoding last
+      // is what keeps an encoded '#' (%23) inside the path instead of letting it
+      // be read as a fragment marker (aifocus-11w).
+      const raw = href.split("#")[0].split("?")[0];
+      if (!raw) {
         external += 1;
         continue;
       }
 
-      const absolute = pathname.startsWith("/")
-        ? pathname
-        : new URL(pathname, `http://x${where}`).pathname;
+      const resolvedUrl = new URL(raw, `http://x${where}`);
+      let pathname;
+      try {
+        pathname = decodeURIComponent(resolvedUrl.pathname);
+      } catch {
+        // A malformed escape (%zz) is still a link: check it as written rather
+        // than letting one bad character crash the gate.
+        pathname = resolvedUrl.pathname;
+      }
+
+      const absolute = pathname;
 
       internal += 1;
       const kind = resolveTarget(root, absolute);

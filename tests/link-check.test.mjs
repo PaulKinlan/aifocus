@@ -141,6 +141,45 @@ test("a slash written as a numeric entity resolves and is not read as a fragment
   assert.equal(result.resolved, 1);
 });
 
+test("a percent-encoded path resolves to the file the host would serve (aifocus-11w)", (t) => {
+  // A host maps /a%20b/ onto a directory named "a b", so the gate must decode.
+  // The previous version did; the parse5 rewrite dropped it, which is what this
+  // case pins - and it pins the order too, because decoding before splitting the
+  // fragment would turn %23 into a '#' and truncate the path.
+  const root = builtSite(t, {
+    "index.html": page(
+      [
+        '<a href="/a%20b/">space</a>',
+        '<a href="/a%23b/">hash in a filename</a>',
+        '<a href="../a%20b/">relative, from a subdirectory</a>',
+      ].join(""),
+    ),
+    "a b/index.html": page("ok"),
+    "a#b/index.html": page("ok"),
+    "posts/index.html": page('<a href="../a%20b/">relative</a>'),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.resolved, 4);
+});
+
+test("a percent-encoded target that does not exist still fails", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a href="/a%20b/">missing</a>'),
+  });
+
+  assert.deepEqual(brokenTargets(scanSite(root)), ["/a b/"]);
+});
+
+test("a malformed escape is checked as written rather than crashing the gate", (t) => {
+  const root = builtSite(t, {
+    "index.html": page('<a href="/a%zzb/">malformed</a>'),
+  });
+
+  assert.deepEqual(brokenTargets(scanSite(root)), ["/a%zzb/"]);
+});
+
 test("named entities in an href are decoded before resolving", (t) => {
   assert.deepEqual(anchorTargets('<a href="/a&amp;b/">ampersand</a>'), [
     "/a&b/",
