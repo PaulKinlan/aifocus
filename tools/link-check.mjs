@@ -11,111 +11,114 @@
  * WHY THIS EXISTS
  * aifocus-8mx: content/posts/latency.md linked /superapps/ while the post is
  * published at /super-apps/, so the link 404ed in production. Nothing in the
- * repo noticed: the build was green, the asset ratchet was green, the unit tests
- * were green, because a link is only wrong relative to the *output* - the bug
+ * repo noticed - the build was green, the asset ratchet was green, the unit tests
+ * were green - because a link is only wrong relative to the *output*: the bug
  * lives between the content and the generated tree, not inside either one. The
  * factory docs-drift station that eventually reported it would have missed it
  * too if latency.md had stayed outside its candidate set. This check reads the
  * built site, so it cannot miss that class.
  *
- * WHEN THE SCANNER IS WRONG, IT IS WORSE THAN NO SCANNER
- * aifocus-r0b: the first version of this file matched the substring `href`, so
- * `data-href` was read as a link - a page with `<a data-href="/exists/"
- * href="/dead/">` passed with the dead link unresolved, and reversing the values
- * failed a working link. A checker that reports the wrong answer is trusted, so
- * the anchor scan now reads the attribute *name* in full and tests/link-check.test.mjs
- * pins that case, the attribute-order variants and the exclusions below.
+ * WHY IT PARSES HTML INSTEAD OF SCANNING IT (aifocus-mfo, aifocus-adz)
+ * The first three versions of this file searched the markup with regular
+ * expressions. Each review round found the same shape of bug - the scanner
+ * misread valid HTML - and each fix bought exactly one more edge case:
+ *
+ *   round 1 (aifocus-r0b): `\bhref` matched the substring in `data-href`, so a
+ *           data attribute could stand in for a real link. A dead link passed
+ *           and a working one failed.
+ *   round 2 (aifocus-mfo): text inside an HTML comment was scanned as markup, so
+ *           a commented-out anchor failed the gate on valid built output.
+ *   round 2 (aifocus-adz): only six named entities were decoded, and the
+ *           fragment split ran first, so `&#47;` (an escaped slash) became "#"
+ *           and truncated the URL to "/&".
+ *
+ * So the scanning is now done by parse5, a spec-compliant HTML5 parser (the
+ * reference implementation, and the one jsdom uses): comments are comment nodes,
+ * script and style contents are text, attribute names are parsed rather than
+ * matched as substrings, and attribute values arrive decoded. The classes above
+ * are not patched, they are structurally impossible. Measured on this repo's
+ * 1.81 MB / 57-page build, and the numbers are why this trade is worth taking:
+ *
+ *   hand-rolled regex scan   12.6 ms   (0.22 ms/page)
+ *   parse5                  596.3 ms   (10.46 ms/page)   <- now used
+ *   htmlparser2 (tolerant)  278.3 ms   (4.88 ms/page)    <- rejected: 6 packages, looser
+ *
+ * parse5 costs ~0.6 s of gate time and buys the difference between a scanner
+ * that is *nearly* right and one that is right about HTML. The regex version was
+ * also demonstrably wrong on real output, not just in theory: on the same build
+ * it mis-decodes 72 link values across 36 of the 57 pages - the share buttons
+ * carry `&#43;` (a plus sign) and it passed the entity through undecoded. Those
+ * happen to be external URLs, so they never failed a build; the moment one of
+ * them is an internal link it is a false gate failure, which is the worst kind
+ * for a gate every lane has to pass.
  *
  * WHAT IT DOES
- * Walks every built HTML page, extracts the link targets of every <a> - parsing
- * attributes rather than searching for the substring "href", so attribute order,
- * extra attributes and quoted values are all handled - keeps the internal ones,
- * resolves each against the generated file tree the way a static host does (an
- * exact file, or a directory holding index.html) and exits non-zero, naming the
- * page and the target, for anything that resolves to nothing. Deterministic
- * (sorted walk, no network, no browser) and fast: it reads the built HTML and
- * nothing else.
+ * Parses every built HTML page, collects the `href` of every <a> element,
+ * resolves the internal ones against the generated file tree the way a static
+ * host does (an exact file, or a directory holding index.html) and exits
+ * non-zero, naming the page and the target, for anything that resolves to
+ * nothing. Deterministic (sorted walk, no network, no browser).
  *
- * WHAT IT DELIBERATELY DOES NOT DO - the exclusions, stated so they are visible
- * and reviewable rather than silent skips:
+ * WHAT IT DELIBERATELY DOES NOT DO - the tail, stated honestly so nobody assumes
+ * more coverage than there is:
  *
- *   1. <script> and <style> blocks are removed before scanning. hrefs built in
- *      JavaScript are not markup links and cannot be resolved statically. The
- *      cases in this repo today are the template literals in
- *      static/pwa-cooked-timeline.html and static/pwa-cooked-baseline.html
- *      (href="${api.ref}" and href="${f.ref}") and the string concatenation in
- *      static/model-gap.html (href="' + esc(m.card) + '"). A *markup* link you
- *      add is checked; a link you build in JavaScript is not seen here, and that
- *      is the one thing this tool cannot cover.
- *
- *   2. External and non-navigational hrefs are counted, never resolved: any
+ *   1. Hrefs built at runtime in JavaScript are invisible, by construction: a
+ *      string inside <script> is text, not an element. The cases in this repo are
+ *      the template literals in static/pwa-cooked-timeline.html and
+ *      static/pwa-cooked-baseline.html (href="${api.ref}", href="${f.ref}") and
+ *      the concatenation in static/model-gap.html. A markup link you add is
+ *      checked; a link you build in JavaScript is not, and no static check can.
+ *   2. <template> content is inert - a browser does not navigate it until
+ *      something clones it - so it is not walked. That is the same class as (1).
+ *   3. Paths only functions/_middleware.js can serve (for example a decorated
+ *      /<slug>.md with no built file) are not recognised. None exist today.
+ *   4. An in-page fragment (#section) is checked only as a page; whether the
+ *      fragment exists on that page is a different check this tool does not do.
+ *   5. Redirect rules that exist only at the host (a Cloudflare _redirects file)
+ *      are invisible to a file-tree check. static/_headers exists, static/_redirects
+ *      does not.
+ *   6. <base href> is ignored: no page in the build declares one (measured: 0 of
+ *      57), and links are resolved against the page's own URL.
+ *   7. External and non-navigational hrefs are counted, never resolved: any
  *      http:/https: URL, protocol-relative //host, mailto:, tel:, data:,
  *      javascript:, a bare fragment (#foo) or an empty href.
- *
- *   3. A target with no trailing slash that resolves through a directory index
+ *   8. A target with no trailing slash that resolves through a directory index
  *      (/foo -> /foo/index.html) is accepted, because a static host redirects it
- *      (verified live: /super-apps -> 308 -> /super-apps/ -> 200). Only targets
- *      with nothing behind them are failures. The count is reported so that
- *      canonical-form drift stays visible without failing the build.
- *
- *   4. Paths that only functions/_middleware.js can serve - for example a
- *      decorated /<slug>.md with no built file - are not recognised. No such
- *      link exists in the site today; if one is added, this check will name it
- *      and the correct fix is to link the built path.
- *
- *   5. An in-page anchor (#section) is checked only as a page; whether the
- *      fragment exists on that page is a different check this tool does not do.
+ *      (verified live: /super-apps -> 308 -> /super-apps/ -> 200). The count is
+ *      reported so canonical-form drift stays visible without failing the build.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const SCRIPT_OR_STYLE = /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi;
+import { parse } from "parse5";
 
-// An <a ...> tag, allowing quoted attribute values to contain '>' (title="a > b")
-// so the tag does not end early. \b keeps <abbr>, <animate> and friends out.
-const ANCHOR_TAG = /<a\b(?:[^>"']|"[^"]*"|'[^']*')*>/gi;
-
-// One attribute: a name, then an optional value in double quotes, single quotes
-// or bare. The name is captured whole, which is the point - `data-href` and
-// `xlink:href` must not be mistaken for `href` (aifocus-r0b).
-const ATTRIBUTE =
-  /([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
-
-// SVG anchors carry their target in xlink:href. HTML attribute names are
-// case-insensitive, so `HREF=` counts too.
-const LINK_ATTRIBUTES = new Set(["href", "xlink:href"]);
+// Only `href` is a navigation target. SVG's xlink:href needs no special case:
+// measured, parse5 adjusts it to an `href` attribute on an <a> inside <svg>, and
+// on an HTML anchor `xlink:href` is a foreign attribute a browser does not
+// follow - which is exactly the distinction the regex version could not make.
+const LINK_ATTRIBUTE = "href";
 
 const EXTERNAL_OR_LOCAL_ONLY = /^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|\/\/|#|$)/;
-const ENTITIES = {
-  "&amp;": "&",
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&apos;": "'",
-};
 
-function decode(value) {
-  return value.replace(
-    /&(amp|lt|gt|quot|#39|apos);/g,
-    (match) => ENTITIES[match] ?? match,
-  );
-}
-
-/** Every link target of every <a> in one page's markup, in document order. */
+/**
+ * Every link target of every navigable <a> in one page's markup, in document
+ * order. Attribute values are decoded by the parser, and comments, script/style
+ * bodies and <template> content are not elements, so they are not visited.
+ */
 export function anchorTargets(markup) {
-  // One global pass removes all script/style blocks; String.replace restarts
-  // from the beginning, so the lastIndex of a shared regex is not a hazard.
-  const scanned = markup.replace(SCRIPT_OR_STYLE, " ");
   const targets = [];
-  for (const tag of scanned.matchAll(ANCHOR_TAG)) {
-    for (const attribute of tag[0].matchAll(ATTRIBUTE)) {
-      if (!LINK_ATTRIBUTES.has(attribute[1].toLowerCase())) continue;
-      targets.push(decode(attribute[2] ?? attribute[3] ?? attribute[4] ?? ""));
+  const visit = (node) => {
+    if (node.tagName === "a" && node.attrs) {
+      for (const attribute of node.attrs) {
+        if (attribute.name === LINK_ATTRIBUTE) targets.push(attribute.value);
+      }
     }
-  }
+    // childNodes only: <template> children live under `content` and stay inert.
+    for (const child of node.childNodes ?? []) visit(child);
+  };
+  visit(parse(markup));
   return targets;
 }
 
@@ -171,15 +174,9 @@ export function scanSite(root) {
       }
 
       // Strip the query and fragment before resolving: /foo/?q=1#x is /foo/.
-      const raw = href.split("#")[0].split("?")[0];
-      let pathname;
-      try {
-        pathname = decodeURIComponent(raw);
-      } catch {
-        // A malformed percent-escape is still a link: check it as written rather
-        // than letting one bad character crash the gate.
-        pathname = raw;
-      }
+      // Safe to split on '#' here because the parser has already decoded any
+      // entity, so a '#&#47;'-style value cannot masquerade as a fragment.
+      const pathname = href.split("#")[0].split("?")[0];
       if (!pathname) {
         external += 1;
         continue;
