@@ -358,7 +358,10 @@ test("the CLI exits 1 and names the page and the target", (t) => {
   let status = 0;
   let stderr = "";
   try {
-    execFileSync(process.execPath, [TOOL, root], { encoding: "utf8" });
+    execFileSync(process.execPath, [TOOL, root], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
   } catch (error) {
     status = error.status;
     stderr = error.stderr;
