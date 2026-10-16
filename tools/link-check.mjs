@@ -91,6 +91,14 @@
  *      (%2F) therefore decodes to a path separator - a build cannot contain a
  *      filename holding a literal "/", so this has no practical effect, but it
  *      is the one place where decoding is lossy.
+ *
+ * KNOWN FALSE-FAILURE SHAPES: a valid link served only by middleware (3), a
+ * host-only redirect (5), or a page using <base href> (6) can fail this file-tree
+ * check. These shapes are absent from the current 57-page build, not impossible
+ * in future. Whitespace-prefixed external hrefs formerly failed too (aifocus-rcf);
+ * hrefs are now trimmed before classification and resolution. If this gate
+ * false-fails in the field, disable the link check first, then investigate; do
+ * not leave every lane blocked on a healthy build while iterating on the checker.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -117,7 +125,7 @@ export function anchorTargets(markup) {
   const visit = (node) => {
     if (node.tagName === "a" && node.attrs) {
       for (const attribute of node.attrs) {
-        if (attribute.name === LINK_ATTRIBUTE) targets.push(attribute.value);
+        if (attribute.name === LINK_ATTRIBUTE) targets.push(attribute.value.trim());
       }
     }
     // childNodes only: <template> children live under `content` and stay inert.

@@ -300,6 +300,24 @@ test("external and non-navigational hrefs are counted, never resolved", (t) => {
   assert.equal(result.resolved, 1);
 });
 
+test("whitespace-prefixed external hrefs are excluded before URL resolution (aifocus-rcf)", (t) => {
+  const root = builtSite(t, {
+    "index.html": page(
+      '<a href=" https://example.com/ok">space</a>' +
+        '<a href="\n https://example.com/ok ">newline</a>' +
+        '<a href="\t//example.com/ok">protocol-relative</a>' +
+        '<a href=" /real/ ">local still resolves</a>',
+    ),
+    "real/index.html": page("ok"),
+  });
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), []);
+  assert.equal(result.external, 3);
+  assert.equal(result.internal, 1);
+  assert.equal(result.resolved, 1);
+});
+
 test("a target with no trailing slash resolves through the directory index", (t) => {
   const root = builtSite(t, {
     "index.html": page(
