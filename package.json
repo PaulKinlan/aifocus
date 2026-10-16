@@ -14,7 +14,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "hugo-bin": "^0.165.0"
+    "hugo-bin": "^0.165.0",
+    "parse5": "^8.0.1"
   },
   "hugo-bin": {
     "buildTags": "extended",
