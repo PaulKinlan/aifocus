@@ -32,7 +32,7 @@
         {{ $authorTermPage := $.Site.Taxonomies.authors.Get $key }}
         {{ if $authorTermPage }}
         {{ if gt (len $authorTermPage.Pages) 0 }}
-        <h4 style="margin-top: 10px; margin-bottom: 5px;">Articles:</h4>
+        <h3>Articles:</h3>
         <ul style="list-style-type: disc; margin-left: 20px;">
           {{ range $authorTermPage.Pages }}
           <li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>
