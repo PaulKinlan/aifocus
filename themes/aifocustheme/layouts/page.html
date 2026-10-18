@@ -14,11 +14,14 @@
         time:
         {{ .ReadingTime }}
         minutes</time></p>
-    <div class="e-summary p-summary summary">
+    {{ with .Summary | plainify | htmlUnescape | strings.TrimSpace }}
+    <div class="e-summary">
       <details>
         <summary>Expand to see summary</summary>
+        <p class="p-summary e-summary-output">{{ . }}</p>
       </details>
     </div>
+    {{ end }}
   </div>
 
   <div class="e-content">
