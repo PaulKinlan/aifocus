@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const summaryElementInitialText = "Expand to see summary";
     let summary = summaryElementInitialText;
     const summaryElement = summaryContainer.querySelector("summary");
+    const summaryOutput = summaryContainer.querySelector(".e-summary-output");
 
     summaryContainer
       .querySelector("details")
@@ -45,25 +46,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             },
           });
 
-          details.removeEventListener("toggle", this);
-
           summaryElement.textContent = "Generating Summary on device...";
 
           const summaryStream = await summarizer.summarizeStreaming(
             document.querySelector(".e-content").innerText
           );
 
-          //summaryElement.textContent = "";
-
           let first = true;
           for await (const chunk of summaryStream) {
             if (first) {
-              summaryElement.textContent = "";
+              summaryOutput.textContent = "";
               first = false;
             }
-            summaryElement.textContent += chunk;
+            summaryOutput.textContent += chunk;
             summary += chunk;
           }
+          summaryElement.textContent = summaryElementInitialText;
         }
       });
 
