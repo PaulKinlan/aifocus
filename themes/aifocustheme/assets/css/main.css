@@ -489,17 +489,6 @@ article {
         text-overflow: ellipsis;
       }
     }
-
-    .summary {
-      margin: 0;
-      padding: 0;
-      font-size: initial;
-      display: none;
-
-      &.visible {
-        display: block;
-      }
-    }
   }
 
   div.youtube {

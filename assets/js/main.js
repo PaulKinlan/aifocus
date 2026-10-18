@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { Summarizer } = window;
     const availability = await Summarizer.availability();
     if (availability === "unavailable") {
-      // keep the summary section hidden
       return;
     }
     const summaryContainer = document.querySelector(".e-summary");
@@ -14,8 +13,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!summaryContainer) {
       return;
     }
-    summaryContainer.classList.add("visible");
-
     const summaryElementInitialText = "Expand to see summary";
     let summary = summaryElementInitialText;
     const summaryElement = summaryContainer.querySelector("summary");
@@ -64,8 +61,6 @@ document.addEventListener("DOMContentLoaded", async () => {
           summaryElement.textContent = summaryElementInitialText;
         }
       });
-
-    summaryContainer.style.display = "block";
   }
 });
 
