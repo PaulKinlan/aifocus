@@ -344,26 +344,33 @@ const PROVIDERS = {
 
 const MAX_TOOL_USES_PER_STEP = 8;
 const MAX_TOOL_RESULT_CHARS_PER_RUN = 32 * 1024;
+const MAX_MODEL_TEXT_CHARS_PER_RUN = 32 * 1024;
 
 async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent }) {
   const provider = PROVIDERS[providerId];
   if (!provider) throw new Error(`unknown provider: ${providerId}`);
   const ctx = provider.init(system, userMessage);
   let resultChars = 0;
+  let textChars = 0;
 
   for (let step = 0; step < 12; step++) {
     onEvent({ type: 'step', step });
     const { textBlocks, toolUses, done } = await provider.step(ctx, apiKey, model);
-    for (const t of textBlocks) if (t.trim()) onEvent({ type: 'text', text: t });
-
-    if (toolUses.length > MAX_TOOL_USES_PER_STEP) {
-      onEvent({ type: 'limit', reason: `stopped: more than ${MAX_TOOL_USES_PER_STEP} tool calls in one step` });
-      return;
+    for (const text of textBlocks) {
+      const remaining = MAX_MODEL_TEXT_CHARS_PER_RUN - textChars;
+      const shown = text.slice(0, remaining);
+      if (shown.trim()) onEvent({ type: 'text', text: shown });
+      textChars += shown.length;
+      if (text.length > remaining) {
+        onEvent({ type: 'limit', reason: `stopped: model text exceeded ${MAX_MODEL_TEXT_CHARS_PER_RUN} characters per run; at least ${text.length - remaining} characters and ${toolUses.length} tool call(s) were not processed` });
+        return;
+      }
     }
+
     if (done) return;
 
     const results = [];
-    for (const use of toolUses) {
+    for (const use of toolUses.slice(0, MAX_TOOL_USES_PER_STEP)) {
       onEvent({ type: 'tool_use', name: use.name, input: use.input });
       let result;
       try { result = await runTool(use.name, use.input); }
@@ -379,6 +386,10 @@ async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent
       resultChars += result.length;
       onEvent({ type: 'tool_result', name: use.name, result });
       results.push({ id: use.id, name: use.name, result });
+    }
+    if (toolUses.length > MAX_TOOL_USES_PER_STEP) {
+      onEvent({ type: 'limit', reason: `stopped at ${MAX_TOOL_USES_PER_STEP} tool calls in this step; ${toolUses.length - MAX_TOOL_USES_PER_STEP} call(s) dropped (completed calls kept)` });
+      return;
     }
     provider.appendResults(ctx, results);
   }
