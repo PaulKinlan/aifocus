@@ -35,18 +35,31 @@ async function eventsFor(h) {
   return events;
 }
 
-test('over-limit step executes first eight calls, then reports dropped work', async () => {
-  const h = harness([batch(9)], 'ok');
+test('over-limit step executes first sixteen calls, then reports dropped work', async () => {
+  const h = harness([batch(17)], 'ok');
   const events = await eventsFor(h);
-  assert.equal(h.calls(), 8);
-  assert.equal(events.filter((e) => e.type === 'tool_result').length, 8);
+  assert.equal(h.calls(), 16);
+  assert.equal(events.filter((e) => e.type === 'tool_result').length, 16);
   assert.match(events.find((e) => e.type === 'limit').reason, /1 call\(s\) dropped \(completed calls kept\)/);
 });
 
-test('exactly eight small calls are allowed, then the next response ends normally', async () => {
-  const h = harness([batch(8)], 'ok');
+test('nine-call journal update includes the index write and receives a summary', async () => {
+  const h = harness([
+    { textBlocks: [], toolUses: [...batch(8).toolUses, { id: 'index', name: 'opfs_write', input: { path: 'index.md', content: 'updated' } }], done: false },
+    { textBlocks: ['Updated the journal and index.md.'], toolUses: [], done: true },
+  ], 'ok');
   const events = await eventsFor(h);
-  assert.equal(h.calls(), 8);
+  assert.equal(h.calls(), 9);
+  assert.equal(events.filter((e) => e.type === 'tool_result').length, 9);
+  assert.equal(events.find((e) => e.type === 'tool_use' && e.input.path === 'index.md')?.name, 'opfs_write');
+  assert.equal(events.find((e) => e.type === 'text')?.text, 'Updated the journal and index.md.');
+  assert.equal(events.some((e) => e.type === 'limit'), false);
+});
+
+test('exactly sixteen small calls are allowed, then the next response ends normally', async () => {
+  const h = harness([batch(16)], 'ok');
+  const events = await eventsFor(h);
+  assert.equal(h.calls(), 16);
   assert.equal(events.some((e) => e.type === 'limit'), false);
 });
 
@@ -83,4 +96,5 @@ test('model text budget accumulates across steps without blocking normal short r
   assert.equal(h.calls(), 1);
   assert.equal(events.filter((e) => e.type === 'text').map((e) => e.text.length).reduce((a, b) => a + b), 32768);
   assert.match(events.find((e) => e.type === 'limit').reason, /model text exceeded/);
+  assert.doesNotMatch(events.find((e) => e.type === 'limit').reason, /0 tool call\(s\)/);
 });

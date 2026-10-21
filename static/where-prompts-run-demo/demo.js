@@ -342,7 +342,7 @@ const PROVIDERS = {
 
 // ─── Provider-agnostic loop ──────────────────────────────────────────
 
-const MAX_TOOL_USES_PER_STEP = 8;
+const MAX_TOOL_USES_PER_STEP = 16;
 const MAX_TOOL_RESULT_CHARS_PER_RUN = 32 * 1024;
 const MAX_MODEL_TEXT_CHARS_PER_RUN = 32 * 1024;
 
@@ -362,7 +362,8 @@ async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent
       if (shown.trim()) onEvent({ type: 'text', text: shown });
       textChars += shown.length;
       if (text.length > remaining) {
-        onEvent({ type: 'limit', reason: `stopped: model text exceeded ${MAX_MODEL_TEXT_CHARS_PER_RUN} characters per run; at least ${text.length - remaining} characters and ${toolUses.length} tool call(s) were not processed` });
+        const droppedCalls = toolUses.length ? ` and ${toolUses.length} tool call(s)` : '';
+        onEvent({ type: 'limit', reason: `stopped: model text exceeded ${MAX_MODEL_TEXT_CHARS_PER_RUN} characters per run; at least ${text.length - remaining} characters${droppedCalls} were not processed` });
         return;
       }
     }
