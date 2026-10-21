@@ -35,11 +35,12 @@ async function eventsFor(h) {
   return events;
 }
 
-test('more than eight tool calls in one step stops before executing any', async () => {
+test('over-limit step executes first eight calls, then reports dropped work', async () => {
   const h = harness([batch(9)], 'ok');
   const events = await eventsFor(h);
-  assert.equal(h.calls(), 0);
-  assert.match(events.find((e) => e.type === 'limit').reason, /more than 8 tool calls/);
+  assert.equal(h.calls(), 8);
+  assert.equal(events.filter((e) => e.type === 'tool_result').length, 8);
+  assert.match(events.find((e) => e.type === 'limit').reason, /1 call\(s\) dropped \(completed calls kept\)/);
 });
 
 test('exactly eight small calls are allowed, then the next response ends normally', async () => {
@@ -63,4 +64,23 @@ test('result budget accumulates across steps', async () => {
   assert.equal(h.calls(), 2);
   assert.match(events.find((e) => e.type === 'limit').reason, /tool results exceeded/);
   assert.equal(events.filter((e) => e.type === 'tool_result')[1].result.length, 500);
+});
+
+test('oversized text shows a bounded prefix and reports unprocessed calls', async () => {
+  const h = harness([{ textBlocks: ['x'.repeat(40000)], toolUses: [use(1)], done: false }], 'ok');
+  const events = await eventsFor(h);
+  assert.equal(events.find((e) => e.type === 'text').text.length, 32768);
+  assert.equal(h.calls(), 0);
+  assert.match(events.find((e) => e.type === 'limit').reason, /at least 7232 characters and 1 tool call\(s\) were not processed/);
+});
+
+test('model text budget accumulates across steps without blocking normal short replies', async () => {
+  const h = harness([
+    { textBlocks: ['x'.repeat(20000)], toolUses: [use(1)], done: false },
+    { textBlocks: ['y'.repeat(20000)], toolUses: [], done: true },
+  ], 'ok');
+  const events = await eventsFor(h);
+  assert.equal(h.calls(), 1);
+  assert.equal(events.filter((e) => e.type === 'text').map((e) => e.text.length).reduce((a, b) => a + b), 32768);
+  assert.match(events.find((e) => e.type === 'limit').reason, /model text exceeded/);
 });
