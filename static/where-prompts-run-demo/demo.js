@@ -342,16 +342,24 @@ const PROVIDERS = {
 
 // ─── Provider-agnostic loop ──────────────────────────────────────────
 
+const MAX_TOOL_USES_PER_STEP = 8;
+const MAX_TOOL_RESULT_CHARS_PER_RUN = 32 * 1024;
+
 async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent }) {
   const provider = PROVIDERS[providerId];
   if (!provider) throw new Error(`unknown provider: ${providerId}`);
   const ctx = provider.init(system, userMessage);
+  let resultChars = 0;
 
   for (let step = 0; step < 12; step++) {
     onEvent({ type: 'step', step });
     const { textBlocks, toolUses, done } = await provider.step(ctx, apiKey, model);
     for (const t of textBlocks) if (t.trim()) onEvent({ type: 'text', text: t });
 
+    if (toolUses.length > MAX_TOOL_USES_PER_STEP) {
+      onEvent({ type: 'limit', reason: `stopped: more than ${MAX_TOOL_USES_PER_STEP} tool calls in one step` });
+      return;
+    }
     if (done) return;
 
     const results = [];
@@ -360,12 +368,21 @@ async function runLoop({ providerId, apiKey, model, system, userMessage, onEvent
       let result;
       try { result = await runTool(use.name, use.input); }
       catch (e) { result = `ERROR: ${e.message}`; }
+      result = typeof result === 'string' ? result : JSON.stringify(result);
+      if (result.length > MAX_TOOL_RESULT_CHARS_PER_RUN - resultChars) {
+        // Don't append an incomplete tool response to the provider's context.
+        // Only a small preview reaches the DOM, even if the tool returned a large file.
+        onEvent({ type: 'tool_result', name: use.name, result: result.slice(0, 500) });
+        onEvent({ type: 'limit', reason: `stopped: tool results exceeded ${MAX_TOOL_RESULT_CHARS_PER_RUN} characters per run` });
+        return;
+      }
+      resultChars += result.length;
       onEvent({ type: 'tool_result', name: use.name, result });
-      results.push({ id: use.id, name: use.name, result: typeof result === 'string' ? result : JSON.stringify(result) });
+      results.push({ id: use.id, name: use.name, result });
     }
     provider.appendResults(ctx, results);
   }
-  onEvent({ type: 'text', text: '(stopped at step cap)' });
+  onEvent({ type: 'limit', reason: 'stopped at 12-step limit' });
 }
 
 // ─── UI wiring ───────────────────────────────────────────────────────
@@ -591,6 +608,7 @@ async function handleSend() {
   toast(`running on ${PROVIDERS[providerId].label}…`);
   $('step').textContent = '';
 
+  let stoppedReason = '';
   try {
     await runLoop({
       providerId, apiKey, model, system,
@@ -613,10 +631,13 @@ async function handleSend() {
           refreshTree();
         } else if (e.type === 'text') {
           appendTranscript('assistant', e.text);
+        } else if (e.type === 'limit') {
+          stoppedReason = e.reason;
+          appendTranscript('error', e.reason);
         }
       },
     });
-    toast('done');
+    toast(stoppedReason || 'done', stoppedReason ? 'err' : '');
   } catch (err) {
     appendTranscript('error', err.message || String(err));
     toast(err.message || 'error', 'err');
