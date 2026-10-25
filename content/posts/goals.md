@@ -3,7 +3,7 @@ title: setting goals
 slug: setting-goals
 description: web development has changed. setting goals for your agent harness is incredibly powerful
 date: 2026-10-25T21:11:25.933Z
-draft: true
+draft: false
 authors: 
   - paulkinlan
 ---
