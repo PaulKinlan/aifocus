@@ -1,0 +1,28 @@
+{{- /*
+  Local override of Hugo's internal x shortcode.
+
+  Differences from the built-in:
+  - No build-time oEmbed request to publish.x.com: the post text is written
+    inline, so the build does not depend on X's API being reachable.
+  - Without JavaScript (or if widgets.js is blocked) the markup still reads as
+    a normal quote with a link to the post.
+  - widgets.js is emitted once per page, however many embeds the page has.
+
+  Params: user, id (required), name, date. The inner content is the post text,
+  rendered as Markdown.
+
+  The CSP in static/_headers allows platform.x.com, platform.twitter.com and
+  cdn.syndication.twimg.com for this embed.
+*/ -}}
+{{- $user := .Get "user" -}}
+{{- $id := .Get "id" -}}
+{{- $name := .Get "name" | default (printf "@%s" $user) -}}
+{{- $url := printf "https://x.com/%s/status/%s" $user $id -}}
+<blockquote class="twitter-tweet" data-dnt="true">
+{{ .Inner | .Page.RenderString (dict "display" "block") }}
+<p>&mdash; {{ $name }} (@{{ $user }}) <a href="{{ $url }}">{{ .Get "date" | default "View on X" }}</a></p>
+</blockquote>
+{{- if not (.Page.Store.Get "x-widgets") }}
+{{- .Page.Store.Set "x-widgets" true }}
+<script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+{{- end }}

@@ -13,16 +13,17 @@ While I've been putting it to the test on a couple of projects, what I didn't se
 
 I found that goals can be as simple as: "Make it faster" and the Harnesses and the models are good enough to, well, make it faster.
 
-<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Agree. Claude was able to do this better than I could since Opus 4.8 or so. 5.5 models are now very good at it.
+{{< x user="bcherny" id="2109027327569203687" name="Boris Cherny" date="October 10, 2026" >}}
+Agree. Claude was able to do this better than I could since Opus 4.8 or so. 5.5 models are now very good at it.
 
 All you do is give the model
 
-1. a goal (eg. “Make p95 ci time &lt;10 mins”)
+1. a goal (eg. “Make p95 ci time <10 mins”)
 2. a way to measure its result (eg. “Read timings in bigquery after each change”)
 3. a sense of how hard to try (eg. “Don’t stop till it’s done, it might take a few weeks of experimenting”)
 
-This pretty much works for most things. I often also ask the model to show me a chart with progress to goal every day, or to dm me a live artifact with the result</p>&mdash; Boris Cherny (@bcherny) <a href="https://x.com/bcherny/status/2109027327569203687?ref_src=twsrc%5Etfw">October 10, 2026</a></blockquote>
-<script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+This pretty much works for most things. I often also ask the model to show me a chart with progress to goal every day, or to dm me a live artifact with the result
+{{< /x >}}
 
 I put this to the test recently on a number of different projects and it's been pretty incredible. I've changed how I engage with my tools and I found that I circled around two different types of goals:
 
