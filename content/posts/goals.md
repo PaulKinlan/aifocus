@@ -46,7 +46,12 @@ Chromestatus.com is our view on what we know about Chrome and it contains links 
 **Initial Goal**:
 
 ```text
-Scan https://chromestatus.com/ and use all the links inside the entry (e.g, Explainer, Spec or existing demos) to determine how the feature works, what it is supposed to be used for and to understand the API semantics. Create simple examples or utilities (such as API tester or configurators) that showcase just the API.
+Scan https://chromestatus.com/ and use all the links
+inside the entry (e.g, Explainer, Spec or existing
+demos) to determine how the feature works, what it is
+supposed to be used for and to understand the API
+semantics. Create simple examples or utilities (such as
+API tester or configurators) that showcase just the API.
 ```
 
 **Findings**: While it mostly worked to start, I had to set out very clear goals and how to test each of the demos and I had to direct it to not create a "simulation" of the API it was trying to create a demo for.
@@ -65,7 +70,12 @@ I had a conversation with a friend in Chrome about WASM and that it outperforms 
 **Initial Goal**:
 
 ```text
-Create a benchmark that compares the performance of common algorithms, web apps like Todo MVC (to test the DOM performance) and web development tasks running JS vs WASM. I will give you a list of benchmarks that I want to see but please feel free to suggest more [inserted a list of benchmarks]
+Create a benchmark that compares the performance of
+common algorithms, web apps like Todo MVC (to test the
+DOM performance) and web development tasks running JS vs
+WASM. I will give you a list of benchmarks that I want to
+see but please feel free to suggest more [inserted a list
+of benchmarks]
 ```
 
 **Findings**: This was one of the most frustrating builds that I have done. I tried to use a lot of what I learnt from Chrome-platform-showcase to set a goal that would let the agent run for a long time building out the entire framework, but it ran into many issues (because I wasn't specific enough) and I spent a huge amount of time trying to course correct.
@@ -94,7 +104,20 @@ I have this hypothesis that many web developers, well, many people, struggle to 
 **Initial Goal**:
 
 ```text
-Create a website that showcases how to use every model on hugging face. I want to at least 3-4 demos for each model that follow: "Basic" - how to use the model at it's most basic level. "Practical" - Where it might be used in a product. "Wild" - Get creative and do something people might not expect. Multi-model: How to use this model with other models on hugging face so people can think about AI-powered systems.
+Create a website that showcases how to use every model
+on hugging face. I want to at least 3-4 demos for each
+model that follow:
+
+"Basic" - how to use the model at it's most basic level.
+
+"Practical" - Where it might be used in a product.
+
+"Wild" - Get creative and do something people might not
+expect.
+
+Multi-model: How to use this model with other models on
+hugging face so people can think about AI-powered
+systems.
 ```
 
 **Findings**: This project was probably the smoothest of the set of demos as I didn't have to correct how I set up the goals or change constraints as new ideas came in to my head. It just chugged along for a while and burned up all my subscription quota many times.
@@ -112,7 +135,10 @@ Like in "the prompt is the program", this entire suite is run by giving your Age
 **Initial Goal**:
 
 ```text
-Use Web-uplift to analyse the top 1000 sites and tell me the quality of how the sites are built. Make it so that it runs through the agent harness so that I can use the tokens in my subscription.
+Use Web-uplift to analyse the top 1000 sites and tell me
+the quality of how the sites are built. Make it so that
+it runs through the agent harness so that I can use the
+tokens in my subscription.
 ```
 
 **Findings**: It actually worked pretty well.  It surprised me that you can set this high-level goal and many of the models were able to stay on track. I did find though that sometimes the model and harness would think that it had scanned everything, but it stopped after 700. A lot of my time on this was refining how we did the tests and how I wanted to present the content.
@@ -129,7 +155,14 @@ Following on from my "The Browser is the Sandbox" post and [co-do.xyz](https://c
 **Initial Goal**:
 
 ```text
-Create an extension that treats the new tab page as a command-centre in the browser. The user should be able to start tasks and have a conversation with the browser. The tasks should have access to every single extensions API. Use the same double-iframe technique as in co-do to generate assets and UI that the user might ask for in a task. Use the same hooks idea to respond to browser events as in ChaOS (https://github.com/paulkinlan/chaos).
+Create an extension that treats the new tab page as a
+command-centre in the browser. The user should be able to
+start tasks and have a conversation with the browser. The
+tasks should have access to every single extensions API.
+Use the same double-iframe technique as in co-do to
+generate assets and UI that the user might ask for in a
+task. Use the same hooks idea to respond to browser
+events as in ChaOS (https://github.com/paulkinlan/chaos).
 ```
 
 **Findings**: The very first generation of this was quite good, but I put it down to having a lot of my previous projects as context my pi could use. I spent a lot of time experimenting with what my tools created and then a lot of time refining the product to something that I now use in Chrome daily. I then added in new processes that refine the product and aim to then improve the quality of it (e.g, performance) every day.
@@ -145,7 +178,10 @@ When I saw the Gemini 3.8 TTS launch I knew that I had to build an RSS feed or w
 **Initial Goal**:
 
 ```text
-Create a website that lets me add in an RSS feed or a blog post to transcribe using Gemini 3.8 TTS (https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash-tts) add the transcribed content to a Podcast RSS.
+Create a website that lets me add in an RSS feed or a
+blog post to transcribe using Gemini 3.8 TTS
+(https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash-tts)
+add the transcribed content to a Podcast RSS.
 ```
 
 **Findings**: It worked mostly. What I realised in this project is that I didn't specify if this was a multi-user system or not, so it just built a simple tool that let's me copy and paste a URL in (well, it would let anyone add content to my RSS feed). I also found that I need deep observability in my projects so that I could monitor and fix issues as the website was being used. I really needed to understand the performance (e.g CWV), the errors, the crashes on the client and also on the server and get them in to a database. The [Reporting Observer API](https://developer.mozilla.org/en-US/docs/Web/API/ReportingObserver) gives you insights into the issues that users experience inside the client and it gives you information that you didn't know you needed.
