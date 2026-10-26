@@ -3,9 +3,11 @@
 // comments need a signed-in account (functions/api/auth/*); reactions and
 // highlights do not.
 //
-// Highlights are drawn with the CSS Custom Highlight API, so the article DOM
+// Highlights are drawn with the CSS Custom Highlight API, so the article text
 // is never modified. Browsers without it still get reactions, notes and
-// comments; only the shading is missing.
+// comments; only the shading is missing. Notes are also shown beside the
+// block they quote (see renderMarginNotes); those elements are marked
+// data-reader-ui and skipped by the text index.
 
 const section = document.querySelector("#reader");
 const content = document.querySelector(".e-content");
@@ -46,7 +48,10 @@ const api = async (path, options = {}) => {
 const buildTextIndex = () => {
   const nodes = [];
   let text = "";
-  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) =>
+      node.parentElement?.closest("[data-reader-ui]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
+  });
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     nodes.push({ node, start: text.length });
     text += node.data;
@@ -64,6 +69,19 @@ const locate = (index, offset) => {
   }
   const entry = index.nodes[lo];
   return { node: entry.node, offset: Math.min(offset - entry.start, entry.node.data.length) };
+};
+
+// Offset in the index text of a (node, offset) boundary point: the start of
+// the first indexed text node at or after it.
+const offsetOf = (index, node, offset) => {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const entry = index.nodes.find((e) => e.node === node);
+    if (entry) return entry.start + offset;
+  }
+  const point = document.createRange();
+  point.setStart(node, offset);
+  const entry = index.nodes.find((e) => point.comparePoint(e.node, 0) >= 0);
+  return entry ? entry.start : index.text.length;
 };
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -116,7 +134,7 @@ const fragmentLink = (quote) => {
 const applyHighlights = () => {
   if (!supportsHighlights || !state) return;
   const index = buildTextIndex();
-  const tiers = { "reader-shared-1": [], "reader-shared-2": [], "reader-shared-3": [], "reader-mine": [] };
+  const tiers = { "reader-shared-1": [], "reader-shared-2": [], "reader-shared-3": [], "reader-mine": [], "reader-note": [] };
   for (const h of state.highlights) {
     const range = findRange(index, h);
     if (!range) continue;
@@ -124,6 +142,10 @@ const applyHighlights = () => {
     if (h.count >= 5) tiers["reader-shared-3"].push(range);
     else if (h.count >= 2) tiers["reader-shared-2"].push(range);
     else if (h.count >= 1 && !h.mine) tiers["reader-shared-1"].push(range);
+  }
+  for (const note of state.notes) {
+    const range = note.quote && findRange(index, note.quote);
+    if (range) tiers["reader-note"].push(range);
   }
   for (const [name, ranges] of Object.entries(tiers)) {
     CSS.highlights.set(name, new Highlight(...ranges));
@@ -276,6 +298,87 @@ const renderItem = (item) => {
   return li;
 };
 
+// --- Notes beside the passage they quote ---------------------------------------
+
+const BLOCKS = "p, li, blockquote, pre, figure, h2, h3, h4, h5, h6, table";
+// Margin notes need this much room to the right of the article column.
+const MARGIN_NOTE_SPACE = 17 * 16;
+
+const wideEnough = () =>
+  content.getBoundingClientRect().right + MARGIN_NOTE_SPACE <= document.documentElement.clientWidth;
+
+const blockFor = (range) => {
+  const start = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
+  const block = start?.closest(BLOCKS);
+  return block && content.contains(block) ? block : null;
+};
+
+const shorten = (text, max) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
+
+const renderMarginNote = (note) => {
+  const item = document.createElement("li");
+  const quote = document.createElement("blockquote");
+  quote.textContent = shorten(note.quote.exact, 90);
+  const body = document.createElement("p");
+  body.textContent = note.body;
+  const meta = document.createElement("p");
+  meta.className = "reader-meta";
+  meta.append(renderWho(note, "Anonymous reader"));
+  if (STATUS_LABELS[note.status]) {
+    const badge = document.createElement("span");
+    badge.className = "reader-badge";
+    badge.textContent = STATUS_LABELS[note.status];
+    meta.append(badge);
+  }
+  item.append(quote, body, meta);
+  return item;
+};
+
+// Each block with notes gets one <aside>. On a wide window it sits in the
+// right margin level with the block (inserted before the block and
+// absolutely positioned); otherwise it follows the block as a collapsed
+// disclosure. The asides are outside the text index, so they do not affect
+// quote matching.
+const renderMarginNotes = () => {
+  for (const old of content.querySelectorAll(".reader-margin-notes")) old.remove();
+  if (!state?.notes.length) return;
+  const index = buildTextIndex();
+  const groups = new Map();
+  for (const note of state.notes) {
+    const range = note.quote && findRange(index, note.quote);
+    const block = range && blockFor(range);
+    if (!block) continue;
+    if (!groups.has(block)) groups.set(block, []);
+    groups.get(block).push(note);
+  }
+  const marginMode = wideEnough() ? "wide" : "narrow";
+  content.classList.toggle("reader-has-margin-notes", marginMode === "wide");
+  let lastBottom = -Infinity;
+  for (const [block, notes] of groups) {
+    const aside = document.createElement("aside");
+    aside.className = "reader-margin-notes";
+    aside.dataset.readerUi = "";
+    aside.setAttribute("aria-label", notes.length === 1 ? "Note on this passage" : `${notes.length} notes on this passage`);
+    const details = document.createElement("details");
+    const summary = document.createElement("summary");
+    summary.textContent = notes.length === 1 ? "1 note" : `${notes.length} notes`;
+    const list = document.createElement("ul");
+    list.append(...notes.map(renderMarginNote));
+    details.append(summary, list);
+    aside.append(details);
+    if (marginMode === "wide") {
+      details.open = true;
+      block.before(aside);
+      // Keep stacked notes on neighbouring blocks from overlapping.
+      const top = aside.offsetTop;
+      if (top < lastBottom + 8) aside.style.marginTop = `${lastBottom + 8 - top}px`;
+      lastBottom = aside.offsetTop + aside.offsetHeight;
+    } else {
+      block.after(aside);
+    }
+  }
+};
+
 const render = () => {
   for (const button of section.querySelectorAll(".reader-reaction")) {
     const kind = button.dataset.kind;
@@ -288,6 +391,7 @@ const render = () => {
   section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map(renderItem));
   renderAccount();
   applyHighlights();
+  renderMarginNotes();
 };
 
 const refresh = async () => {
@@ -352,11 +456,9 @@ const captureRange = (range) => {
   if (!range || range.collapsed || !content.contains(range.commonAncestorContainer)) return null;
   const exact = range.toString();
   if (exact.trim().length < 3) return null;
-  const pre = document.createRange();
-  pre.setStart(content, 0);
-  pre.setEnd(range.startContainer, range.startOffset);
-  const start = pre.toString().length;
-  const { text } = buildTextIndex();
+  const index = buildTextIndex();
+  const { text } = index;
+  const start = offsetOf(index, range.startContainer, range.startOffset) ?? 0;
   return {
     range,
     quote: {
@@ -395,6 +497,16 @@ const showToolbar = () => {
   toolbar.style.left = `${left + window.scrollX}px`;
   toolbar.style.top = `${rect.bottom + window.scrollY + 8}px`;
 };
+
+// Margin notes are laid out for the window width; lay them out again when it
+// changes.
+let resizeTimer = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (state) renderMarginNotes();
+  }, 150);
+});
 
 const init = async () => {
   if (!section || !content || !post) return;

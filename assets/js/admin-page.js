@@ -122,11 +122,72 @@ const loadTrusted = async () => {
     : `Signed in as ${data.moderator}. Nobody is trusted yet: use "Trust this person" on a comment.`;
 };
 
+const profileLink = (user) => {
+  const name = document.createElement(user.profile_url ? "a" : "span");
+  if (user.profile_url) {
+    name.href = user.profile_url;
+    name.rel = "noopener noreferrer";
+    name.target = "_blank";
+  }
+  name.textContent = user.display_name;
+  return name;
+};
+
+const renderAccount = (user) => {
+  const li = document.createElement("li");
+  li.className = "mod-item";
+  const meta = document.createElement("p");
+  meta.className = "mod-meta";
+  const ids = document.createElement("span");
+  ids.textContent = user.identities || "";
+  const joined = document.createElement("time");
+  joined.dateTime = new Date(user.created_at).toISOString();
+  joined.textContent = `joined ${new Date(user.created_at).toLocaleDateString()}`;
+  meta.append(profileLink(user), ids, joined);
+  for (const [flag, on] of [["Trusted", user.trusted], ["Blocked", user.status === "blocked"]]) {
+    if (!on) continue;
+    const badge = document.createElement("span");
+    badge.className = flag === "Blocked" ? "mod-flag" : "";
+    badge.textContent = flag;
+    meta.append(badge);
+  }
+  const counts = document.createElement("p");
+  counts.className = "mod-meta";
+  counts.textContent = `${user.written} notes and comments: ${user.approved} published, ${user.pending} pending, ${user.rejected} rejected or spam`;
+  const actions = document.createElement("div");
+  actions.className = "mod-actions";
+  if (user.status !== "blocked") {
+    const trust = document.createElement("button");
+    trust.type = "button";
+    trust.textContent = user.trusted ? "Stop trusting" : "Trust";
+    trust.addEventListener("click", () => setTrust(user.id, !user.trusted));
+    actions.append(trust);
+  }
+  const block = document.createElement("button");
+  block.type = "button";
+  block.textContent = user.status === "blocked" ? "Unblock" : "Block";
+  block.addEventListener("click", () => setBlocked(user.id, user.status !== "blocked"));
+  actions.append(block);
+  li.append(meta, counts, actions);
+  return li;
+};
+
+const loadAccounts = async () => {
+  const data = await api("/api/admin/accounts");
+  list.replaceChildren(...data.users.map(renderAccount));
+  const shown = data.users.length < data.total ? ` Showing the newest ${data.users.length}.` : "";
+  statusEl.textContent = `Signed in as ${data.moderator}. ${data.total} ${data.total === 1 ? "account" : "accounts"}.${shown}`;
+};
+
 const load = async () => {
   statusEl.textContent = "Loading…";
   try {
     if (current === "trusted") {
       await loadTrusted();
+      return;
+    }
+    if (current === "accounts") {
+      await loadAccounts();
       return;
     }
     const data = await api(`/api/admin/queue?status=${current}`);
@@ -158,6 +219,16 @@ const moderate = async (ids, status) => {
 const setTrust = async (userId, trusted) => {
   try {
     await api("/api/admin/trust", { method: "POST", body: JSON.stringify({ userId, trusted }) });
+    await load();
+  } catch (err) {
+    statusEl.textContent = `Could not update: ${err.message}`;
+  }
+};
+
+const setBlocked = async (userId, blocked) => {
+  if (blocked && !confirm("Block this account? It will be signed out and cannot post.")) return;
+  try {
+    await api("/api/admin/accounts", { method: "POST", body: JSON.stringify({ userId, status: blocked ? "blocked" : "active" }) });
     await load();
   } catch (err) {
     statusEl.textContent = `Could not update: ${err.message}`;
