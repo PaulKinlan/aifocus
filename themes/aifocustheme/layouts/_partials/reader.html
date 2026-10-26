@@ -4,8 +4,10 @@ passages and comments. Rendered hidden; assets/js/reader.js shows it once
 /api/reader/state answers, so without JavaScript (or without the D1 binding)
 the post looks as it did before.
 
-Notes and comments are held for moderation (/admin/). The writer always sees
-their own; other readers see them once approved.
+Notes and comments need a signed-in account (GitHub, Bluesky or X; see
+functions/_lib/auth.js) and are held for moderation (/admin/) unless the
+moderator has marked the account as trusted. The writer always sees their
+own; other readers see them once approved.
 */}}
 <section class="reader" id="reader" data-post="{{ .RelPermalink }}" aria-labelledby="reader-heading" hidden>
   <h2 id="reader-heading">Reader responses</h2>
@@ -24,12 +26,10 @@ their own; other readers see them once approved.
   <div class="reader-comments">
     <h3>Comments</h3>
     <ol class="reader-list" data-list="comments"></ol>
-    <form class="reader-form" data-form="comment">
+    <div class="reader-account" data-account></div>
+    <form class="reader-form" data-form="comment" hidden>
       <label>Comment
         <textarea name="body" rows="4" maxlength="2000" required></textarea>
-      </label>
-      <label>Name (optional)
-        <input type="text" name="name" maxlength="60" autocomplete="nickname">
       </label>
       <button type="submit">Post comment</button>
       <p class="reader-small">Comments and notes are reviewed before other readers see them. You will see yours straight away.</p>
@@ -47,15 +47,13 @@ their own; other readers see them once approved.
   <form class="reader-form" data-form="note" method="dialog">
     <h3 id="reader-dialog-title">Add a note</h3>
     <blockquote class="reader-dialog-quote"></blockquote>
-    <label>Note
+    <div data-note-signin hidden></div>
+    <label data-note-field>Note
       <textarea name="body" rows="4" maxlength="2000" required></textarea>
     </label>
-    <label>Name (optional)
-      <input type="text" name="name" maxlength="60" autocomplete="nickname">
-    </label>
-    <p class="reader-small">Notes are reviewed before other readers see them.</p>
+    <p class="reader-small" data-note-field>Notes are reviewed before other readers see them.</p>
     <div class="reader-dialog-actions">
-      <button type="submit" value="save">Save note</button>
+      <button type="submit" value="save" data-note-field>Save note</button>
       <button type="button" data-action="cancel">Cancel</button>
     </div>
   </form>
@@ -77,12 +75,22 @@ their own; other readers see them once approved.
 .reader-meta button { min-height: 0; padding: .1rem .5rem; font-size: .85rem; }
 .reader-form { display: grid; gap: .5rem; margin-top: 1rem; }
 .reader-form label { display: grid; gap: .25rem; }
+/* The display rules above would otherwise override the hidden attribute
+   that reader.js sets on sign-in-only fields. */
+.reader-form[hidden], .reader-form [hidden] { display: none; }
 .reader-toolbar { position: absolute; z-index: 10; display: flex; gap: .25rem; padding: .25rem; background: var(--bg-secondary); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / .15); }
 .reader-toolbar[hidden] { display: none; }
 .reader-dialog { max-width: min(36rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-secondary); color: var(--color); }
 .reader-dialog::backdrop { background: rgb(0 0 0 / .4); }
 .reader-dialog-quote { max-height: 8rem; overflow: auto; margin: 0; padding-left: .75rem; border-left: 3px solid var(--line); }
 .reader-dialog-actions { display: flex; gap: .5rem; }
+.reader-account { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+.reader-account p { margin: 0; flex-basis: 100%; }
+.reader-account form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; }
+.reader-account input { min-width: 0; flex: 1 1 12rem; }
+.reader-signin-link { display: inline-flex; align-items: center; min-height: 44px; padding: .25rem .75rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--control-bg); color: var(--color); text-decoration: none; }
+.reader-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+.reader-who { display: inline-flex; align-items: center; gap: .375rem; }
 ::highlight(reader-shared-1) { background-color: rgb(255 214 0 / .18); }
 ::highlight(reader-shared-2) { background-color: rgb(255 214 0 / .32); }
 ::highlight(reader-shared-3) { background-color: rgb(255 214 0 / .5); }

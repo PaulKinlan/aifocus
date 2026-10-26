@@ -31,5 +31,16 @@ export async function onRequestPost({ request, env }) {
   );
   const results = await db.batch(ids.map((id) => stmt.bind(status, now, who.email, id)));
   const updated = results.reduce((n, r) => n + (r?.meta?.changes ?? 0), 0);
+
+  // Approving does not trust the writer; accounts are trusted only through
+  // /api/admin/trust. Marking a note or comment as spam does remove its
+  // account's trust, so later ones wait in the queue again.
+  if (status === "spam") {
+    const untrust = db.prepare(
+      `UPDATE users SET trusted = 0, updated_at = ?
+       WHERE id = (SELECT user_id FROM annotations WHERE id = ? AND type != 'highlight' AND user_id IS NOT NULL)`,
+    );
+    await db.batch(ids.map((id) => untrust.bind(now, id)));
+  }
   return json({ status, updated });
 }

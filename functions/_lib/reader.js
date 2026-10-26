@@ -204,7 +204,9 @@ export function publicAnnotation(row, { mine = false } = {}) {
       ? { exact: row.quote_exact, prefix: row.quote_prefix || "", suffix: row.quote_suffix || "" }
       : null,
     body: row.body || null,
-    name: row.author_name || null,
+    name: row.user_display_name || row.author_name || null,
+    avatarUrl: row.user_avatar_url || null,
+    profileUrl: row.user_profile_url || null,
     createdAt: row.created_at,
   };
   if (mine) {

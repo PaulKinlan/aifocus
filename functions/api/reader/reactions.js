@@ -2,6 +2,8 @@
 //
 // Adds or removes one of the fixed reactions for the current reader. The set
 // of kinds is fixed, so there is no free text here and nothing to moderate.
+// Reactions need no account; a signed-in reader's reactions also record the
+// account.
 
 import {
   REACTION_KINDS,
@@ -13,6 +15,7 @@ import {
   loadPostText,
   isRateLimited,
 } from "../../_lib/reader.js";
+import { getSessionUser } from "../../_lib/auth.js";
 
 export async function onRequestPost({ request, env }) {
   const db = env?.READER_DB;
@@ -38,14 +41,15 @@ export async function onRequestPost({ request, env }) {
   }
 
   const reader = getReader(request);
+  const user = await getSessionUser(request, db);
   const now = Date.now();
   if (on) {
     if (await isRateLimited(db, reader.id, null, now)) {
       return json({ error: "Too many requests. Try again later." }, 429);
     }
     await db
-      .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, created_at) VALUES (?, ?, ?, ?)")
-      .bind(post, kind, reader.id, now)
+      .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
+      .bind(post, kind, reader.id, user?.id ?? null, now)
       .run();
   } else {
     await db

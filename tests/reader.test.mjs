@@ -10,6 +10,7 @@ import {
 } from "../functions/api/reader/annotations.js";
 import { onRequestGet as getQueue } from "../functions/api/admin/queue.js";
 import { onRequestPost as postModerate } from "../functions/api/admin/moderate.js";
+import { onRequestGet as getTrust, onRequestPost as postTrust } from "../functions/api/admin/trust.js";
 import {
   normalizePostPath,
   cleanText,
@@ -19,8 +20,11 @@ import {
   READER_COOKIE,
 } from "../functions/_lib/reader.js";
 import { verifyAccess, resetAccessCache } from "../functions/_lib/access.js";
+import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
-const MIGRATION = fileURLToPath(new URL("../migrations/0001_reader.sql", import.meta.url));
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql"].map((f) =>
+  fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
+);
 const ORIGIN = "https://aifoc.us";
 const POST = "/setting-goals/";
 const POST_HTML = `<html><body><article class=h-entry><h1>setting goals</h1>
@@ -30,7 +34,7 @@ const POST_HTML = `<html><body><article class=h-entry><h1>setting goals</h1>
 
 function makeEnv(extra = {}) {
   return {
-    READER_DB: createD1(MIGRATION),
+    READER_DB: createD1(MIGRATIONS),
     ASSETS: {
       fetch: async (req) => {
         const path = new URL(req.url).pathname;
@@ -46,11 +50,14 @@ function makeEnv(extra = {}) {
   };
 }
 
-function req(path, { method = "GET", body, reader, origin = ORIGIN, headers = {} } = {}) {
+function req(path, { method = "GET", body, reader, session, origin = ORIGIN, headers = {} } = {}) {
   const h = new Headers(headers);
   if (body !== undefined) h.set("Content-Type", "application/json");
   if (origin) h.set("Origin", origin);
-  if (reader) h.set("Cookie", `${READER_COOKIE}=${reader}`);
+  const cookies = [];
+  if (reader) cookies.push(`${READER_COOKIE}=${reader}`);
+  if (session) cookies.push(`${SESSION_COOKIE}=${session}`);
+  if (cookies.length) h.set("Cookie", cookies.join("; "));
   h.set("CF-Connecting-IP", "203.0.113.7");
   return new Request(`${ORIGIN}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
 }
@@ -62,6 +69,20 @@ function cookieFrom(res) {
 
 const READER_A = "a".repeat(32);
 const READER_B = "b".repeat(32);
+
+// Create an account with a GitHub identity and return a session token for it.
+async function signIn(env, login = "ana", extra = {}) {
+  const user = await upsertIdentity(env.READER_DB, {
+    provider: "github",
+    providerId: String(login.length * 1000 + login.charCodeAt(0)),
+    handle: login,
+    name: login.toUpperCase(),
+    avatarUrl: `https://avatars.example/${login}.png`,
+    profileUrl: `https://github.com/${login}`,
+    ...extra,
+  });
+  return { user, session: await createSession(env.READER_DB, user.id) };
+}
 
 test("helpers: path, text and reader cookie handling", () => {
   assert.equal(normalizePostPath("/setting-goals"), "/setting-goals/");
@@ -138,24 +159,47 @@ test("highlights: quote must come from the post, approved immediately, deduplica
   assert.equal(state.highlights[0].mine, false);
 });
 
+test("notes and comments: require sign-in", async () => {
+  const env = makeEnv();
+  for (const body of [
+    { post: POST, type: "comment", body: "Nice post" },
+    { post: POST, type: "note", quote: { exact: "reverse engineering" }, body: "Ghidra counts too." },
+  ]) {
+    const res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body, reader: READER_A }), env });
+    assert.equal(res.status, 401);
+  }
+  const res = await postAnnotation({
+    request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "x" }, reader: READER_A, session: "A".repeat(43) }),
+    env,
+  });
+  assert.equal(res.status, 401, "an unknown session token is signed out");
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM annotations").get().n, 0);
+});
+
 test("notes and comments: pending until approved, visible to their writer only", async () => {
   const env = makeEnv();
+  const { session, user } = await signIn(env, "ana");
   let res = await postAnnotation({
     request: req("/api/reader/annotations", {
       method: "POST",
-      body: { post: POST, type: "note", quote: { exact: "reverse engineering" }, body: "Ghidra counts too.", name: "Ana" },
+      body: { post: POST, type: "note", quote: { exact: "reverse engineering" }, body: "Ghidra counts too.", name: "Spoofed" },
       reader: READER_A,
+      session,
     }),
     env,
   });
   assert.equal(res.status, 201);
   const note = (await res.json()).annotation;
   assert.equal(note.status, "pending");
+  assert.equal(note.name, "ANA", "the name comes from the account, not the request");
+  assert.equal(note.avatarUrl, "https://avatars.example/ana.png");
+  assert.equal(note.profileUrl, "https://github.com/ana");
 
-  res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "Nice post" }, reader: READER_A }), env });
+  res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "Nice post" }, reader: READER_A, session }), env });
   const comment = (await res.json()).annotation;
+  assert.equal(env.READER_DB.raw.prepare("SELECT user_id FROM annotations WHERE id = ?").get(comment.id).user_id, user.id);
 
-  res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "" }, reader: READER_A }), env });
+  res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "" }, reader: READER_A, session }), env });
   assert.equal(res.status, 400);
 
   let mine = await (await getState({ request: req(`/api/reader/state?post=${POST}`, { reader: READER_A }), env })).json();
@@ -174,6 +218,8 @@ test("notes and comments: pending until approved, visible to their writer only",
   other = await (await getState({ request: req(`/api/reader/state?post=${POST}`, { reader: READER_B }), env })).json();
   assert.equal(other.comments.length, 1);
   assert.equal(other.comments[0].body, "Nice post");
+  assert.equal(other.comments[0].name, "ANA");
+  assert.equal(other.viewer, null);
   assert.equal(other.comments[0].status, undefined, "status is only shown to the writer");
   assert.equal(other.comments[0].mine, undefined);
 
@@ -187,7 +233,8 @@ test("notes and comments: pending until approved, visible to their writer only",
 
 test("annotations: safety screen result is stored, and failures do not block saving", async () => {
   const env = makeEnv({ AI: { run: async () => ({ response: { safe: false, categories: ["S10"] } }) } });
-  await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "bad" }, reader: READER_A }), env });
+  const { session } = await signIn(env);
+  await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "bad" }, reader: READER_A, session }), env });
   let row = env.READER_DB.raw.prepare("SELECT screen, status, ip_hash FROM annotations").get();
   assert.equal(row.screen, "unsafe:S10");
   assert.equal(row.status, "pending");
@@ -195,7 +242,8 @@ test("annotations: safety screen result is stored, and failures do not block sav
   assert.notEqual(row.ip_hash, "203.0.113.7");
 
   const failing = makeEnv({ AI: { run: async () => { throw new Error("down"); } } });
-  const res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "ok" }, reader: READER_A }), env: failing });
+  const signedIn = await signIn(failing);
+  const res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "ok" }, reader: READER_A, session: signedIn.session }), env: failing });
   assert.equal(res.status, 201);
   row = failing.READER_DB.raw.prepare("SELECT screen FROM annotations").get();
   assert.equal(row.screen, "error");
@@ -203,9 +251,10 @@ test("annotations: safety screen result is stored, and failures do not block sav
 
 test("annotations: rate limited per reader", async () => {
   const env = makeEnv();
+  const { session } = await signIn(env);
   let last;
   for (let i = 0; i < 31; i += 1) {
-    last = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: `c${i}` }, reader: READER_A }), env });
+    last = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: `c${i}` }, reader: READER_A, session }), env });
   }
   assert.equal(last.status, 429);
 });
@@ -271,7 +320,8 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     const token = await sign({ aud: AUD, iss: `https://${TEAM}`, exp: Math.floor(Date.now() / 1000) + 600, email: "paul@aifoc.us" });
     const auth = { "Cf-Access-Jwt-Assertion": token };
 
-    const created = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "hello" }, reader: READER_A }), env });
+    const { session, user } = await signIn(env, "bo");
+    const created = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "hello" }, reader: READER_A, session }), env });
     const { id } = (await created.json()).annotation;
 
     assert.equal((await getQueue({ request: req("/api/admin/queue"), env })).status, 403);
@@ -290,6 +340,39 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     assert.equal(state.comments.length, 1);
     const row = env.READER_DB.raw.prepare("SELECT moderated_by FROM annotations WHERE id = ?").get(id);
     assert.equal(row.moderated_by, "paul@aifoc.us");
+
+    // Approval alone does not trust the account: its next comment waits.
+    assert.equal(env.READER_DB.raw.prepare("SELECT trusted FROM users WHERE id = ?").get(user.id).trusted, 0);
+    res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "waits" }, reader: READER_A, session }), env });
+    assert.equal((await res.json()).annotation.status, "pending");
+
+    // The moderator trusts the account by hand, from the queue item's author_id.
+    const pending = await (await getQueue({ request: req("/api/admin/queue", { headers: auth }), env })).json();
+    assert.equal(pending.items[0].author_id, user.id);
+    const trustBody = { userId: user.id, trusted: true };
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: trustBody }), env })).status, 403);
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: { userId: "x", trusted: true }, headers: auth }), env })).status, 400);
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: trustBody, headers: auth }), env })).status, 200);
+    const trusted = await (await getTrust({ request: req("/api/admin/trust", { headers: auth }), env })).json();
+    assert.deepEqual(trusted.users.map((u) => u.id), [user.id]);
+
+    // A trusted account's next comment is published straight away, unless
+    // the safety screen flags it.
+    res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "again" }, reader: READER_A, session }), env });
+    assert.equal((await res.json()).annotation.status, "approved");
+    env.AI = { run: async () => ({ response: { safe: false, categories: ["S1"] } }) };
+    res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "flagged" }, reader: READER_A, session }), env });
+    const flagged = (await res.json()).annotation;
+    assert.equal(flagged.status, "pending");
+
+    // Marking one as spam removes the trust.
+    res = await postModerate({ request: req("/api/admin/moderate", { method: "POST", body: { ids: [flagged.id], status: "spam" }, headers: auth }), env });
+    assert.equal((await res.json()).updated, 1);
+    assert.equal(env.READER_DB.raw.prepare("SELECT trusted FROM users WHERE id = ?").get(user.id).trusted, 0);
+
+    const queueAfter = await (await getQueue({ request: req("/api/admin/queue?status=spam", { headers: auth }), env })).json();
+    assert.equal(queueAfter.items[0].author_name, "BO");
+    assert.equal(queueAfter.items[0].author_profile_url, "https://github.com/bo");
   } finally {
     globalThis.fetch = realFetch;
   }

@@ -38,8 +38,14 @@ const renderItem = (item) => {
   link.textContent = item.post;
   const type = document.createElement("span");
   type.textContent = item.type;
-  const who = document.createElement("span");
-  who.textContent = item.author_name || "Anonymous reader";
+  // Signed-in writers link to the profile they signed in with.
+  const who = document.createElement(item.author_profile_url ? "a" : "span");
+  if (item.author_profile_url) {
+    who.href = item.author_profile_url;
+    who.rel = "noopener noreferrer";
+    who.target = "_blank";
+  }
+  who.textContent = `${item.author_name || "Anonymous reader"}${item.author_trusted ? " (trusted)" : ""}`;
   const when = document.createElement("time");
   when.dateTime = new Date(item.created_at).toISOString();
   when.textContent = new Date(item.created_at).toLocaleString();
@@ -70,13 +76,59 @@ const renderItem = (item) => {
     button.addEventListener("click", () => moderate([item.id], status));
     actions.append(button);
   }
+  // Trust is set per account, by hand. Trusted accounts skip the queue.
+  if (item.author_id) {
+    const trust = document.createElement("button");
+    trust.type = "button";
+    trust.textContent = item.author_trusted ? "Stop trusting this person" : "Trust this person";
+    trust.addEventListener("click", () => setTrust(item.author_id, !item.author_trusted));
+    actions.append(trust);
+  }
   li.append(actions);
   return li;
+};
+
+const renderTrusted = (user) => {
+  const li = document.createElement("li");
+  li.className = "mod-item";
+  const meta = document.createElement("p");
+  meta.className = "mod-meta";
+  const name = document.createElement(user.profile_url ? "a" : "span");
+  if (user.profile_url) {
+    name.href = user.profile_url;
+    name.rel = "noopener noreferrer";
+    name.target = "_blank";
+  }
+  name.textContent = user.display_name;
+  const ids = document.createElement("span");
+  ids.textContent = user.identities || "";
+  meta.append(name, ids);
+  const actions = document.createElement("div");
+  actions.className = "mod-actions";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Stop trusting";
+  button.addEventListener("click", () => setTrust(user.id, false));
+  actions.append(button);
+  li.append(meta, actions);
+  return li;
+};
+
+const loadTrusted = async () => {
+  const data = await api("/api/admin/trust");
+  list.replaceChildren(...data.users.map(renderTrusted));
+  statusEl.textContent = data.users.length
+    ? `Signed in as ${data.moderator}. Notes and comments from these people are published without review unless the safety screen flags them.`
+    : `Signed in as ${data.moderator}. Nobody is trusted yet: use "Trust this person" on a comment.`;
 };
 
 const load = async () => {
   statusEl.textContent = "Loading…";
   try {
+    if (current === "trusted") {
+      await loadTrusted();
+      return;
+    }
     const data = await api(`/api/admin/queue?status=${current}`);
     for (const span of document.querySelectorAll("[data-count]")) {
       const n = data.counts?.[span.dataset.count] ?? 0;
@@ -97,6 +149,15 @@ const load = async () => {
 const moderate = async (ids, status) => {
   try {
     await api("/api/admin/moderate", { method: "POST", body: JSON.stringify({ ids, status }) });
+    await load();
+  } catch (err) {
+    statusEl.textContent = `Could not update: ${err.message}`;
+  }
+};
+
+const setTrust = async (userId, trusted) => {
+  try {
+    await api("/api/admin/trust", { method: "POST", body: JSON.stringify({ userId, trusted }) });
     await load();
   } catch (err) {
     statusEl.textContent = `Could not update: ${err.message}`;
