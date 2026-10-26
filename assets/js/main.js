@@ -1,4 +1,8 @@
 import "./webmcp.js";
+import { initPalette } from "./command-palette.js";
+
+// Ctrl/Cmd+K and the header Search and Ask links open the command palette.
+initPalette();
 
 // Ctrl/Cmd+K opens search from any page; on /search/ it focuses the box.
 document.addEventListener("keydown", (event) => {
