@@ -26,6 +26,24 @@ test("normalizeQuery: trims, collapses whitespace, strips control chars, caps le
   assert.equal(normalizeQuery("x".repeat(500)).length, MAX_QUERY_LENGTH);
 });
 
+test("normalizeQuery: never splits a surrogate pair or keeps a lone surrogate", () => {
+  const atBoundary = normalizeQuery("x".repeat(MAX_QUERY_LENGTH - 1) + "😀😀");
+  assert.equal(Array.from(atBoundary).length, MAX_QUERY_LENGTH);
+  assert.ok(atBoundary.endsWith("😀"));
+  assert.doesNotThrow(() => encodeURIComponent(atBoundary));
+  assert.equal(normalizeQuery("a\ud800b"), "ab");
+  assert.doesNotThrow(() => encodeURIComponent(normalizeQuery("\udc00".repeat(5) + "q")));
+});
+
+test("onRequestGet: emoji at the length limit still returns JSON", async () => {
+  const res = await onRequestGet({
+    request: new Request("https://aifoc.us/api/search?q=" + encodeURIComponent("x".repeat(MAX_QUERY_LENGTH - 1) + "😀")),
+    env: makeEnv({ searchResult: { chunks: [] } }),
+  });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).count, 0);
+});
+
 test("parseLimit: defaults and clamps", () => {
   assert.equal(parseLimit(null), 10);
   assert.equal(parseLimit("0"), 10);

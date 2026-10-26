@@ -61,14 +61,15 @@ const run = async (query) => {
     return;
   }
   const { results, source } = response;
+  const fallbackNote = source === "keyword"
+    ? " Only titles and summaries were searched (full-text search is unavailable right now)."
+    : "";
   if (results.length === 0) {
-    status.textContent = `No essays matched “${query}”.`;
+    status.textContent = `No essays matched “${query}”.${fallbackNote}`;
     return;
   }
   const plural = results.length === 1 ? "essay" : "essays";
-  status.textContent = source === "keyword"
-    ? `${results.length} ${plural} matched “${query}” by title and summary (full-text search is unavailable right now).`
-    : `${results.length} ${plural} for “${query}”.`;
+  status.textContent = `${results.length} ${plural} for “${query}”.${fallbackNote}`;
   list.replaceChildren(...results.map(renderResult));
 };
 

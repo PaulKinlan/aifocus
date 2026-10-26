@@ -39,7 +39,13 @@ function json(body, status = 200, extraHeaders = {}) {
 function normalizeQuery(raw) {
   if (typeof raw !== "string") return "";
   const collapsed = raw.replace(/[\x00-\x1f\x7f]/g, " ").replace(/\s+/g, " ").trim();
-  return collapsed.slice(0, MAX_QUERY_LENGTH);
+  // Truncate by code point, and drop any lone surrogate from the input, so
+  // the result is always well-formed and encodeURIComponent() cannot throw.
+  return Array.from(collapsed)
+    .filter((ch) => !/^[\ud800-\udfff]$/.test(ch))
+    .slice(0, MAX_QUERY_LENGTH)
+    .join("")
+    .trim();
 }
 
 function parseLimit(raw) {
