@@ -24,3 +24,7 @@ AI_SEARCH_PUBLIC_URL = "https://df045af1-424e-4281-ab4d-e516437dc465.search.ai.c
 # verifies the Cf-Access-Jwt-Assertion JWT against these). Neither is secret.
 ACCESS_TEAM_DOMAIN = "aifocus-team.cloudflareaccess.com"
 ACCESS_AUD = "ec612dc0cd7268f2a7a54e660cf1d0308cfc64f5b3077f166c9956b3f88dbc99"
+
+# GitHub OAuth app for reader sign-in (functions/_lib/providers/github.js).
+# The client id is public; GITHUB_CLIENT_SECRET is a Pages secret.
+GITHUB_CLIENT_ID = "Ov23liGZGUiFun4eOoDD"
