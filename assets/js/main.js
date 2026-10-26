@@ -4,6 +4,20 @@ import { initPalette } from "./command-palette.js";
 // Ctrl/Cmd+K and the header Search and Ask links open the command palette.
 initPalette();
 
+// Ctrl/Cmd+K opens search from any page; on /search/ it focuses the box.
+document.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey)) return;
+  if (event.altKey || event.shiftKey) return;
+  event.preventDefault();
+  const input = document.querySelector("#site-search-input");
+  if (input) {
+    input.focus();
+    input.select();
+  } else {
+    location.href = "/search/";
+  }
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   if ("Summarizer" in window) {
     const { Summarizer } = window;
