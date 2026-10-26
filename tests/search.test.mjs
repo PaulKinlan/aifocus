@@ -10,6 +10,7 @@ import {
   keyToPath,
   extractChunks,
   toSnippet,
+  stripMarkdown,
   indexByPath,
   rankArticles,
 } from "../functions/api/search.js";
@@ -171,4 +172,21 @@ test("onRequestGet: 503 when the AI binding is missing", async () => {
   } finally {
     console.error = original;
   }
+});
+
+test("stripMarkdown: removes links, images, emphasis, headings, lists, tables, code and HTML", () => {
+  const md = [
+    "---", "title: x", "---",
+    "## Where agents run", "",
+    "See [the post](https://aifoc.us/a/) and ![img](/i.png) **bold**, _italic_ and `code`.",
+    "- item one", "1. item two", "> quoted",
+    "| a | b |", "|---|---|", "| 1 | 2 |",
+    '<div class="x">html</div> https://example.com/x snake_case_name 2*3*4',
+  ].join("\n");
+  assert.equal(
+    stripMarkdown(md),
+    "Where agents run See the post and bold, italic and code. item one item two quoted a b 1 2 html snake_case_name 2*3*4",
+  );
+  assert.equal(stripMarkdown(""), "");
+  assert.equal(toSnippet("[link text](https://x.y/)"), "link text");
 });

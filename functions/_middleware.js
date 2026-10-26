@@ -19,6 +19,7 @@ const RESERVED_ROOTS = new Set([
   "",
   "admin",
   "api",
+  "ask",
   "authors",
   "categories",
   "css",

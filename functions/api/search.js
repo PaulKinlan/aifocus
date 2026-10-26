@@ -77,12 +77,39 @@ export function keyToPath(key) {
   return path;
 }
 
-export function toSnippet(text) {
-  const clean = text
-    .replace(/^---[\s\S]*?---\s*/, "")
-    .replace(/[#*_`>]+/g, " ")
+// Reduce a Markdown chunk to plain prose for display. The crawler stores
+// pages as Markdown, so chunks carry link syntax, images, emphasis, headings,
+// list markers, tables, code and the odd HTML tag.
+export function stripMarkdown(text) {
+  return (text || "")
+    .replace(/^---[\s\S]*?\n---\s*/, "") // front matter
+    .replace(/```[\s\S]*?(```|$)/g, " ") // fenced code blocks
+    .replace(/<!--[\s\S]*?-->/g, " ") // HTML comments
+    .replace(/<[^>]+>/g, " ") // HTML tags
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // images
+    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, " ") // reference images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // inline links -> text
+    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1") // reference links -> text
+    .replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, " ") // link definitions
+    .replace(/<?https?:\/\/\S+>?/g, " ") // bare URLs
+    .replace(/`([^`]*)`/g, "$1") // inline code
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "") // headings
+    .replace(/^\s{0,3}>\s?/gm, "") // blockquotes
+    .replace(/^\s*(?:[-*+]|\d+[.)])\s+/gm, "") // list markers
+    .replace(/^\s*(?:[-*_]\s*){3,}$/gm, " ") // horizontal rules
+    .replace(/^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/gm, " ") // table separators
+    .replace(/\s*\|\s*/g, " ") // table cell pipes
+    .replace(/(\*\*|__)(.+?)\1/g, "$2") // bold
+    .replace(/(^|[\s(])([*_])(\S(?:.*?\S)?)\2(?=[\s).,;:!?]|$)/g, "$1$3") // italics
+    .replace(/~~(.+?)~~/g, "$1") // strikethrough
+    .replace(/\\([\\`*_{}\[\]()#+\-.!>|])/g, "$1") // escapes
+    .replace(/&nbsp;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export function toSnippet(text) {
+  const clean = stripMarkdown(text);
   if (clean.length <= SNIPPET_LENGTH) return clean;
   const cut = clean.slice(0, SNIPPET_LENGTH);
   const lastSpace = cut.lastIndexOf(" ");
