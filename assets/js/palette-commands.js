@@ -14,6 +14,7 @@ export const NAV_LINKS = [
   { id: "go-essays", label: "Browse all essays", href: "/posts/", keywords: "archive list posts" },
   { id: "go-search", label: "Open the search page", href: "/search/", keywords: "find" },
   { id: "go-ask", label: "Open the Ask the archive page", href: "/ask/", keywords: "question answer" },
+  { id: "go-account", label: "Your account", href: "/account/", keywords: "profile sign in login comments notes linked" },
 ];
 
 export const REACTIONS = [

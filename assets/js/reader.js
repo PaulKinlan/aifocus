@@ -7,6 +7,8 @@
 // is never modified. Browsers without it still get reactions, notes and
 // comments; only the shading is missing.
 
+import { signInControls, takeSignInResult } from "./signin.js";
+
 const section = document.querySelector("#reader");
 const content = document.querySelector(".e-content");
 const toolbar = document.querySelector(".reader-toolbar");
@@ -136,61 +138,8 @@ const STATUS_LABELS = {
   spam: "Not published",
 };
 
-const SIGNIN_MESSAGES = {
-  failed: "Sign-in did not complete. Try again, or use another account.",
-  cancelled: "Sign-in was cancelled.",
-  expired: "Sign-in took too long. Try again.",
-  unavailable: "That sign-in method is not available.",
-  "bad-handle": "That is not a valid Bluesky handle. It looks like you.bsky.social.",
-  "already-linked": "That account is already linked to a different aifoc.us account.",
-  blocked: "This account cannot post here.",
-};
-
-const startUrl = (provider) =>
-  `/api/auth/start/${provider}?${new URLSearchParams({ return: post })}`;
-
-// Sign-in options for the providers this deployment offers. Bluesky needs a
-// handle to find the reader's server; the others are plain links.
-const signInOptions = (providers) => {
-  const nodes = [];
-  for (const provider of providers) {
-    if (provider.id === "bluesky") {
-      const form = document.createElement("form");
-      form.action = "/api/auth/start/bluesky";
-      form.method = "get";
-      const back = document.createElement("input");
-      back.type = "hidden";
-      back.name = "return";
-      back.value = post;
-      const handle = document.createElement("input");
-      handle.type = "text";
-      handle.name = "handle";
-      handle.placeholder = "you.bsky.social";
-      handle.autocomplete = "username";
-      handle.setAttribute("aria-label", "Bluesky handle");
-      handle.spellcheck = false;
-      const go = document.createElement("button");
-      go.type = "submit";
-      go.textContent = "Sign in with Bluesky";
-      form.append(back, handle, go);
-      // Navigate instead of submitting: the site CSP's form-action also
-      // applies to the redirect that follows a form submission, and the
-      // reader's Bluesky server can be any origin.
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        location.assign(`${startUrl("bluesky")}&${new URLSearchParams({ handle: handle.value.trim() })}`);
-      });
-      nodes.push(form);
-    } else {
-      const link = document.createElement("a");
-      link.className = "reader-signin-link";
-      link.href = startUrl(provider.id);
-      link.textContent = `Sign in with ${provider.label}`;
-      nodes.push(link);
-    }
-  }
-  return nodes;
-};
+// Sign-in options link back to this essay.
+const signInOptions = (providers) => signInControls(providers, post);
 
 const renderWho = (person, fallback) => {
   const wrap = document.createElement(person?.profileUrl ? "a" : "span");
@@ -224,7 +173,10 @@ const renderAccount = () => {
     out.type = "button";
     out.textContent = "Sign out";
     out.addEventListener("click", signOut);
-    box.replaceChildren(signedIn, out);
+    const account = document.createElement("a");
+    account.href = "/account/";
+    account.textContent = "Your account";
+    box.replaceChildren(signedIn, account, out);
     form.hidden = false;
   } else {
     const intro = document.createElement("p");
@@ -409,14 +361,8 @@ const init = async () => {
 
   // Back from a sign-in attempt: report the outcome once, then drop the
   // parameter so a reload does not repeat it.
-  const params = new URLSearchParams(location.search);
-  const signin = params.get("signin");
-  if (signin) {
-    setStatus(SIGNIN_MESSAGES[signin] || SIGNIN_MESSAGES.failed);
-    params.delete("signin");
-    const query = params.toString();
-    history.replaceState(history.state, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
-  }
+  const signinResult = takeSignInResult();
+  if (signinResult) setStatus(signinResult);
 
   for (const button of section.querySelectorAll(".reader-reaction")) {
     button.addEventListener("click", () => toggleReaction(button));

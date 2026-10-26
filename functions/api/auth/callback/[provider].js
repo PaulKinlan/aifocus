@@ -55,7 +55,8 @@ export async function onRequestGet({ request, env, params }) {
     if (!user || user.status !== "active") return back("blocked");
     const token = await createSession(db, user.id);
     const target = new URL(saved.return_to, url.origin);
-    target.hash = "reader";
+    // Essays scroll to the reader section; /account/ stays at the top.
+    if (!target.pathname.startsWith("/account/")) target.hash = "reader";
     return redirect(`${target.pathname}${target.search}${target.hash}`, [clearStateCookie(), sessionCookie(token)]);
   } catch (err) {
     console.error(`auth callback ${provider.id} failed`, err?.message ?? err);

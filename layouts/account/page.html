@@ -1,0 +1,65 @@
+{{ define "main" }}
+{{/* Reader account page. GET /api/account returns the signed-in account,
+     its linked sign-in methods and everything written under it; see
+     functions/api/account.js. Rendered by assets/js/account-page.js. */}}
+<style>
+.account-page { max-width: 46rem; margin: 0 auto; min-width: 0; overflow-wrap: anywhere; }
+.account-page section { margin: 2rem 0; }
+.account-page h2 { font-size: 1.25rem; margin: 0 0 .75rem; }
+.account-status { color: var(--muted); min-height: 1.5em; }
+.account-profile { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.account-profile img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.account-profile strong { font-size: 1.25rem; }
+.account-list { list-style: none; padding: 0; margin: 0; }
+.account-list > li { padding: .75rem 0; border-top: 1px solid var(--line); }
+.account-list p { margin: .25rem 0; white-space: pre-wrap; }
+.account-list blockquote { margin: .25rem 0; padding-left: .75rem; border-left: 3px solid var(--line); }
+.account-meta { color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; }
+.account-badge { border: 1px solid var(--line); border-radius: 999px; padding: 0 .5rem; }
+.account-badge[data-status="pending"] { border-color: #b8860b; }
+.account-badge[data-status="rejected"], .account-badge[data-status="spam"] { border-color: #b3261e; }
+.account-meta button { min-height: 0; padding: .1rem .5rem; font-size: .85rem; }
+.account-signin { display: grid; gap: .5rem; }
+.account-signin form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; }
+.account-signin input { min-width: 0; flex: 1 1 12rem; }
+.account-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+.account-filters button[aria-pressed="true"] { outline: 2px solid var(--link); outline-offset: -2px; }
+.reader-signin-link { display: inline-flex; align-items: center; min-height: 44px; padding: .25rem .75rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--control-bg); color: var(--color); text-decoration: none; }
+</style>
+<section class="account-page">
+  <h1>{{ .Title }}</h1>
+  <p class="account-status" id="account-status" role="status" aria-live="polite">Loading…</p>
+  <noscript><p>Your account page needs JavaScript.</p></noscript>
+  <div id="account-signed-out" class="account-signin" hidden></div>
+  <div id="account-signed-in" hidden>
+    <section aria-labelledby="account-profile-heading">
+      <h2 id="account-profile-heading" class="visually-hidden">Profile</h2>
+      <div class="account-profile" id="account-profile"></div>
+    </section>
+    <section aria-labelledby="account-methods-heading">
+      <h2 id="account-methods-heading">Sign-in methods</h2>
+      <p class="account-meta">Each linked account signs you in to this same aifoc.us account.</p>
+      <ul class="account-list" id="account-identities"></ul>
+      <div class="account-signin" id="account-link"></div>
+    </section>
+    <section aria-labelledby="account-activity-heading">
+      <h2 id="account-activity-heading">Your activity</h2>
+      <p class="account-meta" id="account-summary"></p>
+      <div class="account-filters" role="group" aria-label="Show">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="comment" aria-pressed="false">Comments</button>
+        <button type="button" data-filter="note" aria-pressed="false">Notes</button>
+        <button type="button" data-filter="highlight" aria-pressed="false">Highlights</button>
+        <button type="button" data-filter="reaction" aria-pressed="false">Reactions</button>
+      </div>
+      <ul class="account-list" id="account-activity"></ul>
+    </section>
+  </div>
+</section>
+{{- with resources.Get "js/account-page.js" }}
+  {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/account-page.js" }}
+  {{- with . | js.Build $opts | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end }}
+{{- end }}
+{{ end }}
