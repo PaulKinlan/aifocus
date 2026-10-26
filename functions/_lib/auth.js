@@ -166,8 +166,6 @@ export async function upsertIdentity(db, profile, now = Date.now()) {
   return db.prepare("SELECT * FROM users WHERE id = ?").bind(userId).first();
 }
 
-// `state` may be chosen by the caller when it must be sent to the provider
-// before the row can be written (Bluesky's pushed authorization request).
 // Add another sign-in method to an existing account. Returns the account row,
 // or { conflict: true } when the identity already belongs to a different
 // account (merging two accounts is not supported).
@@ -212,6 +210,8 @@ export async function listIdentities(db, userId) {
   return results.map((r) => ({ provider: r.provider, handle: r.handle, profileUrl: r.profile_url || null }));
 }
 
+// `state` may be chosen by the caller when it must be sent to the provider
+// before the row can be written (Bluesky's pushed authorization request).
 export async function saveOAuthState(
   db,
   { state = randomToken(24), provider, verifier, returnTo, data = null, linkUserId = null },
