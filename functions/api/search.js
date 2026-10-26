@@ -13,7 +13,8 @@
 // endpoint fails, so errors are reported as JSON with a 5xx status rather than
 // hidden.
 
-const INSTANCE_NAME = "aifocus-search";
+import { INSTANCE_NAME, extractChunks, searchChunks } from "../_lib/ai-search.js";
+
 const MAX_QUERY_LENGTH = 200;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 25;
@@ -36,7 +37,7 @@ function json(body, status = 200, extraHeaders = {}) {
 
 // Collapse whitespace and cap length so a crafted query cannot fan out into
 // an oversized retrieval request. Returns "" for anything unusable.
-function normalizeQuery(raw) {
+export function normalizeQuery(raw) {
   if (typeof raw !== "string") return "";
   const collapsed = raw.replace(/[\x00-\x1f\x7f]/g, " ").replace(/\s+/g, " ").trim();
   // Truncate by code point, and drop any lone surrogate from the input, so
@@ -57,7 +58,7 @@ function parseLimit(raw) {
 // A crawled item key may be a full URL ("https://aifoc.us/slug/"), a
 // host-prefixed path ("aifoc.us/slug/") or a bare path. Reduce each to a
 // pathname with a trailing slash so it can be compared with index.json URLs.
-function keyToPath(key) {
+export function keyToPath(key) {
   if (typeof key !== "string" || !key) return null;
   let candidate = key.trim();
   if (!/^https?:\/\//i.test(candidate)) {
@@ -76,31 +77,7 @@ function keyToPath(key) {
   return path;
 }
 
-// Accept both response shapes: the AI Search `chunks` array
-// ({ text, score, item: { key } }) and the earlier AutoRAG `data` array
-// ({ filename, score, attributes, content: [{ text }] }).
-function extractChunks(result) {
-  if (!result || typeof result !== "object") return [];
-  if (Array.isArray(result.chunks)) {
-    return result.chunks.map((chunk) => ({
-      key: chunk?.item?.key ?? chunk?.item?.metadata?.url,
-      score: Number(chunk?.score) || 0,
-      text: typeof chunk?.text === "string" ? chunk.text : "",
-    }));
-  }
-  if (Array.isArray(result.data)) {
-    return result.data.map((entry) => ({
-      key: entry?.attributes?.file?.url ?? entry?.filename,
-      score: Number(entry?.score) || 0,
-      text: Array.isArray(entry?.content)
-        ? entry.content.map((part) => part?.text ?? "").join(" ")
-        : "",
-    }));
-  }
-  return [];
-}
-
-function toSnippet(text) {
+export function toSnippet(text) {
   const clean = text
     .replace(/^---[\s\S]*?---\s*/, "")
     .replace(/[#*_`>]+/g, " ")
@@ -112,7 +89,7 @@ function toSnippet(text) {
   return `${cut.slice(0, lastSpace > 0 ? lastSpace : SNIPPET_LENGTH)}…`;
 }
 
-function indexByPath(articles) {
+export function indexByPath(articles) {
   const byPath = new Map();
   for (const article of articles ?? []) {
     const path = keyToPath(article?.url);
@@ -121,7 +98,7 @@ function indexByPath(articles) {
   return byPath;
 }
 
-function rankArticles(chunks, articlesByPath, limit) {
+export function rankArticles(chunks, articlesByPath, limit) {
   const best = new Map();
   for (const chunk of chunks) {
     const path = keyToPath(chunk.key);
@@ -147,23 +124,12 @@ function rankArticles(chunks, articlesByPath, limit) {
     });
 }
 
-async function loadArticles(env, origin) {
+export async function loadArticles(env, origin) {
   const request = new Request(new URL("/index.json", origin));
   const response = env?.ASSETS ? await env.ASSETS.fetch(request) : await fetch(request);
   if (!response.ok) throw new Error(`index.json: HTTP ${response.status}`);
   const index = await response.json();
   return Array.isArray(index?.articles) ? index.articles : [];
-}
-
-async function runSearch(env, query) {
-  if (!env?.AI || typeof env.AI.autorag !== "function") {
-    throw new Error("AI binding is not configured");
-  }
-  return env.AI.autorag(INSTANCE_NAME).search({
-    query,
-    max_num_results: CHUNK_COUNT,
-    rewrite_query: false,
-  });
 }
 
 export async function onRequestGet(context) {
@@ -189,11 +155,11 @@ export async function onRequestGet(context) {
 
   let results;
   try {
-    const [articles, raw] = await Promise.all([
+    const [articles, found] = await Promise.all([
       loadArticles(env, url.origin),
-      runSearch(env, query),
+      searchChunks(env, query, CHUNK_COUNT),
     ]);
-    results = rankArticles(extractChunks(raw), indexByPath(articles), limit);
+    results = rankArticles(found.chunks, indexByPath(articles), limit);
   } catch (err) {
     console.error("search failed", err);
     return json({ error: "Search is unavailable", query }, 503, {
@@ -212,15 +178,4 @@ export async function onRequestGet(context) {
   return response;
 }
 
-export {
-  INSTANCE_NAME,
-  MAX_QUERY_LENGTH,
-  MAX_LIMIT,
-  normalizeQuery,
-  parseLimit,
-  keyToPath,
-  extractChunks,
-  toSnippet,
-  indexByPath,
-  rankArticles,
-};
+export { INSTANCE_NAME, MAX_QUERY_LENGTH, MAX_LIMIT, parseLimit, extractChunks };

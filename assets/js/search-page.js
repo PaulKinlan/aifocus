@@ -73,9 +73,63 @@ const run = async (query) => {
   list.replaceChildren(...results.map(renderResult));
 };
 
+// --- Ask the archive ---------------------------------------------------------
+
+const askForm = document.querySelector("#ask-form");
+const askInput = document.querySelector("#ask-input");
+const askStatus = document.querySelector("#ask-status");
+const askAnswer = document.querySelector("#ask-answer");
+const askSources = document.querySelector("#ask-sources");
+const askSourcesHeading = document.querySelector("#ask-sources-heading");
+
+const ask = async (question) => {
+  askAnswer.hidden = true;
+  askSourcesHeading.hidden = true;
+  askSources.replaceChildren();
+  if (!question) return;
+  askStatus.textContent = "Retrieving passages and generating an answer…";
+  let body;
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+  } catch (err) {
+    askStatus.textContent = `No answer: ${err.message}`;
+    return;
+  }
+  askStatus.textContent = "Generated answer. Check it against the sources below.";
+  askAnswer.replaceChildren(
+    ...body.answer.split(/\n{2,}/).map((para) => {
+      const p = document.createElement("p");
+      p.textContent = para.trim();
+      return p;
+    }),
+  );
+  askAnswer.hidden = false;
+  if (body.sources?.length) {
+    askSources.replaceChildren(...body.sources.map(renderResult));
+    askSourcesHeading.hidden = false;
+  }
+};
+
+const params = new URLSearchParams(location.search);
+
 if (form && input && status && list) {
-  const query = new URLSearchParams(location.search).get("q")?.trim() ?? "";
+  const query = params.get("q")?.trim() ?? "";
   input.value = query;
-  if (!query) input.focus();
+  if (!query && !params.has("ask")) input.focus();
   run(query);
+}
+
+if (askForm && askInput && askStatus && askAnswer && askSources) {
+  const question = params.get("ask")?.trim() ?? "";
+  askInput.value = question;
+  if (question) {
+    askForm.scrollIntoView();
+    ask(question);
+  }
 }
