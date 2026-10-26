@@ -1,6 +1,7 @@
 // /ask/ page: reads ?q=, posts it to /api/ask and renders the generated answer
 // with the essays its passages came from.
 
+import { answerParagraphs, askArchive } from "./ask-client.js";
 import { renderResult } from "./search-render.js";
 
 const form = document.querySelector("#ask-form");
@@ -18,25 +19,13 @@ const ask = async (question) => {
   status.textContent = "Retrieving passages and generating an answer…";
   let body;
   try {
-    const res = await fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ question }),
-    });
-    body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`);
+    body = await askArchive(question);
   } catch (err) {
     status.textContent = `No answer: ${err.message}`;
     return;
   }
   status.textContent = "Generated answer. Check it against the sources below.";
-  answer.replaceChildren(
-    ...body.answer.split(/\n{2,}/).map((para) => {
-      const p = document.createElement("p");
-      p.textContent = para.trim();
-      return p;
-    }),
-  );
+  answer.replaceChildren(...answerParagraphs(body.answer));
   answer.hidden = false;
   if (body.sources?.length) {
     sources.replaceChildren(...body.sources.map(renderResult));

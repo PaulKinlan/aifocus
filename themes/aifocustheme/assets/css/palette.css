@@ -1,0 +1,208 @@
+/* Command palette (assets/js/command-palette.js). A modal <dialog> near the
+   top of the viewport; the result list scrolls inside it, so it never makes
+   the page wider or taller on a phone. */
+.palette {
+  width: min(40rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: min(36rem, calc(100dvh - 4rem));
+  margin: max(2rem, 10dvh) auto auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) * 2);
+  background: var(--background);
+  color: var(--color);
+  box-shadow: 0 16px 48px rgb(0 0 0 / .25);
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.palette::backdrop {
+  background: rgb(0 0 0 / .35);
+}
+
+.palette-field {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.palette-input {
+  flex: 1;
+  min-width: 0;
+  padding: .5rem 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.125rem;
+}
+
+.palette-input:focus {
+  outline: none;
+}
+
+.palette-field:focus-within {
+  box-shadow: inset 0 -2px 0 var(--link);
+}
+
+.palette-close {
+  flex: none;
+  min-height: 32px;
+  padding: .125rem .5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--muted);
+  font: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+}
+
+.palette-list,
+.palette-answer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: .25rem 0 .5rem;
+}
+
+.palette-answer {
+  padding: .75rem 1rem 1rem;
+}
+
+.palette-group-label {
+  margin: 0;
+  padding: .75rem 1rem .25rem;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.palette-answer .palette-group-label {
+  padding: 1rem 0 .25rem;
+}
+
+.palette-option {
+  display: flex;
+  flex-direction: column;
+  gap: .125rem;
+  min-height: 44px;
+  justify-content: center;
+  margin: 0 .5rem;
+  padding: .5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.palette-option[aria-selected="true"] {
+  background: var(--control-bg);
+}
+
+.palette-option[aria-disabled="true"] {
+  color: var(--muted);
+  cursor: default;
+}
+
+.palette-option-title {
+  font-weight: 500;
+}
+
+.palette-option-meta,
+.palette-option-detail {
+  color: var(--muted);
+  font-size: .875rem;
+  line-height: 1.4;
+}
+
+.palette-option-detail {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.palette-empty,
+.palette-hint:not(:empty) {
+  margin: 0;
+  padding: .5rem 1rem;
+  color: var(--muted);
+  font-size: .875rem;
+}
+
+.palette-hint:not(:empty) {
+  border-top: 1px solid var(--line);
+}
+
+.palette-back {
+  padding: .25rem 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  font-size: .875rem;
+  cursor: pointer;
+}
+
+.palette-question {
+  margin: .5rem 0;
+  font-size: 1.25rem;
+}
+
+.palette-status {
+  margin: 0 0 .75rem;
+  color: var(--muted);
+}
+
+.palette-answer-text {
+  padding: .75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+.palette-answer-text p {
+  margin: 0 0 .75rem;
+  white-space: pre-wrap;
+}
+
+.palette-answer-text p:last-child {
+  margin-bottom: 0;
+}
+
+.palette-sources {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.palette-sources li {
+  margin: .25rem 0;
+}
+
+.palette-permalink {
+  display: inline-block;
+  margin-top: .75rem;
+  font-size: .875rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .palette[open] {
+    animation: palette-in .12s ease-out;
+  }
+
+  @keyframes palette-in {
+    from {
+      opacity: 0;
+      transform: translateY(-.5rem);
+    }
+  }
+}

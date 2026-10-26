@@ -235,13 +235,9 @@ const removeAnnotation = async (id) => {
   }
 };
 
-// Capture the current selection as { exact, prefix, suffix } if it lies inside
-// the article.
-const captureSelection = () => {
-  const selection = window.getSelection();
-  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
-  const range = selection.getRangeAt(0);
-  if (!content.contains(range.commonAncestorContainer)) return null;
+// Capture a Range as { exact, prefix, suffix } if it lies inside the article.
+const captureRange = (range) => {
+  if (!range || range.collapsed || !content.contains(range.commonAncestorContainer)) return null;
   const exact = range.toString();
   if (exact.trim().length < 3) return null;
   const pre = document.createRange();
@@ -257,6 +253,13 @@ const captureSelection = () => {
       suffix: text.slice(start + exact.length, start + exact.length + 32),
     },
   };
+};
+
+// Capture the current selection, if it lies inside the article.
+const captureSelection = () => {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
+  return captureRange(selection.getRangeAt(0));
 };
 
 const hideToolbar = () => {
@@ -321,10 +324,7 @@ const init = async () => {
     if (event.key === "Escape") hideToolbar();
   });
 
-  toolbar.addEventListener("click", async (event) => {
-    const action = event.target.closest("button")?.dataset.action;
-    if (!action || !pendingQuote) return;
-    hideToolbar();
+  const runPassageAction = async (action) => {
     if (action === "highlight") {
       try {
         await createAnnotation({ type: "highlight", quote: pendingQuote });
@@ -336,6 +336,38 @@ const init = async () => {
     } else if (action === "note") {
       dialog.querySelector(".reader-dialog-quote").textContent = pendingQuote.exact;
       dialog.showModal();
+    }
+  };
+
+  toolbar.addEventListener("click", (event) => {
+    const action = event.target.closest("button")?.dataset.action;
+    if (!action || !pendingQuote) return;
+    hideToolbar();
+    runPassageAction(action);
+  });
+
+  // Commands from the command palette (command-palette.js). detail is
+  // { action: "highlight" | "note" | "comment" | "react", range?, kind? }.
+  document.addEventListener("aifocus:reader-command", (event) => {
+    const { action, range, kind } = event.detail || {};
+    if (action === "highlight" || action === "note") {
+      const captured = captureRange(range);
+      if (!captured) {
+        setStatus("Select a passage in the essay first.");
+        return;
+      }
+      pendingQuote = captured.quote;
+      runPassageAction(action);
+    } else if (action === "comment") {
+      const textarea = section.querySelector('[data-form="comment"] textarea');
+      textarea.scrollIntoView({ block: "center" });
+      textarea.focus({ preventScroll: true });
+    } else if (action === "react") {
+      const button = section.querySelector(`.reader-reaction[data-kind="${CSS.escape(kind || "")}"]`);
+      if (button) {
+        button.scrollIntoView({ block: "center" });
+        toggleReaction(button);
+      }
     }
   });
 
