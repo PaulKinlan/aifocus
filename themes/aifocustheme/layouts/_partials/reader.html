@@ -43,20 +43,24 @@ own; other readers see them once approved.
   <button type="button" data-action="note">Add note</button>
 </div>
 
-<dialog class="reader-dialog" aria-labelledby="reader-dialog-title">
+<dialog class="reader-dialog" aria-labelledby="reader-dialog-title" closedby="any">
+  <h3 id="reader-dialog-title">Add a note</h3>
+  <blockquote class="reader-dialog-quote"></blockquote>
+  {{/* Signed out: sign-in options replace the form. They sit outside the
+       form because the Bluesky option is a form of its own. */}}
+  <div class="reader-dialog-signin" data-note-signin hidden></div>
   <form class="reader-form" data-form="note" method="dialog">
-    <h3 id="reader-dialog-title">Add a note</h3>
-    <blockquote class="reader-dialog-quote"></blockquote>
-    <div data-note-signin hidden></div>
-    <label data-note-field>Note
+    <label>Note
       <textarea name="body" rows="4" maxlength="2000" required></textarea>
     </label>
-    <p class="reader-small" data-note-field>Notes are reviewed before other readers see them.</p>
+    <p class="reader-small">Notes are reviewed before other readers see them.</p>
     <div class="reader-dialog-actions">
-      <button type="submit" value="save" data-note-field>Save note</button>
-      <button type="button" data-action="cancel">Cancel</button>
+      <button type="submit" value="save">Save note</button>
     </div>
   </form>
+  <div class="reader-dialog-actions">
+    <button type="button" data-action="cancel">Cancel</button>
+  </div>
 </dialog>
 
 <style>
@@ -80,10 +84,21 @@ own; other readers see them once approved.
 .reader-form[hidden], .reader-form [hidden] { display: none; }
 .reader-toolbar { position: absolute; z-index: 10; display: flex; gap: .25rem; padding: .25rem; background: var(--bg-secondary); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / .15); }
 .reader-toolbar[hidden] { display: none; }
-.reader-dialog { max-width: min(36rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-secondary); color: var(--color); }
-.reader-dialog::backdrop { background: rgb(0 0 0 / .4); }
+/* The theme's global `* { margin: 0 }` removes the auto margins that center
+   a modal dialog, so they are set back here. */
+.reader-dialog { width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 1.25rem; border: 1px solid var(--line); border-radius: calc(var(--radius) * 2); background: var(--background); color: var(--color); box-shadow: 0 16px 48px rgb(0 0 0 / .25); overflow: auto; overflow-wrap: anywhere; }
+.reader-dialog[open] { display: grid; gap: .75rem; }
+.reader-dialog::backdrop { background: rgb(0 0 0 / .35); backdrop-filter: blur(4px); }
+.reader-dialog h3 { margin: 0; }
+.reader-dialog .reader-form { margin-top: 0; }
+.reader-dialog-signin { display: grid; gap: .5rem; }
+.reader-dialog-signin p { margin: 0; }
+.reader-dialog-signin form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; }
+.reader-dialog-signin input { min-width: 0; flex: 1 1 10rem; }
+.reader-dialog-signin .reader-signin-link { justify-content: center; }
+.reader-dialog-signin[hidden] { display: none; }
 .reader-dialog-quote { max-height: 8rem; overflow: auto; margin: 0; padding-left: .75rem; border-left: 3px solid var(--line); }
-.reader-dialog-actions { display: flex; gap: .5rem; }
+.reader-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 .reader-account { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
 .reader-account p { margin: 0; flex-basis: 100%; }
 .reader-account form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; }

@@ -461,7 +461,7 @@ const init = async () => {
     } else if (action === "note") {
       dialog.querySelector(".reader-dialog-quote").textContent = pendingQuote.exact;
       const signedIn = Boolean(state.viewer);
-      for (const field of dialog.querySelectorAll("[data-note-field]")) field.hidden = !signedIn;
+      dialog.querySelector('[data-form="note"]').hidden = !signedIn;
       const signin = dialog.querySelector("[data-note-signin]");
       signin.hidden = signedIn;
       if (!signedIn) {
@@ -511,6 +511,17 @@ const init = async () => {
 
   const noteForm = dialog.querySelector('[data-form="note"]');
   dialog.querySelector('[data-action="cancel"]').addEventListener("click", () => dialog.close());
+  // Light dismiss for browsers without <dialog closedby>: a click on the
+  // dialog element itself that lands outside its box hit the backdrop.
+  if (!("closedBy" in HTMLDialogElement.prototype)) {
+    dialog.addEventListener("click", (event) => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      const inside = rect.top <= event.clientY && event.clientY <= rect.bottom
+        && rect.left <= event.clientX && event.clientX <= rect.right;
+      if (!inside) dialog.close();
+    });
+  }
   noteForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const data = new FormData(noteForm);
