@@ -124,13 +124,26 @@ function strategies(env, fetchImpl) {
   return list;
 }
 
-async function firstThatAnswers(env, fetchImpl, run) {
+// Search must answer while a reader is typing, so a strategy that does not
+// answer in time is treated as failed and the next one is tried.
+export const SEARCH_TIMEOUT_MS = 4000;
+export const ASK_TIMEOUT_MS = 25000;
+
+function withTimeout(promise, ms, name) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${name} timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function firstThatAnswers(env, fetchImpl, run, timeoutMs) {
   const list = strategies(env, fetchImpl);
   if (list.length === 0) throw new Error("No AI Search binding or endpoint is configured");
   let lastError;
   for (const strategy of list) {
     try {
-      return { via: strategy.name, raw: await run(strategy) };
+      return { via: strategy.name, raw: await withTimeout(Promise.resolve().then(() => run(strategy)), timeoutMs, strategy.name) };
     } catch (err) {
       lastError = err;
       console.warn(`ai-search ${strategy.name} failed`, err?.message ?? err);
@@ -139,12 +152,12 @@ async function firstThatAnswers(env, fetchImpl, run) {
   throw lastError;
 }
 
-export async function searchChunks(env, query, n, { fetchImpl = fetch } = {}) {
-  const { via, raw } = await firstThatAnswers(env, fetchImpl, (s) => s.search(query, n));
+export async function searchChunks(env, query, n, { fetchImpl = fetch, timeoutMs = SEARCH_TIMEOUT_MS } = {}) {
+  const { via, raw } = await firstThatAnswers(env, fetchImpl, (s) => s.search(query, n), timeoutMs);
   return { via, chunks: extractChunks(raw) };
 }
 
-export async function askArchive(env, query, system, n, { fetchImpl = fetch } = {}) {
-  const { via, raw } = await firstThatAnswers(env, fetchImpl, (s) => s.ask(query, system, n));
+export async function askArchive(env, query, system, n, { fetchImpl = fetch, timeoutMs = ASK_TIMEOUT_MS } = {}) {
+  const { via, raw } = await firstThatAnswers(env, fetchImpl, (s) => s.ask(query, system, n), timeoutMs);
   return { via, answer: extractAnswer(raw), chunks: extractChunks(raw) };
 }

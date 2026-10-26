@@ -58,21 +58,30 @@ const keywordSearch = async (query, limit) => {
   return { query, count: results.length, source: "keyword", results };
 };
 
-export const searchSite = async (query, { limit = 10, signal } = {}) => {
+// /api/search tries each AI Search path with its own time limit, so a
+// request that takes longer than this is not going to answer.
+export const SEARCH_TIMEOUT_MS = 10000;
+
+export const searchSite = async (query, { limit = 10, signal, keywordFallback = true } = {}) => {
   const trimmed = (query || "").trim();
   if (!trimmed) return { query: "", count: 0, source: "none", results: [] };
+  const timeout = AbortSignal.timeout(SEARCH_TIMEOUT_MS);
+  const signals = signal ? [signal, timeout] : [timeout];
   try {
     const params = new URLSearchParams({ q: trimmed, limit: String(limit) });
     const res = await fetch(`/api/search?${params}`, {
       headers: { Accept: "application/json" },
-      signal,
+      signal: signals.length > 1 && AbortSignal.any ? AbortSignal.any(signals) : signals[0],
     });
     if (!res.ok) throw new Error(`/api/search: HTTP ${res.status}`);
     const body = await res.json();
     if (!Array.isArray(body?.results)) throw new Error("/api/search: bad body");
     return body;
   } catch (err) {
-    if (err?.name === "AbortError") throw err;
+    if (signal?.aborted) throw signal.reason ?? err;
+    if (!keywordFallback) throw err;
     return keywordSearch(trimmed, limit);
   }
 };
+
+export const keywordSearchSite = (query, limit = 10) => keywordSearch((query || "").trim(), limit);

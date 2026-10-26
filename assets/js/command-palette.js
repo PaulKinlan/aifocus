@@ -9,7 +9,7 @@
 import { answerParagraphs, askArchive } from "./ask-client.js";
 import { buildCommands, filterGroups, textFragmentUrl } from "./palette-commands.js";
 import { formatDate } from "./search-render.js";
-import { searchSite } from "./site-search.js";
+import { keywordSearchSite, searchSite } from "./site-search.js";
 
 const SEARCH_DELAY_MS = 250;
 const SEARCH_LIMIT = 5;
@@ -30,6 +30,9 @@ let searchTimer = 0;
 let searchController = null;
 let askController = null;
 let uid = 0;
+// True once the reader picks a row with the arrow keys, so results arriving
+// later keep that row instead of resetting to the first one.
+let pinned = false;
 
 const el = (tag, props = {}, ...children) => {
   const node = document.createElement(tag);
@@ -140,47 +143,32 @@ const renderGroup = (group) => {
   );
 };
 
-const queryGroups = (query) => {
-  const out = [];
-  if (query.length < MIN_QUERY_LENGTH) return out;
-  out.push({
-    id: "ask",
-    label: "Ask the archive",
-    items: [{
-      id: "ask",
-      label: `Ask: “${query}”`,
-      detail: "Generates an answer from passages in these essays. Generated answers can be wrong.",
-      run: { ask: query },
-    }],
-  });
-  if (mode === "ask") return out;
-  const essays = [];
-  if (essayResults.query === query && essayResults.state === "done") {
-    for (const essay of essayResults.results) essays.push({ id: essay.url, essay, run: { href: essay.url } });
-    if (essays.length === 0) essays.push({ id: "none", label: "No matching essays", disabled: true });
-    essays.push({ id: "all-results", label: `See all results for “${query}”`, run: { href: `/search/?q=${encodeURIComponent(query)}` } });
-  } else {
-    essays.push({ id: "searching", label: "Searching essays…", disabled: true });
+// Essay results come first: keyword matches over /index.json show at once,
+// then AI Search results replace them when /api/search answers.
+const essayGroup = (query) => {
+  const items = [];
+  const current = essayResults.query === query ? essayResults : { state: "loading", results: [] };
+  for (const essay of current.results) items.push({ id: essay.url, essay, run: { href: essay.url } });
+  if (current.state === "loading" && items.length === 0) {
+    items.push({ id: "searching", label: "Searching essays…", disabled: true });
+  } else if (current.state === "done" && items.length === 0) {
+    items.push({ id: "none", label: "No matching essays", disabled: true });
   }
-  out.push({ id: "essays", label: "Essays", items: essays });
-  return out;
+  items.push({ id: "all-results", label: `See all results for “${query}”`, run: { href: `/search/?q=${encodeURIComponent(query)}` } });
+  const label = current.state === "done" ? "Essays" : "Essays · searching…";
+  return { id: "essays", label, items };
 };
 
-const render = () => {
-  const query = input.value.trim();
-  const commands = mode === "ask" ? [] : filterGroups(groups, query);
-  // Commands and the Ask row render synchronously ahead of the essay results,
-  // so results arriving later never move the row Enter would activate.
-  const all = [...commands, ...queryGroups(query)];
-  const previous = options[activeIndex]?._item?.id;
-  list.replaceChildren(...all.map(renderGroup));
-  options = [...list.querySelectorAll('[role="option"]')];
-  const keep = options.findIndex((o) => o._item.id === previous && !o._item.disabled);
-  setActive(keep >= 0 ? keep : firstEnabled(0, 1));
-  if (all.length === 0) {
-    list.append(el("p", { class: "palette-empty", text: mode === "ask" ? "Type a question, then press Enter." : "No matching actions." }));
-  }
-};
+const askGroup = (query) => ({
+  id: "ask",
+  label: "Ask the archive",
+  items: [{
+    id: "ask",
+    label: `Ask: “${query}”`,
+    detail: "Generates an answer from passages in these essays. Generated answers can be wrong.",
+    run: { ask: query },
+  }],
+});
 
 const firstEnabled = (start, step) => {
   for (let i = start; i >= 0 && i < options.length; i += step) {
@@ -208,6 +196,7 @@ const setActive = (index, { scroll = true } = {}) => {
 
 const move = (step) => {
   if (options.length === 0) return;
+  pinned = true;
   let i = activeIndex;
   for (let n = 0; n < options.length; n += 1) {
     i = (i + step + options.length) % options.length;
@@ -226,18 +215,26 @@ const scheduleSearch = () => {
   const query = input.value.trim();
   if (mode === "ask" || query.length < MIN_QUERY_LENGTH) return;
   essayResults = { query, state: "loading", results: [] };
+  const isCurrent = () => input.value.trim() === query && essayResults.query === query;
+  keywordSearchSite(query, SEARCH_LIMIT)
+    .then((body) => {
+      if (!isCurrent() || essayResults.state !== "loading") return;
+      essayResults = { query, state: "loading", results: body.results };
+      render();
+    })
+    .catch(() => {});
   searchTimer = setTimeout(async () => {
-    searchController = new AbortController();
+    const controller = new AbortController();
+    searchController = controller;
     try {
-      const body = await searchSite(query, { limit: SEARCH_LIMIT, signal: searchController.signal });
-      if (input.value.trim() !== query) return;
+      const body = await searchSite(query, { limit: SEARCH_LIMIT, signal: controller.signal });
+      if (!isCurrent()) return;
       essayResults = { query, state: "done", results: body.results || [] };
       render();
-    } catch (err) {
-      if (err?.name !== "AbortError") {
-        essayResults = { query, state: "done", results: [] };
-        render();
-      }
+    } catch {
+      if (controller.signal.aborted || !isCurrent()) return;
+      essayResults = { query, state: "done", results: essayResults.results };
+      render();
     }
   }, SEARCH_DELAY_MS);
 };
@@ -325,6 +322,7 @@ const activate = (index) => {
 
 const onInput = () => {
   hint.textContent = "";
+  pinned = false;
   if (!answerView.hidden) showList();
   scheduleSearch();
   render();
@@ -373,6 +371,7 @@ export const openPalette = ({ mode: nextMode = "all", query = "" } = {}) => {
   input.value = query;
   hint.textContent = "";
   essayResults = { query: "", state: "idle", results: [] };
+  pinned = false;
   showList();
   render();
   scheduleSearch();
