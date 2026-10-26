@@ -67,7 +67,9 @@ export function safeReturnTo(value) {
   }
   try {
     const url = new URL(value, "https://aifoc.us");
-    if (url.origin !== "https://aifoc.us") return "/";
+    // Dot segments can normalize to a path starting with "//", which a
+    // browser would read as another host.
+    if (url.origin !== "https://aifoc.us" || url.pathname.startsWith("//")) return "/";
     return `${url.pathname}${url.search}${url.hash}`;
   } catch {
     return "/";
@@ -232,9 +234,10 @@ export async function saveOAuthState(
 // match the state cookie set in this browser. The row is deleted either way.
 export async function takeOAuthState(db, request, provider, state, now = Date.now()) {
   if (!state || !/^[A-Za-z0-9_-]{32}$/.test(state)) return null;
-  const row = await db.prepare("SELECT * FROM oauth_states WHERE state = ?").bind(state).first();
+  // DELETE ... RETURNING consumes the row in one statement, so two
+  // concurrent callbacks cannot both read it.
+  const row = await db.prepare("DELETE FROM oauth_states WHERE state = ? RETURNING *").bind(state).first();
   if (!row) return null;
-  await db.prepare("DELETE FROM oauth_states WHERE state = ?").bind(state).run();
   if (row.provider !== provider || now - row.created_at > STATE_TTL_MS) return null;
   if (readCookie(request, STATE_COOKIE) !== state) return null;
   return { ...row, data: row.data ? JSON.parse(row.data) : null };

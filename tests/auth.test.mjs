@@ -92,6 +92,7 @@ async function signInVia(env, provider, { cookies = {}, query = "", code = "c0de
 
 test("safeReturnTo and withParam keep redirects on this site", () => {
   assert.equal(safeReturnTo("/setting-goals/"), "/setting-goals/");
+  assert.equal(safeReturnTo("/a/..//unused.example//evil.example/"), "/");
   assert.equal(safeReturnTo("/a/?b=1#c"), "/a/?b=1#c");
   for (const bad of ["https://evil.example/", "//evil.example/", "/\\evil.example", "javascript:alert(1)", "", null]) {
     assert.equal(safeReturnTo(bad), "/", String(bad));

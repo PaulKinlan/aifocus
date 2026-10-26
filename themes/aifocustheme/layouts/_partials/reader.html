@@ -5,9 +5,9 @@ passages and comments. Rendered hidden; assets/js/reader.js shows it once
 the post looks as it did before.
 
 Notes and comments need a signed-in account (GitHub, Bluesky or X; see
-functions/_lib/auth.js) and are held for moderation (/admin/) until the
-account has had one approved. The writer always sees their own; other readers
-see them once approved.
+functions/_lib/auth.js) and are held for moderation (/admin/) unless the
+moderator has marked the account as trusted. The writer always sees their
+own; other readers see them once approved.
 */}}
 <section class="reader" id="reader" data-post="{{ .RelPermalink }}" aria-labelledby="reader-heading" hidden>
   <h2 id="reader-heading">Reader responses</h2>
@@ -32,7 +32,7 @@ see them once approved.
         <textarea name="body" rows="4" maxlength="2000" required></textarea>
       </label>
       <button type="submit">Post comment</button>
-      <p class="reader-small">A new account's comments and notes are reviewed before other readers see them. You will see yours straight away.</p>
+      <p class="reader-small">Comments and notes are reviewed before other readers see them. You will see yours straight away.</p>
     </form>
   </div>
   <p class="reader-status" role="status" aria-live="polite"></p>
@@ -51,7 +51,7 @@ see them once approved.
     <label data-note-field>Note
       <textarea name="body" rows="4" maxlength="2000" required></textarea>
     </label>
-    <p class="reader-small" data-note-field>A new account's notes are reviewed before other readers see them.</p>
+    <p class="reader-small" data-note-field>Notes are reviewed before other readers see them.</p>
     <div class="reader-dialog-actions">
       <button type="submit" value="save" data-note-field>Save note</button>
       <button type="button" data-action="cancel">Cancel</button>
@@ -75,6 +75,9 @@ see them once approved.
 .reader-meta button { min-height: 0; padding: .1rem .5rem; font-size: .85rem; }
 .reader-form { display: grid; gap: .5rem; margin-top: 1rem; }
 .reader-form label { display: grid; gap: .25rem; }
+/* The display rules above would otherwise override the hidden attribute
+   that reader.js sets on sign-in-only fields. */
+.reader-form[hidden], .reader-form [hidden] { display: none; }
 .reader-toolbar { position: absolute; z-index: 10; display: flex; gap: .25rem; padding: .25rem; background: var(--bg-secondary); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / .15); }
 .reader-toolbar[hidden] { display: none; }
 .reader-dialog { max-width: min(36rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-secondary); color: var(--color); }

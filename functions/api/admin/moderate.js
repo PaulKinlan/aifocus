@@ -38,7 +38,7 @@ export async function onRequestPost({ request, env }) {
   if (status === "spam") {
     const untrust = db.prepare(
       `UPDATE users SET trusted = 0, updated_at = ?
-       WHERE id = (SELECT user_id FROM annotations WHERE id = ? AND user_id IS NOT NULL)`,
+       WHERE id = (SELECT user_id FROM annotations WHERE id = ? AND type != 'highlight' AND user_id IS NOT NULL)`,
     );
     await db.batch(ids.map((id) => untrust.bind(now, id)));
   }
