@@ -480,15 +480,6 @@ article {
     margin-bottom: 1em;
     border-bottom: 1px solid #eee; /* Lighter border */
     clear: both;
-
-    details:not([open]) {
-      summary {
-        height: auto;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
   }
 
   div.youtube {
