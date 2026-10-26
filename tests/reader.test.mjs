@@ -12,6 +12,7 @@ import { onRequestGet as getAccount } from "../functions/api/account.js";
 import { onRequestGet as getQueue } from "../functions/api/admin/queue.js";
 import { onRequestPost as postModerate } from "../functions/api/admin/moderate.js";
 import { onRequestGet as getTrust, onRequestPost as postTrust } from "../functions/api/admin/trust.js";
+import { onRequestGet as getAccounts, onRequestPost as postAccounts } from "../functions/api/admin/accounts.js";
 import {
   normalizePostPath,
   cleanText,
@@ -374,6 +375,24 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     const queueAfter = await (await getQueue({ request: req("/api/admin/queue?status=spam", { headers: auth }), env })).json();
     assert.equal(queueAfter.items[0].author_name, "BO");
     assert.equal(queueAfter.items[0].author_profile_url, "https://github.com/bo");
+
+    // All accounts, with counts; blocking signs the account out.
+    assert.equal((await getAccounts({ request: req("/api/admin/accounts"), env })).status, 403);
+    const accounts = await (await getAccounts({ request: req("/api/admin/accounts", { headers: auth }), env })).json();
+    assert.equal(accounts.total, 1);
+    assert.equal(accounts.users[0].id, user.id);
+    assert.equal(accounts.users[0].identities, "github:bo");
+    assert.equal(accounts.users[0].written, 4);
+    // Search matches a linked handle; LIKE wildcards are literal.
+    const found = await (await getAccounts({ request: req("/api/admin/accounts?q=bo", { headers: auth }), env })).json();
+    assert.deepEqual([found.matched, found.users.length, found.total], [1, 1, 1]);
+    const none = await (await getAccounts({ request: req("/api/admin/accounts?q=%25", { headers: auth }), env })).json();
+    assert.deepEqual([none.matched, none.users.length], [0, 0]);
+    assert.equal((await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" } }), env })).status, 403);
+    res = await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" }, headers: auth }), env });
+    assert.equal(res.status, 200);
+    res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "blocked" }, reader: READER_A, session }), env });
+    assert.equal(res.status, 401);
   } finally {
     globalThis.fetch = realFetch;
   }

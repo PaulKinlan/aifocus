@@ -110,6 +110,21 @@ own; other readers see them once approved.
 ::highlight(reader-shared-2) { background-color: rgb(255 214 0 / .32); }
 ::highlight(reader-shared-3) { background-color: rgb(255 214 0 / .5); }
 ::highlight(reader-mine) { background-color: rgb(80 160 255 / .3); }
+::highlight(reader-note) { text-decoration: underline dotted; text-decoration-color: var(--link); text-underline-offset: .2em; }
+/* Notes beside the passage they quote (reader.js renderMarginNotes). Narrow
+   windows: a collapsed disclosure after the block. Wide windows: inserted
+   before the block and positioned in the right margin, level with it. */
+/* Reset the theme's `article aside` float, width and striped background. */
+.reader-margin-notes { float: none; width: auto; padding: 0; background: none; margin: .25rem 0 1rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: .85rem; line-height: 1.45; color: var(--color); }
+.reader-margin-notes summary { cursor: pointer; color: var(--muted); }
+.reader-margin-notes ul { list-style: none; margin: .5rem 0 0; padding: 0 0 0 .75rem; border-left: 2px solid var(--link); display: grid; gap: .75rem; }
+.reader-margin-notes li { margin: 0; }
+.reader-margin-notes blockquote { margin: 0 0 .25rem; padding: 0; border: 0; color: var(--muted); font-style: italic; }
+.reader-margin-notes p { margin: 0 0 .25rem; white-space: pre-wrap; }
+.reader-margin-notes .reader-meta { font-size: .8rem; }
+.e-content.reader-has-margin-notes { position: relative; }
+.reader-has-margin-notes .reader-margin-notes { position: absolute; left: calc(100% + 2rem); width: 15rem; margin: 0; }
+.reader-has-margin-notes .reader-margin-notes summary { display: none; }
 </style>
 {{- with resources.Get "js/reader.js" }}
   {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/reader.js" }}
