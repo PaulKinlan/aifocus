@@ -23,6 +23,8 @@ const STATUS_LABELS = {
 const REACTION_LABELS = { useful: "👍 Useful", "new-to-me": "💡 New to me", "not-convinced": "🤔 Not convinced" };
 
 let items = [];
+let counts = {};
+let limitPerKind = Infinity;
 let filter = "all";
 let titles = new Map();
 
@@ -118,14 +120,12 @@ const renderActivity = () => {
   if (shown.length === 0) {
     activityList.append(el("li", {}, el("p", { class: "account-meta", text: "Nothing here yet." })));
   }
-  const counts = {};
-  for (const item of items) counts[item.type] = (counts[item.type] || 0) + 1;
   const parts = ["comment", "note", "highlight", "reaction"]
     .filter((type) => counts[type])
     .map((type) => `${counts[type]} ${TYPE_LABELS[type].toLowerCase()}${counts[type] === 1 ? "" : "s"}`);
-  const essays = new Set(items.map((i) => i.post)).size;
+  const truncated = Object.values(counts).some((n) => n > limitPerKind);
   document.querySelector("#account-summary").textContent = parts.length
-    ? `${parts.join(", ")} across ${essays} ${essays === 1 ? "essay" : "essays"}.`
+    ? `${parts.join(", ")} in total.${truncated ? ` The ${limitPerKind} most recent of each kind are listed.` : ""}`
     : "You have not written anything on the essays yet.";
 };
 
@@ -135,6 +135,7 @@ const deleteItem = async (item, button) => {
   try {
     await api(`/api/reader/annotations?id=${encodeURIComponent(item.id)}`, { method: "DELETE" });
     items = items.filter((other) => other !== item);
+    counts[item.type] = Math.max(0, (counts[item.type] || 1) - 1);
     renderActivity();
     statusEl.textContent = `${TYPE_LABELS[item.type]} deleted.`;
   } catch (err) {
@@ -193,6 +194,8 @@ const load = async () => {
     ...data.annotations,
     ...data.reactions.map((r) => ({ ...r, type: "reaction" })),
   ].sort((a, b) => b.createdAt - a.createdAt);
+  counts = data.counts || {};
+  limitPerKind = data.limitPerKind || Infinity;
   signedOut.hidden = true;
   renderProfile(data.user);
   renderIdentities(data.identities, data.providers);

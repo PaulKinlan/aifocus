@@ -12,7 +12,10 @@ import { getSessionUser, listIdentities, publicUser } from "../_lib/auth.js";
 import { configuredProviders } from "../_lib/providers/index.js";
 import { json } from "../_lib/reader.js";
 
-const LIMIT = 500;
+// The most recent items of each kind are returned (notes, comments,
+// highlights and reactions each up to this many), so a long run of one kind
+// never hides another. `counts` always covers the full history.
+const LIMIT_PER_KIND = 200;
 
 export async function onRequestGet({ request, env }) {
   const db = env?.READER_DB;
@@ -20,17 +23,23 @@ export async function onRequestGet({ request, env }) {
   const user = await getSessionUser(request, db);
   if (!user) return json({ error: "Not signed in" }, 401);
 
-  const [annotations, reactions] = await db.batch([
+  const [annotations, reactions, annotationCounts, reactionCount] = await db.batch([
     db
       .prepare(
-        `SELECT id, post, type, quote_exact, body, status, created_at FROM annotations
-         WHERE user_id = ? ORDER BY created_at DESC LIMIT ${LIMIT}`,
+        `SELECT id, post, type, quote_exact, body, status, created_at FROM (
+           SELECT *, ROW_NUMBER() OVER (PARTITION BY type ORDER BY created_at DESC) AS n
+           FROM annotations WHERE user_id = ?
+         ) WHERE n <= ${LIMIT_PER_KIND} ORDER BY created_at DESC`,
       )
       .bind(user.id),
     db
-      .prepare(`SELECT post, kind, created_at FROM reactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ${LIMIT}`)
+      .prepare(`SELECT post, kind, created_at FROM reactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ${LIMIT_PER_KIND}`)
       .bind(user.id),
+    db.prepare("SELECT type, COUNT(*) AS n FROM annotations WHERE user_id = ? GROUP BY type").bind(user.id),
+    db.prepare("SELECT COUNT(*) AS n FROM reactions WHERE user_id = ?").bind(user.id),
   ]);
+  const counts = Object.fromEntries((annotationCounts.results ?? []).map((r) => [r.type, r.n]));
+  counts.reaction = reactionCount.results?.[0]?.n ?? 0;
 
   return json({
     user: publicUser(user),
@@ -46,5 +55,7 @@ export async function onRequestGet({ request, env }) {
       createdAt: row.created_at,
     })),
     reactions: (reactions.results ?? []).map((row) => ({ post: row.post, kind: row.kind, createdAt: row.created_at })),
+    counts,
+    limitPerKind: LIMIT_PER_KIND,
   });
 }
