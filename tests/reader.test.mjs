@@ -10,6 +10,7 @@ import {
 } from "../functions/api/reader/annotations.js";
 import { onRequestGet as getQueue } from "../functions/api/admin/queue.js";
 import { onRequestPost as postModerate } from "../functions/api/admin/moderate.js";
+import { onRequestGet as getTrust, onRequestPost as postTrust } from "../functions/api/admin/trust.js";
 import {
   normalizePostPath,
   cleanText,
@@ -340,9 +341,23 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     const row = env.READER_DB.raw.prepare("SELECT moderated_by FROM annotations WHERE id = ?").get(id);
     assert.equal(row.moderated_by, "paul@aifoc.us");
 
-    // Approval trusts the account: its next comment is published straight
-    // away, unless the safety screen flags it.
-    assert.equal(env.READER_DB.raw.prepare("SELECT trusted FROM users WHERE id = ?").get(user.id).trusted, 1);
+    // Approval alone does not trust the account: its next comment waits.
+    assert.equal(env.READER_DB.raw.prepare("SELECT trusted FROM users WHERE id = ?").get(user.id).trusted, 0);
+    res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "waits" }, reader: READER_A, session }), env });
+    assert.equal((await res.json()).annotation.status, "pending");
+
+    // The moderator trusts the account by hand, from the queue item's author_id.
+    const pending = await (await getQueue({ request: req("/api/admin/queue", { headers: auth }), env })).json();
+    assert.equal(pending.items[0].author_id, user.id);
+    const trustBody = { userId: user.id, trusted: true };
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: trustBody }), env })).status, 403);
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: { userId: "x", trusted: true }, headers: auth }), env })).status, 400);
+    assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: trustBody, headers: auth }), env })).status, 200);
+    const trusted = await (await getTrust({ request: req("/api/admin/trust", { headers: auth }), env })).json();
+    assert.deepEqual(trusted.users.map((u) => u.id), [user.id]);
+
+    // A trusted account's next comment is published straight away, unless
+    // the safety screen flags it.
     res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "again" }, reader: READER_A, session }), env });
     assert.equal((await res.json()).annotation.status, "approved");
     env.AI = { run: async () => ({ response: { safe: false, categories: ["S1"] } }) };

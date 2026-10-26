@@ -6,9 +6,9 @@
 // Notes (quote + text) and comments (text only) require a signed-in account
 // (functions/_lib/auth.js) and are shown under its name and avatar. They
 // start as pending and are visible only to their writer until approved in
-// /admin/. Once a moderator has approved one from an account, the account is
-// trusted and its later notes and comments are published straight away,
-// unless the safety screen flags them. Each body is screened by a Workers AI
+// /admin/. Accounts the moderator has marked as trusted in /admin/ have their
+// notes and comments published straight away, unless the safety screen flags
+// them. Each body is screened by a Workers AI
 // safety model; the verdict is shown to the moderator.
 
 import {

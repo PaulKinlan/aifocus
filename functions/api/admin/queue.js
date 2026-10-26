@@ -22,7 +22,8 @@ export async function onRequestGet({ request, env }) {
       .prepare(
         `SELECT a.id, a.post, a.type, a.quote_exact, a.body, a.status, a.screen, a.created_at, a.moderated_at,
                 a.moderated_by, COALESCE(u.display_name, a.author_name) AS author_name,
-                u.profile_url AS author_profile_url, u.avatar_url AS author_avatar_url, u.trusted AS author_trusted
+                u.profile_url AS author_profile_url, u.avatar_url AS author_avatar_url, u.trusted AS author_trusted,
+                a.user_id AS author_id
          FROM annotations a LEFT JOIN users u ON u.id = a.user_id
          WHERE a.status = ?1 AND a.type != 'highlight' AND a.created_at < ?2
          ORDER BY a.created_at DESC

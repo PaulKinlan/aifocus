@@ -6,9 +6,9 @@
 -- Apply with: npx wrangler d1 migrations apply aifocus-reader --remote
 
 -- One row per reader account. Display fields are copied from the identity
--- used to create the account and can be changed later. `trusted` is set when
--- a moderator approves one of the user's notes or comments; later ones from
--- a trusted user are published without waiting in the queue.
+-- used to create the account and can be changed later. `trusted` is set by
+-- the moderator in /admin/; notes and comments from a trusted user are
+-- published without waiting in the queue.
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
