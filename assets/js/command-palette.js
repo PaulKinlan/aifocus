@@ -170,6 +170,23 @@ const askGroup = (query) => ({
   }],
 });
 
+const render = () => {
+  const query = input.value.trim();
+  const searching = query.length >= MIN_QUERY_LENGTH;
+  let all;
+  if (mode === "ask") all = searching ? [askGroup(query)] : [];
+  else if (searching) all = [essayGroup(query), askGroup(query), ...filterGroups(groups, query)];
+  else all = filterGroups(groups, query);
+  const previous = options[activeIndex]?._item?.id;
+  list.replaceChildren(...all.map(renderGroup));
+  options = [...list.querySelectorAll('[role="option"]')];
+  const keep = pinned ? options.findIndex((o) => o._item.id === previous && !o._item.disabled) : -1;
+  setActive(keep >= 0 ? keep : firstEnabled(0, 1));
+  if (all.length === 0) {
+    list.append(el("p", { class: "palette-empty", text: mode === "ask" ? "Type a question, then press Enter." : "No matching actions." }));
+  }
+};
+
 const firstEnabled = (start, step) => {
   for (let i = start; i >= 0 && i < options.length; i += step) {
     if (!options[i]._item.disabled) return i;

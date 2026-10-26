@@ -65,13 +65,18 @@ export const SEARCH_TIMEOUT_MS = 10000;
 export const searchSite = async (query, { limit = 10, signal, keywordFallback = true } = {}) => {
   const trimmed = (query || "").trim();
   if (!trimmed) return { query: "", count: 0, source: "none", results: [] };
-  const timeout = AbortSignal.timeout(SEARCH_TIMEOUT_MS);
-  const signals = signal ? [signal, timeout] : [timeout];
+  // One controller aborts on the caller's signal or the deadline, whichever
+  // comes first (AbortSignal.any is not available in every browser).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new DOMException("Search timed out", "TimeoutError")), SEARCH_TIMEOUT_MS);
+  const onAbort = () => controller.abort(signal.reason);
+  if (signal?.aborted) onAbort();
+  else signal?.addEventListener("abort", onAbort, { once: true });
   try {
     const params = new URLSearchParams({ q: trimmed, limit: String(limit) });
     const res = await fetch(`/api/search?${params}`, {
       headers: { Accept: "application/json" },
-      signal: signals.length > 1 && AbortSignal.any ? AbortSignal.any(signals) : signals[0],
+      signal: controller.signal,
     });
     if (!res.ok) throw new Error(`/api/search: HTTP ${res.status}`);
     const body = await res.json();
@@ -81,6 +86,9 @@ export const searchSite = async (query, { limit = 10, signal, keywordFallback = 
     if (signal?.aborted) throw signal.reason ?? err;
     if (!keywordFallback) throw err;
     return keywordSearch(trimmed, limit);
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener("abort", onAbort);
   }
 };
 
