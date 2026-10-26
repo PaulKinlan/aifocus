@@ -191,6 +191,9 @@ const firstEnabled = (start, step) => {
 
 const setActive = (index, { scroll = true } = {}) => {
   if (index >= 0 && options[index]?._item.disabled) return;
+  // While the answer view is shown the combobox is collapsed, so nothing in
+  // the hidden list may become the active descendant.
+  if (list.hidden) index = -1;
   options[activeIndex]?.setAttribute("aria-selected", "false");
   activeIndex = index;
   const option = options[index];
@@ -248,6 +251,8 @@ const showList = () => {
 };
 
 const showAnswer = async (question) => {
+  clearTimeout(searchTimer);
+  searchController?.abort();
   list.hidden = true;
   input.setAttribute("aria-expanded", "false");
   input.removeAttribute("aria-activedescendant");
@@ -327,12 +332,9 @@ const onInput = () => {
 
 const onKeydown = (event) => {
   if (event.isComposing) return;
-  if (event.key === "ArrowDown") {
+  if ((event.key === "ArrowDown" || event.key === "ArrowUp") && !list.hidden) {
     event.preventDefault();
-    move(1);
-  } else if (event.key === "ArrowUp") {
-    event.preventDefault();
-    move(-1);
+    move(event.key === "ArrowDown" ? 1 : -1);
   } else if (event.key === "Enter") {
     event.preventDefault();
     if (!answerView.hidden) {
