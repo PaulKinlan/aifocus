@@ -8,6 +8,7 @@ import {
   onRequestPost as postAnnotation,
   onRequestDelete as deleteAnnotation,
 } from "../functions/api/reader/annotations.js";
+import { onRequestGet as getAccount } from "../functions/api/account.js";
 import { onRequestGet as getQueue } from "../functions/api/admin/queue.js";
 import { onRequestPost as postModerate } from "../functions/api/admin/moderate.js";
 import { onRequestGet as getTrust, onRequestPost as postTrust } from "../functions/api/admin/trust.js";
@@ -376,4 +377,23 @@ test("admin queue and moderation: require Access, then approve makes a note publ
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test("account: lists the signed-in account's own items across posts, with status", async () => {
+  const env = makeEnv();
+  assert.equal((await getAccount({ request: req("/api/account"), env })).status, 401);
+
+  const { user, session } = await signIn(env, "cy");
+  const other = await signIn(env, "dee");
+  await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "mine" }, reader: READER_A, session }), env });
+  await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "theirs" }, reader: READER_B, session: other.session }), env });
+  await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A, session }), env });
+
+  const res = await getAccount({ request: req("/api/account", { session }), env });
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.user.id, user.id);
+  assert.deepEqual(body.identities.map((i) => i.provider), ["github"]);
+  assert.deepEqual(body.annotations.map((a) => [a.type, a.body, a.status]), [["comment", "mine", "pending"]]);
+  assert.deepEqual(body.reactions.map((r) => [r.post, r.kind]), [[POST, "useful"]]);
 });
