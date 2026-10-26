@@ -1,2 +1,21 @@
 name = "aifocus"
 pages_build_output_dir = "public"
+
+# Workers AI binding. Used by functions/api/search.js to query the
+# `aifocus-search` AI Search instance through env.AI.autorag().
+[ai]
+binding = "AI"
+
+# Reader responses (reactions, highlights, notes, comments).
+# Schema: migrations/. Apply with:
+#   npx wrangler d1 migrations apply aifocus-reader --remote
+[[d1_databases]]
+binding = "READER_DB"
+database_name = "aifocus-reader"
+database_id = "75475f47-2f40-4a73-b7bf-34d08ac65158"
+migrations_dir = "migrations"
+
+[vars]
+# Public endpoint of the aifocus-search instance. Used server-side only, as a
+# fallback when neither AI Search binding answers (functions/_lib/ai-search.js).
+AI_SEARCH_PUBLIC_URL = "https://df045af1-424e-4281-ab4d-e516437dc465.search.ai.cloudflare.com"

@@ -17,7 +17,9 @@ const MARKDOWN_TYPES = new Set([
 // trigger markdown negotiation.
 const RESERVED_ROOTS = new Set([
   "",
+  "admin",
   "api",
+  "ask",
   "authors",
   "categories",
   "css",
@@ -27,6 +29,7 @@ const RESERVED_ROOTS = new Set([
   "images",
   "js",
   "posts",
+  "search",
   "static",
   "tags",
   "training",

@@ -1,0 +1,35 @@
+{{ define "main" }}
+{{/* Moderation queue for reader notes and comments. /admin/ and /api/admin/
+     must sit behind a Cloudflare Access application; the API also verifies
+     the Access token itself (functions/_lib/access.js). */}}
+<style>
+.mod { max-width: 52rem; margin: 0 auto; }
+.mod-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+.mod-tabs button[aria-pressed="true"] { outline: 2px solid var(--link); outline-offset: -2px; }
+.mod-list { list-style: none; padding: 0; }
+.mod-item { padding: 1rem 0; border-top: 1px solid var(--line); }
+.mod-item blockquote { margin: .5rem 0; padding-left: .75rem; border-left: 3px solid var(--line); }
+.mod-item p { margin: .25rem 0; white-space: pre-wrap; }
+.mod-meta { color: var(--muted); font-size: .85rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+.mod-flag { color: #b3261e; font-weight: 600; }
+.mod-actions { display: flex; gap: .5rem; margin-top: .5rem; flex-wrap: wrap; }
+.mod-status { color: var(--muted); }
+</style>
+<section class="mod">
+  <h1>{{ .Title }}</h1>
+  <p class="mod-status" id="mod-status" role="status" aria-live="polite">Loading…</p>
+  <div class="mod-tabs" role="group" aria-label="Filter by status">
+    <button type="button" data-status="pending" aria-pressed="true">Pending <span data-count="pending"></span></button>
+    <button type="button" data-status="approved" aria-pressed="false">Approved <span data-count="approved"></span></button>
+    <button type="button" data-status="rejected" aria-pressed="false">Rejected <span data-count="rejected"></span></button>
+    <button type="button" data-status="spam" aria-pressed="false">Spam <span data-count="spam"></span></button>
+  </div>
+  <ol class="mod-list" id="mod-list"></ol>
+</section>
+{{- with resources.Get "js/admin-page.js" }}
+  {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/admin-page.js" }}
+  {{- with . | js.Build $opts | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end }}
+{{- end }}
+{{ end }}

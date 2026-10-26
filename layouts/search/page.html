@@ -1,0 +1,40 @@
+{{ define "main" }}
+{{/* Search page. Results come from /api/search (AI Search) with a keyword
+     fallback over /index.json; see assets/js/site-search.js. The form is a
+     plain GET form so /search/?q=… URLs can be shared. */}}
+<style>
+/* min-width: 0 and overflow-wrap stop a long unbroken string in a title,
+   snippet or answer (a URL, a code identifier) from widening the page on a
+   narrow screen. */
+.search-page { max-width: 46rem; margin: 0 auto; min-width: 0; overflow-wrap: anywhere; }
+.search-form { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 .5rem; }
+.search-form input[type="search"] { flex: 1 1 12rem; min-width: 0; }
+.search-status { color: var(--muted); min-height: 1.5em; }
+.search-results { list-style: none; padding: 0; margin: 1.5rem 0 0; }
+.search-result { padding: 1rem 0; border-top: 1px solid var(--line); min-width: 0; }
+.search-result h2 { font-size: 1.25rem; margin: 0 0 .25rem; }
+.search-result-date { margin: 0; color: var(--muted); font-size: .9rem; }
+.search-result-snippet { margin: .5rem 0 0; }
+</style>
+<section class="search-page">
+  <h1>{{ .Title }}</h1>
+  <form id="site-search-form" class="search-form" action="{{ .RelPermalink }}" method="get" role="search"
+    toolname="search_site" tooldescription="Search the essays on aifoc.us and show the results page.">
+    <label for="site-search-input" class="visually-hidden">Search essays</label>
+    <input id="site-search-input" type="search" name="q" placeholder="Search essays" autocomplete="off"
+      enterkeyhint="search" maxlength="200" required>
+    <button type="submit">Search</button>
+  </form>
+  <p id="site-search-status" class="search-status" role="status" aria-live="polite"></p>
+  <noscript><p>Search needs JavaScript. You can <a href="/posts/">browse all essays</a> instead.</p></noscript>
+  <ol id="site-search-results" class="search-results"></ol>
+
+  <p class="search-status">Want an answer rather than a list? <a href="/ask/">Ask the archive</a>.</p>
+</section>
+{{- with resources.Get "js/search-page.js" }}
+  {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/search-page.js" }}
+  {{- with . | js.Build $opts | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end }}
+{{- end }}
+{{ end }}
