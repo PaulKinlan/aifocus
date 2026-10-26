@@ -142,3 +142,21 @@ test("ai-search: errors when nothing is configured; ignores non-https public URL
   await assert.rejects(searchChunks({ AI_SEARCH_PUBLIC_URL: "http://insecure" }, "q", 3), /No AI Search/);
   assert.deepEqual(extractChunks({ result: { data: [] } }), []);
 });
+
+test("ai-search: a strategy that does not answer in time is skipped", async () => {
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    const env = {
+      AI: { autorag: () => ({ search: () => new Promise(() => {}) }) },
+      AI_SEARCH_PUBLIC_URL: "https://example.search.ai.cloudflare.com",
+    };
+    const fetchImpl = async () =>
+      new Response(JSON.stringify({ chunks: [{ text: "x", score: 1, item: { key: "aifoc.us/c/" } }] }));
+    const found = await searchChunks(env, "q", 3, { fetchImpl, timeoutMs: 20 });
+    assert.equal(found.via, "public-endpoint");
+    assert.equal(found.chunks[0].key, "aifoc.us/c/");
+  } finally {
+    console.warn = warn;
+  }
+});
