@@ -353,8 +353,12 @@ const renderMarginNotes = () => {
   }
   const marginMode = wideEnough() ? "wide" : "narrow";
   content.classList.toggle("reader-has-margin-notes", marginMode === "wide");
+  // Notes arrive in creation order; lay them out top to bottom so the overlap
+  // adjustment only ever pushes an aside down past the one above it.
+  const ordered = [...groups].sort(([a], [b]) =>
+    a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
   let lastBottom = -Infinity;
-  for (const [block, notes] of groups) {
+  for (const [block, notes] of ordered) {
     const aside = document.createElement("aside");
     aside.className = "reader-margin-notes";
     aside.dataset.readerUi = "";
@@ -454,15 +458,19 @@ const removeAnnotation = async (id) => {
 // Capture a Range as { exact, prefix, suffix } if it lies inside the article.
 const captureRange = (range) => {
   if (!range || range.collapsed || !content.contains(range.commonAncestorContainer)) return null;
-  const exact = range.toString();
-  if (exact.trim().length < 3) return null;
+  // The quote comes from the text index, not range.toString(), so note text
+  // inside a selection (see renderMarginNotes) is left out of it.
   const index = buildTextIndex();
   const { text } = index;
-  const start = offsetOf(index, range.startContainer, range.startOffset) ?? 0;
+  const rawStart = offsetOf(index, range.startContainer, range.startOffset);
+  const raw = text.slice(rawStart, Math.max(rawStart, offsetOf(index, range.endContainer, range.endOffset)));
+  const exact = raw.trim();
+  if (exact.length < 3) return null;
+  const start = rawStart + raw.length - raw.trimStart().length;
   return {
     range,
     quote: {
-      exact: exact.trim(),
+      exact,
       prefix: text.slice(Math.max(0, start - 32), start),
       suffix: text.slice(start + exact.length, start + exact.length + 32),
     },

@@ -382,6 +382,11 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     assert.equal(accounts.users[0].id, user.id);
     assert.equal(accounts.users[0].identities, "github:bo");
     assert.equal(accounts.users[0].written, 4);
+    // Search matches a linked handle; LIKE wildcards are literal.
+    const found = await (await getAccounts({ request: req("/api/admin/accounts?q=bo", { headers: auth }), env })).json();
+    assert.deepEqual([found.matched, found.users.length, found.total], [1, 1, 1]);
+    const none = await (await getAccounts({ request: req("/api/admin/accounts?q=%25", { headers: auth }), env })).json();
+    assert.deepEqual([none.matched, none.users.length], [0, 0]);
     assert.equal((await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" } }), env })).status, 403);
     res = await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" }, headers: auth }), env });
     assert.equal(res.status, 200);

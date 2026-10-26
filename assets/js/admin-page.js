@@ -3,6 +3,7 @@
 const statusEl = document.querySelector("#mod-status");
 const list = document.querySelector("#mod-list");
 const tabs = [...document.querySelectorAll(".mod-tabs button")];
+const searchForm = document.querySelector("#mod-search");
 let current = "pending";
 
 const ACTIONS = {
@@ -173,14 +174,18 @@ const renderAccount = (user) => {
 };
 
 const loadAccounts = async () => {
-  const data = await api("/api/admin/accounts");
+  const q = searchForm.elements.q.value.trim();
+  const data = await api(`/api/admin/accounts${q ? `?q=${encodeURIComponent(q)}` : ""}`);
   list.replaceChildren(...data.users.map(renderAccount));
-  const shown = data.users.length < data.total ? ` Showing the newest ${data.users.length}.` : "";
-  statusEl.textContent = `Signed in as ${data.moderator}. ${data.total} ${data.total === 1 ? "account" : "accounts"}.${shown}`;
+  const plural = (n) => `${n} ${n === 1 ? "account" : "accounts"}`;
+  const found = q ? ` ${plural(data.matched)} match "${q}".` : "";
+  const shown = data.users.length < data.matched ? ` Showing the newest ${data.users.length}; search to find others.` : "";
+  statusEl.textContent = `Signed in as ${data.moderator}. ${plural(data.total)}.${found}${shown}`;
 };
 
 const load = async () => {
   statusEl.textContent = "Loading…";
+  searchForm.hidden = current !== "accounts";
   try {
     if (current === "trusted") {
       await loadTrusted();
@@ -234,6 +239,11 @@ const setBlocked = async (userId, blocked) => {
     statusEl.textContent = `Could not update: ${err.message}`;
   }
 };
+
+searchForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  load();
+});
 
 for (const tab of tabs) {
   tab.addEventListener("click", () => {

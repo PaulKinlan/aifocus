@@ -14,6 +14,9 @@
 .mod-flag { color: #b3261e; font-weight: 600; }
 .mod-actions { display: flex; gap: .5rem; margin-top: .5rem; flex-wrap: wrap; }
 .mod-status { color: var(--muted); }
+.mod-search { display: flex; gap: .5rem; margin: 0 0 1rem; }
+.mod-search[hidden] { display: none; }
+.mod-search input { flex: 1; min-width: 0; }
 </style>
 <section class="mod">
   <h1>{{ .Title }}</h1>
@@ -26,6 +29,11 @@
     <button type="button" data-status="trusted" aria-pressed="false">Trusted people</button>
     <button type="button" data-status="accounts" aria-pressed="false">All accounts</button>
   </div>
+  <form class="mod-search" id="mod-search" role="search" hidden>
+    <label for="mod-search-q" class="visually-hidden">Find an account</label>
+    <input id="mod-search-q" name="q" type="search" placeholder="Find by name or handle" autocomplete="off">
+    <button type="submit">Find</button>
+  </form>
   <ol class="mod-list" id="mod-list"></ol>
 </section>
 {{- with resources.Get "js/admin-page.js" }}
