@@ -1,0 +1,96 @@
+{{/*
+Reader responses for an essay: reactions, shared highlights, notes on
+passages and comments. Rendered hidden; assets/js/reader.js shows it once
+/api/reader/state answers, so without JavaScript (or without the D1 binding)
+the post looks as it did before.
+
+Notes and comments are held for moderation (/admin/). The writer always sees
+their own; other readers see them once approved.
+*/}}
+<section class="reader" id="reader" data-post="{{ .RelPermalink }}" aria-labelledby="reader-heading" hidden>
+  <h2 id="reader-heading">Reader responses</h2>
+  <div class="reader-reactions" role="group" aria-label="Reactions to this essay">
+    <button type="button" class="reader-reaction" data-kind="useful" aria-pressed="false">👍 Useful <span class="reader-count">0</span></button>
+    <button type="button" class="reader-reaction" data-kind="new-to-me" aria-pressed="false">💡 New to me <span class="reader-count">0</span></button>
+    <button type="button" class="reader-reaction" data-kind="not-convinced" aria-pressed="false">🤔 Not convinced <span class="reader-count">0</span></button>
+  </div>
+  <p class="reader-hint">Select any passage in the essay to highlight it or add a note.</p>
+
+  <div class="reader-notes" hidden>
+    <h3>Notes on passages</h3>
+    <ol class="reader-list" data-list="notes"></ol>
+  </div>
+
+  <div class="reader-comments">
+    <h3>Comments</h3>
+    <ol class="reader-list" data-list="comments"></ol>
+    <form class="reader-form" data-form="comment">
+      <label>Comment
+        <textarea name="body" rows="4" maxlength="2000" required></textarea>
+      </label>
+      <label>Name (optional)
+        <input type="text" name="name" maxlength="60" autocomplete="nickname">
+      </label>
+      <button type="submit">Post comment</button>
+      <p class="reader-small">Comments and notes are reviewed before other readers see them. You will see yours straight away.</p>
+    </form>
+  </div>
+  <p class="reader-status" role="status" aria-live="polite"></p>
+</section>
+
+<div class="reader-toolbar" role="toolbar" aria-label="Selected passage" hidden>
+  <button type="button" data-action="highlight">Highlight</button>
+  <button type="button" data-action="note">Add note</button>
+</div>
+
+<dialog class="reader-dialog" aria-labelledby="reader-dialog-title">
+  <form class="reader-form" data-form="note" method="dialog">
+    <h3 id="reader-dialog-title">Add a note</h3>
+    <blockquote class="reader-dialog-quote"></blockquote>
+    <label>Note
+      <textarea name="body" rows="4" maxlength="2000" required></textarea>
+    </label>
+    <label>Name (optional)
+      <input type="text" name="name" maxlength="60" autocomplete="nickname">
+    </label>
+    <p class="reader-small">Notes are reviewed before other readers see them.</p>
+    <div class="reader-dialog-actions">
+      <button type="submit" value="save">Save note</button>
+      <button type="button" data-action="cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+.reader { margin: 2.5rem 0; padding-top: 1rem; border-top: 1px solid var(--line); }
+.reader-reactions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.reader-reaction[aria-pressed="true"] { outline: 2px solid var(--link); outline-offset: -2px; }
+.reader-count { font-variant-numeric: tabular-nums; margin-left: .25rem; }
+.reader-hint, .reader-small, .reader-status { color: var(--muted); font-size: .9rem; }
+.reader-list { list-style: none; padding: 0; margin: 0; }
+.reader-item { padding: .75rem 0; border-top: 1px solid var(--line); }
+.reader-item blockquote { margin: 0 0 .5rem; padding-left: .75rem; border-left: 3px solid var(--line); }
+.reader-item blockquote a { color: inherit; }
+.reader-item p { margin: .25rem 0; white-space: pre-wrap; }
+.reader-meta { color: var(--muted); font-size: .85rem; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.reader-badge { border: 1px solid var(--line); border-radius: 999px; padding: 0 .5rem; }
+.reader-meta button { min-height: 0; padding: .1rem .5rem; font-size: .85rem; }
+.reader-form { display: grid; gap: .5rem; margin-top: 1rem; }
+.reader-form label { display: grid; gap: .25rem; }
+.reader-toolbar { position: absolute; z-index: 10; display: flex; gap: .25rem; padding: .25rem; background: var(--bg-secondary); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 16px rgb(0 0 0 / .15); }
+.reader-toolbar[hidden] { display: none; }
+.reader-dialog { max-width: min(36rem, calc(100vw - 2rem)); border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-secondary); color: var(--color); }
+.reader-dialog::backdrop { background: rgb(0 0 0 / .4); }
+.reader-dialog-quote { max-height: 8rem; overflow: auto; margin: 0; padding-left: .75rem; border-left: 3px solid var(--line); }
+.reader-dialog-actions { display: flex; gap: .5rem; }
+::highlight(reader-shared-1) { background-color: rgb(255 214 0 / .18); }
+::highlight(reader-shared-2) { background-color: rgb(255 214 0 / .32); }
+::highlight(reader-shared-3) { background-color: rgb(255 214 0 / .5); }
+::highlight(reader-mine) { background-color: rgb(80 160 255 / .3); }
+</style>
+{{- with resources.Get "js/reader.js" }}
+  {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/reader.js" }}
+  {{- with . | js.Build $opts | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end }}
+{{- end }}

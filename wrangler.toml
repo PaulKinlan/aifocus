@@ -5,3 +5,12 @@ pages_build_output_dir = "public"
 # `aifocus-search` AI Search instance through env.AI.autorag().
 [ai]
 binding = "AI"
+
+# Reader responses (reactions, highlights, notes, comments).
+# Schema: migrations/. Apply with:
+#   npx wrangler d1 migrations apply aifocus-reader --remote
+[[d1_databases]]
+binding = "READER_DB"
+database_name = "aifocus-reader"
+database_id = "75475f47-2f40-4a73-b7bf-34d08ac65158"
+migrations_dir = "migrations"
