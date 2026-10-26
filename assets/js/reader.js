@@ -1,5 +1,7 @@
 // Reader responses on essays: reactions, shared highlights, notes on
-// passages and comments. Server side: functions/api/reader/*.
+// passages and comments. Server side: functions/api/reader/*. Notes and
+// comments need a signed-in account (functions/api/auth/*); reactions and
+// highlights do not.
 //
 // Highlights are drawn with the CSS Custom Highlight API, so the article DOM
 // is never modified. Browsers without it still get reactions, notes and
@@ -134,6 +136,106 @@ const STATUS_LABELS = {
   spam: "Not published",
 };
 
+const SIGNIN_MESSAGES = {
+  failed: "Sign-in did not complete. Try again, or use another account.",
+  cancelled: "Sign-in was cancelled.",
+  expired: "Sign-in took too long. Try again.",
+  unavailable: "That sign-in method is not available.",
+  "bad-handle": "That is not a valid Bluesky handle. It looks like you.bsky.social.",
+  "already-linked": "That account is already linked to a different aifoc.us account.",
+  blocked: "This account cannot post here.",
+};
+
+const startUrl = (provider) =>
+  `/api/auth/start/${provider}?${new URLSearchParams({ return: post })}`;
+
+// Sign-in options for the providers this deployment offers. Bluesky needs a
+// handle to find the reader's server; the others are plain links.
+const signInOptions = (providers) => {
+  const nodes = [];
+  for (const provider of providers) {
+    if (provider.id === "bluesky") {
+      const form = document.createElement("form");
+      form.action = "/api/auth/start/bluesky";
+      form.method = "get";
+      const back = document.createElement("input");
+      back.type = "hidden";
+      back.name = "return";
+      back.value = post;
+      const handle = document.createElement("input");
+      handle.type = "text";
+      handle.name = "handle";
+      handle.placeholder = "you.bsky.social";
+      handle.autocomplete = "username";
+      handle.setAttribute("aria-label", "Bluesky handle");
+      handle.spellcheck = false;
+      const go = document.createElement("button");
+      go.type = "submit";
+      go.textContent = "Sign in with Bluesky";
+      form.append(back, handle, go);
+      // Navigate instead of submitting: the site CSP's form-action also
+      // applies to the redirect that follows a form submission, and the
+      // reader's Bluesky server can be any origin.
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        location.assign(`${startUrl("bluesky")}&${new URLSearchParams({ handle: handle.value.trim() })}`);
+      });
+      nodes.push(form);
+    } else {
+      const link = document.createElement("a");
+      link.className = "reader-signin-link";
+      link.href = startUrl(provider.id);
+      link.textContent = `Sign in with ${provider.label}`;
+      nodes.push(link);
+    }
+  }
+  return nodes;
+};
+
+const renderWho = (person, fallback) => {
+  const wrap = document.createElement(person?.profileUrl ? "a" : "span");
+  wrap.className = "reader-who";
+  if (person?.profileUrl) {
+    wrap.href = person.profileUrl;
+    wrap.rel = "noopener noreferrer ugc";
+  }
+  if (person?.avatarUrl) {
+    const img = document.createElement("img");
+    img.className = "reader-avatar";
+    img.src = person.avatarUrl;
+    img.alt = "";
+    img.width = 24;
+    img.height = 24;
+    img.loading = "lazy";
+    img.referrerPolicy = "no-referrer";
+    wrap.append(img);
+  }
+  wrap.append(person?.name || person?.displayName || fallback);
+  return wrap;
+};
+
+const renderAccount = () => {
+  const box = section.querySelector("[data-account]");
+  const form = section.querySelector('[data-form="comment"]');
+  if (state.viewer) {
+    const signedIn = document.createElement("span");
+    signedIn.append("Signed in as ", renderWho(state.viewer, "you"));
+    const out = document.createElement("button");
+    out.type = "button";
+    out.textContent = "Sign out";
+    out.addEventListener("click", signOut);
+    box.replaceChildren(signedIn, out);
+    form.hidden = false;
+  } else {
+    const intro = document.createElement("p");
+    intro.textContent = state.providers.length
+      ? "Sign in to comment or add notes. Your name and avatar from that account are shown with what you write."
+      : "Comments are not available right now.";
+    box.replaceChildren(intro, ...signInOptions(state.providers));
+    form.hidden = true;
+  }
+};
+
 const renderItem = (item) => {
   const li = document.createElement("li");
   li.className = "reader-item";
@@ -152,8 +254,7 @@ const renderItem = (item) => {
   }
   const meta = document.createElement("p");
   meta.className = "reader-meta";
-  const who = document.createElement("span");
-  who.textContent = item.name || "Anonymous reader";
+  const who = renderWho(item, "Anonymous reader");
   const when = document.createElement("time");
   when.dateTime = new Date(item.createdAt).toISOString();
   when.textContent = new Date(item.createdAt).toLocaleDateString();
@@ -185,6 +286,7 @@ const render = () => {
   notesWrap.hidden = state.notes.length === 0;
   section.querySelector('[data-list="notes"]').replaceChildren(...state.notes.map(renderItem));
   section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map(renderItem));
+  renderAccount();
   applyHighlights();
 };
 
@@ -213,6 +315,16 @@ const toggleReaction = async (button) => {
     setStatus(err.message);
   } finally {
     button.disabled = false;
+  }
+};
+
+const signOut = async () => {
+  try {
+    await api("/api/auth/logout", { method: "POST" });
+    await refresh();
+    setStatus("Signed out.");
+  } catch (err) {
+    setStatus(err.message);
   }
 };
 
@@ -295,6 +407,17 @@ const init = async () => {
   }
   section.hidden = false;
 
+  // Back from a sign-in attempt: report the outcome once, then drop the
+  // parameter so a reload does not repeat it.
+  const params = new URLSearchParams(location.search);
+  const signin = params.get("signin");
+  if (signin) {
+    setStatus(SIGNIN_MESSAGES[signin] || SIGNIN_MESSAGES.failed);
+    params.delete("signin");
+    const query = params.toString();
+    history.replaceState(history.state, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
+  }
+
   for (const button of section.querySelectorAll(".reader-reaction")) {
     button.addEventListener("click", () => toggleReaction(button));
   }
@@ -304,9 +427,11 @@ const init = async () => {
     const form = event.currentTarget;
     const data = new FormData(form);
     try {
-      await createAnnotation({ type: "comment", body: data.get("body"), name: data.get("name") });
+      const saved = await createAnnotation({ type: "comment", body: data.get("body") });
       form.reset();
-      setStatus("Comment saved. Other readers will see it once it is approved.");
+      setStatus(saved?.status === "approved"
+        ? "Comment posted."
+        : "Comment saved. Other readers will see it once it is approved.");
     } catch (err) {
       setStatus(err.message);
     }
@@ -335,6 +460,15 @@ const init = async () => {
       }
     } else if (action === "note") {
       dialog.querySelector(".reader-dialog-quote").textContent = pendingQuote.exact;
+      const signedIn = Boolean(state.viewer);
+      for (const field of dialog.querySelectorAll("[data-note-field]")) field.hidden = !signedIn;
+      const signin = dialog.querySelector("[data-note-signin]");
+      signin.hidden = signedIn;
+      if (!signedIn) {
+        const intro = document.createElement("p");
+        intro.textContent = "Sign in to add a note. You can select the passage again afterwards.";
+        signin.replaceChildren(intro, ...signInOptions(state.providers));
+      }
       dialog.showModal();
     }
   };
@@ -359,9 +493,13 @@ const init = async () => {
       pendingQuote = captured.quote;
       runPassageAction(action);
     } else if (action === "comment") {
-      const textarea = section.querySelector('[data-form="comment"] textarea');
-      textarea.scrollIntoView({ block: "center" });
-      textarea.focus({ preventScroll: true });
+      // Signed out, the comment form is replaced by the sign-in options.
+      const target = state.viewer
+        ? section.querySelector('[data-form="comment"] textarea')
+        : section.querySelector("[data-account] a, [data-account] input:not([type=hidden])");
+      if (!target) return;
+      target.scrollIntoView({ block: "center" });
+      target.focus({ preventScroll: true });
     } else if (action === "react") {
       const button = section.querySelector(`.reader-reaction[data-kind="${CSS.escape(kind || "")}"]`);
       if (button) {
@@ -377,16 +515,17 @@ const init = async () => {
     event.preventDefault();
     const data = new FormData(noteForm);
     try {
-      await createAnnotation({
+      const saved = await createAnnotation({
         type: "note",
         quote: pendingQuote,
         body: data.get("body"),
-        name: data.get("name"),
       });
       noteForm.reset();
       dialog.close();
       window.getSelection()?.removeAllRanges();
-      setStatus("Note saved. Other readers will see it once it is approved.");
+      setStatus(saved?.status === "approved"
+        ? "Note posted."
+        : "Note saved. Other readers will see it once it is approved.");
     } catch (err) {
       setStatus(err.message);
     }

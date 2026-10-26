@@ -20,10 +20,12 @@ export async function onRequestGet({ request, env }) {
   const [items, counts] = await db.batch([
     db
       .prepare(
-        `SELECT id, post, type, quote_exact, body, author_name, status, screen, created_at, moderated_at, moderated_by
-         FROM annotations
-         WHERE status = ?1 AND type != 'highlight' AND created_at < ?2
-         ORDER BY created_at DESC
+        `SELECT a.id, a.post, a.type, a.quote_exact, a.body, a.status, a.screen, a.created_at, a.moderated_at,
+                a.moderated_by, COALESCE(u.display_name, a.author_name) AS author_name,
+                u.profile_url AS author_profile_url, u.avatar_url AS author_avatar_url, u.trusted AS author_trusted
+         FROM annotations a LEFT JOIN users u ON u.id = a.user_id
+         WHERE a.status = ?1 AND a.type != 'highlight' AND a.created_at < ?2
+         ORDER BY a.created_at DESC
          LIMIT 50`,
       )
       .bind(status, Number.isFinite(before) ? before : Number.MAX_SAFE_INTEGER),

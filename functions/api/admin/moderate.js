@@ -31,5 +31,16 @@ export async function onRequestPost({ request, env }) {
   );
   const results = await db.batch(ids.map((id) => stmt.bind(status, now, who.email, id)));
   const updated = results.reduce((n, r) => n + (r?.meta?.changes ?? 0), 0);
+
+  // Approving a note or comment trusts its account, so the account's later
+  // ones are published without waiting (see functions/api/reader/annotations.js).
+  // Marking one as spam removes that trust.
+  if (status === "approved" || status === "spam") {
+    const trust = db.prepare(
+      `UPDATE users SET trusted = ?, updated_at = ?
+       WHERE id = (SELECT user_id FROM annotations WHERE id = ? AND user_id IS NOT NULL)`,
+    );
+    await db.batch(ids.map((id) => trust.bind(status === "approved" ? 1 : 0, now, id)));
+  }
   return json({ status, updated });
 }

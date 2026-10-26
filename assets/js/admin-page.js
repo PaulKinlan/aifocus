@@ -38,8 +38,14 @@ const renderItem = (item) => {
   link.textContent = item.post;
   const type = document.createElement("span");
   type.textContent = item.type;
-  const who = document.createElement("span");
-  who.textContent = item.author_name || "Anonymous reader";
+  // Signed-in writers link to the profile they signed in with.
+  const who = document.createElement(item.author_profile_url ? "a" : "span");
+  if (item.author_profile_url) {
+    who.href = item.author_profile_url;
+    who.rel = "noopener noreferrer";
+    who.target = "_blank";
+  }
+  who.textContent = `${item.author_name || "Anonymous reader"}${item.author_trusted ? " (trusted)" : ""}`;
   const when = document.createElement("time");
   when.dateTime = new Date(item.created_at).toISOString();
   when.textContent = new Date(item.created_at).toLocaleString();

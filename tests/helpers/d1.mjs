@@ -27,9 +27,10 @@ class Statement {
   }
 }
 
-export function createD1(migrationPath) {
+// `migrations` is one migration file path or a list of them, applied in order.
+export function createD1(migrations) {
   const db = new DatabaseSync(":memory:");
-  if (migrationPath) db.exec(readFileSync(migrationPath, "utf8"));
+  for (const path of [migrations].flat().filter(Boolean)) db.exec(readFileSync(path, "utf8"));
   return {
     raw: db,
     prepare(sql) {
