@@ -1,2 +1,7 @@
 name = "aifocus"
 pages_build_output_dir = "public"
+
+# Workers AI binding. Used by functions/api/search.js to query the
+# `aifocus-search` AI Search instance through env.AI.autorag().
+[ai]
+binding = "AI"

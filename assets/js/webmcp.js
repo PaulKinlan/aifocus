@@ -4,49 +4,11 @@
 // Registers tools on navigator.modelContext so MCP-capable agents running
 // in the browser can contact Paul and explore the article catalogue.
 
+import { loadArticleIndex, searchSite } from "./site-search.js";
+
 const OWNER_EMAIL = "paul@aifoc.us";
 
 const textResult = (text) => ({ content: [{ type: "text", text }] });
-
-const loadArticleIndex = (() => {
-  let promise = null;
-  return () => {
-    if (!promise) {
-      promise = fetch("/index.json", { headers: { Accept: "application/json" } })
-        .then((res) => {
-          if (!res.ok) throw new Error(`index.json: HTTP ${res.status}`);
-          return res.json();
-        })
-        .catch((err) => {
-          promise = null;
-          throw err;
-        });
-    }
-    return promise;
-  };
-})();
-
-const scoreArticle = (article, terms) => {
-  const haystack = `${article.title}\n${article.summary}`.toLowerCase();
-  let score = 0;
-  for (const term of terms) {
-    if (!term) continue;
-    if (article.title.toLowerCase().includes(term)) score += 3;
-    if (haystack.includes(term)) score += 1;
-  }
-  return score;
-};
-
-const matchArticles = (articles, query, limit) => {
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-  if (terms.length === 0) return articles.slice(0, limit);
-  return articles
-    .map((article) => ({ article, score: scoreArticle(article, terms) }))
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((entry) => entry.article);
-};
 
 const extractArticleText = (html) => {
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -142,9 +104,12 @@ const registerTools = (modelContext) => {
   modelContext.registerTool({
     name: "search_articles",
     description:
-      "Search essays on aifoc.us by keyword. Matches against article titles " +
-      "and summaries. Returns titles, URLs, dates and short summaries — use " +
-      "read_article to fetch the full body of a match.",
+      "Search essays on aifoc.us. Uses the site's AI Search index over the " +
+      "full text of each essay, and falls back to keyword matching on titles " +
+      "and summaries if that index is unavailable (the `source` field says " +
+      "which was used). Returns titles, URLs, dates, summaries and, for index " +
+      "results, the best-matching passage — use read_article to fetch the " +
+      "full body of a match.",
     inputSchema: {
       type: "object",
       properties: {
@@ -163,11 +128,10 @@ const registerTools = (modelContext) => {
     },
     annotations: { readOnlyHint: true },
     async execute({ query, limit = 10 }) {
-      const index = await loadArticleIndex();
-      const matches = matchArticles(index.articles, query, limit);
+      const { source, results } = await searchSite(query, { limit });
       return textResult(
         JSON.stringify(
-          { query, count: matches.length, matches },
+          { query, source, count: results.length, matches: results },
           null,
           2,
         ),
