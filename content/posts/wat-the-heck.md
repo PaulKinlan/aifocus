@@ -35,8 +35,9 @@ Nope. I saw a heap of JS files and a heap of WAT files. A WAT file is the [WebAs
 
 This led me to ask the question: Why do we need to ship JS?
 
-<blockquote class="twitter-tweet"><p lang="en" dir="ltr">Idly musing that if we don't look at the code anymore, why are we shipping JS and not WASM.</p>&mdash; Paul Kinlan (@Paul_Kinlan) <a href="https://x.com/Paul_Kinlan/status/2084250175074160822?ref_src=twsrc%5Etfw">August 3, 2026</a></blockquote>
-<script async src="https://platform.x.com/widgets.js" charset="utf-8"></script>
+{{< x user="Paul_Kinlan" id="2084250175074160822" name="Paul Kinlan" date="August 3, 2026" >}}
+Idly musing that if we don't look at the code anymore, why are we shipping JS and not WASM.
+{{< /x >}}
 
 I know why I ship JS. It's the language I've used for decades building websites, but the more I use these LLM tools, the less I am looking at the outputted code and relying on my tests and usage of the output. I used to want to write well-structured code so I can maintain it, but now the tools are good at making the changes that I need to get the outcome I want.
 

@@ -22,9 +22,9 @@
 #   - media: local files plus data: URIs — /web-uplift-report/ inlines a small
 #     data:video/mp4 clip.
 #   - frame: the embeds posts actually use (YouTube, paulkinlan.github.io,
-#     esper.val.run, and X's platform.twitter.com / platform.x.com /
-#     syndication.twitter.com post iframes) and same-origin, for the in-page
-#     demos.
+#     esper.val.run, wasm-vs-js.paulkinlan-ea.deno.net, and X's
+#     platform.twitter.com / platform.x.com / syndication.twitter.com post
+#     iframes) and same-origin, for the in-page demos.
 #   - connect: analytics endpoints, Cloudflare's beacon, and the three provider
 #     APIs. The provider hosts are here because the demo's own meta policy
 #     allows exactly one of them and policies intersect: without them in this
@@ -37,7 +37,7 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://platform.x.com https://platform.twitter.com https://cdn.syndication.twimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://cloudflareinsights.com https://api.anthropic.com https://generativelanguage.googleapis.com https://api.openai.com; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://paulkinlan.github.io https://esper.val.run https://platform.x.com https://platform.twitter.com https://syndication.twitter.com; object-src 'none'; base-uri 'self'; form-action 'self' https://buttondown.com; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://platform.x.com https://platform.twitter.com https://cdn.syndication.twimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; media-src 'self' data:; connect-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://cloudflareinsights.com https://api.anthropic.com https://generativelanguage.googleapis.com https://api.openai.com; frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://paulkinlan.github.io https://esper.val.run https://wasm-vs-js.paulkinlan-ea.deno.net https://platform.x.com https://platform.twitter.com https://syndication.twitter.com; object-src 'none'; base-uri 'self'; form-action 'self' https://buttondown.com; frame-ancestors 'self'
 
 # Moderation page: keep it out of search indexes and caches. Access control is
 # a Cloudflare Access application on /admin/* and /api/admin/*.
