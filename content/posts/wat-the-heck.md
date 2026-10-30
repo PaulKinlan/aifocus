@@ -19,7 +19,7 @@ I had a conversation with a buddy in work about the performance differences betw
 >
 > ME: Err... I wasn't planning to do this, but let me go and play.
 
-The issue now is that I had a mindworm that I had to try and get an answer to and more importantly I have an LLM-shaped hammer. So my LLM-shapped hammer squashed the worm. I built a benchmark suite that helped me test and validate some of the questions that we had... And you know what, I have some data, but it needs a lot more validation, but it turns out it's not the most interesting point of the story. Btw, [the code is on GitHub](https://github.com/paulKinlan/wasm-vs-js) if you want to look.
+The issue now is that I had a mindworm that I had to try and get an answer to and more importantly I have an LLM-shaped hammer. So my LLM-shaped hammer squashed the worm. I built a benchmark suite that helped me test and validate some of the questions that we had... And you know what, I have some data, but it needs a lot more validation, but it turns out it's not the most interesting point of the story. Btw, [the code is on GitHub](https://github.com/paulKinlan/wasm-vs-js) if you want to look.
 
 The project is pretty simple, I defined a suite of tests for things that I would expect a modern web site or application to do such as Math, Data Processing, DOM manipulation, Text Processing, 3D and Neural networks and then I asked the model to build out the suite of tests in "JS and WASM" and then let me compare the performance between runs.
 
