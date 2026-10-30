@@ -1,5 +1,5 @@
 ---
-title: WAT the heck
+title: "wat the heck: why ship javascript when nobody reads the code?"
 slug: wat-the-heck
 description: "I asked a model to benchmark JS against WASM and it did, but it
   did something more than I expected and it made me question that if we stop
