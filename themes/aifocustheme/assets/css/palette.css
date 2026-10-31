@@ -206,3 +206,23 @@
     }
   }
 }
+
+/* Shortcut hint beside the header Search link (filled in by
+   command-palette.js). Touch-only devices have no keyboard shortcut to show. */
+.nav-shortcut {
+  margin-inline-start: .4em;
+  padding: .05em .35em;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: .75em;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media not ((hover: hover) and (pointer: fine)) {
+  .nav-shortcut {
+    display: none;
+  }
+}

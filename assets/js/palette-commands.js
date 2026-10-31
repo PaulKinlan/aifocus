@@ -84,3 +84,10 @@ export function textFragmentUrl(pageUrl, exact) {
     : enc(words.join(" "));
   return `${pageUrl.split("#")[0]}#:~:text=${text}`;
 }
+
+// The palette shortcut as shown in the header: ⌘K on Apple platforms, where
+// the Command key is the convention, and Ctrl K everywhere else. Both keys
+// open the palette on every platform (command-palette.js).
+export function shortcutLabel(platform = "") {
+  return /mac|iphone|ipad|ipod/i.test(platform) ? "⌘K" : "Ctrl K";
+}

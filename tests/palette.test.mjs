@@ -5,6 +5,7 @@ import {
   buildCommands,
   filterGroups,
   matchesQuery,
+  shortcutLabel,
   textFragmentUrl,
 } from "../assets/js/palette-commands.js";
 
@@ -61,4 +62,13 @@ test("textFragmentUrl encodes short quotes whole and long quotes as start,end", 
     "https://aifoc.us/post/#:~:text=w0%20w1%20w2%20w3%20w4,w15%20w16%20w17%20w18%20w19",
   );
   assert.equal(textFragmentUrl("https://aifoc.us/post/", "  "), "https://aifoc.us/post/");
+});
+
+test("shortcutLabel shows ⌘K on Apple platforms and Ctrl K elsewhere", () => {
+  assert.equal(shortcutLabel("MacIntel"), "⌘K");
+  assert.equal(shortcutLabel("macOS"), "⌘K");
+  assert.equal(shortcutLabel("iPad"), "⌘K");
+  assert.equal(shortcutLabel("Win32"), "Ctrl K");
+  assert.equal(shortcutLabel("Linux x86_64"), "Ctrl K");
+  assert.equal(shortcutLabel(""), "Ctrl K");
 });

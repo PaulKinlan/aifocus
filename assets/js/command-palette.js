@@ -7,7 +7,7 @@
 // listbox, using aria-activedescendant so focus stays in the input.
 
 import { answerParagraphs, askArchive } from "./ask-client.js";
-import { buildCommands, filterGroups, textFragmentUrl } from "./palette-commands.js";
+import { buildCommands, filterGroups, shortcutLabel, textFragmentUrl } from "./palette-commands.js";
 import { formatDate } from "./search-render.js";
 import { keywordSearchSite, searchSite } from "./site-search.js";
 
@@ -403,6 +403,15 @@ export const initPalette = () => {
     event.preventDefault();
     openPalette();
   });
+  // Show the shortcut next to the header Search link. It stays hidden without
+  // JavaScript (the shortcut needs it) and CSS hides it on touch-only devices.
+  const label = shortcutLabel(navigator.userAgentData?.platform || navigator.platform || "");
+  for (const kbd of document.querySelectorAll(".site-navigation kbd[data-shortcut]")) {
+    kbd.textContent = label;
+    kbd.hidden = false;
+    const link = kbd.closest("a");
+    if (link) link.title = `Search essays and ask the archive (${label})`;
+  }
   // Header links open the palette; modified clicks (new tab, etc.) and
   // no-JavaScript visits still go to the pages.
   for (const link of document.querySelectorAll(".site-navigation a[data-palette]")) {
