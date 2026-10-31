@@ -1,0 +1,123 @@
+{{- /* Share card for one essay: a 1200x630 page that functions/og/[[path]].js
+     screenshots with Cloudflare Browser Run to make the page's og:image.
+
+     The Function fills the empty data-og-hook paragraph with a one-line hook (Workers AI output,
+     or a line set in /admin/) before rendering. A `share_hook` front-matter
+     value is printed here instead and the Function leaves it alone.
+
+     Not linked from the site and served with X-Robots-Tag: noindex
+     (static/_headers). Self-contained apart from the two Google fonts, so it
+     renders the same from any origin. */ -}}
+{{- $info := partial "og-card-info.html" . -}}
+{{- $authors := .Params.authors | default (slice site.Params.defaultAuthor) -}}
+{{- $postNumber := 0 -}}
+{{- if eq .Type "posts" -}}
+  {{- range $i, $p := where site.RegularPages.ByDate "Type" "posts" -}}
+    {{- if eq $p.Permalink $.Permalink }}{{ $postNumber = add $i 1 }}{{ break }}{{ end -}}
+  {{- end -}}
+{{- end -}}
+<!doctype html>
+<html lang="{{ site.LanguageCode | default "en" }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1200">
+<meta name="robots" content="noindex, nofollow">
+<meta name="og-card-version" content="{{ $info.version }}">
+<title>{{ $info.title }} | share card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gelasio:ital,wght@0,400;0,600;1,400&family=Joan&display=block">
+<style>
+  :root {
+    --paper: #fdfcf8;
+    --ink: #1c1a17;
+    --muted: #5c574f;
+    --rule: #a8a39a;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--paper); }
+  body { color: var(--ink); font-family: Gelasio, Georgia, "Times New Roman", serif; }
+  .card {
+    width: 1200px; height: 630px;
+    padding: 56px 72px 52px;
+    display: flex; flex-direction: column; gap: 28px;
+  }
+  .top { display: flex; align-items: flex-end; justify-content: space-between; }
+  .brand { font-family: Joan, Gelasio, serif; font-size: 34px; letter-spacing: .12em; line-height: 1; }
+  .brand::after {
+    /* The double rule from the site logo (static/images/card.jpeg). */
+    content: ""; display: block; margin-top: 10px; height: 7px;
+    border-top: 3px solid var(--rule); border-bottom: 3px solid var(--ink);
+  }
+  .kind {
+    font-size: 20px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .body { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 24px; overflow: hidden; }
+  .body > * { flex-shrink: 0; }
+  .title {
+    font-weight: 600; font-size: 84px; line-height: 1.06; letter-spacing: -.01em;
+    text-wrap: balance; overflow-wrap: anywhere;
+  }
+  .hook {
+    font-style: italic; font-size: 34px; line-height: 1.3; color: var(--muted);
+    padding-left: 24px; border-left: 4px solid var(--ink);
+    text-wrap: pretty;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  }
+  .hook:empty { display: none; }
+  .foot { display: flex; align-items: center; gap: 20px; padding-top: 22px; border-top: 1px solid var(--rule); }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+  .byline { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .who { font-size: 26px; font-weight: 600; }
+  .when { font-size: 22px; color: var(--muted); }
+  .site { font-family: Joan, Gelasio, serif; font-size: 30px; }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="top">
+    <span class="brand">AI FOCUS</span>
+    <span class="kind">{{ if gt $postNumber 0 }}Essay #{{ $postNumber | printf "%03d" }}{{ else if eq .Section "tutorials" }}Training{{ else }}Essay{{ end }}</span>
+  </div>
+  <div class="body" id="body">
+    <h1 class="title" id="title">{{ $info.title }}</h1>
+    {{- with .Params.share_hook }}
+    <p class="hook" id="hook" data-fixed>{{ . | plainify }}</p>
+    {{- else }}
+    <p class="hook" id="hook" data-og-hook></p>
+    {{- end }}
+  </div>
+  <div class="foot">
+    {{- with index $authors 0 | printf "images/%s.png" | resources.Get }}
+      {{- with .Fill "128x128 Center webp q85" }}
+    <img class="avatar" src="data:image/webp;base64,{{ .Content | base64Encode }}" alt="">
+      {{- end }}
+    {{- end }}
+    <div class="byline">
+      <span class="who">{{ partial "author-names.html" $authors }}</span>
+      <span class="when">{{ .Date | time.Format ":date_long" }} · {{ .ReadingTime }} min read</span>
+    </div>
+    <span class="site">aifoc.us</span>
+  </div>
+</main>
+<script>
+  // Shrink the title (then the hook) until the middle block fits, after the
+  // web fonts load; Browser Run waits for html.ready before the screenshot.
+  (async () => {
+    try { await document.fonts.ready; } catch {}
+    const body = document.getElementById("body");
+    const title = document.getElementById("title");
+    const hook = document.getElementById("hook");
+    // Children do not shrink, so compare their stacked height with the box.
+    const fits = () =>
+      title.offsetHeight + (hook.offsetHeight ? hook.offsetHeight + 24 : 0) <= body.clientHeight;
+    let size = 84;
+    while (!fits() && size > 44) title.style.fontSize = `${size -= 4}px`;
+    let hookSize = 34;
+    while (!fits() && hookSize > 24) hook.style.fontSize = `${hookSize -= 2}px`;
+    document.documentElement.classList.add("ready");
+  })();
+</script>
+</body>
+</html>

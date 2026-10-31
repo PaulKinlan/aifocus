@@ -9,6 +9,9 @@ theme = 'aifocustheme'
   about = "Hello, I'm [Paul Kinlan](https://paul.kinlan.me/), a Developer Advocate on Chrome and a Web Developer. There's a significant shift in the industry driven by AI, and I'm developing an opinion through a collection of essays and projects on how AI is changing the medium of the web and web development at large."
   defaultAuthor = "paulkinlan"
   images = ['/images/card.jpeg']
+  # Bump to re-render every per-essay share card (changes the og:image ?v=
+  # hash). See layouts/page.ogcard.html and functions/og/[[path]].js.
+  ogCardVersion = '1'
 [params.authors]
 [params.authors.paulkinlan]
   name = "Paul Kinlan"
@@ -44,6 +47,15 @@ theme = 'aifocustheme'
     isPlainText = true
     permalinkable = true
     baseName = 'index'
+  # 1200x630 share-card page for each essay. Not linked from the site; a Pages
+  # Function screenshots it with Browser Run to make the og:image.
+  [outputFormats.ogcard]
+    name = 'ogcard'
+    mediaType = 'text/html'
+    isHTML = true
+    baseName = 'og-card'
+    notAlternative = true
+    noUgly = true
   [outputFormats.latest]
     name = 'latest'
     mediaType = 'text/plain'
@@ -56,3 +68,10 @@ theme = 'aifocustheme'
   section = ['html', 'rss']
   taxonomy = ['html']
   term = ['html', 'rss']
+
+# Essays and tutorials also get the share-card page (outputFormats.ogcard).
+[[cascade]]
+  outputs = ['html', 'markdown', 'ogcard']
+  [cascade.target]
+    kind = 'page'
+    path = '{/posts/**,/tutorials/**}'

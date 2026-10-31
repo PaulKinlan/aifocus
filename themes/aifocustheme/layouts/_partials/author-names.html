@@ -1,0 +1,10 @@
+{{/* Plain-text author names for a list of author keys ("Paul Kinlan and Andre
+     Cipriani Bandarra"). Falls back to the key when an author is not in
+     params.authors. */}}
+{{- $names := slice }}
+{{- range . }}
+  {{- $name := . }}
+  {{- with index site.Params.authors . }}{{ with .name }}{{ $name = . }}{{ end }}{{ end }}
+  {{- $names = $names | append $name }}
+{{- end }}
+{{- return delimit $names ", " " and " }}
