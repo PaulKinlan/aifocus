@@ -140,8 +140,13 @@ export async function resolveHook(env, origin, pagePath, html) {
     const markdown = md.ok ? await md.text() : "";
     const hook = await generateHook(env, cardTitle(html), markdown);
     if (!hook) return { hook: "", stored: false };
-    if (env?.READER_DB) {
+    // Keep the generated hook for this render even if it cannot be saved; the
+    // PNG is only stored once the hook is, so the two never disagree.
+    try {
       await writeHook(env.READER_DB, pagePath, hook, "ai", env.OG_HOOK_MODEL || DEFAULT_HOOK_MODEL);
+    } catch (err) {
+      console.error("og hook write", pagePath, err?.message || err);
+      return { hook, stored: false };
     }
     return { hook, stored: true };
   } catch (err) {

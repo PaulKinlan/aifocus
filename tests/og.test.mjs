@@ -170,6 +170,15 @@ test("a Workers AI failure still renders, but the card is not stored", async () 
   assert.equal(calls.screenshots.length, 1);
 });
 
+test("a generated hook is still printed when D1 cannot save it, and the card is not stored", async () => {
+  const { env, calls } = makeEnv();
+  env.READER_DB = createD1([]); // no og_hooks table, as before the migration is applied
+  const res = await run(env);
+  assert.equal(res.headers.get("X-Og-Card"), "rendered, not stored");
+  assert.match(calls.screenshots[0].options.html, /One agent loop now runs/);
+  assert.equal(env.OG_CARDS.store.size, 0);
+});
+
 test("render failures and unknown pages fall back to the site card", async () => {
   let { env } = makeEnv({ browser: () => new Response("boom", { status: 500 }) });
   let res = await run(env);
