@@ -1,10 +1,24 @@
 name = "aifocus"
 pages_build_output_dir = "public"
+# quickAction() on the Browser Run binding needs 2026-03-24 or later. Set
+# here for the first time on 2026-10-31; before this the project used the
+# date chosen in the Pages dashboard.
+compatibility_date = "2026-10-01"
 
 # Workers AI binding. Used by functions/api/search.js to query the
 # `aifocus-search` AI Search instance through env.AI.autorag().
 [ai]
 binding = "AI"
+
+# Browser Run (formerly Browser Rendering). functions/og/[[path]].js
+# screenshots each essay's og-card.html into its share image.
+[browser]
+binding = "BROWSER"
+
+# Rendered share cards, keyed cards/<page path>/<card version>.png.
+[[r2_buckets]]
+binding = "OG_CARDS"
+bucket_name = "aifocus-og"
 
 # Reader responses (reactions, highlights, notes, comments).
 # Schema: migrations/. Apply with:

@@ -1,0 +1,45 @@
+{{/* Open Graph and Twitter/X card tags. Replaces Hugo's _internal/opengraph.html
+     and _internal/twitter_cards.html, which on this site emitted no og:title or
+     twitter:title and pointed every page at the same /images/card.jpeg.
+
+     Essays and tutorials point og:image at /og/<path>.png, a 1200x630 card
+     made by functions/og/[[path]].js from the page's og-card.html output.
+     Every other page keeps the site card. Called with
+     (dict "page" . "desc" $desc) from head.html. */}}
+{{- $page := .page }}
+{{- $info := partial "og-card-info.html" $page }}
+{{- $title := cond $page.IsHome site.Title $info.title }}
+{{- $desc := .desc | plainify | strings.TrimSpace | truncate 200 }}
+<meta property="og:url" content="{{ $page.Permalink }}">
+<meta property="og:site_name" content="{{ site.Title }}">
+<meta property="og:title" content="{{ $title }}">
+<meta property="og:description" content="{{ $desc }}">
+<meta property="og:locale" content="{{ site.LanguageCode | replaceRE "-" "_" }}">
+{{- if $page.IsPage }}
+<meta property="og:type" content="article">
+<meta property="article:section" content="{{ $page.Section }}">
+{{- with $page.PublishDate }}
+<meta property="article:published_time" content="{{ .Format "2006-01-02T15:04:05-07:00" }}">
+{{- end }}
+{{- with $page.Lastmod }}
+<meta property="article:modified_time" content="{{ .Format "2006-01-02T15:04:05-07:00" }}">
+{{- end }}
+{{- else }}
+<meta property="og:type" content="website">
+{{- end }}
+<meta property="og:image" content="{{ $info.image }}">
+<meta property="og:image:width" content="{{ $info.width }}">
+<meta property="og:image:height" content="{{ $info.height }}">
+<meta property="og:image:alt" content="{{ $info.alt }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ $title }}">
+<meta name="twitter:description" content="{{ $desc }}">
+<meta name="twitter:image" content="{{ $info.image }}">
+<meta name="twitter:image:alt" content="{{ $info.alt }}">
+{{- $authorKey := index ($page.Params.authors | default (slice site.Params.defaultAuthor)) 0 }}
+{{- with index site.Params.authors $authorKey }}{{ with .twitter }}
+{{- $handle := . | replaceRE `^https?://(www\.)?(x|twitter)\.com/` "" | strings.TrimSuffix "/" }}
+{{- if findRE `^[A-Za-z0-9_]{1,15}$` $handle }}
+<meta name="twitter:creator" content="@{{ $handle }}">
+{{- end }}
+{{- end }}{{ end }}

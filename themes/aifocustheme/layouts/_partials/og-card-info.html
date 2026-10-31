@@ -1,0 +1,53 @@
+{{/* Share-card facts for a page, shared by the social meta tags (social.html)
+     and the card page itself (page.ogcard.html).
+
+     Returns a dict:
+       card     true when the page has a per-essay card (posts and tutorials)
+       title    the visible title, trimmed and plain
+       postNumber, authorNames  as printed on the card
+       version  short hash of everything printed on the card; it goes in the
+                og:image URL (?v=) so a changed title, date, reading time,
+                author or share_hook gives the card a new URL, which makes
+                social platforms fetch it again, and in the card page so the
+                Function can key the stored PNG on it
+       image    absolute og:image URL
+       width, height, alt
+*/}}
+{{- $page := . }}
+{{- $title := $page.Title | plainify | strings.TrimSpace | default site.Title }}
+{{- $card := and $page.IsPage (in (slice "posts" "tutorials") $page.Section) }}
+{{- $authors := $page.Params.authors | default (slice site.Params.defaultAuthor) }}
+{{- $info := dict "card" false "title" $title }}
+{{- if $card }}
+  {{- $postNumber := 0 }}
+  {{- if eq $page.Type "posts" }}
+    {{- range $i, $p := where site.RegularPages.ByDate "Type" "posts" }}
+      {{- if eq $p.Permalink $page.Permalink }}{{ $postNumber = add $i 1 }}{{ break }}{{ end }}
+    {{- end }}
+  {{- end }}
+  {{- $authorNames := partial "author-names.html" $authors }}
+  {{- $facts := slice $title ($page.Date.Format "2006-01-02") (string $page.ReadingTime) $authorNames (string $postNumber) (string ($page.Params.share_hook | default "")) (string (site.Params.ogCardVersion | default "1")) }}
+  {{- $version := strings.Substr (delimit $facts "|" | md5) 0 10 }}
+  {{- $path := $page.RelPermalink | strings.TrimPrefix "/" | strings.TrimSuffix "/" }}
+  {{- $info = dict
+      "card" true
+      "title" $title
+      "version" $version
+      "postNumber" $postNumber
+      "authorNames" $authorNames
+      "image" (printf "og/%s.png?v=%s" $path $version | absURL)
+      "width" 1200
+      "height" 630
+      "alt" (printf "%s, an essay on AI Focus by %s" $title $authorNames)
+  }}
+{{- else }}
+  {{- $info = dict
+      "card" false
+      "title" $title
+      "image" (index site.Params.images 0 | absURL)
+      "width" 2816
+      "height" 1536
+      "alt" "AI Focus, aifoc.us"
+  }}
+{{- end }}
+{{- return $info }}

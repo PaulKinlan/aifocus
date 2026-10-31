@@ -183,6 +183,77 @@ const loadAccounts = async () => {
   statusEl.textContent = `Signed in as ${data.moderator}. ${plural(data.total)}.${found}${shown}`;
 };
 
+// Share cards: the hook line printed under each essay's title on its og:image.
+const cardUrl = (path) => `/og/${path.replace(/^\/|\/$/g, "")}.png`;
+
+const renderCard = (item) => {
+  const li = document.createElement("li");
+  li.className = "mod-item";
+  const meta = document.createElement("p");
+  meta.className = "mod-meta";
+  const link = document.createElement("a");
+  link.href = item.path;
+  link.textContent = item.title || item.path;
+  const source = document.createElement("span");
+  source.textContent = item.source === "manual"
+    ? "Set by hand"
+    : item.source === "ai"
+      ? `Workers AI${item.model ? ` (${item.model.replace(/^@cf\//, "")})` : ""}`
+      : "No hook yet: one is generated the first time the card is requested";
+  const preview = document.createElement("a");
+  // The query only defeats the browser cache after an edit; the Function
+  // ignores it when it looks up the stored image.
+  preview.href = `${cardUrl(item.path)}?t=${item.updated_at || Date.now()}`;
+  preview.target = "_blank";
+  preview.rel = "noopener";
+  preview.textContent = "Open card";
+  meta.append(link, source, preview);
+
+  const label = document.createElement("label");
+  label.className = "visually-hidden";
+  label.htmlFor = `og-${item.path}`;
+  label.textContent = `Hook for ${item.title}`;
+  const input = document.createElement("textarea");
+  input.className = "og-hook";
+  input.id = `og-${item.path}`;
+  input.rows = 2;
+  input.maxLength = 140;
+  input.value = item.hook;
+  input.placeholder = "One line shown under the title on the share image";
+
+  const actions = document.createElement("div");
+  actions.className = "mod-actions";
+  const save = document.createElement("button");
+  save.type = "button";
+  save.textContent = "Save hook";
+  save.addEventListener("click", () => saveCard({ path: item.path, hook: input.value }));
+  const regen = document.createElement("button");
+  regen.type = "button";
+  regen.textContent = "Generate a new one";
+  regen.addEventListener("click", () => saveCard({ path: item.path, regenerate: true }));
+  actions.append(save, regen);
+  li.append(meta, label, input, actions);
+  return li;
+};
+
+const loadCards = async () => {
+  const data = await api("/api/admin/og");
+  list.replaceChildren(...data.items.map(renderCard));
+  statusEl.textContent = `Signed in as ${data.moderator}. Saving or regenerating deletes the stored image; the next request renders a new one. Platforms that already fetched the old image keep it until they fetch again.`;
+};
+
+const saveCard = async (body) => {
+  try {
+    const out = await api("/api/admin/og", { method: "POST", body: JSON.stringify(body) });
+    await load();
+    statusEl.textContent = out.source
+      ? `Saved the hook for ${out.path}.`
+      : `Cleared the hook for ${out.path}. Open the card to generate a new one.`;
+  } catch (err) {
+    statusEl.textContent = `Could not update: ${err.message}`;
+  }
+};
+
 const load = async () => {
   statusEl.textContent = "Loading…";
   searchForm.hidden = current !== "accounts";
@@ -193,6 +264,10 @@ const load = async () => {
     }
     if (current === "accounts") {
       await loadAccounts();
+      return;
+    }
+    if (current === "og") {
+      await loadCards();
       return;
     }
     const data = await api(`/api/admin/queue?status=${current}`);

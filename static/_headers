@@ -44,3 +44,8 @@
 /admin/*
   X-Robots-Tag: noindex, nofollow
   Cache-Control: no-store
+
+# Share-card pages exist only to be screenshotted into og:image
+# (functions/og/[[path]].js); keep them out of search results.
+/*/og-card.html
+  X-Robots-Tag: noindex, nofollow

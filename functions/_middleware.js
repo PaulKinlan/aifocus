@@ -28,6 +28,7 @@ const RESERVED_ROOTS = new Set([
   "functions",
   "images",
   "js",
+  "og",
   "posts",
   "search",
   "static",
