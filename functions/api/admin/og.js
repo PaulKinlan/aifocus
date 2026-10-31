@@ -70,7 +70,12 @@ export async function onRequestPost({ request, env }) {
     if (!hook) return json({ error: "Hook is empty" }, 400);
     await writeHook(db, path, hook, "manual");
   }
-  const purged = await purgeCards(env?.OG_CARDS, path).catch(() => 0);
+  // Stored PNGs are keyed by their hook, so a changed hook is never served
+  // from an old image; purging only frees the space and can safely fail.
+  const purged = await purgeCards(env?.OG_CARDS, path).catch((err) => {
+    console.error("og purge", path, err?.message || err);
+    return null;
+  });
   const row = await db.prepare("SELECT hook, source FROM og_hooks WHERE path = ?").bind(path).first();
   return json({ path, hook: row?.hook || "", source: row?.source || null, purged });
 }

@@ -9,6 +9,8 @@ import {
   fillHook,
   cleanHook,
   r2Key,
+  hookTag,
+  writeHook,
   serveCard,
   HOOK_MAX_CHARS,
 } from "../functions/_lib/og.js";
@@ -136,12 +138,41 @@ test("first request renders with a Workers AI hook, stores it in D1 and R2; late
 
   const row = env.READER_DB.raw.prepare("SELECT hook, source FROM og_hooks WHERE path = ?").get(PAGE);
   assert.equal(row.source, "ai");
-  assert.ok(env.OG_CARDS.store.has(r2Key(PAGE, "d6cf95e357")));
+  assert.ok(env.OG_CARDS.store.has(r2Key(PAGE, "d6cf95e357", await hookTag(row.hook))));
 
   res = await run(env);
   assert.equal(res.headers.get("X-Og-Card"), "stored");
   assert.equal(calls.ai, 1);
   assert.equal(calls.screenshots.length, 1);
+});
+
+test("an AI hook never replaces a hook set in /admin/ while it was being generated", async () => {
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      // An admin saves a hook while the model call is in flight.
+      await writeHook(env.READER_DB, PAGE, "Written by hand", "manual");
+      return { response: "Model line" };
+    },
+  });
+  const res = await run(env);
+  assert.equal(res.headers.get("X-Og-Card"), "rendered");
+  const row = env.READER_DB.raw.prepare("SELECT hook, source FROM og_hooks WHERE path = ?").get(PAGE);
+  assert.deepEqual({ ...row }, { hook: "Written by hand", source: "manual" });
+  assert.match(calls.screenshots[0].options.html, /Written by hand/);
+});
+
+test("a PNG stored under an old hook is not served after the hook changes", async () => {
+  const { env, calls } = makeEnv();
+  await run(env);
+  assert.equal(calls.screenshots.length, 1);
+  // Change the hook without purging R2, as if the purge failed or a slow
+  // render wrote the old image back afterwards.
+  await writeHook(env.READER_DB, PAGE, "A new line", "manual");
+  const res = await run(env);
+  assert.equal(res.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 2);
+  assert.match(calls.screenshots[1].options.html, /A new line/);
+  assert.equal((await run(env)).headers.get("X-Og-Card"), "stored");
 });
 
 test("a share_hook in front matter skips Workers AI", async () => {

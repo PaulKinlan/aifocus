@@ -37,8 +37,17 @@ export function pagePathFromSegments(segments) {
   return `/${parts.join("/")}/`;
 }
 
-export function r2Key(pagePath, version) {
-  return `cards${pagePath}${version}.png`;
+// The key names the card version and the hook it was drawn with, so a PNG
+// rendered with an old hook can never be served once the hook changes, even if
+// a slow render writes it after /admin/ purged the page.
+export function r2Key(pagePath, version, hookTag = "none") {
+  return `cards${pagePath}${version}-${hookTag}.png`;
+}
+
+export async function hookTag(hook) {
+  if (!hook) return "none";
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hook));
+  return [...new Uint8Array(digest).slice(0, 5)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 export function r2Prefix(pagePath) {
@@ -110,12 +119,17 @@ export async function readHook(db, pagePath) {
   }
 }
 
+// Manual hooks replace whatever is stored. AI hooks are only inserted when no
+// row exists, so a generation that finishes after an /admin/ edit cannot undo it.
 export async function writeHook(db, pagePath, hook, source, model = null) {
+  const onConflict = source === "manual"
+    ? `DO UPDATE SET hook = excluded.hook, source = excluded.source,
+         model = excluded.model, updated_at = excluded.updated_at`
+    : "DO NOTHING";
   await db
     .prepare(
       `INSERT INTO og_hooks (path, hook, source, model, updated_at) VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(path) DO UPDATE SET hook = excluded.hook, source = excluded.source,
-         model = excluded.model, updated_at = excluded.updated_at`,
+       ON CONFLICT(path) ${onConflict}`,
     )
     .bind(pagePath, hook, source, model, Date.now())
     .run();
@@ -129,12 +143,10 @@ export async function generateHook(env, title, markdown) {
   return cleanHook(text || "");
 }
 
-// Returns { hook, stored } where stored says whether the hook is durable
-// (so the rendered PNG may be kept in R2).
-export async function resolveHook(env, origin, pagePath, html) {
-  if (hasFixedHook(html)) return { hook: "", stored: true };
-  const row = await readHook(env?.READER_DB, pagePath);
-  if (row?.hook) return { hook: row.hook, stored: true };
+// Asks Workers AI for a hook and saves it if the page still has none.
+// Returns { hook, stored }: the hook to print (the saved row wins over the
+// generated text) and whether it is durable, so the PNG may be kept in R2.
+export async function generateAndSaveHook(env, origin, pagePath, html) {
   try {
     const md = await env.ASSETS.fetch(new Request(new URL(`${pagePath}index.md`, origin)));
     const markdown = md.ok ? await md.text() : "";
@@ -144,11 +156,12 @@ export async function resolveHook(env, origin, pagePath, html) {
     // PNG is only stored once the hook is, so the two never disagree.
     try {
       await writeHook(env.READER_DB, pagePath, hook, "ai", env.OG_HOOK_MODEL || DEFAULT_HOOK_MODEL);
+      const row = await env.READER_DB.prepare("SELECT hook FROM og_hooks WHERE path = ?").bind(pagePath).first();
+      if (row?.hook) return { hook: row.hook, stored: true };
     } catch (err) {
       console.error("og hook write", pagePath, err?.message || err);
-      return { hook, stored: false };
     }
-    return { hook, stored: true };
+    return { hook, stored: false };
   } catch (err) {
     console.error("og hook", pagePath, err?.message || err);
     return { hook: "", stored: false };
@@ -226,10 +239,14 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
   }
   const version = cardVersion(html);
   if (!version) return fallback(origin, "no card version");
-  const key = r2Key(pagePath, version);
 
+  // A share_hook in front matter is already in the page; otherwise use the
+  // saved hook, if there is one, to find the stored PNG.
+  const fixed = hasFixedHook(html);
+  const row = fixed ? null : await readHook(env?.READER_DB, pagePath);
   const bucket = env?.OG_CARDS;
-  if (bucket) {
+  if (bucket && (fixed || row?.hook)) {
+    const key = r2Key(pagePath, version, await hookTag(fixed ? "" : row.hook));
     try {
       const hit = await bucket.get(key);
       if (hit) return new Response(hit.body, { headers: pngHeaders({ "X-Og-Card": "stored" }) });
@@ -239,7 +256,12 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
   }
 
   try {
-    const { hook, stored } = await resolveHook(env, origin, pagePath, html);
+    const { hook, stored } = fixed
+      ? { hook: "", stored: true }
+      : row?.hook
+        ? { hook: row.hook, stored: true }
+        : await generateAndSaveHook(env, origin, pagePath, html);
+    const key = r2Key(pagePath, version, await hookTag(hook));
     const png = await screenshot(env, fillHook(html, hook));
     if (bucket && stored) {
       waitUntil(

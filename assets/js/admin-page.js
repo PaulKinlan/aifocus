@@ -201,7 +201,9 @@ const renderCard = (item) => {
       ? `Workers AI${item.model ? ` (${item.model.replace(/^@cf\//, "")})` : ""}`
       : "No hook yet: one is generated the first time the card is requested";
   const preview = document.createElement("a");
-  preview.href = cardUrl(item.path);
+  // The query only defeats the browser cache after an edit; the Function
+  // ignores it when it looks up the stored image.
+  preview.href = `${cardUrl(item.path)}?t=${item.updated_at || Date.now()}`;
   preview.target = "_blank";
   preview.rel = "noopener";
   preview.textContent = "Open card";

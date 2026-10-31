@@ -10,12 +10,7 @@
      renders the same from any origin. */ -}}
 {{- $info := partial "og-card-info.html" . -}}
 {{- $authors := .Params.authors | default (slice site.Params.defaultAuthor) -}}
-{{- $postNumber := 0 -}}
-{{- if eq .Type "posts" -}}
-  {{- range $i, $p := where site.RegularPages.ByDate "Type" "posts" -}}
-    {{- if eq $p.Permalink $.Permalink }}{{ $postNumber = add $i 1 }}{{ break }}{{ end -}}
-  {{- end -}}
-{{- end -}}
+{{- $postNumber := $info.postNumber -}}
 <!doctype html>
 <html lang="{{ site.LanguageCode | default "en" }}">
 <head>
@@ -95,7 +90,7 @@
       {{- end }}
     {{- end }}
     <div class="byline">
-      <span class="who">{{ partial "author-names.html" $authors }}</span>
+      <span class="who">{{ $info.authorNames }}</span>
       <span class="when">{{ .Date | time.Format ":date_long" }} · {{ .ReadingTime }} min read</span>
     </div>
     <span class="site">aifoc.us</span>
