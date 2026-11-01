@@ -230,22 +230,36 @@ def main():
 
 
 def write_csv(series, tasks, raw, run_date):
+    """Write this run's rows. A CSV for the same run date (an earlier run today,
+    or a run limited with --tool) is merged, not replaced: its rows for other
+    tools and periods are kept, and a re-measured tool+period takes the new value."""
     out = os.path.join(DATA_DIR, f"{series['file_prefix']}-{run_date}.csv")
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    rows = 0
+    header = ["tool", "period_start", "period_end", "granularity", "total_count", "url", "samples"]
+    rows = {}
+    if os.path.exists(out):
+        with open(out, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                rows[(row["tool"], row["period_start"])] = [row.get(h, "") for h in header]
+    kept = len(rows)
+    new = 0
+    for tool, s, e in tasks:
+        vals = sorted(v for v in raw.get(f"{tool['name']}|{s}..{e}", []) if v is not None)
+        if not vals:
+            continue
+        median = vals[len(vals) // 2]
+        query = f"{tool['query']} {series['date_field']}:{s}..{e}".strip()
+        if (tool["name"], s) in rows:
+            kept -= 1
+        rows[(tool["name"], s)] = [tool["name"], s, e, series["granularity"], median,
+                                   web_search_url(series["search"], query), json.dumps(vals)]
+        new += 1
     with open(out, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
-        w.writerow(["tool", "period_start", "period_end", "granularity", "total_count", "url", "samples"])
-        for tool, s, e in tasks:
-            vals = sorted(v for v in raw.get(f"{tool['name']}|{s}..{e}", []) if v is not None)
-            if not vals:
-                continue
-            median = vals[len(vals) // 2]
-            query = f"{tool['query']} {series['date_field']}:{s}..{e}".strip()
-            w.writerow([tool["name"], s, e, series["granularity"], median,
-                        web_search_url(series["search"], query), json.dumps(vals)])
-            rows += 1
-    log(f"wrote {rows} rows to {os.path.relpath(out, ROOT)}")
+        w.writerow(header)
+        for key in sorted(rows, key=lambda k: (k[1], k[0])):
+            w.writerow(rows[key])
+    log(f"wrote {new} rows to {os.path.relpath(out, ROOT)}" + (f" (kept {kept} rows already in the file)" if kept else ""))
 
 
 if __name__ == "__main__":

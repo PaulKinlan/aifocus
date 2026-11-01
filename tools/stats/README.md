@@ -79,6 +79,10 @@ commit stay manual.
 3. Add `claims` for the figures the essay states, with the period they refer to.
    Set `"cumulative": false` on a series whose values are levels (origins, a
    share) rather than counts per period, so no running total is shown.
+   Set `"show_partial": false` to leave incomplete periods out of the chart,
+   table and derived series instead of drawing them as hollow points (the
+   row stays in the CSV; `total-commits` does this because a five-day week
+   reads as a collapse next to full weeks).
 4. Run the collector (or write the manual CSV), then `python3 tools/stats/build.py`.
 
 ## Sources that still need a hand

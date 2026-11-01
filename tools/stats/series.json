@@ -184,6 +184,7 @@
       "unit": "commits per week",
       "file_prefix": "total-commits-weekly",
       "resample": 2,
+      "show_partial": false,
       "primary": "All commits",
       "tools": [
         {

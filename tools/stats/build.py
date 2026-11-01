@@ -156,6 +156,11 @@ def load_series(series):
             partial = False
             if series["granularity"] in ("weekly", "monthly"):
                 partial = pdate(e) < expected_end(s, series["granularity"]) or pdate(e) >= pdate(rd)
+            # "show_partial": false drops incomplete periods from the series
+            # altogether (chart, table, derived series), instead of drawing
+            # them as hollow points. The row stays in the published CSV.
+            if partial and series.get("show_partial", True) is False:
+                continue
             pt = points.setdefault(tool, {}).get(s)
             if pt is None or rd >= pt["run"]:
                 points[tool][s] = {"s": s, "e": e, "v": v, "partial": partial, "url": url, "run": rd,
