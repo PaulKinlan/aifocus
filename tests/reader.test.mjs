@@ -182,15 +182,28 @@ test("reactions: survive a functions deploy that runs before migration 0005", as
   // The reactions table has no ip_hash column yet: writes must not 500.
   let res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
   assert.equal(res.status, 200);
-  // Rate limiting degrades to the per-reader count rather than disappearing:
-  // seed 30 annotation rows for this reader, then the next write is limited.
+  // The degraded limiter is a GLOBAL cap, not the per-reader bucket: rows
+  // written by a different reader trip the limit for this one too.
   const now = Date.now();
   for (let i = 0; i < 30; i += 1) {
     await env.READER_DB.prepare(
       "INSERT INTO annotations (id, post, reader, type, status, created_at) VALUES (?, ?, ?, 'comment', 'approved', ?)",
-    ).bind(`seed${i}`, POST, READER_A, now).run();
+    ).bind(`seed${i}`, POST, READER_B, now).run();
   }
   res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
+  assert.equal(res.status, 429);
+});
+
+test("reactions: an unexpected database error fails the rate limit closed", async () => {
+  const env = makeEnv();
+  const inner = env.READER_DB.prepare.bind(env.READER_DB);
+  env.READER_DB.prepare = (sql) => {
+    // Anything other than the known missing-column case: the limiter must
+    // deny writes rather than silently run per-reader only.
+    if (sql.includes("AS by_reader")) throw new Error("disk I/O error");
+    return inner(sql);
+  };
+  const res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
   assert.equal(res.status, 429);
 });
 

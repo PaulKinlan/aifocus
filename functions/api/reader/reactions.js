@@ -60,9 +60,12 @@ export async function onRequestPost({ request, env }) {
         .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, ip_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)")
         .bind(post, kind, reader.id, user?.id ?? null, ipHash, now)
         .run();
-    } catch {
+    } catch (err) {
+      if (!/no such column|has no column named/i.test(err?.message ?? "")) throw err;
       // Migration 0005 not applied yet: write without the ip_hash column
-      // rather than failing the reaction.
+      // rather than failing the reaction. The degraded limiter above counts
+      // these rows in its global bucket, so they stay visible to it.
+      console.error("reaction write degraded: reactions.ip_hash missing; apply D1 migration 0005");
       await db
         .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
         .bind(post, kind, reader.id, user?.id ?? null, now)

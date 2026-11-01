@@ -184,19 +184,27 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
       .bind(reader, key, since)
       .first();
     return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
-  } catch {
-    // Migration 0005 not applied yet (functions deployed before the D1
-    // migration): degrade to the per-reader count instead of failing every
-    // annotations/reactions write with "no such column".
-    const row = await db
-      .prepare(
-        `SELECT
-           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?2) +
-           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?2) AS by_reader`,
-      )
-      .bind(reader, since)
-      .first();
-    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour;
+  } catch (err) {
+    if (/no such column|has no column named/i.test(err?.message ?? "")) {
+      // Migration 0005 not applied yet (functions deployed before the D1
+      // migration): degrade to a global cap across ALL readers and IPs - never
+      // to the per-reader bucket alone, which a cookie-rotating client
+      // controls - and make the degradation visible in the logs.
+      console.error("rate-limit degraded: reactions.ip_hash missing; apply D1 migration 0005");
+      const row = await db
+        .prepare(
+          `SELECT (SELECT COUNT(*) FROM annotations WHERE created_at > ?1) +
+                  (SELECT COUNT(*) FROM reactions WHERE created_at > ?1) AS all_writes`,
+        )
+        .bind(since)
+        .first();
+      return (row?.all_writes ?? LIMITS.writesPerHour) >= LIMITS.writesPerHour;
+    }
+    // Any other database error: fail closed. Silently answering with the
+    // per-reader count would switch the security control off while the
+    // endpoint keeps working - the same class of bug as the original bypass.
+    console.error("rate-limit fail-closed: isRateLimited query failed", err);
+    return true;
   }
 }
 
