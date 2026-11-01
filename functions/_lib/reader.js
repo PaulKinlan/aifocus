@@ -18,9 +18,11 @@ export const LIMITS = {
   context: 64,
   body: 2000,
   name: 60,
-  // Writes allowed per reader and per client IP in a rolling hour. A request
-  // with no client IP (no CF-Connecting-IP header) shares one bucket, so a
-  // missing IP never means "no limit".
+  // Writes allowed per reader (best effort, live rows) and per client IP
+  // (write EVENTS in the append-only write_events ledger, so on/off toggles
+  // and deletes cannot erase the count) in a rolling hour. A request with no
+  // client IP (no CF-Connecting-IP header) shares one bucket, so a missing
+  // IP never means "no limit".
   writesPerHour: 30,
 };
 
@@ -178,19 +180,18 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
         `SELECT
            (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
            (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-           (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) +
-           (SELECT COUNT(*) FROM reactions WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+           (SELECT COUNT(*) FROM write_events WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
       )
       .bind(reader, key, since)
       .first();
     return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
   } catch (err) {
-    if (/no such column|has no column named/i.test(err?.message ?? "")) {
-      // Migration 0005 not applied yet (functions deployed before the D1
-      // migration): degrade to a global cap across ALL readers and IPs - never
-      // to the per-reader bucket alone, which a cookie-rotating client
+    if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
+      // Migrations 0005/0006 not applied yet (functions deployed before the
+      // D1 migrations): degrade to a global cap across ALL readers and IPs -
+      // never to the per-reader bucket alone, which a cookie-rotating client
       // controls - and make the degradation visible in the logs.
-      console.error("rate-limit degraded: reactions.ip_hash missing; apply D1 migration 0005");
+      console.error("rate-limit degraded: write_events/reactions.ip_hash schema missing; apply D1 migrations 0005+0006");
       const row = await db
         .prepare(
           `SELECT (SELECT COUNT(*) FROM annotations WHERE created_at > ?1) +
@@ -205,6 +206,24 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
     // endpoint keeps working - the same class of bug as the original bypass.
     console.error("rate-limit fail-closed: isRateLimited query failed", err);
     return true;
+  }
+}
+
+// Append one write event to the per-IP ledger. The limiter counts these
+// rows, so deleting the underlying reaction/annotation cannot erase the
+// count the way it could when live rows were counted. Skips ONLY for the
+// known missing-table case (pre-migration window, where the degraded global
+// cap applies); anything else propagates.
+export async function recordWriteEvent(db, ipHash, now = Date.now()) {
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    await db.prepare("INSERT INTO write_events (ip_hash, created_at) VALUES (?, ?)").bind(key, now).run();
+  } catch (err) {
+    if (/no such table/i.test(err?.message ?? "")) {
+      console.error("write-event ledger missing; apply D1 migration 0006");
+      return;
+    }
+    throw err;
   }
 }
 

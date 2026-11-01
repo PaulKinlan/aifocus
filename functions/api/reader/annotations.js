@@ -27,6 +27,7 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
+  recordWriteEvent,
   UNKNOWN_IP_BUCKET,
   screenText,
   publicAnnotation,
@@ -127,6 +128,9 @@ export async function onRequestPost({ request, env }) {
       row.body, row.author_name, row.user_id, row.status, row.screen, row.ip_hash, row.created_at,
     )
     .run();
+  // One ledger row per accepted write: the per-IP limiter counts these, so a
+  // deleted annotation cannot erase the count.
+  await recordWriteEvent(db, ipHash, now);
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};
   const shaped = publicAnnotation(

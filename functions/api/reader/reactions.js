@@ -15,6 +15,7 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
+  recordWriteEvent,
   UNKNOWN_IP_BUCKET,
 } from "../../_lib/reader.js";
 import { getSessionUser } from "../../_lib/auth.js";
@@ -45,16 +46,17 @@ export async function onRequestPost({ request, env }) {
   const reader = getReader(request);
   const user = await getSessionUser(request, db);
   const now = Date.now();
+  // The reader cookie is client-controlled, so the per-reader count alone is
+  // bypassable by rotating or dropping the cookie. The per-IP half of
+  // isRateLimited() does the real work here; a missing CF-Connecting-IP
+  // header (local dev) folds into the shared UNKNOWN_IP_BUCKET, so the limit
+  // still applies. Both toggle directions are writes and share the budget:
+  // an unthrottled 'off' would let one client delete and rewrite forever.
+  const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
+  if (await isRateLimited(db, reader.id, ipHash, now)) {
+    return json({ error: "Too many requests. Try again later." }, 429);
+  }
   if (on) {
-    // The reader cookie is client-controlled, so the per-reader count alone is
-    // bypassable by rotating or dropping the cookie. The per-IP half of
-    // isRateLimited() does the real work here; a missing CF-Connecting-IP
-    // header (local dev) folds into the shared UNKNOWN_IP_BUCKET, so the
-    // limit still applies.
-    const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
-    if (await isRateLimited(db, reader.id, ipHash, now)) {
-      return json({ error: "Too many requests. Try again later." }, 429);
-    }
     try {
       await db
         .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, ip_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)")
@@ -77,6 +79,10 @@ export async function onRequestPost({ request, env }) {
       .bind(post, kind, reader.id)
       .run();
   }
+  // One ledger row per accepted write, on or off: the per-IP limiter counts
+  // these, so a delete cannot erase the count the way live rows could.
+  await recordWriteEvent(db, ipHash, now);
+
   const row = await db
     .prepare("SELECT COUNT(*) AS n FROM reactions WHERE post = ? AND kind = ?")
     .bind(post, kind)

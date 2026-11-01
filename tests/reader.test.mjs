@@ -24,7 +24,7 @@ import {
 import { verifyAccess, resetAccessCache } from "../functions/_lib/access.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
-const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql"].map((f) =>
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0006_write_events.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
 );
 // The tree as a functions deploy can find it: before migration 0005 ran.
@@ -175,6 +175,31 @@ test("reactions: a missing client IP still shares a rate-limit bucket", async ()
   // Every header-less write lands in the one shared UNKNOWN_IP_BUCKET.
   const row = env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions WHERE ip_hash = 'unknown'").get();
   assert.equal(row.n, 30);
+});
+
+test("reactions: rate limit counts write events, so on/off toggling cannot outrun it", async () => {
+  const env = makeEnv();
+  // The old limiter counted live rows, so toggling on and off deleted its own
+  // count: 31 on/off pairs from one IP with rotating readers were all accepted.
+  let writes = 0;
+  let tripped = false;
+  for (let i = 0; i < 40 && !tripped; i += 1) {
+    const on = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }), env });
+    if (on.status === 429) { tripped = true; break; }
+    writes += 1;
+    const reader = cookieFrom(on);
+    const off = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful", on: false }, reader }), env });
+    if (off.status === 429) { tripped = true; break; }
+    writes += 1;
+  }
+  // Exactly the 31st write event trips it, whichever direction it is.
+  assert.equal(writes, 30);
+  assert.equal(tripped, true);
+  // Nothing was retained: the ledger counted events, not live rows.
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions").get().n, 0);
+  // The off path is rate limited too, not just the on path.
+  const offAfter = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful", on: false }, reader: READER_A }), env });
+  assert.equal(offAfter.status, 429);
 });
 
 test("reactions: survive a functions deploy that runs before migration 0005", async () => {
