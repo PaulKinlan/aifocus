@@ -566,5 +566,86 @@ test("recentRenders is bypassed when a durable hook exists in D1", async () => {
   assert.equal(calls.screenshots.length, 2, "re-rendered with durable hook instead of serving stale unstored cache");
 });
 
+test("a denied-IP request followed by a fresh-IP request for the same card: the second must render, not 302", async () => {
+  const { env, calls } = makeEnv();
+  const db = env.READER_DB;
+  const exhaustedIp = "203.0.113.150";
+  const freshIp = "203.0.113.151";
+
+  // Pre-seed 30 rows for exhaustedIp so its reservation is denied
+  const exhaustedHash = await hashIp(db, exhaustedIp);
+  for (let i = 0; i < OG_RENDERS_PER_HOUR; i++) {
+    await db.prepare("INSERT INTO og_render_log (ip_hash, created_at) VALUES (?, ?)").bind(exhaustedHash, Date.now()).run();
+  }
+
+  // Request 1: from denied IP -> must return 302 fallback
+  const res1 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": exhaustedIp },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res1.status, 302);
+  assert.equal(res1.headers.get("X-Og-Card"), "fallback: rate limited");
+
+  // Request 2: sequential from fresh IP for the exact same card -> must render (200), not 302!
+  const res2 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": freshIp },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res2.status, 200, "second request from fresh IP must render (200), not 302");
+  assert.equal(res2.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 1, "exactly 1 screenshot rendered for the fresh IP");
+});
+
+test("a hook change followed by a same-second request must not serve the old card", async () => {
+  let hookCounter = 0;
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      hookCounter++;
+      return { response: `Hook version ${hookCounter}` };
+    },
+  });
+  // Schema with no og_hooks table initially so render 1 is unstored and enters recentRenders
+  const partialDb = createD1(["0001_reader.sql", "0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url))));
+  env.READER_DB = partialDb;
+
+  // Render 1: generates hook 1, unstored, cached in recentRenders
+  const res1 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.210" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res1.status, 200);
+  assert.equal(res1.headers.get("X-Og-Card"), "rendered, not stored");
+  assert.equal(calls.screenshots.length, 1);
+  assert.match(calls.screenshots[0].options.html, /Hook version 1/);
+
+  // Hook change: an editor sets a durable hook in D1 immediately (same second)
+  const fullDb = createD1(MIGRATIONS);
+  await writeHook(fullDb, "/agent-do-my-agent-loop/", "Brand new editor hook", "manual");
+  env.READER_DB = fullDb;
+
+  // Render 2: same-second request for the exact same page -> must NOT serve the old card!
+  const res2 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.210" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res2.status, 200);
+  assert.equal(res2.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 2, "second render was triggered instead of serving stale card");
+  assert.match(calls.screenshots[1].options.html, /Brand new editor hook/, "must serve the new hook, not the old hook");
+});
+
+
 
 

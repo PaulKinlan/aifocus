@@ -284,8 +284,10 @@ async function renderCard({ env, origin, pagePath, version, html, fixed, row, bu
       "X-Og-Card": stored ? "rendered" : "rendered, not stored",
       ...(stored ? {} : { "Cache-Control": "public, max-age=300" }),
     });
+    const hookVersion = fixed ? "fixed" : (row?.hook ? await hookTag(row.hook) : "unstored");
+    const cacheKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
     if (!stored) {
-      recentRenders.set(flightKey, {
+      recentRenders.set(cacheKey, {
         png,
         headers,
         expiresAt: Date.now() + UNSTORED_CACHE_TTL_MS,
@@ -330,80 +332,91 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
     }
   }
 
-  const flightKey = `${origin}:${pagePath}:${version}`;
-  if (!fixed && !row?.hook) {
-    const cachedRender = recentRenders.get(flightKey);
-    if (cachedRender) {
-      if (Date.now() < cachedRender.expiresAt) {
-        return new Response(cachedRender.png, { headers: cachedRender.headers });
-      }
-      recentRenders.delete(flightKey);
+  const hookVersion = fixed ? "fixed" : (row?.hook ? await hookTag(row.hook) : "unstored");
+  const cacheKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
+  const cachedRender = recentRenders.get(cacheKey);
+  if (cachedRender) {
+    if (Date.now() < cachedRender.expiresAt) {
+      return new Response(cachedRender.png, { headers: cachedRender.headers });
     }
+    recentRenders.delete(cacheKey);
   }
 
-  let renderPromise = inFlightRenders.get(flightKey);
-  if (!renderPromise) {
-    // Synchronously register the in-flight flight promise before any async work,
+  const flightKey = `${origin}:${pagePath}:${version}`;
+  let flight = inFlightRenders.get(flightKey);
+  if (!flight) {
+    // Synchronously register the in-flight flight before any async work,
     // ensuring concurrent callers for the same card collapse into this flight
     // without executing duplicate quota reservations or renders.
-    renderPromise = (async () => {
-      const db = env?.READER_DB;
-      const now = Date.now();
-      const clientIp = request.headers.get("CF-Connecting-IP");
-      const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
-      const allowed = await reserveOgSlot(db, ipHash, now);
-      if (!allowed) {
-        return fallback(origin, "rate limited");
-      }
+    const creatorIp = request.headers.get("CF-Connecting-IP");
+    flight = {
+      creatorIp,
+      promise: (async () => {
+        const db = env?.READER_DB;
+        const now = Date.now();
+        const ipHash = (db ? await hashIp(db, creatorIp) : null) ?? UNKNOWN_IP_BUCKET;
+        const allowed = await reserveOgSlot(db, ipHash, now);
+        if (!allowed) {
+          // Never leave a denied flight in inFlightRenders: remove immediately
+          // so sequential and subsequent callers do not encounter a stale flight.
+          inFlightRenders.delete(flightKey);
+          return { allowed: false, creatorIp };
+        }
 
-      const controller = new AbortController();
-      let timerId;
-      const timeoutPromise = new Promise((resolve) => {
-        timerId = setTimeout(() => {
+        const controller = new AbortController();
+        let timerId;
+        const timeoutPromise = new Promise((resolve) => {
+          timerId = setTimeout(() => {
+            controller.abort();
+            resolve(fallback(origin, "render timed out"));
+          }, _RENDER_TIMEOUT_MS);
+        });
+
+        try {
+          const resp = await Promise.race([
+            renderCard({
+              env,
+              origin,
+              pagePath,
+              version,
+              html,
+              fixed,
+              row,
+              bucket,
+              waitUntil,
+              flightKey,
+              signal: controller.signal,
+            }),
+            timeoutPromise,
+          ]);
+          return { allowed: true, response: resp };
+        } catch (err) {
           controller.abort();
-          resolve(fallback(origin, "render timed out"));
-        }, _RENDER_TIMEOUT_MS);
-      });
+          console.error("og render error", pagePath, err?.message || err);
+          return { allowed: true, response: fallback(origin, "render failed") };
+        } finally {
+          clearTimeout(timerId);
+        }
+      })().finally(() => {
+        inFlightRenders.delete(flightKey);
+      }),
+    };
 
-      try {
-        return await Promise.race([
-          renderCard({
-            env,
-            origin,
-            pagePath,
-            version,
-            html,
-            fixed,
-            row,
-            bucket,
-            waitUntil,
-            flightKey,
-            signal: controller.signal,
-          }),
-          timeoutPromise,
-        ]);
-      } catch (err) {
-        controller.abort();
-        console.error("og render error", pagePath, err?.message || err);
-        return fallback(origin, "render failed");
-      } finally {
-        clearTimeout(timerId);
-      }
-    })().finally(() => {
-      inFlightRenders.delete(flightKey);
-    });
-
-    inFlightRenders.set(flightKey, renderPromise);
+    inFlightRenders.set(flightKey, flight);
   }
 
   try {
-    const response = await renderPromise;
-    if (response.headers.get("X-Og-Card") === "fallback: rate limited") {
-      // The flight creator was rate-limited. If this caller has quota available,
-      // evaluate its own quota so an exhausted peer does not poison legitimate joiners.
+    const result = await flight.promise;
+    if (!result.allowed) {
+      // The flight creator was rate-limited. Never share a 302 denial across identities!
+      const clientIp = request.headers.get("CF-Connecting-IP");
+      if (clientIp === result.creatorIp) {
+        return fallback(origin, "rate limited");
+      }
+      // This is an innocent joiner whose IP was not evaluated.
+      // Re-evaluate quota for this caller rather than inheriting the creator's denial.
       const db = env?.READER_DB;
       const now = Date.now();
-      const clientIp = request.headers.get("CF-Connecting-IP");
       const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
       const allowed = await reserveOgSlot(db, ipHash, now);
       if (!allowed) {
@@ -411,7 +424,7 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
       }
       return serveCard({ request, env, segments, waitUntil });
     }
-    return response.clone();
+    return result.response.clone();
   } catch (err) {
     console.error("og serveCard error", pagePath, err?.message || err);
     return fallback(origin, "render failed");
