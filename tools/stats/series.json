@@ -457,6 +457,22 @@
       "resample": 1,
       "primary": "Copilot PR Reviewer (commenter)",
       "chart_top": 6,
+      "exclude_from_chart": [
+        "Claude Code (in comments)",
+        "Copilot PR Reviewer (reviewer)",
+        "CodeRabbit (reviewer)",
+        "Codex Connector (reviewer)",
+        "Gemini Code Assist (reviewer)",
+        "Cursor (reviewer)",
+        "Claude (reviewer)",
+        "Sourcery (reviewer)",
+        "Copilot (reviewer)",
+        "Korbit (reviewer)",
+        "Ellipsis (reviewer)",
+        "PR-Agent/CodiumAI (reviewer)",
+        "Qodo (reviewer)",
+        "CodeRabbit (in comments)"
+      ],
       "tools": [
         {
           "name": "Copilot PR Reviewer (commenter)",
@@ -636,13 +652,15 @@
           "name": "PR-Agent/CodiumAI (commenter)",
           "label": "PR-Agent",
           "method": "commenter",
-          "query": "is:pr commenter:codiumai-pr-agent-pro[bot]"
+          "query": "is:pr commenter:codiumai-pr-agent-pro[bot]",
+          "track": false
         },
         {
           "name": "PR-Agent/CodiumAI (reviewer)",
           "label": "PR-Agent (reviews)",
           "method": "reviewed-by",
-          "query": "is:pr reviewed-by:codiumai-pr-agent-pro[bot]"
+          "query": "is:pr reviewed-by:codiumai-pr-agent-pro[bot]",
+          "track": false
         },
         {
           "name": "Qodo (commenter)",
@@ -740,7 +758,9 @@
       "claims": [],
       "method": "GitHub Search API, /search/issues with is:pr and an updated date range per calendar month. A PR is counted in every month it was updated, so monthly figures are not strictly additive.",
       "caveats": [
-        "The post's six-month totals were single queries over the whole window; the monthly rows here come from separate queries and do not sum to exactly those totals."
+        "The post's six-month totals were single queries over the whole window; the monthly rows here come from separate queries and do not sum to exactly those totals.",
+    "The chart shows one line per bot, from its commenter query; the reviewed-by and text-marker variants of the same bots stay in the table.",
+    "The codiumai-pr-agent-pro and sweep-ai bot accounts no longer exist on GitHub (the Search API returns a validation error for them), so their rows stop at the last successful run and they are not re-measured."
       ]
     },
     {
@@ -876,7 +896,8 @@
           "name": "PR-Agent/CodiumAI",
           "label": "PR-Agent",
           "method": "commenter",
-          "query": "is:issue commenter:codiumai-pr-agent-pro[bot]"
+          "query": "is:issue commenter:codiumai-pr-agent-pro[bot]",
+          "track": false
         },
         {
           "name": "Qodo",
