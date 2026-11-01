@@ -96,7 +96,10 @@
  * host-only redirect (5), or a page using <base href> (6) can fail this file-tree
  * check. These shapes are absent from the current 57-page build, not impossible
  * in future. Whitespace-prefixed external hrefs formerly failed too (aifocus-rcf);
- * hrefs are now trimmed before classification and resolution. If this gate
+ * hrefs are now trimmed before classification and resolution. Host-invalid or
+ * unparsable hrefs (such as `\\[::1` or `\\`) formerly crashed the gate with an
+ * uncaught TypeError (aifocus-qs1); URL resolution is now guarded and unparsable
+ * targets are recorded as unresolved findings rather than throwing. If this gate
  * false-fails in the field, disable the link check first, then investigate; do
  * not leave every lane blocked on a healthy build while iterating on the checker.
  */
@@ -199,7 +202,26 @@ export function scanSite(root) {
         continue;
       }
 
-      const resolvedUrl = new URL(raw, `http://x${where}`);
+      let resolvedUrl;
+      try {
+        resolvedUrl = new URL(raw, `http://x${where}`);
+      } catch {
+        // A host-invalid or unparsable href (such as `\\[::1` or `\\`) cannot
+        // resolve against the file tree. Record it as an unresolved internal
+        // target rather than aborting the gate with an uncaught TypeError.
+        internal += 1;
+        if (!broken.has(raw)) broken.set(raw, []);
+        broken.get(raw).push(where);
+        continue;
+      }
+
+      // If the target resolved to an external host (for example via a leading `\\`),
+      // count it as external rather than resolving against the local filesystem.
+      if (resolvedUrl.origin !== "http://x") {
+        external += 1;
+        continue;
+      }
+
       let pathname;
       try {
         pathname = decodeURIComponent(resolvedUrl.pathname);
