@@ -1,0 +1,3 @@
+tool,period_start,period_end,granularity,total_count,url,note
+BuiltWith: React live sites,2025-10-12,2025-10-12,snapshot,55000000,https://trends.builtwith.com/javascript/React,"as read for dead framework theory (about 55 million live sites)"
+BuiltWith: React in top 1m,2025-10-12,2025-10-12,snapshot,160000,https://trends.builtwith.com/javascript/React,"as read for dead framework theory"

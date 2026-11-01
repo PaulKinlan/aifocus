@@ -1,0 +1,9 @@
+tool,period_start,period_end,granularity,total_count,url,note
+Programming tokens per week,2025-06-18,2025-06-18,snapshot,500000000000,https://openrouter.ai/rankings?category=programming&view=week,"token slinging: at least 500B tokens/week for programming"
+All tokens per week,2025-06-18,2025-06-18,snapshot,1000000000000,https://openrouter.ai/rankings?view=week,"token slinging: about 1T tokens/week across OpenRouter"
+Programming tokens per week,2026-01-15,2026-01-15,snapshot,4200000000000,https://openrouter.ai/rankings?category=programming&view=week,"January 2026 run kept in a Google Sheet; exact day not recorded"
+Programming model cost per week (USD),2026-01-15,2026-01-15,snapshot,3700000,https://openrouter.ai/rankings?category=programming&view=week,"January 2026 run"
+Programming input share (%),2026-01-15,2026-01-15,snapshot,93.4,https://openrouter.ai/rankings?category=programming&view=week,"January 2026 run"
+Programming tokens per week,2026-03-27,2026-03-27,snapshot,21733000000000,https://openrouter.ai/rankings?category=programming&view=week,"the token salary: 21,733B tokens/week across the top 21 programming models"
+Programming model cost per week (USD),2026-03-27,2026-03-27,snapshot,17090075,https://openrouter.ai/rankings?category=programming&view=week,"the token salary"
+Programming input share (%),2026-03-27,2026-03-27,snapshot,95.9,https://openrouter.ai/rankings?category=programming&view=week,"the token salary"

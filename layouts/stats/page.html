@@ -1,0 +1,176 @@
+{{ define "main" }}
+{{/* /stats/: the figures used in essays, re-measured monthly. Everything shown
+     here is read from data/stats.json, which tools/stats/build.py compiles from
+     the run CSVs under static/data/. Charts are drawn by assets/js/stats-page.js
+     from the compact JSON embedded in each figure; the tables are the no-JS view. */}}
+{{ $stats := site.Data.stats }}
+<style>
+.stats-page { max-width: 46rem; margin: 0 auto; min-width: 0; overflow-wrap: anywhere;
+  --viz-1: light-dark(#2a78d6, #3987e5); --viz-2: light-dark(#eb6834, #d95926);
+  --viz-3: light-dark(#1baf7a, #199e70); --viz-4: light-dark(#eda100, #c98500);
+  --viz-5: light-dark(#e87ba4, #d55181); --viz-6: light-dark(#008300, #3fae3f);
+  --viz-7: light-dark(#6250d6, #9085e9); --viz-8: light-dark(#e34948, #e66767);
+  --viz-grid: light-dark(#e4e0d4, #332f2a); --viz-axis: light-dark(#8a8577, #7a756c); }
+.stats-updated { color: var(--muted); font-size: .9rem; }
+.stats-toc ul { list-style: none; padding: 0; margin: 0 0 1.5rem; display: flex; flex-wrap: wrap; gap: .4rem .6rem; }
+.stats-toc li a { display: inline-block; padding: .2rem .6rem; border: 1px solid var(--line); border-radius: 999px; font-size: .85rem; text-decoration: none; }
+.stat { border-top: 1px solid var(--line); padding: 1.5rem 0 1rem; min-width: 0; }
+.stat h2 { font-size: 1.35rem; margin: 0 0 .25rem; }
+.stat h2 a { text-decoration: none; color: inherit; }
+.stat h3 { font-size: 1.1rem; margin: 1rem 0 .25rem; }
+.stat-meta { margin: 0 0 1rem; color: var(--muted); font-size: .9rem; }
+.stat-kpis { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0 0 1rem; }
+.kpi { flex: 1 1 10rem; min-width: 0; padding: .6rem .8rem; background: var(--bg-secondary); border-radius: var(--radius); }
+.kpi-label { display: block; font-size: .8rem; color: var(--muted); }
+.kpi-value { display: block; font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.kpi-sub { display: block; font-size: .8rem; color: var(--muted); }
+.stat-chart { margin: 0 0 1rem; position: relative; }
+.chart-controls { display: flex; justify-content: flex-end; gap: 1rem; font-size: .8rem; color: var(--muted); margin: 0 0 .25rem; }
+.chart-host { position: relative; min-height: 220px; }
+.chart-host svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-host text { font-size: 11px; fill: var(--muted); }
+.chart-host .grid { stroke: var(--viz-grid); stroke-width: 1; }
+.chart-host .axis { stroke: var(--viz-axis); stroke-width: 1; }
+.chart-host .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-host .pt { stroke-width: 2; fill: var(--background); }
+.chart-host .cursor { stroke: var(--viz-axis); stroke-dasharray: 3 3; }
+.chart-tip { position: absolute; pointer-events: none; background: var(--background); border: 1px solid var(--line); border-radius: var(--radius); padding: .4rem .6rem; font-size: .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.15); max-width: 16rem; z-index: 2; }
+.chart-tip b { display: block; margin-bottom: .2rem; }
+.chart-tip .row { display: flex; justify-content: space-between; gap: .75rem; font-variant-numeric: tabular-nums; }
+.chart-legend { list-style: none; padding: 0; margin: .4rem 0 0; display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .8rem; }
+.chart-legend button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
+.chart-legend button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.swatch { display: inline-block; width: .9em; height: .9em; border-radius: 50%; }
+.stat-chart figcaption { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
+.stat table { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.stat th, .stat td { padding: .35rem .5rem; border-bottom: 1px solid var(--viz-grid); text-align: right; vertical-align: top; }
+.stat th:first-child, .stat td:first-child { text-align: left; }
+.stat thead th { font-weight: 600; color: var(--muted); white-space: nowrap; }
+.stat caption { text-align: left; font-weight: 600; padding: 0 0 .35rem; }
+.stat-claims { margin: 0 0 1rem; }
+.stat-claims td small, .stat-claims th small { color: var(--muted); font-weight: normal; }
+.stat-claims small { white-space: nowrap; }
+.stat-claims td:first-child { min-width: 9rem; }
+.stat-claims td:last-child, .stat-claims th:last-child { white-space: nowrap; }
+.chart-controls label { display: inline-flex; align-items: center; gap: .3rem; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll table { min-width: 36rem; }
+.stat details { margin: .5rem 0; }
+.stat summary { cursor: pointer; }
+.stat-method p, .stat-method li { font-size: .9rem; }
+.no-js-note { font-size: .85rem; color: var(--muted); }
+</style>
+<section class="stats-page">
+  <h1>{{ .Title }}</h1>
+  <div class="e-content">{{ .Content }}</div>
+  <p class="stats-updated">Data compiled {{ $stats.generated }}. Hollow points on the charts are periods that were still incomplete when measured.</p>
+  <nav class="stats-toc" aria-label="Tracked stats"><ul>
+    {{- range $stats.series }}<li><a href="#{{ .id }}">{{ .title }}</a></li>{{ end -}}
+  </ul></nav>
+  {{- range $stats.series }}
+  <section class="stat" id="{{ .id }}">
+    <h2><a href="#{{ .id }}">{{ .title }}</a></h2>
+    <p class="stat-meta">
+      {{- with .posts }}From {{ range $i, $p := . }}{{ if $i }} and {{ end }}<a href="{{ $p.url }}">{{ $p.title }}</a>{{ end }}{{ end }}
+      {{- with .updated }} · measured {{ . }}{{ end }}
+      {{- if .period_count }} · {{ .period_count }} {{ if eq .granularity "snapshot" }}snapshots{{ else }}{{ .granularity }} periods{{ end }}{{ end }}
+    </p>
+    {{ template "stats-body" . }}
+    {{- range .derived }}
+    <h3 id="{{ .id }}">{{ .title }}</h3>
+    {{ template "stats-body" . }}
+    {{- end }}
+    <details class="stat-method">
+      <summary>Method, caveats and raw data</summary>
+      {{ with .method }}<p>{{ . }}</p>{{ end }}
+      {{ with .caveats }}<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
+      {{ with .runs }}<p>Runs: {{ range $i, $r := . }}{{ if $i }}, {{ end }}<a href="{{ $r.file }}">{{ $r.date }}</a> ({{ $r.rows }} rows){{ end }}.</p>{{ end }}
+    </details>
+  </section>
+  {{- end }}
+</section>
+{{- with resources.Get "js/stats-page.js" }}
+  {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/stats-page.js" }}
+  {{- with . | js.Build $opts | fingerprint }}
+<script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+  {{- end }}
+{{- end }}
+{{ end }}
+
+{{/* One series (or derived series): headline numbers, chart, as-written table, period table. */}}
+{{ define "stats-body" }}
+{{ $s := . }}
+{{ $primary := dict }}
+{{ range $s.tools }}{{ if eq .name $s.primary }}{{ $primary = . }}{{ end }}{{ end }}
+{{ with $primary }}{{ with .latest }}
+<div class="stat-kpis">
+  <div class="kpi">
+    <span class="kpi-label">{{ $primary.label }}, {{ template "stats-period" (dict "s" .s "e" .e "g" $s.granularity) }}</span>
+    <span class="kpi-value">{{ .fmt }}</span>
+    <span class="kpi-sub">{{ $s.unit }}</span>
+  </div>
+  {{ with $primary.ago }}
+  <div class="kpi">
+    <span class="kpi-label">vs {{ template "stats-period" (dict "s" .s "e" .e "g" $s.granularity) }}</span>
+    <span class="kpi-value">{{ $primary.change_ago.fmt }}</span>
+    <span class="kpi-sub">{{ if eq $s.granularity "weekly" }}four weeks earlier{{ else if eq $s.granularity "monthly" }}previous month{{ else }}previous snapshot{{ end }}</span>
+  </div>
+  {{ end }}
+  {{ with $primary.total_fmt }}
+  <div class="kpi">
+    <span class="kpi-label">Total since {{ template "stats-period" (dict "s" $s.first_period "e" $s.first_period "g" $s.granularity) }}</span>
+    <span class="kpi-value">{{ . }}</span>
+    <span class="kpi-sub">{{ $primary.label }}, complete periods only</span>
+  </div>
+  {{ end }}
+</div>
+{{ end }}{{ end }}
+{{ if gt (len $s.chart.periods) 1 }}
+<figure class="stat-chart" data-stat-chart data-title="{{ $s.title }}">
+  <div class="chart-host"><p class="no-js-note">The chart needs JavaScript; the table below has the same data.</p></div>
+  <script type="application/json">{{ $s.chart | jsonify | safeJS }}</script>
+  <figcaption>{{ $s.unit }}{{ if gt (len $s.chart.series) 1 }}; click a legend entry to hide or show a line{{ end }}.</figcaption>
+</figure>
+{{ end }}
+{{ with $s.claims }}
+<div class="table-scroll"><table class="stat-claims">
+  <caption>As written, and now</caption>
+  <thead><tr><th>Figure in the essay</th><th>Written</th><th>Re-measured</th><th>Latest</th><th>Change</th></tr></thead>
+  <tbody>
+  {{- range . }}{{ $c := . }}
+    <tr>
+      <td>{{ .text }}</td>
+      <td>{{ .value_fmt }}<br><small>{{ .period_label }}</small></td>
+      <td>{{ with .measured }}{{ if .url }}<a href="{{ .url }}" title="{{ .full }}">{{ .fmt }}</a>{{ else }}<span title="{{ .full }}">{{ .fmt }}</span>{{ end }}{{ if .partial }}*{{ end }}{{ if not .exact }}<br><small>nearest: {{ template "stats-period" (dict "s" .s "e" .s "g" $s.granularity) }}</small>{{ end }}{{ else }}–{{ end }}</td>
+      <td>{{ with .now }}{{ if .url }}<a href="{{ .url }}" title="{{ .full }}">{{ .fmt }}</a>{{ else }}<span title="{{ .full }}">{{ .fmt }}</span>{{ end }}<br><small>{{ $c.now_label }}</small>{{ else }}–{{ end }}</td>
+      <td>{{ .change.fmt }}</td>
+    </tr>
+  {{- end }}
+  </tbody>
+</table></div>
+{{ end }}
+{{ with $s.table }}{{ if .rows }}
+<details class="stat-table">
+  <summary>Last {{ len .periods }} {{ if eq $s.granularity "snapshot" }}snapshots{{ else }}periods{{ end }}, every tracked row</summary>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Tool</th>{{ range .periods }}<th>{{ template "stats-period" (dict "s" .s "e" .e "g" $s.granularity) }}{{ if .partial }}*{{ end }}</th>{{ end }}</tr></thead>
+    <tbody>
+    {{- range .rows }}
+      <tr><th scope="row">{{ .label }}</th>
+      {{- range .cells }}<td>{{ if . }}{{ if .url }}<a href="{{ .url }}" title="{{ .full }}">{{ .fmt }}</a>{{ else }}<span title="{{ .full }}">{{ .fmt }}</span>{{ end }}{{ else }}–{{ end }}</td>{{ end }}
+      </tr>
+    {{- end }}
+    </tbody>
+  </table></div>
+  <p class="no-js-note">* period was incomplete when measured. Where a number links out, the link is the exact search or dashboard that produced it.</p>
+</details>
+{{ end }}{{ end }}
+{{ end }}
+
+{{/* Period label from a start date and granularity. */}}
+{{ define "stats-period" }}
+{{- $d := time.AsTime .s -}}
+{{- if eq .g "monthly" }}{{ $d.Format "Jan 2006" }}
+{{- else if eq .g "weekly" }}w/c {{ $d.Format "2 Jan 2006" }}
+{{- else }}{{ $d.Format "2 Jan 2006" }}{{ end -}}
+{{ end }}

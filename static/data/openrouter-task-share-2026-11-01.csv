@@ -1,0 +1,9 @@
+tool,period_start,period_end,granularity,total_count,url,samples
+Code share of tokens (30 days),2026-10-31,2026-10-31,snapshot,32.39,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+Data share of tokens (30 days),2026-10-31,2026-10-31,snapshot,6.99,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+Agent share of tokens (30 days),2026-10-31,2026-10-31,snapshot,33.28,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+General share of tokens (30 days),2026-10-31,2026-10-31,snapshot,27.34,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+Code share of spend (30 days),2026-10-31,2026-10-31,snapshot,27.17,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+Data share of spend (30 days),2026-10-31,2026-10-31,snapshot,10.35,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+Agent share of spend (30 days),2026-10-31,2026-10-31,snapshot,30.61,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"
+General share of spend (30 days),2026-10-31,2026-10-31,snapshot,31.87,https://openrouter.ai/rankings#task-spend,"{""window_days"": 30}"

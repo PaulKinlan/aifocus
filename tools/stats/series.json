@@ -1,0 +1,1366 @@
+{
+  "_comment": "Series tracked on /stats/. Each series is re-measured by tools/stats/update.sh and compiled by tools/stats/build.py into data/stats.json. Claims are the figures as written in the linked posts, so the page can show drift.",
+  "series": [
+    {
+      "id": "ai-commits",
+      "title": "AI coding tool commits on public GitHub",
+      "kind": "github-search",
+      "search": "commits",
+      "date_field": "author-date",
+      "granularity": "weekly",
+      "epoch": "2025-09-29",
+      "unit": "commits per week",
+      "file_prefix": "ai-commits",
+      "resample": 4,
+      "primary": "Claude (co-author)",
+      "aliases": {
+        "GitHub Copilot (co-author)": "Copilot (co-author)"
+      },
+      "tools": [
+        {
+          "name": "Claude (co-author)",
+          "label": "Claude Code",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Claude",
+          "slot": 1
+        },
+        {
+          "name": "Cursor (co-author)",
+          "label": "Cursor",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Cursor",
+          "slot": 2
+        },
+        {
+          "name": "Copilot Agent (author)",
+          "label": "Copilot coding agent",
+          "method": "Bot author account",
+          "query": "author:copilot-swe-agent[bot]",
+          "slot": 3
+        },
+        {
+          "name": "Copilot (co-author)",
+          "label": "GitHub Copilot",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: GitHub Copilot",
+          "slot": 4
+        },
+        {
+          "name": "Codex (co-author)",
+          "label": "Codex",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Codex",
+          "slot": 5
+        },
+        {
+          "name": "Jules (author)",
+          "label": "Jules",
+          "method": "Bot author account",
+          "query": "author:google-labs-jules[bot]",
+          "slot": 6
+        },
+        {
+          "name": "Antigravity (co-author)",
+          "label": "Antigravity",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Antigravity",
+          "slot": 7
+        },
+        {
+          "name": "Devin (author)",
+          "label": "Devin",
+          "method": "Bot author account",
+          "query": "author:devin-ai-integration[bot]",
+          "slot": 8
+        },
+        {
+          "name": "Aider (co-author)",
+          "label": "Aider",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Aider",
+          "track": false
+        },
+        {
+          "name": "Happy (co-author)",
+          "label": "Happy",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Happy",
+          "track": false
+        },
+        {
+          "name": "Devin (co-author)",
+          "label": "Devin (trailer)",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Devin",
+          "track": false
+        },
+        {
+          "name": "Windsurf (co-author)",
+          "label": "Windsurf",
+          "method": "Co-Authored-By trailer",
+          "query": "Co-Authored-By: Windsurf",
+          "track": false
+        },
+        {
+          "name": "Amazon Q (author)",
+          "label": "Amazon Q",
+          "method": "Bot author account",
+          "query": "author:amazon-q-developer[bot]",
+          "track": false
+        }
+      ],
+      "posts": [
+        {
+          "title": "damn claude, that's a lot of commits",
+          "url": "/damn-claude-thats-a-lot-of-commits/",
+          "date": "2026-03-30"
+        },
+        {
+          "title": "Latest stats on Claude Commits",
+          "url": "/update-on-claude-commits/",
+          "date": "2026-11-01"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Claude Code commits in the week of 29 September 2025",
+          "tool": "Claude (co-author)",
+          "period": "2025-09-29",
+          "value": 180000
+        },
+        {
+          "text": "Claude Code commits in the week of 16 March 2026",
+          "tool": "Claude (co-author)",
+          "period": "2026-03-16",
+          "value": 2600000
+        },
+        {
+          "text": "Claude Code commits in the week of 21 September 2026 (follow-up post on X)",
+          "tool": "Claude (co-author)",
+          "period": "2026-09-21",
+          "value": 7000000
+        },
+        {
+          "text": "Claude Code commits in the week of 26 October 2026 (Latest stats on Claude Commits; pulled on the Sunday, so a day short)",
+          "tool": "Claude (co-author)",
+          "period": "2026-10-26",
+          "value": 10339440
+        },
+        {
+          "text": "Claude Code commits in the week of 27 October 2025, the year-ago comparison in Latest stats on Claude Commits",
+          "tool": "Claude (co-author)",
+          "period": "2025-10-27",
+          "value": 243000
+        },
+        {
+          "text": "Cursor commits in the week of 26 October 2026 (Latest stats on Claude Commits)",
+          "tool": "Cursor (co-author)",
+          "period": "2026-10-26",
+          "value": 289522
+        },
+        {
+          "text": "Codex commits in the week of 26 October 2026 (Latest stats on Claude Commits)",
+          "tool": "Codex (co-author)",
+          "period": "2026-10-26",
+          "value": 181737
+        }
+      ],
+      "method": "GitHub Search API, /search/commits, one query per tool per week using author-date ranges. The count is GitHub's total_count, which fluctuates between identical queries; runs since September 2026 sample each week more than once and keep the median. Every row of every CSV carries the GitHub search URL that produced it.",
+      "caveats": [
+        "Public repositories only. Private and enterprise usage is invisible.",
+        "Detection is uneven: Claude Code adds a trailer by default, Copilot inline completions add nothing, Cursor and Codex changed their trailer behaviour during the window.",
+        "GitHub total_count is approximate and drifts for weeks after the fact, so the latest run overrides earlier runs for the same week; the per-run values are kept in the data file."
+      ],
+      "samples": 2
+    },
+    {
+      "id": "total-commits",
+      "title": "All public GitHub commits",
+      "kind": "github-search",
+      "search": "commits",
+      "date_field": "author-date",
+      "granularity": "weekly",
+      "epoch": "2025-09-29",
+      "unit": "commits per week",
+      "file_prefix": "total-commits-weekly",
+      "resample": 2,
+      "primary": "All commits",
+      "tools": [
+        {
+          "name": "All commits",
+          "label": "All public commits",
+          "method": "author-date range, no other filter",
+          "query": "",
+          "slot": 1
+        }
+      ],
+      "posts": [
+        {
+          "title": "damn claude, that's a lot of commits",
+          "url": "/damn-claude-thats-a-lot-of-commits/",
+          "date": "2026-03-30"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Public commits in the week of 29 September 2025",
+          "tool": "All commits",
+          "period": "2025-09-29",
+          "value": 27700000
+        },
+        {
+          "text": "Public commits in the week of 16 March 2026",
+          "tool": "All commits",
+          "period": "2026-03-16",
+          "value": 57800000
+        }
+      ],
+      "method": "GitHub Search API, /search/commits, with only an author-date range as the query. This is the denominator for the AI share chart.",
+      "caveats": [
+        "GitHub counts here spike unpredictably (early March 2026 was roughly double the norm), so the share series inherits that noise."
+      ],
+      "derived": [
+        {
+          "id": "ai-share",
+          "title": "Share of all public commits",
+          "unit": "% of public commits per week",
+          "numerator_series": "ai-commits",
+          "tools": [
+            "Claude (co-author)",
+            "Cursor (co-author)",
+            "Copilot Agent (author)",
+            "Copilot (co-author)",
+            "Codex (co-author)"
+          ],
+          "denominator_tool": "All commits",
+          "claims": [
+            {
+              "text": "Claude Code share of all public commits, week of 29 September 2025",
+              "tool": "Claude (co-author)",
+              "period": "2025-09-29",
+              "value": 0.7
+            },
+            {
+              "text": "Claude Code share of all public commits, week of 16 March 2026",
+              "tool": "Claude (co-author)",
+              "period": "2026-03-16",
+              "value": 4.5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ai-prs",
+      "title": "Pull requests created by AI tools",
+      "kind": "github-search",
+      "search": "issues",
+      "date_field": "created",
+      "granularity": "monthly",
+      "epoch": "2025-09-01",
+      "unit": "pull requests per month",
+      "file_prefix": "ai-prs",
+      "resample": 1,
+      "primary": "Claude Code (body)",
+      "tools": [
+        {
+          "name": "Copilot SWE Agent (author)",
+          "label": "Copilot coding agent",
+          "method": "PR author",
+          "query": "is:pr author:copilot-swe-agent[bot]",
+          "slot": 3
+        },
+        {
+          "name": "Claude Code (body)",
+          "label": "Claude Code",
+          "method": "\"Generated with Claude Code\" in body",
+          "query": "is:pr \"Generated with Claude Code\"",
+          "slot": 1
+        },
+        {
+          "name": "Jules (author)",
+          "label": "Jules",
+          "method": "PR author",
+          "query": "is:pr author:google-labs-jules[bot]",
+          "slot": 6
+        },
+        {
+          "name": "Codex Connector (author)",
+          "label": "Codex",
+          "method": "PR author",
+          "query": "is:pr author:chatgpt-codex-connector[bot]",
+          "slot": 5
+        },
+        {
+          "name": "Devin (author)",
+          "label": "Devin",
+          "method": "PR author",
+          "query": "is:pr author:devin-ai-integration[bot]",
+          "slot": 8
+        },
+        {
+          "name": "Cursor (author)",
+          "label": "Cursor",
+          "method": "PR author",
+          "query": "is:pr author:cursor[bot]",
+          "slot": 2
+        },
+        {
+          "name": "Sweep (title)",
+          "label": "Sweep",
+          "method": "\"Sweep:\" in title",
+          "query": "is:pr \"Sweep:\""
+        },
+        {
+          "name": "Claude (author)",
+          "label": "Claude app",
+          "method": "PR author",
+          "query": "is:pr author:claude[bot]"
+        },
+        {
+          "name": "Claude (co-author in body)",
+          "label": "Claude (trailer in body)",
+          "method": "\"Co-Authored-By: Claude\" in body",
+          "query": "is:pr \"Co-Authored-By: Claude\""
+        },
+        {
+          "name": "Amazon Q (author)",
+          "label": "Amazon Q",
+          "method": "PR author",
+          "query": "is:pr author:amazon-q-developer[bot]"
+        },
+        {
+          "name": "Sweep (author)",
+          "label": "Sweep (bot)",
+          "method": "PR author",
+          "query": "is:pr author:sweep-ai[bot]"
+        },
+        {
+          "name": "Pixeebot (author)",
+          "label": "Pixeebot",
+          "method": "PR author",
+          "query": "is:pr author:pixeebot[bot]"
+        },
+        {
+          "name": "Codeflash (author)",
+          "label": "Codeflash",
+          "method": "PR author",
+          "query": "is:pr author:codeflash-ai[bot]"
+        },
+        {
+          "name": "Codegen (author)",
+          "label": "Codegen",
+          "method": "PR author",
+          "query": "is:pr author:codegen-sh[bot]"
+        },
+        {
+          "name": "Mentat (author)",
+          "label": "Mentat",
+          "method": "PR author",
+          "query": "is:pr author:mentatbot[bot]"
+        },
+        {
+          "name": "GitAuto (author)",
+          "label": "GitAuto",
+          "method": "PR author",
+          "query": "is:pr author:gitauto-ai[bot]"
+        },
+        {
+          "name": "CodeRabbit (author)",
+          "label": "CodeRabbit",
+          "method": "PR author",
+          "query": "is:pr author:coderabbitai[bot]"
+        },
+        {
+          "name": "Sourcery (author)",
+          "label": "Sourcery",
+          "method": "PR author",
+          "query": "is:pr author:sourcery-ai[bot]"
+        },
+        {
+          "name": "Gemini Code Assist (author)",
+          "label": "Gemini Code Assist",
+          "method": "PR author",
+          "query": "is:pr author:gemini-code-assist[bot]"
+        },
+        {
+          "name": "Devin (body)",
+          "label": "Devin (body marker)",
+          "method": "\"Created by Devin\" in body",
+          "query": "is:pr \"Created by Devin\""
+        },
+        {
+          "name": "Dependabot (author)",
+          "label": "Dependabot",
+          "method": "PR author (dependency bot, context)",
+          "query": "is:pr author:dependabot[bot]"
+        },
+        {
+          "name": "Renovate (author)",
+          "label": "Renovate",
+          "method": "PR author (dependency bot, context)",
+          "query": "is:pr author:renovate[bot]"
+        }
+      ],
+      "posts": [
+        {
+          "title": "damn claude, that's a lot of commits",
+          "url": "/damn-claude-thats-a-lot-of-commits/",
+          "date": "2026-03-30"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Claude Code PRs created per month (around 230,000 each for Claude Code and the Copilot agent)",
+          "tool": "Claude Code (body)",
+          "period": "2026-02-01",
+          "value": 230000
+        },
+        {
+          "text": "Copilot coding agent PRs created per month",
+          "tool": "Copilot SWE Agent (author)",
+          "period": "2026-02-01",
+          "value": 230000
+        }
+      ],
+      "method": "GitHub Search API, /search/issues with is:pr and a created date range per calendar month.",
+      "caveats": [
+        "Author-account queries only see bots that open PRs under their own account; Claude Code PRs are opened by the human, so the body marker is used instead."
+      ]
+    },
+    {
+      "id": "ai-pr-interactions",
+      "title": "Pull requests commented on or reviewed by AI bots",
+      "kind": "github-search",
+      "search": "issues",
+      "date_field": "updated",
+      "granularity": "monthly",
+      "epoch": "2025-09-01",
+      "unit": "pull requests per month",
+      "file_prefix": "ai-pr-interactions",
+      "resample": 1,
+      "primary": "Copilot PR Reviewer (commenter)",
+      "chart_top": 6,
+      "tools": [
+        {
+          "name": "Copilot PR Reviewer (commenter)",
+          "label": "Copilot PR reviewer",
+          "method": "commenter",
+          "query": "is:pr commenter:copilot-pull-request-reviewer[bot]",
+          "slot": 3
+        },
+        {
+          "name": "CodeRabbit (commenter)",
+          "label": "CodeRabbit",
+          "method": "commenter",
+          "query": "is:pr commenter:coderabbitai[bot]",
+          "slot": 2
+        },
+        {
+          "name": "Codex Connector (commenter)",
+          "label": "Codex connector",
+          "method": "commenter",
+          "query": "is:pr commenter:chatgpt-codex-connector[bot]",
+          "slot": 5
+        },
+        {
+          "name": "Gemini Code Assist (commenter)",
+          "label": "Gemini Code Assist",
+          "method": "commenter",
+          "query": "is:pr commenter:gemini-code-assist[bot]",
+          "slot": 4
+        },
+        {
+          "name": "Claude (commenter)",
+          "label": "Claude",
+          "method": "commenter",
+          "query": "is:pr commenter:claude[bot]",
+          "slot": 1
+        },
+        {
+          "name": "Cursor (commenter)",
+          "label": "Cursor",
+          "method": "commenter",
+          "query": "is:pr commenter:cursor[bot]",
+          "slot": 6
+        },
+        {
+          "name": "Copilot SWE Agent (commenter)",
+          "label": "Copilot coding agent",
+          "method": "commenter",
+          "query": "is:pr commenter:copilot-swe-agent[bot]"
+        },
+        {
+          "name": "Sourcery (commenter)",
+          "label": "Sourcery",
+          "method": "commenter",
+          "query": "is:pr commenter:sourcery-ai[bot]"
+        },
+        {
+          "name": "Devin (commenter)",
+          "label": "Devin",
+          "method": "commenter",
+          "query": "is:pr commenter:devin-ai-integration[bot]"
+        },
+        {
+          "name": "Claude Code (in comments)",
+          "label": "Claude Code (text marker)",
+          "method": "\"Generated with Claude Code\" in comments",
+          "query": "is:pr in:comments \"Generated with Claude Code\""
+        },
+        {
+          "name": "Copilot PR Reviewer (reviewer)",
+          "label": "Copilot PR reviewer (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:copilot-pull-request-reviewer[bot]"
+        },
+        {
+          "name": "CodeRabbit (reviewer)",
+          "label": "CodeRabbit (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:coderabbitai[bot]"
+        },
+        {
+          "name": "Codex Connector (reviewer)",
+          "label": "Codex connector (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:chatgpt-codex-connector[bot]"
+        },
+        {
+          "name": "Gemini Code Assist (reviewer)",
+          "label": "Gemini Code Assist (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:gemini-code-assist[bot]"
+        },
+        {
+          "name": "Cursor (reviewer)",
+          "label": "Cursor (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:cursor[bot]"
+        },
+        {
+          "name": "Claude (reviewer)",
+          "label": "Claude (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:claude[bot]"
+        },
+        {
+          "name": "Sourcery (reviewer)",
+          "label": "Sourcery (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:sourcery-ai[bot]"
+        },
+        {
+          "name": "Copilot (commenter)",
+          "label": "Copilot",
+          "method": "commenter",
+          "query": "is:pr commenter:copilot[bot]"
+        },
+        {
+          "name": "Copilot (reviewer)",
+          "label": "Copilot (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:copilot[bot]"
+        },
+        {
+          "name": "Korbit (commenter)",
+          "label": "Korbit",
+          "method": "commenter",
+          "query": "is:pr commenter:korbit-ai[bot]"
+        },
+        {
+          "name": "Korbit (reviewer)",
+          "label": "Korbit (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:korbit-ai[bot]"
+        },
+        {
+          "name": "What The Diff (commenter)",
+          "label": "What The Diff",
+          "method": "commenter",
+          "query": "is:pr commenter:what-the-diff[bot]"
+        },
+        {
+          "name": "CodeAnt AI (commenter)",
+          "label": "CodeAnt AI",
+          "method": "commenter",
+          "query": "is:pr commenter:codeant-ai[bot]"
+        },
+        {
+          "name": "Augment Code (commenter)",
+          "label": "Augment Code",
+          "method": "commenter",
+          "query": "is:pr commenter:augmentcode[bot]"
+        },
+        {
+          "name": "Ellipsis (commenter)",
+          "label": "Ellipsis",
+          "method": "commenter",
+          "query": "is:pr commenter:ellipsis-dev[bot]"
+        },
+        {
+          "name": "Ellipsis (reviewer)",
+          "label": "Ellipsis (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:ellipsis-dev[bot]"
+        },
+        {
+          "name": "Greptile (commenter)",
+          "label": "Greptile",
+          "method": "commenter",
+          "query": "is:pr commenter:greptile[bot]"
+        },
+        {
+          "name": "Greptile Apps (commenter)",
+          "label": "Greptile Apps",
+          "method": "commenter",
+          "query": "is:pr commenter:greptile-apps[bot]"
+        },
+        {
+          "name": "PR-Agent/CodiumAI (commenter)",
+          "label": "PR-Agent",
+          "method": "commenter",
+          "query": "is:pr commenter:codiumai-pr-agent-pro[bot]"
+        },
+        {
+          "name": "PR-Agent/CodiumAI (reviewer)",
+          "label": "PR-Agent (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:codiumai-pr-agent-pro[bot]"
+        },
+        {
+          "name": "Qodo (commenter)",
+          "label": "Qodo",
+          "method": "commenter",
+          "query": "is:pr commenter:qodo-ai[bot]"
+        },
+        {
+          "name": "Qodo (reviewer)",
+          "label": "Qodo (reviews)",
+          "method": "reviewed-by",
+          "query": "is:pr reviewed-by:qodo-ai[bot]"
+        },
+        {
+          "name": "Jules (commenter)",
+          "label": "Jules",
+          "method": "commenter",
+          "query": "is:pr commenter:google-labs-jules[bot]"
+        },
+        {
+          "name": "Amazon Q (commenter)",
+          "label": "Amazon Q",
+          "method": "commenter",
+          "query": "is:pr commenter:amazon-q-developer[bot]"
+        },
+        {
+          "name": "Sweep (commenter)",
+          "label": "Sweep",
+          "method": "commenter",
+          "query": "is:pr commenter:sweep-ai[bot]"
+        },
+        {
+          "name": "Pixeebot (commenter)",
+          "label": "Pixeebot",
+          "method": "commenter",
+          "query": "is:pr commenter:pixeebot[bot]"
+        },
+        {
+          "name": "Codeflash (commenter)",
+          "label": "Codeflash",
+          "method": "commenter",
+          "query": "is:pr commenter:codeflash-ai[bot]"
+        },
+        {
+          "name": "Codegen (commenter)",
+          "label": "Codegen",
+          "method": "commenter",
+          "query": "is:pr commenter:codegen-sh[bot]"
+        },
+        {
+          "name": "Mentat (commenter)",
+          "label": "Mentat",
+          "method": "commenter",
+          "query": "is:pr commenter:mentatbot[bot]"
+        },
+        {
+          "name": "GitAuto (commenter)",
+          "label": "GitAuto",
+          "method": "commenter",
+          "query": "is:pr commenter:gitauto-ai[bot]"
+        },
+        {
+          "name": "Dosu (commenter)",
+          "label": "Dosu",
+          "method": "commenter",
+          "query": "is:pr commenter:dosubot[bot]"
+        },
+        {
+          "name": "Continue (commenter)",
+          "label": "Continue",
+          "method": "commenter",
+          "query": "is:pr commenter:continue[bot]"
+        },
+        {
+          "name": "Graphite (commenter)",
+          "label": "Graphite",
+          "method": "commenter",
+          "query": "is:pr commenter:graphite-app[bot]"
+        },
+        {
+          "name": "CodeRabbit (in comments)",
+          "label": "CodeRabbit (text marker)",
+          "method": "\"CodeRabbit\" in comments",
+          "query": "is:pr in:comments \"CodeRabbit\""
+        }
+      ],
+      "posts": [
+        {
+          "title": "damn claude, that's a lot of commits",
+          "url": "/damn-claude-thats-a-lot-of-commits/",
+          "date": "2026-03-30"
+        }
+      ],
+      "claims": [],
+      "method": "GitHub Search API, /search/issues with is:pr and an updated date range per calendar month. A PR is counted in every month it was updated, so monthly figures are not strictly additive.",
+      "caveats": [
+        "The post's six-month totals were single queries over the whole window; the monthly rows here come from separate queries and do not sum to exactly those totals."
+      ]
+    },
+    {
+      "id": "ai-issue-comments",
+      "title": "Issues commented on by AI bots",
+      "kind": "github-search",
+      "search": "issues",
+      "date_field": "updated",
+      "granularity": "monthly",
+      "epoch": "2025-09-01",
+      "unit": "issues per month",
+      "file_prefix": "ai-issue-comments",
+      "resample": 1,
+      "primary": "Claude",
+      "chart_top": 6,
+      "exclude_from_chart": [
+        "GitHub Actions",
+        "Dependabot",
+        "Renovate"
+      ],
+      "tools": [
+        {
+          "name": "CodeRabbit",
+          "label": "CodeRabbit",
+          "method": "commenter",
+          "query": "is:issue commenter:coderabbitai[bot]",
+          "slot": 2
+        },
+        {
+          "name": "Claude",
+          "label": "Claude",
+          "method": "commenter",
+          "query": "is:issue commenter:claude[bot]",
+          "slot": 1
+        },
+        {
+          "name": "Dosu",
+          "label": "Dosu",
+          "method": "commenter",
+          "query": "is:issue commenter:dosubot[bot]",
+          "slot": 3
+        },
+        {
+          "name": "Gemini Code Assist",
+          "label": "Gemini Code Assist",
+          "method": "commenter",
+          "query": "is:issue commenter:gemini-code-assist[bot]",
+          "slot": 4
+        },
+        {
+          "name": "Copilot",
+          "label": "Copilot",
+          "method": "commenter",
+          "query": "is:issue commenter:copilot[bot]",
+          "slot": 5
+        },
+        {
+          "name": "Copilot SWE Agent",
+          "label": "Copilot coding agent",
+          "method": "commenter",
+          "query": "is:issue commenter:copilot-swe-agent[bot]",
+          "slot": 6
+        },
+        {
+          "name": "Codex Connector",
+          "label": "Codex connector",
+          "method": "commenter",
+          "query": "is:issue commenter:chatgpt-codex-connector[bot]"
+        },
+        {
+          "name": "Cursor",
+          "label": "Cursor",
+          "method": "commenter",
+          "query": "is:issue commenter:cursor[bot]"
+        },
+        {
+          "name": "Copilot PR Reviewer",
+          "label": "Copilot PR reviewer",
+          "method": "commenter",
+          "query": "is:issue commenter:copilot-pull-request-reviewer[bot]"
+        },
+        {
+          "name": "Sourcery",
+          "label": "Sourcery",
+          "method": "commenter",
+          "query": "is:issue commenter:sourcery-ai[bot]"
+        },
+        {
+          "name": "Korbit",
+          "label": "Korbit",
+          "method": "commenter",
+          "query": "is:issue commenter:korbit-ai[bot]"
+        },
+        {
+          "name": "What The Diff",
+          "label": "What The Diff",
+          "method": "commenter",
+          "query": "is:issue commenter:what-the-diff[bot]"
+        },
+        {
+          "name": "CodeAnt AI",
+          "label": "CodeAnt AI",
+          "method": "commenter",
+          "query": "is:issue commenter:codeant-ai[bot]"
+        },
+        {
+          "name": "Augment Code",
+          "label": "Augment Code",
+          "method": "commenter",
+          "query": "is:issue commenter:augmentcode[bot]"
+        },
+        {
+          "name": "Ellipsis",
+          "label": "Ellipsis",
+          "method": "commenter",
+          "query": "is:issue commenter:ellipsis-dev[bot]"
+        },
+        {
+          "name": "Greptile",
+          "label": "Greptile",
+          "method": "commenter",
+          "query": "is:issue commenter:greptile[bot]"
+        },
+        {
+          "name": "Greptile Apps",
+          "label": "Greptile Apps",
+          "method": "commenter",
+          "query": "is:issue commenter:greptile-apps[bot]"
+        },
+        {
+          "name": "PR-Agent/CodiumAI",
+          "label": "PR-Agent",
+          "method": "commenter",
+          "query": "is:issue commenter:codiumai-pr-agent-pro[bot]"
+        },
+        {
+          "name": "Qodo",
+          "label": "Qodo",
+          "method": "commenter",
+          "query": "is:issue commenter:qodo-ai[bot]"
+        },
+        {
+          "name": "Devin",
+          "label": "Devin",
+          "method": "commenter",
+          "query": "is:issue commenter:devin-ai-integration[bot]"
+        },
+        {
+          "name": "Jules",
+          "label": "Jules",
+          "method": "commenter",
+          "query": "is:issue commenter:google-labs-jules[bot]"
+        },
+        {
+          "name": "Amazon Q",
+          "label": "Amazon Q",
+          "method": "commenter",
+          "query": "is:issue commenter:amazon-q-developer[bot]"
+        },
+        {
+          "name": "Sweep",
+          "label": "Sweep",
+          "method": "commenter",
+          "query": "is:issue commenter:sweep-ai[bot]"
+        },
+        {
+          "name": "Pixeebot",
+          "label": "Pixeebot",
+          "method": "commenter",
+          "query": "is:issue commenter:pixeebot[bot]"
+        },
+        {
+          "name": "Codeflash",
+          "label": "Codeflash",
+          "method": "commenter",
+          "query": "is:issue commenter:codeflash-ai[bot]"
+        },
+        {
+          "name": "Codegen",
+          "label": "Codegen",
+          "method": "commenter",
+          "query": "is:issue commenter:codegen-sh[bot]"
+        },
+        {
+          "name": "Mentat",
+          "label": "Mentat",
+          "method": "commenter",
+          "query": "is:issue commenter:mentatbot[bot]"
+        },
+        {
+          "name": "GitAuto",
+          "label": "GitAuto",
+          "method": "commenter",
+          "query": "is:issue commenter:gitauto-ai[bot]"
+        },
+        {
+          "name": "Continue",
+          "label": "Continue",
+          "method": "commenter",
+          "query": "is:issue commenter:continue[bot]"
+        },
+        {
+          "name": "Graphite",
+          "label": "Graphite",
+          "method": "commenter",
+          "query": "is:issue commenter:graphite-app[bot]"
+        },
+        {
+          "name": "Dependabot",
+          "label": "Dependabot (context)",
+          "method": "commenter",
+          "query": "is:issue commenter:dependabot[bot]"
+        },
+        {
+          "name": "Renovate",
+          "label": "Renovate (context)",
+          "method": "commenter",
+          "query": "is:issue commenter:renovate[bot]"
+        },
+        {
+          "name": "GitHub Actions",
+          "label": "GitHub Actions (context)",
+          "method": "commenter",
+          "query": "is:issue commenter:github-actions[bot]"
+        }
+      ],
+      "posts": [
+        {
+          "title": "damn claude, that's a lot of commits",
+          "url": "/damn-claude-thats-a-lot-of-commits/",
+          "date": "2026-03-30"
+        }
+      ],
+      "claims": [],
+      "method": "GitHub Search API, /search/issues with is:issue and an updated date range per calendar month.",
+      "caveats": [
+        "GitHub Actions, Dependabot and Renovate are kept as context rows and left out of the chart."
+      ]
+    },
+    {
+      "id": "service-worker-page-loads",
+      "title": "Share of Chrome page loads controlled by a service worker",
+      "kind": "chromestatus",
+      "bucket_id": 990,
+      "granularity": "weekly",
+      "epoch": "2025-09-29",
+      "unit": "% of page loads",
+      "file_prefix": "chromestatus-service-worker",
+      "primary": "ServiceWorkerControlledPage",
+      "value_format": "percent",
+      "tools": [
+        {
+          "name": "ServiceWorkerControlledPage",
+          "label": "Service-worker controlled page loads",
+          "method": "Chrome use counter, bucket 990",
+          "query": "",
+          "slot": 1
+        }
+      ],
+      "posts": [
+        {
+          "title": "are pwas cooked?",
+          "url": "/are-pwas-cooked/",
+          "date": "2026-05-17"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Service worker adoption is about 19% of all sites (HTTP Archive Web Almanac 2025; a share of sites, not of page loads)",
+          "tool": "ServiceWorkerControlledPage",
+          "period": "2026-05-11",
+          "value": 19,
+          "comparable": false
+        }
+      ],
+      "method": "Chrome Platform Status feature popularity timeline for the ServiceWorkerControlledPage use counter (https://chromestatus.com/metrics/feature/timeline/popularity/990), averaged per week. This measures page loads in Chrome, not sites; the Web Almanac figure in the post measures sites in the HTTP Archive crawl.",
+      "caveats": [
+        "Chrome-only, page-load weighted, so a few heavily visited sites dominate.",
+        "Different denominator from the Web Almanac figure the post cites; the two are shown side by side, not compared."
+      ]
+    },
+    {
+      "id": "react-httparchive",
+      "title": "React adoption in the HTTP Archive crawl",
+      "kind": "httparchive",
+      "technology": "React",
+      "granularity": "monthly",
+      "epoch": "2024-01-01",
+      "unit": "origins",
+      "file_prefix": "httparchive-react",
+      "primary": "HTTP Archive: React origins (mobile)",
+      "tools": [
+        {
+          "name": "HTTP Archive: React origins (mobile)",
+          "label": "All origins, mobile",
+          "method": "tech report adoption, rank ALL, mobile",
+          "query": "",
+          "rank": "ALL",
+          "client": "mobile",
+          "slot": 1
+        },
+        {
+          "name": "HTTP Archive: React origins (desktop)",
+          "label": "All origins, desktop",
+          "method": "tech report adoption, rank ALL, desktop",
+          "query": "",
+          "rank": "ALL",
+          "client": "desktop",
+          "slot": 2
+        },
+        {
+          "name": "HTTP Archive: React in top 1m (mobile)",
+          "label": "Top 1M, mobile",
+          "method": "tech report adoption, rank Top 1M, mobile",
+          "query": "",
+          "rank": "Top 1M",
+          "client": "mobile",
+          "slot": 3
+        },
+        {
+          "name": "HTTP Archive: React in top 1m (desktop)",
+          "label": "Top 1M, desktop",
+          "method": "tech report adoption, rank Top 1M, desktop",
+          "query": "",
+          "rank": "Top 1M",
+          "client": "desktop",
+          "slot": 4
+        }
+      ],
+      "posts": [
+        {
+          "title": "dead framework theory",
+          "url": "/dead-framework-theory/",
+          "date": "2025-10-12"
+        }
+      ],
+      "claims": [
+        {
+          "text": "HTTP Archive: React mobile origins (stalled at 1.2 million)",
+          "tool": "HTTP Archive: React origins (mobile)",
+          "period": "2025-10-01",
+          "value": 1200000
+        },
+        {
+          "text": "HTTP Archive: React in the top 1m (140k)",
+          "tool": "HTTP Archive: React in top 1m (mobile)",
+          "period": "2025-10-01",
+          "value": 140000
+        }
+      ],
+      "method": "Monthly origin counts from the HTTP Archive tech report (https://httparchive.org/reports/techreport/tech?tech=React), fetched by tools/stats/collect-httparchive.py from cdn.httparchive.org/v1/adoption, the endpoint the report itself reads. Each crawl is dated the first of its month; the full history is re-fetched on every run so later corrections to the crawl show up as revisions.",
+      "caveats": [
+        "The crawl covers roughly 12-16 million origins with enough traffic to be in the Chrome UX Report; parked and unused domains are not in it, which is the main reason it is far below BuiltWith.",
+        "The top-1m figure in the essay was read off the report's chart in October 2025; the API gives 113k mobile and 106k desktop for that month, so the 140k as written was closer to the desktop and mobile series combined than to either one."
+      ],
+      "cumulative": false
+    },
+    {
+      "id": "react-builtwith",
+      "title": "React on BuiltWith",
+      "kind": "manual",
+      "granularity": "snapshot",
+      "unit": "live sites",
+      "file_prefix": "manual/react-builtwith",
+      "primary": "BuiltWith: React live sites",
+      "tools": [
+        {
+          "name": "BuiltWith: React live sites",
+          "label": "Live sites",
+          "method": "trends.builtwith.com/javascript/React",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "BuiltWith: React in top 1m",
+          "label": "Top 1m sites",
+          "method": "trends.builtwith.com/javascript/React",
+          "query": "",
+          "slot": 4
+        }
+      ],
+      "posts": [
+        {
+          "title": "dead framework theory",
+          "url": "/dead-framework-theory/",
+          "date": "2025-10-12"
+        }
+      ],
+      "claims": [
+        {
+          "text": "BuiltWith: React live sites (about 55 million)",
+          "tool": "BuiltWith: React live sites",
+          "period": "2025-10-12",
+          "value": 55000000
+        },
+        {
+          "text": "BuiltWith: React in the top 1m (160k)",
+          "tool": "BuiltWith: React in top 1m",
+          "period": "2025-10-12",
+          "value": 160000
+        }
+      ],
+      "method": "Manual snapshots. Read https://trends.builtwith.com/javascript/React in a browser and append one row per figure to static/data/manual/react-builtwith.csv with the date, the value and the page URL. The page sits behind a BuiltWith bot check (an image puzzle), so it cannot be fetched by a script and is not part of tools/stats/update.sh.",
+      "caveats": [
+        "BuiltWith counts hundreds of millions of root domains, including parked and inactive sites, so its totals are not comparable with the HTTP Archive series, only with earlier BuiltWith readings."
+      ]
+    },
+    {
+      "id": "openrouter-tokens",
+      "title": "Tokens routed through OpenRouter",
+      "kind": "openrouter-chart",
+      "granularity": "weekly",
+      "epoch": "2025-11-03",
+      "unit": "tokens a week",
+      "file_prefix": "openrouter-tokens",
+      "primary": "All tokens per week",
+      "tools": [
+        {
+          "name": "All tokens per week",
+          "label": "All tokens/week",
+          "method": "rankings chart, top 10 models + Others, summed",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Programming tokens per week (estimate)",
+          "label": "Programming tokens/week (estimate)",
+          "method": "all tokens × code share of tokens (trailing 30 days)",
+          "query": "",
+          "slot": 2
+        }
+      ],
+      "posts": [
+        {
+          "title": "the token salary",
+          "url": "/the-token-salary/",
+          "date": "2026-03-27"
+        },
+        {
+          "title": "what token slinging taught me about ai costs",
+          "url": "/token-slinging/",
+          "date": "2025-06-30"
+        }
+      ],
+      "claims": [
+        {
+          "text": "About 1T tokens a week across OpenRouter (token slinging, June 2025)",
+          "tool": "All tokens per week",
+          "period": "2025-06-16",
+          "value": 1000000000000
+        },
+        {
+          "text": "21,733B tokens a week across the top 21 programming models (the token salary)",
+          "tool": "Programming tokens per week (estimate)",
+          "period": "2026-03-23",
+          "value": 21733000000000,
+          "comparable": false
+        }
+      ],
+      "method": "tools/stats/collect-openrouter.py reads the weekly chart behind https://openrouter.ai/rankings (model-rankings-chart, view=week): the top ten models plus an Others bucket for every Monday-to-Sunday week in the trailing year, summed to a weekly total. The programming estimate multiplies the complete weeks inside the trailing 30 days by the code share of tokens from the task breakdown on the same page.",
+      "caveats": [
+        "OpenRouter removed the per-category model rankings (rankings/programming) during 2026. The programming figures in the essays were read from that ranking and cannot be re-measured the same way; the estimate here uses OpenRouter's task classifier instead, which counts code tasks from any app rather than tokens from programming apps.",
+        "The chart's first week (w/c 27 October 2025) only has a day or two of data, so the series starts the week after.",
+        "The chart only reaches back one year, so each run re-fetches the full window and earlier weeks are revised if OpenRouter restates them.",
+        "OpenRouter traffic is one router's view of the market, not total LLM usage."
+      ]
+    },
+    {
+      "id": "openrouter-task-share",
+      "title": "What OpenRouter tokens are spent on",
+      "kind": "openrouter-task-share",
+      "granularity": "snapshot",
+      "unit": "of OpenRouter traffic in the trailing 30 days",
+      "file_prefix": "openrouter-task-share",
+      "primary": "Code share of tokens (30 days)",
+      "value_format": "percent",
+      "tools": [
+        {
+          "name": "Code share of tokens (30 days)",
+          "label": "Code, tokens",
+          "method": "task-spend, tokens.macroCategories.code",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Agent share of tokens (30 days)",
+          "label": "Agent, tokens",
+          "method": "task-spend, tokens.macroCategories.agent",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "Data share of tokens (30 days)",
+          "label": "Data, tokens",
+          "method": "task-spend, tokens.macroCategories.data",
+          "query": "",
+          "slot": 3
+        },
+        {
+          "name": "General share of tokens (30 days)",
+          "label": "General, tokens",
+          "method": "task-spend, tokens.macroCategories.general",
+          "query": "",
+          "slot": 4
+        },
+        {
+          "name": "Code share of spend (30 days)",
+          "label": "Code, spend",
+          "method": "task-spend, spend.macroCategories.code",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "Agent share of spend (30 days)",
+          "label": "Agent, spend",
+          "method": "task-spend, spend.macroCategories.agent",
+          "query": "",
+          "slot": 6
+        },
+        {
+          "name": "Data share of spend (30 days)",
+          "label": "Data, spend",
+          "method": "task-spend, spend.macroCategories.data",
+          "query": "",
+          "slot": 7
+        },
+        {
+          "name": "General share of spend (30 days)",
+          "label": "General, spend",
+          "method": "task-spend, spend.macroCategories.general",
+          "query": "",
+          "slot": 8
+        }
+      ],
+      "posts": [
+        {
+          "title": "the token salary",
+          "url": "/the-token-salary/",
+          "date": "2026-03-27"
+        },
+        {
+          "title": "what token slinging taught me about ai costs",
+          "url": "/token-slinging/",
+          "date": "2025-06-30"
+        }
+      ],
+      "claims": [],
+      "method": "tools/stats/collect-openrouter.py reads the task breakdown behind https://openrouter.ai/rankings (task-spend): OpenRouter classifies requests into task types and reports each macro-category's share of tokens and of spend over the trailing 30 days. One row per monthly run.",
+      "caveats": [
+        "Only the trailing 30 days are published, so the history here starts with the first run (November 2026).",
+        "Classification is OpenRouter's; a coding agent's planning calls land under Agent, not Code."
+      ]
+    },
+    {
+      "id": "openrouter-programming",
+      "title": "OpenRouter programming traffic",
+      "kind": "manual",
+      "granularity": "snapshot",
+      "unit": "tokens per week",
+      "file_prefix": "manual/openrouter-programming",
+      "primary": "Programming tokens per week",
+      "tools": [
+        {
+          "name": "Programming tokens per week",
+          "label": "Programming tokens/week",
+          "method": "openrouter.ai/rankings?category=programming&view=week, all models summed",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "All tokens per week",
+          "label": "All tokens/week",
+          "method": "openrouter.ai/rankings?view=week",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "Programming model cost per week (USD)",
+          "label": "Programming spend/week (USD)",
+          "method": "weekly tokens × list price per model, summed",
+          "query": "",
+          "slot": 3,
+          "value_format": "usd"
+        },
+        {
+          "name": "Programming input share (%)",
+          "label": "Input token share",
+          "method": "input tokens ÷ all tokens",
+          "query": "",
+          "slot": 4,
+          "value_format": "percent"
+        }
+      ],
+      "posts": [
+        {
+          "title": "the token salary",
+          "url": "/the-token-salary/",
+          "date": "2026-03-27"
+        },
+        {
+          "title": "what token slinging taught me about ai costs",
+          "url": "/token-slinging/",
+          "date": "2025-06-30"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Programming tokens per week on OpenRouter (the token salary)",
+          "tool": "Programming tokens per week",
+          "period": "2026-03-27",
+          "value": 21733000000000
+        },
+        {
+          "text": "Weekly model cost for programming on OpenRouter (the token salary)",
+          "tool": "Programming model cost per week (USD)",
+          "period": "2026-03-27",
+          "value": 17090075
+        },
+        {
+          "text": "Input share of programming tokens (the token salary)",
+          "tool": "Programming input share (%)",
+          "period": "2026-03-27",
+          "value": 95.9
+        },
+        {
+          "text": "Programming tokens per week (token slinging, measured 18 June 2025)",
+          "tool": "Programming tokens per week",
+          "period": "2025-06-18",
+          "value": 500000000000
+        }
+      ],
+      "method": "Hand-recorded readings of the OpenRouter programming ranking (rankings/programming, later rankings?category=programming) at the time each essay was written: tokens, model cost from the pricing of each model, and the input share of tokens. The page no longer exists, so no new rows can be added the same way; keep it for the as-written figures.",
+      "caveats": [
+        "OpenRouter is one gateway; the number is a lower bound on programming traffic, not a market total.",
+        "Model cost uses list prices at the time of the snapshot.",
+        "OpenRouter removed the per-category model ranking these figures came from during 2026; the weekly series above (Tokens routed through OpenRouter) is the automated replacement."
+      ]
+    }
+  ]
+}
