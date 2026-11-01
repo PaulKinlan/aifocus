@@ -16,6 +16,7 @@ import {
   OG_RENDERS_PER_HOUR,
   reserveOgSlot,
   _inFlightRenders,
+  _inFlightReservations,
   _recentRenders,
   _setRenderTimeoutMs,
 } from "../functions/_lib/og.js";
@@ -54,6 +55,7 @@ function makeBucket() {
 function makeEnv({ card = CARD, ai, browser } = {}) {
   _recentRenders?.clear();
   _inFlightRenders?.clear();
+  _inFlightReservations?.clear();
   const calls = { ai: 0, screenshots: [] };
   const env = {
     READER_DB: createD1(MIGRATIONS),
@@ -645,6 +647,104 @@ test("a hook change followed by a same-second request must not serve the old car
   assert.equal(calls.screenshots.length, 2, "second render was triggered instead of serving stale card");
   assert.match(calls.screenshots[1].options.html, /Brand new editor hook/, "must serve the new hook, not the old hook");
 });
+
+test("exact reviewer scenario: leader denied, fresh IP with 1 slot left joins -> renders 200, consumes exactly 1 slot, never double-charged, never false 302", async () => {
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      // Small delay so concurrent joiner attaches during leader reservation
+      await new Promise((r) => setTimeout(r, 20));
+      return { response: "Reviewer scenario hook" };
+    },
+  });
+  const db = env.READER_DB;
+  const exhaustedIp = "203.0.113.80";
+  const oneSlotIp = "203.0.113.81";
+
+  // Pre-seed 30 rows for exhaustedIp (0 slots left)
+  const exhaustedHash = await hashIp(db, exhaustedIp);
+  for (let i = 0; i < OG_RENDERS_PER_HOUR; i++) {
+    await db.prepare("INSERT INTO og_render_log (ip_hash, created_at) VALUES (?, ?)").bind(exhaustedHash, Date.now()).run();
+  }
+
+  // Pre-seed 29 rows for oneSlotIp (exactly 1 slot left)
+  const oneSlotHash = await hashIp(db, oneSlotIp);
+  for (let i = 0; i < OG_RENDERS_PER_HOUR - 1; i++) {
+    await db.prepare("INSERT INTO og_render_log (ip_hash, created_at) VALUES (?, ?)").bind(oneSlotHash, Date.now()).run();
+  }
+
+  // Fire exhausted leader and 1-slot joiner concurrently
+  const [resLeader, resJoiner] = await Promise.all([
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": exhaustedIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": oneSlotIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+  ]);
+
+  assert.equal(resLeader.status, 302, "denied leader gets 302 rate limited");
+  assert.equal(resLeader.headers.get("X-Og-Card"), "fallback: rate limited");
+
+  assert.equal(resJoiner.status, 200, "joiner with 1 slot left renders HTTP 200, NOT a false 302");
+  assert.equal(resJoiner.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 1, "exactly 1 screenshot rendered");
+
+  // Verify the joiner was charged EXACTLY ONCE, not twice
+  const joinerRows = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log WHERE ip_hash = ?").bind(oneSlotHash).first();
+  assert.equal(joinerRows.n, 30, "joiner consumed exactly 1 slot (29 -> 30), never double-charged");
+});
+
+test("joiner legitimately reuses leader's rendered card and consumes zero quota", async () => {
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      await new Promise((r) => setTimeout(r, 20));
+      return { response: "Shared leader hook" };
+    },
+  });
+  const db = env.READER_DB;
+  const leaderIp = "203.0.113.90";
+  const joinerIp = "203.0.113.91";
+
+  const [resLeader, resJoiner] = await Promise.all([
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": leaderIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": joinerIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+  ]);
+
+  assert.equal(resLeader.status, 200);
+  assert.equal(resJoiner.status, 200);
+  assert.equal(calls.screenshots.length, 1, "single flight rendered once");
+
+  // Leader consumed 1 slot
+  const leaderHash = await hashIp(db, leaderIp);
+  const leaderRows = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log WHERE ip_hash = ?").bind(leaderHash).first();
+  assert.equal(leaderRows.n, 1, "leader consumed 1 quota slot");
+
+  // Joiner consumed 0 slots (free cache hit!)
+  const joinerHash = await hashIp(db, joinerIp);
+  const joinerRows = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log WHERE ip_hash = ?").bind(joinerHash).first();
+  assert.equal(joinerRows.n, 0, "joiner consumed zero quota slots");
+});
+
 
 
 

@@ -201,6 +201,12 @@ export async function purgeCards(bucket, pagePath) {
   for (const key of recentRenders.keys()) {
     if (key.includes(target)) recentRenders.delete(key);
   }
+  for (const key of inFlightRenders.keys()) {
+    if (key.includes(target)) inFlightRenders.delete(key);
+  }
+  for (const key of inFlightReservations.keys()) {
+    if (key.includes(target)) inFlightReservations.delete(key);
+  }
   if (!bucket) return 0;
   let removed = 0;
   let cursor;
@@ -235,6 +241,7 @@ function fallback(origin, reason) {
 }
 
 const inFlightRenders = new Map();
+const inFlightReservations = new Map();
 const recentRenders = new Map();
 const UNSTORED_CACHE_TTL_MS = 300 * 1000;
 
@@ -343,88 +350,89 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
   }
 
   const flightKey = `${origin}:${pagePath}:${version}`;
+
+  // 1. If an actual render is already in flight, join it (costs 0 quota).
   let flight = inFlightRenders.get(flightKey);
-  if (!flight) {
-    // Synchronously register the in-flight flight before any async work,
-    // ensuring concurrent callers for the same card collapse into this flight
-    // without executing duplicate quota reservations or renders.
-    const creatorIp = request.headers.get("CF-Connecting-IP");
-    flight = {
-      creatorIp,
-      promise: (async () => {
-        const db = env?.READER_DB;
-        const now = Date.now();
-        const ipHash = (db ? await hashIp(db, creatorIp) : null) ?? UNKNOWN_IP_BUCKET;
-        const allowed = await reserveOgSlot(db, ipHash, now);
-        if (!allowed) {
-          // Never leave a denied flight in inFlightRenders: remove immediately
-          // so sequential and subsequent callers do not encounter a stale flight.
-          inFlightRenders.delete(flightKey);
-          return { allowed: false, creatorIp };
-        }
-
-        const controller = new AbortController();
-        let timerId;
-        const timeoutPromise = new Promise((resolve) => {
-          timerId = setTimeout(() => {
-            controller.abort();
-            resolve(fallback(origin, "render timed out"));
-          }, _RENDER_TIMEOUT_MS);
-        });
-
-        try {
-          const resp = await Promise.race([
-            renderCard({
-              env,
-              origin,
-              pagePath,
-              version,
-              html,
-              fixed,
-              row,
-              bucket,
-              waitUntil,
-              flightKey,
-              signal: controller.signal,
-            }),
-            timeoutPromise,
-          ]);
-          return { allowed: true, response: resp };
-        } catch (err) {
-          controller.abort();
-          console.error("og render error", pagePath, err?.message || err);
-          return { allowed: true, response: fallback(origin, "render failed") };
-        } finally {
-          clearTimeout(timerId);
-        }
-      })().finally(() => {
-        inFlightRenders.delete(flightKey);
-      }),
-    };
-
-    inFlightRenders.set(flightKey, flight);
+  if (flight) {
+    const resp = await flight;
+    return resp.clone();
   }
 
-  try {
-    const result = await flight.promise;
-    if (!result.allowed) {
-      // The flight creator was rate-limited. Never share a 302 denial across identities!
-      const clientIp = request.headers.get("CF-Connecting-IP");
-      if (clientIp === result.creatorIp) {
-        return fallback(origin, "rate limited");
-      }
-      // This is an innocent joiner whose IP was not evaluated.
-      // Re-evaluate quota for this caller rather than inheriting the creator's denial.
-      const db = env?.READER_DB;
-      const now = Date.now();
-      const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
-      const allowed = await reserveOgSlot(db, ipHash, now);
-      if (!allowed) {
-        return fallback(origin, "rate limited");
-      }
-      return serveCard({ request, env, segments, waitUntil });
+  // 2. If another caller is currently reserving a slot for this card, wait for that reservation:
+  let reserving = inFlightReservations.get(flightKey);
+  if (reserving) {
+    const res = await reserving;
+    if (res?.allowed && res?.flight) {
+      const resp = await res.flight;
+      return resp.clone();
     }
-    return result.response.clone();
+  }
+
+  // 3. This caller is candidate leader. Check THIS identity's quota before publishing any flight!
+  let reservationResolve;
+  const reservationPromise = new Promise((resolve) => {
+    reservationResolve = resolve;
+  });
+  inFlightReservations.set(flightKey, reservationPromise);
+
+  const db = env?.READER_DB;
+  const now = Date.now();
+  const clientIp = request.headers.get("CF-Connecting-IP");
+  const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
+  const allowed = await reserveOgSlot(db, ipHash, now);
+
+  if (!allowed) {
+    // Leader is denied! Reject before publishing so joiners never attach to a doomed flight.
+    inFlightReservations.delete(flightKey);
+    reservationResolve({ allowed: false });
+    return fallback(origin, "rate limited");
+  }
+
+  // 4. Quota reserved! Publish the in-flight render so joiners can share it:
+  const controller = new AbortController();
+  let timerId;
+  const timeoutPromise = new Promise((resolve) => {
+    timerId = setTimeout(() => {
+      controller.abort();
+      resolve(fallback(origin, "render timed out"));
+    }, _RENDER_TIMEOUT_MS);
+  });
+
+  const renderPromise = (async () => {
+    try {
+      return await Promise.race([
+        renderCard({
+          env,
+          origin,
+          pagePath,
+          version,
+          html,
+          fixed,
+          row,
+          bucket,
+          waitUntil,
+          flightKey,
+          signal: controller.signal,
+        }),
+        timeoutPromise,
+      ]);
+    } catch (err) {
+      controller.abort();
+      console.error("og render error", pagePath, err?.message || err);
+      return fallback(origin, "render failed");
+    } finally {
+      clearTimeout(timerId);
+      inFlightRenders.delete(flightKey);
+    }
+  })();
+
+  inFlightRenders.set(flightKey, renderPromise);
+  inFlightReservations.delete(flightKey);
+  reservationResolve({ allowed: true, flight: renderPromise });
+
+  try {
+    const response = await renderPromise;
+    return response.clone();
   } catch (err) {
     console.error("og serveCard error", pagePath, err?.message || err);
     return fallback(origin, "render failed");
@@ -435,4 +443,9 @@ function setRenderTimeoutMs(ms) {
   _RENDER_TIMEOUT_MS = ms;
 }
 
-export { inFlightRenders as _inFlightRenders, recentRenders as _recentRenders, setRenderTimeoutMs as _setRenderTimeoutMs };
+export {
+  inFlightRenders as _inFlightRenders,
+  inFlightReservations as _inFlightReservations,
+  recentRenders as _recentRenders,
+  setRenderTimeoutMs as _setRenderTimeoutMs,
+};
