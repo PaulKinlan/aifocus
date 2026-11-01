@@ -16,11 +16,15 @@
 // Any failure falls back to a redirect to the site-wide card, so a share never
 // gets a broken image.
 
+import { hashIp, UNKNOWN_IP_BUCKET } from "./reader.js";
+
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;
 export const FALLBACK_IMAGE = "/images/card.jpeg";
 export const HOOK_MAX_CHARS = 140;
 export const DEFAULT_HOOK_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+export const OG_RENDERS_PER_HOUR = 30;
+let _RENDER_TIMEOUT_MS = 30000;
 const ESSAY_MAX_CHARS = 16000;
 const SEGMENT_RE = /^[a-z0-9][a-z0-9-]{0,120}$/i;
 
@@ -168,17 +172,20 @@ export async function generateAndSaveHook(env, origin, pagePath, html) {
   }
 }
 
-export async function screenshot(env, html) {
+export async function screenshot(env, html, signal) {
   if (!env?.BROWSER || typeof env.BROWSER.quickAction !== "function") {
     throw new Error("BROWSER binding missing");
   }
+  if (signal?.aborted) throw new Error("render aborted");
   const res = await env.BROWSER.quickAction("screenshot", {
     html,
     viewport: { width: CARD_WIDTH, height: CARD_HEIGHT },
     screenshotOptions: { type: "png" },
     gotoOptions: { waitUntil: "networkidle0", timeout: 15000 },
     waitForSelector: { selector: "html.ready", timeout: 10000 },
+    signal,
   });
+  if (signal?.aborted) throw new Error("render aborted");
   if (!res?.ok) {
     const detail = await res?.text?.().catch(() => "");
     throw new Error(`screenshot HTTP ${res?.status}: ${String(detail).slice(0, 200)}`);
@@ -190,6 +197,16 @@ export async function screenshot(env, html) {
 
 // Removes every stored PNG for a page (after its hook changes).
 export async function purgeCards(bucket, pagePath) {
+  const target = `:${pagePath}:`;
+  for (const key of recentRenders.keys()) {
+    if (key.includes(target)) recentRenders.delete(key);
+  }
+  for (const key of inFlightRenders.keys()) {
+    if (key.includes(target)) inFlightRenders.delete(key);
+  }
+  for (const key of inFlightReservations.keys()) {
+    if (key.includes(target)) inFlightReservations.delete(key);
+  }
   if (!bucket) return 0;
   let removed = 0;
   let cursor;
@@ -221,6 +238,71 @@ function fallback(origin, reason) {
       "X-Og-Card": `fallback: ${reason}`,
     },
   });
+}
+
+const inFlightRenders = new Map();
+const inFlightReservations = new Map();
+const recentRenders = new Map();
+const UNSTORED_CACHE_TTL_MS = 300 * 1000;
+
+export async function reserveOgSlot(db, ipHash, now) {
+  if (!db) {
+    console.error("og rate limit error: READER_DB unavailable; failing closed (requires 0007_search_log.sql)");
+    return false;
+  }
+  const windowStart = now - 60 * 60 * 1000;
+  try {
+    const batchRes = await db.batch([
+      db.prepare("DELETE FROM og_render_log WHERE created_at <= ?").bind(windowStart),
+      db.prepare(
+        `INSERT INTO og_render_log (ip_hash, created_at)
+         SELECT ?1, ?2
+         WHERE (SELECT COUNT(*) FROM og_render_log WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+      ).bind(ipHash, now, windowStart, OG_RENDERS_PER_HOUR),
+    ]);
+    const changes = batchRes[1]?.meta?.changes ?? batchRes[1]?.changes ?? 0;
+    return changes > 0;
+  } catch (err) {
+    console.error("og rate limit error: failing closed (requires 0007_search_log.sql)", err?.message || err);
+    return false; // Fail closed for DB error or missing table
+  }
+}
+
+async function renderCard({ env, origin, pagePath, version, html, fixed, row, bucket, waitUntil, flightKey, signal }) {
+  try {
+    if (signal?.aborted) return fallback(origin, "render aborted");
+    const { hook, stored } = fixed
+      ? { hook: "", stored: true }
+      : row?.hook
+        ? { hook: row.hook, stored: true }
+        : await generateAndSaveHook(env, origin, pagePath, html);
+    if (signal?.aborted) return fallback(origin, "render aborted");
+    const key = r2Key(pagePath, version, await hookTag(hook));
+    const png = await screenshot(env, fillHook(html, hook), signal);
+    if (signal?.aborted) return fallback(origin, "render aborted");
+    if (bucket && stored) {
+      waitUntil(
+        bucket
+          .put(key, png, { httpMetadata: { contentType: "image/png" }, customMetadata: { page: pagePath, version } })
+          .catch((err) => console.error("og r2 put", key, err?.message || err)),
+      );
+    }
+    const headers = pngHeaders({
+      "X-Og-Card": stored ? "rendered" : "rendered, not stored",
+      ...(stored ? {} : { "Cache-Control": "public, max-age=300" }),
+    });
+    if (!stored) {
+      recentRenders.set(flightKey, {
+        png,
+        headers,
+        expiresAt: Date.now() + UNSTORED_CACHE_TTL_MS,
+      });
+    }
+    return new Response(png, { headers });
+  } catch (err) {
+    console.error("og render", pagePath, err?.message || err);
+    return fallback(origin, "render failed");
+  }
 }
 
 export async function serveCard({ request, env, segments, waitUntil = () => {} }) {
@@ -255,29 +337,117 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
     }
   }
 
-  try {
-    const { hook, stored } = fixed
-      ? { hook: "", stored: true }
-      : row?.hook
-        ? { hook: row.hook, stored: true }
-        : await generateAndSaveHook(env, origin, pagePath, html);
-    const key = r2Key(pagePath, version, await hookTag(hook));
-    const png = await screenshot(env, fillHook(html, hook));
-    if (bucket && stored) {
-      waitUntil(
-        bucket
-          .put(key, png, { httpMetadata: { contentType: "image/png" }, customMetadata: { page: pagePath, version } })
-          .catch((err) => console.error("og r2 put", key, err?.message || err)),
-      );
+  const hookVersion = fixed ? "fixed" : (row?.hook ? await hookTag(row.hook) : "unstored");
+  const flightKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
+  const cachedRender = recentRenders.get(flightKey);
+  if (cachedRender) {
+    if (Date.now() < cachedRender.expiresAt) {
+      return new Response(cachedRender.png, { headers: cachedRender.headers });
     }
-    return new Response(png, {
-      headers: pngHeaders({
-        "X-Og-Card": stored ? "rendered" : "rendered, not stored",
-        ...(stored ? {} : { "Cache-Control": "public, max-age=300" }),
-      }),
-    });
+    recentRenders.delete(flightKey);
+  }
+
+  // 1. If an actual render is already in flight, join it (costs 0 quota).
+  let flight = inFlightRenders.get(flightKey);
+  if (flight) {
+    const resp = await flight;
+    return resp.clone();
+  }
+
+  // 2. If another caller is currently reserving a slot for this card, wait for that reservation:
+  let reserving = inFlightReservations.get(flightKey);
+  if (reserving) {
+    const res = await reserving;
+    if (res?.allowed && res?.flight) {
+      const resp = await res.flight;
+      return resp.clone();
+    }
+  }
+
+  // 3. This caller is candidate leader. Check THIS identity's quota before publishing any flight!
+  let reservationResolve;
+  const reservationPromise = new Promise((resolve) => {
+    reservationResolve = resolve;
+  });
+  inFlightReservations.set(flightKey, reservationPromise);
+
+  const db = env?.READER_DB;
+  const now = Date.now();
+  let allowed = false;
+  try {
+    const clientIp = request.headers.get("CF-Connecting-IP");
+    const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
+    allowed = await reserveOgSlot(db, ipHash, now);
   } catch (err) {
-    console.error("og render", pagePath, err?.message || err);
+    console.error("og rate limit error: failing closed (requires 0007_search_log.sql)", err?.message || err);
+    allowed = false;
+  }
+
+  if (!allowed) {
+    // Leader is denied! Reject before publishing so joiners never attach to a doomed flight.
+    inFlightReservations.delete(flightKey);
+    reservationResolve({ allowed: false });
+    return fallback(origin, "rate limited");
+  }
+
+  // 4. Quota reserved! Publish the in-flight render so joiners can share it:
+  const controller = new AbortController();
+  let timerId;
+  const timeoutPromise = new Promise((resolve) => {
+    timerId = setTimeout(() => {
+      controller.abort();
+      resolve(fallback(origin, "render timed out"));
+    }, _RENDER_TIMEOUT_MS);
+  });
+
+  const renderPromise = (async () => {
+    try {
+      return await Promise.race([
+        renderCard({
+          env,
+          origin,
+          pagePath,
+          version,
+          html,
+          fixed,
+          row,
+          bucket,
+          waitUntil,
+          flightKey,
+          signal: controller.signal,
+        }),
+        timeoutPromise,
+      ]);
+    } catch (err) {
+      controller.abort();
+      console.error("og render error", pagePath, err?.message || err);
+      return fallback(origin, "render failed");
+    } finally {
+      clearTimeout(timerId);
+      inFlightRenders.delete(flightKey);
+    }
+  })();
+
+  inFlightRenders.set(flightKey, renderPromise);
+  inFlightReservations.delete(flightKey);
+  reservationResolve({ allowed: true, flight: renderPromise });
+
+  try {
+    const response = await renderPromise;
+    return response.clone();
+  } catch (err) {
+    console.error("og serveCard error", pagePath, err?.message || err);
     return fallback(origin, "render failed");
   }
 }
+
+function setRenderTimeoutMs(ms) {
+  _RENDER_TIMEOUT_MS = ms;
+}
+
+export {
+  inFlightRenders as _inFlightRenders,
+  inFlightReservations as _inFlightReservations,
+  recentRenders as _recentRenders,
+  setRenderTimeoutMs as _setRenderTimeoutMs,
+};
