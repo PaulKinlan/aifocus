@@ -291,10 +291,8 @@ async function renderCard({ env, origin, pagePath, version, html, fixed, row, bu
       "X-Og-Card": stored ? "rendered" : "rendered, not stored",
       ...(stored ? {} : { "Cache-Control": "public, max-age=300" }),
     });
-    const hookVersion = fixed ? "fixed" : (row?.hook ? await hookTag(row.hook) : "unstored");
-    const cacheKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
     if (!stored) {
-      recentRenders.set(cacheKey, {
+      recentRenders.set(flightKey, {
         png,
         headers,
         expiresAt: Date.now() + UNSTORED_CACHE_TTL_MS,
@@ -340,16 +338,14 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
   }
 
   const hookVersion = fixed ? "fixed" : (row?.hook ? await hookTag(row.hook) : "unstored");
-  const cacheKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
-  const cachedRender = recentRenders.get(cacheKey);
+  const flightKey = `${origin}:${pagePath}:${version}:${hookVersion}`;
+  const cachedRender = recentRenders.get(flightKey);
   if (cachedRender) {
     if (Date.now() < cachedRender.expiresAt) {
       return new Response(cachedRender.png, { headers: cachedRender.headers });
     }
-    recentRenders.delete(cacheKey);
+    recentRenders.delete(flightKey);
   }
-
-  const flightKey = `${origin}:${pagePath}:${version}`;
 
   // 1. If an actual render is already in flight, join it (costs 0 quota).
   let flight = inFlightRenders.get(flightKey);

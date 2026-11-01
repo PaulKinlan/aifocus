@@ -745,6 +745,68 @@ test("joiner legitimately reuses leader's rendered card and consumes zero quota"
   assert.equal(joinerRows.n, 0, "joiner consumed zero quota slots");
 });
 
+test("a hook edit while an old render is in-flight: new request does not join old flight and does not serve old card", async () => {
+  let releaseRenderA;
+  const holdRenderA = new Promise((r) => {
+    releaseRenderA = r;
+  });
+  let reachedA = false;
+
+  const { env, calls } = makeEnv({
+    browser: async (action, options) => {
+      if (options.html.includes("Initial Hook A")) {
+        reachedA = true;
+        // Hold render A in-flight
+        await holdRenderA;
+      }
+      return new Response(new Uint8Array([137, 80, 78, 71]), { headers: { "Content-Type": "image/png" } });
+    },
+  });
+  const fullDb = env.READER_DB;
+  await writeHook(fullDb, "/agent-do-my-agent-loop/", "Initial Hook A", "manual");
+
+  // Fire Request A (starts in-flight render for Hook A)
+  const reqAPromise = serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.10" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+
+  // Wait until Request A is actively in-flight in the renderer
+  while (!reachedA) await new Promise((r) => setTimeout(r, 5));
+
+  // While Request A is still in-flight, editor updates the hook in D1 to Hook B
+  await writeHook(fullDb, "/agent-do-my-agent-loop/", "Updated Hook B", "manual");
+
+  // Fire Request B for the same page while Request A is still in-flight
+  const reqBPromise = serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.11" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+
+  // Small delay so Request B evaluates and dispatches its own flight
+  await new Promise((r) => setTimeout(r, 20));
+
+  // Now release Request A
+  releaseRenderA();
+
+  const [resA, resB] = await Promise.all([reqAPromise, reqBPromise]);
+
+  assert.equal(resA.status, 200);
+  assert.equal(resB.status, 200);
+
+  // Must have executed 2 screenshots, not joined into 1!
+  assert.equal(calls.screenshots.length, 2, "must render separately, not join the old version's flight");
+  assert.match(calls.screenshots[0].options.html, /Initial Hook A/);
+  assert.match(calls.screenshots[1].options.html, /Updated Hook B/);
+});
+
+
 
 
 
