@@ -416,6 +416,37 @@ test("Bluesky start refuses discovery that points off the public internet", asyn
   assert.ok(!log3.some((l) => l.includes("10.0.0.1")), "the internal issuer is never fetched");
 });
 
+test("Bluesky start normalizes hostnames before the public-host checks", async () => {
+  // Trailing-dot FQDN form: 'service.internal.' must hit the same rejection
+  // as 'service.internal'.
+  const env = makeEnv();
+  const log = [];
+  await withFetch(blueskyFetch({ log, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://service.internal./" }] }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.ok(!log.some((l) => l.includes("service.internal")), "the internal host is never fetched");
+
+  // Punycode/IDN form: a host whose name ends in the reserved suffix is
+  // refused after URL normalization (lowercase + punycode), and an uppercase
+  // mixture of a legitimate host is normalized down so the flow still works.
+  const env2 = makeEnv();
+  const log2 = [];
+  await withFetch(blueskyFetch({ log: log2, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://xn--80aaa.internal/" }] }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env2, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.ok(!log2.some((l) => l.includes("xn--80aaa.internal")), "the punycode internal host is never fetched");
+
+  const env3 = makeEnv();
+  const log3 = [];
+  await withFetch(blueskyFetch({ log: log3, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://PDS.Example.COM" }] }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env3, params: { provider: "bluesky" } });
+    assert.match(res.headers.get("Location"), /^https:\/\/auth\.example\.com\/authorize/); // the whole start succeeds
+  });
+  assert.ok(log3.some((l) => l === `GET https://pds.example.com/.well-known/oauth-protected-resource`), "an uppercase-mixture legit host is normalized and fetched");
+});
+
 test("Bluesky start does not follow redirects and keeps the fetch sequence bounded", async () => {
   const env = makeEnv();
   const log = [];

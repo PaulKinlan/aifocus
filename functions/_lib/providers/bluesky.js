@@ -27,18 +27,31 @@ const DID_RE = /^did:(plc:[a-z2-7]{24}|web:[a-z0-9.-]+(?::\d+)?)$/;
 const FETCH_TIMEOUT_MS = 5000;
 const MAX_JSON_CHARS = 64 * 1024;
 
+// The hostname is already normalized (lowercase, punycode, no trailing dot).
+// This is a denylist of everything that is not a public name plus one
+// positive rule - a public host has at least two labels - because a denylist
+// of internal names alone can never be complete.
+function publicHostnameProblem(host) {
+  if (!host.includes(".")) return "single-label host";
+  if (host.includes(":") || /^\d+(\.\d+)*$/.test(host)) return "IP literal";
+  if (host === "localhost" || /\.(local|internal|localhost)$/.test(host) || host === "localhost.internal") return "reserved name";
+  return null;
+}
+
 // Every outbound URL in this flow is either one of the fixed discovery hosts
 // (appview, plc.directory) or a host named by third-party data (a DID
 // document). Anything fetched must be https on the default port, on a public
-// DNS name - never an IP literal, an internal/reserved hostname, or another
-// port - so the discovery chain cannot be pointed at internal addresses.
+// multi-label DNS name - never an IP literal, an internal/reserved name, or
+// another port - so the discovery chain cannot be pointed at internal
+// addresses. The hostname is normalized BEFORE the checks: lowercased and
+// IDN-converted to punycode by the URL parser, with a single trailing dot
+// stripped so the FQDN form ('service.internal.') cannot slip the rules.
 function assertPublicHttpsUrl(url) {
   const u = url instanceof URL ? url : new URL(url);
   if (u.protocol !== "https:") throw new Error(`bluesky: ${u.host} is not https`);
-  const host = u.hostname;
-  if (host.includes(":") || /^\d+(\.\d+)*$/.test(host) || host === "localhost" || /\.(local|internal|localhost)$/.test(host)) {
-    throw new Error(`bluesky: ${host} is not a public host`);
-  }
+  const host = u.hostname.replace(/\.$/, "");
+  const reason = publicHostnameProblem(host);
+  if (reason) throw new Error(`bluesky: ${u.host} rejected: ${reason}`);
   if (u.port && u.port !== "443") throw new Error(`bluesky: ${u.host} uses a non-standard port`);
   return u;
 }
