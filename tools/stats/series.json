@@ -344,7 +344,8 @@
           "name": "Sweep (author)",
           "label": "Sweep (bot)",
           "method": "PR author",
-          "query": "is:pr author:sweep-ai[bot]"
+          "query": "is:pr author:sweep-ai[bot]",
+          "track": false
         },
         {
           "name": "Pixeebot (author)",
@@ -436,7 +437,9 @@
       ],
       "method": "GitHub Search API, /search/issues with is:pr and a created date range per calendar month.",
       "caveats": [
-        "Author-account queries only see bots that open PRs under their own account; Claude Code PRs are opened by the human, so the body marker is used instead."
+        "Author-account queries only see bots that open PRs under their own account; Claude Code PRs are opened by the human, so the body marker is used instead.",
+    "The chatgpt-codex-connector bot account has authored almost no pull requests since March 2026 (three in August, one in October), so the Codex line here no longer reflects Codex use; PRs made with Codex now appear under the user's own account with no marker this series can match.",
+    "The sweep-ai bot account no longer exists on GitHub (the Search API returns a validation error for it), so its rows stop at the last successful run and it is not re-measured."
       ]
     },
     {
@@ -669,7 +672,8 @@
           "name": "Sweep (commenter)",
           "label": "Sweep",
           "method": "commenter",
-          "query": "is:pr commenter:sweep-ai[bot]"
+          "query": "is:pr commenter:sweep-ai[bot]",
+          "track": false
         },
         {
           "name": "Pixeebot (commenter)",
@@ -902,7 +906,8 @@
           "name": "Sweep",
           "label": "Sweep",
           "method": "commenter",
-          "query": "is:issue commenter:sweep-ai[bot]"
+          "query": "is:issue commenter:sweep-ai[bot]",
+          "track": false
         },
         {
           "name": "Pixeebot",
