@@ -3,8 +3,8 @@ title: Latest stats on Claude Commits
 seotitle: "Claude Code is now 10 million GitHub commits a week"
 slug: update-on-claude-commits
 description: "In March, Claude Code was 2.6 million public GitHub commits a week. In September I said 7 million. Re-run for the 52 weeks to 1 November 2026, it is 10.3 million a week, and every tool I track is in the table."
-date: 2026-11-01T18:00:00.000Z
-draft: true
+date: 2026-11-01T18:08:00.994Z
+draft: false
 authors:
   - paulkinlan
 ---
