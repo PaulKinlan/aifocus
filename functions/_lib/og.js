@@ -301,7 +301,9 @@ async function renderCard({ env, origin, pagePath, version, html, fixed, row, bu
     return new Response(png, { headers });
   } catch (err) {
     console.error("og render", pagePath, err?.message || err);
-    return fallback(origin, "render failed");
+    // The reason travels in the X-Og-Card header so a failing card can be
+    // diagnosed from a browser; it is our own error text, trimmed.
+    return fallback(origin, `render failed: ${String(err?.message || err).replace(/[\r\n]+/g, " ").slice(0, 160)}`);
   }
 }
 
