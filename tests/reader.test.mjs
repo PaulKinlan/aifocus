@@ -202,21 +202,16 @@ test("reactions: rate limit counts write events, so on/off toggling cannot outru
   assert.equal(offAfter.status, 429);
 });
 
-test("reactions: survive a functions deploy that runs before migration 0005", async () => {
+test("reactions: a functions deploy that runs before migration 0005 denies writes loudly", async () => {
   const env = makeEnv({ READER_DB: createD1(MIGRATIONS_PRE_IP) });
-  // The reactions table has no ip_hash column yet: writes must not 500.
-  let res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
-  assert.equal(res.status, 200);
-  // The degraded limiter is a GLOBAL cap, not the per-reader bucket: rows
-  // written by a different reader trip the limit for this one too.
-  const now = Date.now();
-  for (let i = 0; i < 30; i += 1) {
-    await env.READER_DB.prepare(
-      "INSERT INTO annotations (id, post, reader, type, status, created_at) VALUES (?, ?, ?, 'comment', 'approved', ?)",
-    ).bind(`seed${i}`, POST, READER_B, now).run();
-  }
-  res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
+  // The reactions table has no ip_hash column and there is no write_events
+  // ledger: there is no append-only counter to limit with, so the write path
+  // fails closed (429) instead of half-working behind an erasable counter.
+  const res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
   assert.equal(res.status, 429);
+  const off = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful", on: false }, reader: READER_A }), env });
+  assert.equal(off.status, 429);
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions").get().n, 0);
 });
 
 test("reactions: an unexpected database error fails the rate limit closed", async () => {

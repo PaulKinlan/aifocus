@@ -164,9 +164,9 @@ export async function hashIp(db, ip) {
 }
 
 // Bucket key for writes with no client IP (no CF-Connecting-IP header, e.g.
-// local dev): they share one coarse bucket instead of escaping the limit.
-// Used where the schema declares ip_hash NOT NULL (ask_log); nullable columns
-// (annotations, reactions) use a NULL ip_hash bucket instead.
+// local dev): every reader write endpoint (reactions, annotations, ask)
+// folds a missing IP into this one constant bucket, so a missing IP can
+// never mean "no limit" and no NULL-keyed row is ever written.
 export const UNKNOWN_IP_BUCKET = "unknown";
 
 export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
@@ -188,18 +188,13 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
   } catch (err) {
     if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
       // Migrations 0005/0006 not applied yet (functions deployed before the
-      // D1 migrations): degrade to a global cap across ALL readers and IPs -
-      // never to the per-reader bucket alone, which a cookie-rotating client
-      // controls - and make the degradation visible in the logs.
-      console.error("rate-limit degraded: write_events/reactions.ip_hash schema missing; apply D1 migrations 0005+0006");
-      const row = await db
-        .prepare(
-          `SELECT (SELECT COUNT(*) FROM annotations WHERE created_at > ?1) +
-                  (SELECT COUNT(*) FROM reactions WHERE created_at > ?1) AS all_writes`,
-        )
-        .bind(since)
-        .first();
-      return (row?.all_writes ?? LIMITS.writesPerHour) >= LIMITS.writesPerHour;
+      // D1 migrations): fail closed and say exactly why. There is no
+      // append-only counter to count in this state, and any live-row fallback
+      // is either erasable by the toggle flood it exists to stop or strict
+      // enough to lock ordinary traffic out site-wide - so the write path is
+      // uniformly, visibly OFF until the migration runs (one command).
+      console.error("reader writes denied: apply D1 migrations 0005+0006 (write_events/reactions.ip_hash missing)");
+      return true;
     }
     // Any other database error: fail closed. Silently answering with the
     // per-reader count would switch the security control off while the
