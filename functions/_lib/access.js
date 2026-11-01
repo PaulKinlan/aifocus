@@ -56,6 +56,9 @@ export async function verifyAccess(request, env, { fetchImpl = fetch, now = Date
   } catch {
     return null;
   }
+  // "null", "123" or a string decode to non-objects; touching .alg/.aud on
+  // them would throw a TypeError and turn a bad token into a 500.
+  if (!header || typeof header !== "object" || !payload || typeof payload !== "object") return null;
   if (header.alg !== "RS256") return null;
 
   let keys;
@@ -67,20 +70,28 @@ export async function verifyAccess(request, env, { fetchImpl = fetch, now = Date
   const jwk = keys.find((k) => k.kid === header.kid);
   if (!jwk) return null;
 
-  const key = await crypto.subtle.importKey(
-    "jwk",
-    jwk,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["verify"],
-  );
-  const valid = await crypto.subtle.verify(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    b64urlToBytes(parts[2]),
-    new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
-  );
-  if (!valid) return null;
+  let key;
+  try {
+    key = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    // atob() throws a DOMException on a malformed signature segment, and
+    // subtle.verify() can reject on unusable key material: a token that
+    // cannot be validated is rejected (null -> 403), never a 500.
+    const valid = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      key,
+      b64urlToBytes(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
+    );
+    if (!valid) return null;
+  } catch {
+    return null;
+  }
 
   const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   if (!auds.includes(aud)) return null;

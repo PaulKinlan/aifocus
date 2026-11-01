@@ -411,6 +411,16 @@ test("verifyAccess: accepts a valid token and rejects wrong aud, issuer, expiry,
   assert.equal(await check(tampered), null);
   assert.equal(await check(null), null);
   assert.equal(await check(await sign(good), {}), null, "fails closed without configuration");
+
+  // Malformed tokens must be REJECTED without throwing (a 500 instead of a
+  // 403 would leak that the endpoint exists and errored mid-verification).
+  const [, , badSig] = "h.H.s!g!".split(".");
+  assert.equal(await check("e30.e30.s!gnature"), null, "malformed signature segment");
+  assert.equal(await check(`e30.${Buffer.from(JSON.stringify(good)).toString("base64url")}.${badSig}`), null);
+  assert.equal(await check(`${Buffer.from("null").toString("base64url")}.${Buffer.from(JSON.stringify(good)).toString("base64url")}.${(await sign(good)).split(".")[2]}`), null, "null header");
+  assert.equal(await check(`${(await sign(good)).split(".")[0]}.${Buffer.from("null").toString("base64url")}.${(await sign(good)).split(".")[2]}`), null, "null payload");
+  assert.equal(await check("not-a-jwt"), null);
+  assert.equal(await check("a.b"), null);
 });
 
 test("admin queue and moderation: require Access, then approve makes a note public", async () => {
