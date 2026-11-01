@@ -24,6 +24,24 @@ const DEFAULT_SERVER = "https://bsky.social";
 const APPVIEW = "https://public.api.bsky.app";
 const HANDLE_RE = /^(?=.{3,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]$/;
 const DID_RE = /^did:(plc:[a-z2-7]{24}|web:[a-z0-9.-]+(?::\d+)?)$/;
+const FETCH_TIMEOUT_MS = 5000;
+const MAX_JSON_CHARS = 64 * 1024;
+
+// Every outbound URL in this flow is either one of the fixed discovery hosts
+// (appview, plc.directory) or a host named by third-party data (a DID
+// document). Anything fetched must be https on the default port, on a public
+// DNS name - never an IP literal, an internal/reserved hostname, or another
+// port - so the discovery chain cannot be pointed at internal addresses.
+function assertPublicHttpsUrl(url) {
+  const u = url instanceof URL ? url : new URL(url);
+  if (u.protocol !== "https:") throw new Error(`bluesky: ${u.host} is not https`);
+  const host = u.hostname;
+  if (host.includes(":") || /^\d+(\.\d+)*$/.test(host) || host === "localhost" || /\.(local|internal|localhost)$/.test(host)) {
+    throw new Error(`bluesky: ${host} is not a public host`);
+  }
+  if (u.port && u.port !== "443") throw new Error(`bluesky: ${u.host} uses a non-standard port`);
+  return u;
+}
 
 export const clientId = (origin) => `${origin}/api/auth/client-metadata`;
 
@@ -49,9 +67,23 @@ export function normalizeHandle(raw) {
 }
 
 const getJson = async (url, fetchImpl) => {
-  const res = await fetchImpl(url, { headers: { Accept: "application/json" } });
-  if (!res.ok) throw new Error(`bluesky: ${new URL(url).host}${new URL(url).pathname} HTTP ${res.status}`);
-  return res.json();
+  assertPublicHttpsUrl(url);
+  // Redirects are never followed: each hop must re-qualify as a public https
+  // host, so a discovery response cannot bounce a fetch onto an internal
+  // address. 5s timeout and a 64KB body cap bound what one hop can cost.
+  const res = await fetchImpl(url, {
+    headers: { Accept: "application/json" },
+    redirect: "manual",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (res.status < 200 || res.status >= 300) {
+    throw new Error(`bluesky: ${new URL(url).host}${new URL(url).pathname} HTTP ${res.status}`);
+  }
+  const declared = Number(res.headers.get("Content-Length") || "0");
+  if (declared > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+  const text = await res.text();
+  if (text.length > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+  return JSON.parse(text);
 };
 
 export async function resolveHandle(handle, fetchImpl) {
@@ -65,13 +97,18 @@ export async function resolveHandle(handle, fetchImpl) {
 
 export async function pdsForDid(did, fetchImpl) {
   if (!DID_RE.test(did)) throw new Error("bluesky: invalid DID");
-  const doc = did.startsWith("did:plc:")
-    ? await getJson(`https://plc.directory/${did}`, fetchImpl)
-    : await getJson(`https://${did.slice("did:web:".length).replace(/:/g, "%3A")}/.well-known/did.json`, fetchImpl);
+  // did:web names its own host, so honouring it would let the caller pick the
+  // host we fetch next. DID documents for did:plc come from the fixed
+  // plc.directory registry instead.
+  if (!did.startsWith("did:plc:")) throw new Error("bluesky: only did:plc identities are supported");
+  const doc = await getJson(`https://plc.directory/${did}`, fetchImpl);
   if (doc?.id !== did) throw new Error("bluesky: DID document id mismatch");
   const service = (doc.service || []).find((s) => s?.id === "#atproto_pds" || s?.id === `${did}#atproto_pds`);
   const endpoint = service?.serviceEndpoint;
   if (typeof endpoint !== "string" || !endpoint.startsWith("https://")) throw new Error("bluesky: no PDS in DID document");
+  // The PDS endpoint is third-party data: it must be a public https host
+  // before anything is fetched from it.
+  assertPublicHttpsUrl(endpoint);
   return endpoint.replace(/\/+$/, "");
 }
 
@@ -79,10 +116,12 @@ export async function authServerForPds(pds, fetchImpl) {
   const resource = await getJson(`${pds}/.well-known/oauth-protected-resource`, fetchImpl);
   const issuer = resource?.authorization_servers?.[0];
   if (typeof issuer !== "string" || !issuer.startsWith("https://")) throw new Error("bluesky: no authorization server");
+  assertPublicHttpsUrl(issuer);
   return issuer.replace(/\/+$/, "");
 }
 
 export async function authServerMetadata(issuer, fetchImpl) {
+  assertPublicHttpsUrl(issuer);
   const meta = await getJson(`${issuer}/.well-known/oauth-authorization-server`, fetchImpl);
   if (meta?.issuer !== issuer) throw new Error("bluesky: issuer mismatch");
   for (const key of ["authorization_endpoint", "token_endpoint", "pushed_authorization_request_endpoint"]) {
@@ -115,6 +154,7 @@ export async function dpopProof(privateJwk, { htm, htu, nonce }) {
 // POST a form with a DPoP proof, retrying once with the server's nonce when
 // it answers use_dpop_nonce (servers require a nonce on the first request).
 export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
+  assertPublicHttpsUrl(url);
   let currentNonce = nonce || null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const res = await fetchImpl(url, {
@@ -125,9 +165,18 @@ export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
         DPoP: await dpopProof(privateJwk, { htm: "POST", htu: url, nonce: currentNonce }),
       },
       body: new URLSearchParams(form),
+      redirect: "manual",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     const nextNonce = res.headers.get("DPoP-Nonce");
-    const body = await res.json().catch(() => ({}));
+    const text = await res.text();
+    if (text.length > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = {};
+    }
     if (res.ok) return { body, nonce: nextNonce || currentNonce };
     if (body?.error === "use_dpop_nonce" && nextNonce && attempt === 0) {
       currentNonce = nextNonce;

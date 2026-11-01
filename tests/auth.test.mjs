@@ -16,7 +16,7 @@ import { onRequestPost as logout } from "../functions/api/auth/logout.js";
 import { onRequestGet as clientMetadataRoute } from "../functions/api/auth/client-metadata.js";
 import { dpopProof, generateDpopKey, normalizeHandle } from "../functions/_lib/providers/bluesky.js";
 
-const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql"].map((f) =>
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0008_auth_start_log.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
 );
 const ORIGIN = "https://aifoc.us";
@@ -294,15 +294,17 @@ test("Bluesky: DPoP proofs are valid ES256 JWTs and handles are normalised", asy
   assert.equal(base64url(new Uint8Array([251, 255])), "-_8");
 });
 
-function blueskyFetch({ tokenSub = DID, log = [] } = {}) {
+function blueskyFetch({ tokenSub = DID, log = [], resolve, plcDoc } = {}) {
   let parNonceSent = false;
   return (url, init = {}) => {
     log.push(`${init.method || "GET"} ${url.href}`);
     if (url.href.startsWith("https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle")) {
       assert.equal(url.searchParams.get("handle"), "ana.example.com");
+      if (resolve) return resolve(url);
       return json({ did: DID });
     }
     if (url.href === `https://plc.directory/${DID}`) {
+      if (plcDoc) return plcDoc(url);
       return json({ id: DID, service: [{ id: "#atproto_pds", type: "AtprotoPersonalDataServer", serviceEndpoint: PDS }] });
     }
     if (url.href === `${PDS}/.well-known/oauth-protected-resource`) return json({ authorization_servers: [AS] });
@@ -374,6 +376,67 @@ test("Bluesky: a token for a different DID, or a wrong issuer, is refused", asyn
   const bad = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=not%20a%20handle"), env, params: { provider: "bluesky" } });
   assert.equal(bad.headers.get("Location"), "/p/?signin=bad-handle");
   assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM users").get().n, 0);
+});
+
+test("Bluesky start refuses discovery that points off the public internet", async () => {
+  // did:web names its own host: honouring it would let the caller pick the
+  // host we fetch next, so only did:plc (from the pinned plc.directory) is
+  // discoverable.
+  const env = makeEnv();
+  const log = [];
+  await withFetch(blueskyFetch({ log, resolve: () => json({ did: "did:web:evil.example" }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.equal(log.length, 1, "no fetch beyond the pinned appview");
+  assert.ok(log[0].includes("public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle"));
+
+  // The DID document's PDS endpoint is third-party data: internal hosts are
+  // refused before anything is fetched from them.
+  const env2 = makeEnv();
+  const log2 = [];
+  await withFetch(blueskyFetch({ log: log2, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://169.254.169.254/" }] }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env2, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.equal(log2.length, 2, "appview + plc only");
+  assert.ok(!log2.some((l) => l.includes("169.254.169.254")), "the internal host is never fetched");
+
+  // The authorization server issuer is validated the same way.
+  const env3 = makeEnv();
+  const log3 = [];
+  const base = blueskyFetch({ log: log3 });
+  await withFetch((url, init) => {
+    if (url.href === `${PDS}/.well-known/oauth-protected-resource`) return json({ authorization_servers: ["https://10.0.0.1"] });
+    return base(url, init);
+  }, async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env3, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.ok(!log3.some((l) => l.includes("10.0.0.1")), "the internal issuer is never fetched");
+});
+
+test("Bluesky start does not follow redirects and keeps the fetch sequence bounded", async () => {
+  const env = makeEnv();
+  const log = [];
+  await withFetch(blueskyFetch({ log, resolve: () => new Response(null, { status: 302, headers: { Location: "https://10.0.0.1/x" } }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.equal(log.length, 1, "the redirect is not followed");
+  assert.ok(!log.some((l) => l.includes("10.0.0.1")), "the redirect target is never fetched");
+});
+
+test("auth start is rate limited per client IP", async () => {
+  const env = makeEnv();
+  await withFetch(githubFetch(GH_USER), async () => {
+    let last;
+    for (let i = 0; i < 31; i += 1) {
+      last = await start({ request: req("/api/auth/start/github?return=/p/"), env, params: { provider: "github" } });
+      if (i < 30) assert.ok(last.headers.get("Location").startsWith("https://github.com/login/oauth/authorize"));
+    }
+    assert.equal(last.headers.get("Location"), "/p/?signin=ratelimited");
+  });
 });
 
 test("client metadata describes the origin it is served from", async () => {
