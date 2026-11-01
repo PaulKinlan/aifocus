@@ -163,10 +163,9 @@ export async function hashIp(db, ip) {
   return sha256Hex(`${row.value}:${ip}`);
 }
 
-// Bucket key for writes with no client IP (no CF-Connecting-IP header, e.g.
-// local dev): every reader write endpoint (reactions, annotations, ask)
-// folds a missing IP into this one constant bucket, so a missing IP can
-// never mean "no limit" and no NULL-keyed row is ever written.
+// Bucket key for requests/writes with no client IP (no CF-Connecting-IP
+// header, e.g. local dev): folds into one constant coarse bucket so missing
+// client IP never means "no limit" and no NULL-keyed row is ever written.
 export const UNKNOWN_IP_BUCKET = "unknown";
 
 export async function isRateLimited(db, reader, ipHash, now = Date.now()) {

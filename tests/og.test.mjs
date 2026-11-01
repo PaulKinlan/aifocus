@@ -13,13 +13,19 @@ import {
   writeHook,
   serveCard,
   HOOK_MAX_CHARS,
+  OG_RENDERS_PER_HOUR,
+  reserveOgSlot,
+  _inFlightRenders,
+  _recentRenders,
+  _setRenderTimeoutMs,
 } from "../functions/_lib/og.js";
 import { onRequestGet as getOg, onRequestPost as postOg } from "../functions/api/admin/og.js";
 import { resetAccessCache } from "../functions/_lib/access.js";
+import { hashIp } from "../functions/_lib/reader.js";
 
 const ORIGIN = "https://aifoc.us";
 const PAGE = "/agent-do-my-agent-loop/";
-const MIGRATIONS = ["0004_og_hooks.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)));
+const MIGRATIONS = ["0001_reader.sql", "0004_og_hooks.sql", "0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)));
 
 // Shaped like the minified Hugo output of layouts/page.ogcard.html.
 const CARD = `<!doctype html><html><head><meta name=og-card-version content="d6cf95e357"></head>
@@ -46,6 +52,8 @@ function makeBucket() {
 }
 
 function makeEnv({ card = CARD, ai, browser } = {}) {
+  _recentRenders?.clear();
+  _inFlightRenders?.clear();
   const calls = { ai: 0, screenshots: [] };
   const env = {
     READER_DB: createD1(MIGRATIONS),
@@ -203,7 +211,7 @@ test("a Workers AI failure still renders, but the card is not stored", async () 
 
 test("a generated hook is still printed when D1 cannot save it, and the card is not stored", async () => {
   const { env, calls } = makeEnv();
-  env.READER_DB = createD1([]); // no og_hooks table, as before the migration is applied
+  env.READER_DB = createD1(["0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)))); // og_render_log present, but og_hooks missing
   const res = await run(env);
   assert.equal(res.headers.get("X-Og-Card"), "rendered, not stored");
   assert.match(calls.screenshots[0].options.html, /One agent loop now runs/);
@@ -281,3 +289,282 @@ test("admin share cards: require Access, set a hook by hand, regenerate, and pur
     globalThis.fetch = realFetch;
   }
 });
+
+test("concurrent requests for the same uncached card use single-flight and only render once", async () => {
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      // Small artificial delay so concurrent requests overlap
+      await new Promise((r) => setTimeout(r, 20));
+      return { response: "Single flight hook" };
+    },
+  });
+
+  const [res1, res2, res3] = await Promise.all([run(env), run(env), run(env)]);
+  assert.equal(res1.status, 200);
+  assert.equal(res2.status, 200);
+  assert.equal(res3.status, 200);
+  assert.equal(res1.headers.get("X-Og-Card"), "rendered");
+  assert.equal(res2.headers.get("X-Og-Card"), "rendered");
+  assert.equal(res3.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.ai, 1, "Workers AI should only be called once");
+  assert.equal(calls.screenshots.length, 1, "Browser Run screenshot should only be called once");
+});
+
+test("the stored:false path caches in memory and no longer re-bills on subsequent requests", async () => {
+  const { env, calls } = makeEnv();
+  env.READER_DB = createD1(["0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)))); // no og_hooks table -> causes stored: false
+  const res1 = await run(env);
+  assert.equal(res1.status, 200);
+  assert.equal(res1.headers.get("X-Og-Card"), "rendered, not stored");
+  assert.equal(calls.screenshots.length, 1);
+  assert.equal(calls.ai, 1);
+
+  // Second request for the same card: served from memory cache, does NOT re-bill
+  const res2 = await run(env);
+  assert.equal(res2.status, 200);
+  assert.equal(res2.headers.get("X-Og-Card"), "rendered, not stored");
+  assert.equal(calls.screenshots.length, 1, "screenshot was not called again");
+  assert.equal(calls.ai, 1, "AI was not called again");
+});
+
+test("a never-settling quickAction times out, cancels render, resolves to fallback, and does not crash", async () => {
+  _setRenderTimeoutMs(50);
+  let aborted = false;
+  try {
+    const { env } = makeEnv({
+      card: CARD_FIXED,
+      browser: async (action, options) => {
+        return new Promise((resolve, reject) => {
+          options?.signal?.addEventListener("abort", () => {
+            aborted = true;
+            reject(new Error("aborted"));
+          });
+        });
+      },
+    });
+
+    const res = await run(env);
+    assert.equal(res.status, 302);
+    assert.match(res.headers.get("Location"), /card\.jpeg/);
+    assert.equal(res.headers.get("X-Og-Card"), "fallback: render timed out");
+    assert.equal(aborted, true, "underlying quickAction was aborted");
+  } finally {
+    _setRenderTimeoutMs(30000);
+  }
+});
+
+test("uncached OG renders are rate limited across isolates via D1", async () => {
+  const { env } = makeEnv();
+  // Exhaust rate limit
+  for (let i = 0; i < 30; i += 1) {
+    const res = await serveCard({
+      request: new Request(`https://aifoc.us/og/agent-do-my-agent-loop.png?burst=${i}`, {
+        headers: { "CF-Connecting-IP": "198.51.100.88" },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    });
+    // In this test makeEnv, first request will render and store in R2; subsequent ones with different query hit R2 directly.
+    // So to test uncached render rate limiting, let's clear R2 before each call or make R2 miss:
+    env.OG_CARDS.store.clear();
+    _recentRenders.clear();
+  }
+
+  // Next uncached render from same IP trips rate limit and gets fallback 302
+  env.OG_CARDS.store.clear();
+  _recentRenders.clear();
+  const res = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png?burst=overflow", {
+      headers: { "CF-Connecting-IP": "198.51.100.88" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.get("X-Og-Card"), "fallback: rate limited");
+
+  // Verify rows in og_render_log: denied call inserted nothing
+  const rowCount = await env.READER_DB.prepare("SELECT COUNT(*) AS n FROM og_render_log").first();
+  assert.equal(rowCount.n, 30, "denied OG render did not insert a row into og_render_log");
+});
+
+test("OG with READER_DB absent renders nothing and serves fallback without error", async () => {
+  const original = console.error;
+  console.error = () => {};
+  try {
+    const { env, calls } = makeEnv();
+    delete env.READER_DB;
+    const res = await run(env);
+    assert.equal(res.status, 302);
+    assert.match(res.headers.get("Location"), /card\.jpeg/);
+    assert.equal(res.headers.get("X-Og-Card"), "fallback: rate limited");
+    assert.equal(calls.screenshots.length, 0, "must render NOTHING");
+    assert.equal(calls.ai, 0, "must call NO AI");
+  } finally {
+    console.error = original;
+  }
+});
+
+test("OG with og_render_log missing renders nothing and serves fallback without error", async () => {
+  const original = console.error;
+  console.error = () => {};
+  try {
+    const { env, calls } = makeEnv();
+    env.READER_DB = createD1([]); // no tables at all
+    const res = await run(env);
+    assert.equal(res.status, 302);
+    assert.match(res.headers.get("Location"), /card\.jpeg/);
+    assert.equal(res.headers.get("X-Og-Card"), "fallback: rate limited");
+    assert.equal(calls.screenshots.length, 0, "must render NOTHING");
+    assert.equal(calls.ai, 0, "must call NO AI");
+  } finally {
+    console.error = original;
+  }
+});
+
+test("reserveOgSlot prunes expired rows older than 1 hour and prevents table from growing past the window", async () => {
+  const { env } = makeEnv();
+  const db = env.READER_DB;
+  const now = Date.now();
+  const expiredTime = now - 2 * 60 * 60 * 1000; // 2 hours ago
+
+  // Seed expired rows
+  for (let i = 0; i < 10; i++) {
+    await db.prepare("INSERT INTO og_render_log (ip_hash, created_at) VALUES (?, ?)").bind(`expired_ip_${i}`, expiredTime).run();
+  }
+
+  const preCount = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log").first();
+  assert.equal(preCount.n, 10, "10 expired rows seeded");
+
+  // Call reserveOgSlot with current time
+  const allowed = await reserveOgSlot(db, "active_ip", now);
+  assert.equal(allowed, true);
+
+  // All 10 expired rows must be pruned, leaving only the 1 newly inserted row
+  const postCount = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log").first();
+  assert.equal(postCount.n, 1, "expired rows were pruned, table bounded");
+});
+
+test("40 same-IP same-card requests => exactly 1 render and 1 quota row, and no false 302 for repeat callers", async () => {
+  const { env, calls } = makeEnv();
+  const promises = Array.from({ length: 40 }, () =>
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": "198.51.100.77" },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+  );
+
+  const responses = await Promise.all(promises);
+  const statuses = responses.map((r) => r.status);
+  const count200 = statuses.filter((s) => s === 200).length;
+  const count302 = statuses.filter((s) => s === 302).length;
+
+  assert.equal(count200, 40, "all 40 requests receive status 200 with no false 302s");
+  assert.equal(count302, 0, "no requests receive false 302");
+  assert.equal(calls.screenshots.length, 1, "exactly 1 screenshot rendered");
+
+  // Verify quota rows consumed in og_render_log
+  const totalRows = await env.READER_DB.prepare("SELECT COUNT(*) AS n FROM og_render_log").first();
+  assert.equal(totalRows.n, 1, "exactly 1 quota row consumed in og_render_log");
+});
+
+test("48h of OG reservations for one IP stays strictly bounded by the window (at most OG_RENDERS_PER_HOUR rows)", async () => {
+  const { env } = makeEnv();
+  const db = env.READER_DB;
+  const baseTime = Date.now();
+  const hourMs = 60 * 60 * 1000;
+  const ip = "198.51.100.201";
+
+  for (let hour = 0; hour < 48; hour++) {
+    const t = baseTime + hour * hourMs;
+    for (let i = 0; i < OG_RENDERS_PER_HOUR; i++) {
+      const allowed = await reserveOgSlot(db, ip, t + i * 1000);
+      assert.equal(allowed, true);
+    }
+  }
+
+  const count = await db.prepare("SELECT COUNT(*) AS n FROM og_render_log WHERE ip_hash = ?").bind(ip).first();
+  assert.equal(count.n, OG_RENDERS_PER_HOUR, "table contains only active window rows (30), not 48h history (1,440)");
+});
+
+test("concurrent same-card requests: rate-limited flight leader does not poison peer with quota", async () => {
+  const { env, calls } = makeEnv({
+    ai: async () => {
+      await new Promise((r) => setTimeout(r, 20));
+      return { response: "Concurrent peer hook" };
+    },
+  });
+  const db = env.READER_DB;
+  const exhaustedIp = "203.0.113.100";
+  const freshIp = "203.0.113.101";
+
+  // Pre-seed 30 rows for exhaustedIp using its actual hashed value
+  const exhaustedHash = await hashIp(db, exhaustedIp);
+  for (let i = 0; i < OG_RENDERS_PER_HOUR; i++) {
+    await db.prepare("INSERT INTO og_render_log (ip_hash, created_at) VALUES (?, ?)").bind(exhaustedHash, Date.now()).run();
+  }
+
+  // Fire exhaustedIp (flight leader) and freshIp (joiner) concurrently for the same card
+  const [resExhausted, resFresh] = await Promise.all([
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": exhaustedIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+    serveCard({
+      request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+        headers: { "CF-Connecting-IP": freshIp },
+      }),
+      env,
+      segments: ["agent-do-my-agent-loop.png"],
+    }),
+  ]);
+
+  assert.equal(resExhausted.status, 302, "rate-limited leader gets 302 fallback");
+  assert.equal(resExhausted.headers.get("X-Og-Card"), "fallback: rate limited");
+  assert.equal(resFresh.status, 200, "fresh joiner is not poisoned and gets 200 rendered card");
+  assert.equal(resFresh.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 1, "exactly 1 screenshot rendered for the fresh caller");
+});
+
+test("recentRenders is bypassed when a durable hook exists in D1", async () => {
+  const { env, calls } = makeEnv();
+  // Start with no og_hooks table so render 1 is stored: false and enters recentRenders
+  env.READER_DB = createD1(["0001_reader.sql", "0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url))));
+
+  const res1 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.200" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res1.status, 200);
+  assert.equal(res1.headers.get("X-Og-Card"), "rendered, not stored");
+  assert.equal(calls.screenshots.length, 1);
+
+  // Now create a full DB with a durable hook in og_hooks
+  const fullDb = createD1(MIGRATIONS);
+  await writeHook(fullDb, "/agent-do-my-agent-loop/", "DURABLE NEW HOOK", "manual");
+  env.READER_DB = fullDb;
+
+  // Second request: recentRenders should NOT be served because a durable hook now exists
+  const res2 = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.200" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res2.status, 200);
+  assert.equal(res2.headers.get("X-Og-Card"), "rendered");
+  assert.equal(calls.screenshots.length, 2, "re-rendered with durable hook instead of serving stale unstored cache");
+});
+
+
+

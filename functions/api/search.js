@@ -14,10 +14,12 @@
 // hidden.
 
 import { INSTANCE_NAME, extractChunks, searchChunks } from "../_lib/ai-search.js";
+import { hashIp, UNKNOWN_IP_BUCKET } from "../_lib/reader.js";
 
 const MAX_QUERY_LENGTH = 200;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 25;
+const SEARCHES_PER_HOUR = 30;
 // Chunks requested from AI Search. Several chunks usually come from the same
 // essay, so ask for more than the number of essays returned.
 const CHUNK_COUNT = 30;
@@ -33,6 +35,26 @@ function json(body, status = 200, extraHeaders = {}) {
       ...extraHeaders,
     },
   });
+}
+
+// Atomically reserve a search slot before spending on retrieval.
+// Prunes expired records older than the 1-hour window so storage does not grow forever.
+// Conditionally inserts a row ONLY if the IP is currently under the hourly limit;
+// if the limit is reached, nothing is inserted (preventing unbounded table growth).
+// Fails closed if the database is missing or errors.
+export async function reserveSearchSlot(db, ipHash, now) {
+  if (!db) throw new Error("READER_DB unavailable for search rate limiting");
+  const windowStart = now - 60 * 60 * 1000;
+  const batchRes = await db.batch([
+    db.prepare("DELETE FROM search_log WHERE created_at <= ?").bind(windowStart),
+    db.prepare(
+      `INSERT INTO search_log (ip_hash, created_at)
+       SELECT ?1, ?2
+       WHERE (SELECT COUNT(*) FROM search_log WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+    ).bind(ipHash, now, windowStart, SEARCHES_PER_HOUR),
+  ]);
+  const changes = batchRes[1]?.meta?.changes ?? batchRes[1]?.changes ?? 0;
+  return changes > 0;
 }
 
 // Collapse whitespace and cap length so a crafted query cannot fan out into
@@ -180,6 +202,27 @@ export async function onRequestGet(context) {
     if (cached) return cached;
   }
 
+  // Rate limit: reserve before spend in a single atomic batch.
+  // Fails closed if the database is missing or errors.
+  const db = env?.READER_DB;
+  const now = Date.now();
+  const clientIp = request.headers.get("CF-Connecting-IP");
+  let ipHash;
+  try {
+    ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
+    const allowed = await reserveSearchSlot(db, ipHash, now);
+    if (!allowed) {
+      return json({ error: "Too many searches. Please try again later.", query }, 429, {
+        "Cache-Control": "no-store",
+      });
+    }
+  } catch (err) {
+    console.error("search rate limit error", err?.message || err);
+    return json({ error: "Search rate limit error", query }, 503, {
+      "Cache-Control": "no-store",
+    });
+  }
+
   let results;
   try {
     const [articles, found] = await Promise.all([
@@ -205,4 +248,4 @@ export async function onRequestGet(context) {
   return response;
 }
 
-export { INSTANCE_NAME, MAX_QUERY_LENGTH, MAX_LIMIT, parseLimit, extractChunks };
+export { INSTANCE_NAME, MAX_QUERY_LENGTH, MAX_LIMIT, SEARCHES_PER_HOUR, parseLimit, extractChunks };
