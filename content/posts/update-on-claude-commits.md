@@ -36,7 +36,7 @@ If you are interested in how this compares to other tools? Then you can see belo
 While it looks like Claude is now 14x the next tool over the year, and 36x it in the latest week, you have to remember that not every other tool consistently openly attributes commits to the tool the user used, also, here are more caveats: 
 
 - **Public repositories only.** Everything enterprise is invisible to this.
-- **Detection is uneven.** Claude Code writes a trailer on every commit by default, so it is over-counted relative to tools that leave no trailer, or that changed how they mark commits during the year. The Copilot agent drop above is probably exactly that.
+- **Detection is uneven.** Claude Code writes a trailer on every commit by default, so it is over-counted relative to tools that leave no trailer, or that changed how they mark commits during the year.
 - **GitHub's commit search is noisy, and noisier than it was.** In September, running the same weekly query twice gave the same answer to within a commit. This weekend the same query for the week of 24 August returned 2.5M, 3.4M, 4.2M and 4.7M on four consecutive tries. I sampled every Claude week at least twice and took the median, and the other tools once, so treat individual weeks as ±20% and the trend as the thing that's solid. The final week was pulled on a Sunday afternoon, so it is a day short (note to self: fix this - I normally write on Sundays :)
 - **Github Search can also not be consistent** if someone makes a private repository public or private then this can impact historic stats from previous runs.
 
