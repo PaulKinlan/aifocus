@@ -14,6 +14,8 @@ collectors and the compile step; the page itself is `content/stats.md` +
 | `tools/stats/collect-chromestatus.py` | Chrome Platform Status use-counter collector (service worker page loads). |
 | `tools/stats/collect-httparchive.py` | HTTP Archive tech report collector (React origins, monthly, from `cdn.httparchive.org/v1`). |
 | `tools/stats/collect-openrouter.py` | OpenRouter collector: weekly token totals from the rankings chart and the task-category shares. |
+| `tools/stats/collect-w3techs.py` | W3Techs collector: share of all websites using React, monthly for the trailing year. |
+| `tools/stats/manual-add.py` | Appends one hand-read figure to a manual series and rebuilds (`--list` shows what to read). |
 | `tools/stats/build.py` | Merges every run CSV into `data/stats.json` and prints the change report. |
 | `tools/stats/update.sh` | Runs all of the above for one monthly update. |
 | `static/data/<series>-<date>.csv` | One file per collection run, published as-is so readers can download it. The originals from the March 2026 post are the first runs. |
@@ -34,8 +36,9 @@ Then:
    any earlier weeks GitHub has revised by 5% or more since the previous run,
    and every figure-as-written with its current value.
 2. Refresh BuiltWith if you have two minutes: open
-   https://trends.builtwith.com/javascript/React, append one row per figure to
-   `static/data/manual/react-builtwith.csv`, then `python3 tools/stats/build.py`.
+   https://trends.builtwith.com/javascript/React in a browser and run
+   `python3 tools/stats/manual-add.py react-builtwith "BuiltWith: React live sites" <n>`
+   and the same for `"BuiltWith: React in top 1m"`; it appends the rows and rebuilds.
    (`openrouter-programming.csv` is frozen: the ranking it came from is gone.)
 3. `npm test` (build, asset ratchet, unit tests, link check), look at
    `/stats/` with `npm run dev`, and commit `static/data/*.csv`,
@@ -81,8 +84,11 @@ commit stay manual.
 ## Sources that still need a hand
 
 - **BuiltWith** has no free API and the trends page sits behind an image
-  puzzle, so `curl` and fetch tools get a "BuiltWith verification" page. Read
-  the two numbers in a browser.
+  puzzle, so `curl` and fetch tools get a "BuiltWith verification" page, and the
+  Wayback Machine has no copies after October 2025. Read the two numbers in a
+  browser and add them with `manual-add.py`. W3Techs (`collect-w3techs.py`) is
+  the automated stand-in: a share of the top 10 million sites rather than a
+  count of all domains, so it tracks the trend, not the BuiltWith total.
 - **OpenRouter programming figures**: the per-category model ranking
   (`/rankings/programming`, later `/rankings?category=programming`) that the
   token essays quoted no longer exists; the frontend API ignores `category`.

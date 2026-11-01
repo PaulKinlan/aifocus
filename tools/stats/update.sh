@@ -33,6 +33,7 @@ echo "== stats update $RUN_DATE"
 if [ -z "$DRY" ]; then
   python3 -I tools/stats/collect-chromestatus.py --series service-worker-page-loads --run-date "$RUN_DATE" || echo "chromestatus collector failed; continuing"
   python3 -I tools/stats/collect-httparchive.py --series react-httparchive --run-date "$RUN_DATE" || echo "httparchive collector failed; continuing"
+  python3 -I tools/stats/collect-w3techs.py --series react-w3techs --run-date "$RUN_DATE" || echo "w3techs collector failed; continuing"
   for s in openrouter-tokens openrouter-task-share; do
     python3 -I tools/stats/collect-openrouter.py --series "$s" --run-date "$RUN_DATE" || echo "openrouter collector ($s) failed; continuing"
   done
@@ -48,7 +49,9 @@ python3 -I tools/stats/build.py ${STATS_REPORT:+--report "$STATS_REPORT"}
 cat <<MSG
 
 Manual series (edit the CSV, then re-run: python3 tools/stats/build.py):
-  static/data/manual/react-builtwith.csv        read trends.builtwith.com/javascript/React in a browser (bot check blocks scripts)
+  react-builtwith: read trends.builtwith.com/javascript/React in a browser (bot check blocks scripts), then
+    python3 tools/stats/manual-add.py react-builtwith "BuiltWith: React live sites" <n>
+    python3 tools/stats/manual-add.py react-builtwith "BuiltWith: React in top 1m" <n>
   static/data/manual/openrouter-programming.csv  frozen: the per-category ranking it came from is gone; see openrouter-tokens
 
 Changed files:
