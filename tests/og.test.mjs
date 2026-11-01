@@ -329,19 +329,15 @@ test("the stored:false path caches in memory and no longer re-bills on subsequen
   assert.equal(calls.ai, 1, "AI was not called again");
 });
 
-test("a never-settling quickAction times out, cancels render, resolves to fallback, and does not crash", async () => {
+test("a never-settling quickAction times out, resolves to fallback, and does not crash", async () => {
   _setRenderTimeoutMs(50);
-  let aborted = false;
+  let seenOptions;
   try {
     const { env } = makeEnv({
       card: CARD_FIXED,
       browser: async (action, options) => {
-        return new Promise((resolve, reject) => {
-          options?.signal?.addEventListener("abort", () => {
-            aborted = true;
-            reject(new Error("aborted"));
-          });
-        });
+        seenOptions = options;
+        return new Promise(() => {});
       },
     });
 
@@ -349,7 +345,10 @@ test("a never-settling quickAction times out, cancels render, resolves to fallba
     assert.equal(res.status, 302);
     assert.match(res.headers.get("Location"), /card\.jpeg/);
     assert.equal(res.headers.get("X-Og-Card"), "fallback: render timed out");
-    assert.equal(aborted, true, "underlying quickAction was aborted");
+    // The binding call is RPC: an AbortSignal in its options is rejected by
+    // the runtime ("AbortSignal serialization is not enabled"), so the
+    // timeout is enforced locally and no signal may be passed through.
+    assert.equal("signal" in (seenOptions || {}), false, "no AbortSignal is sent over the binding");
   } finally {
     _setRenderTimeoutMs(30000);
   }

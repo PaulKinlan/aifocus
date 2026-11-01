@@ -177,13 +177,17 @@ export async function screenshot(env, html, signal) {
     throw new Error("BROWSER binding missing");
   }
   if (signal?.aborted) throw new Error("render aborted");
+  // The signal is checked here and by the caller but never passed to the
+  // binding: quickAction() runs over RPC, and the runtime rejects an
+  // AbortSignal in the options ("AbortSignal serialization is not enabled"),
+  // which took every card down to the fallback on 2026-11-01. The remote
+  // render is bounded by its own goto and waitForSelector timeouts instead.
   const res = await env.BROWSER.quickAction("screenshot", {
     html,
     viewport: { width: CARD_WIDTH, height: CARD_HEIGHT },
     screenshotOptions: { type: "png" },
     gotoOptions: { waitUntil: "networkidle0", timeout: 15000 },
     waitForSelector: { selector: "html.ready", timeout: 10000 },
-    signal,
   });
   if (signal?.aborted) throw new Error("render aborted");
   if (!res?.ok) {
