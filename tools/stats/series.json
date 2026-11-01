@@ -185,6 +185,7 @@
       "file_prefix": "total-commits-weekly",
       "resample": 2,
       "show_partial": false,
+      "samples": 3,
       "primary": "All commits",
       "tools": [
         {
@@ -218,7 +219,8 @@
       ],
       "method": "GitHub Search API, /search/commits, with only an author-date range as the query. This is the denominator for the AI share chart.",
       "caveats": [
-        "GitHub counts here spike unpredictably (early March 2026 was roughly double the norm), so the share series inherits that noise."
+        "GitHub counts here spike unpredictably (early March 2026 was roughly double the norm), so the share series inherits that noise.",
+    "From w/c 10 Aug 2026 to w/c 5 Oct 2026 the Search API returned two to ten times the surrounding weeks (596M for w/c 21 Sep 2026 against about 55M either side), and repeated queries of the same week on 1 Nov 2026 differed by more than 20% (w/c 5 Oct 2026: 451M, 476M, 577M). Those weeks, and the share series across them, are not reliable; the counts are published as measured. From Nov 2026 each week is queried three times and the median kept."
       ],
       "derived": [
         {
