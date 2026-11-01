@@ -9,7 +9,7 @@
 // salted hash in D1) and identical questions are served from cache.
 
 import { askArchive } from "../_lib/ai-search.js";
-import { json, isSameOrigin, hashIp } from "../_lib/reader.js";
+import { json, isSameOrigin, hashIp, UNKNOWN_IP_BUCKET } from "../_lib/reader.js";
 import { normalizeQuery, indexByPath, rankArticles, loadArticles } from "./search.js";
 
 const ASKS_PER_HOUR = 20;
@@ -26,7 +26,7 @@ export const SYSTEM_PROMPT = [
 ].join(" ");
 
 async function isRateLimited(db, ipHash, now) {
-  if (!db || !ipHash) return false;
+  if (!db) return false;
   const row = await db
     .prepare("SELECT COUNT(*) AS n FROM ask_log WHERE ip_hash = ? AND created_at > ?")
     .bind(ipHash, now - 60 * 60 * 1000)
@@ -60,7 +60,11 @@ export async function onRequestPost(context) {
 
   const db = env?.READER_DB;
   const now = Date.now();
-  const ipHash = db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null;
+  // A missing client IP shares one coarse bucket rather than escaping the
+  // limit; ask_log.ip_hash is NOT NULL, so the bucket is a sentinel value.
+  const ipHash = db
+    ? (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET
+    : null;
   if (await isRateLimited(db, ipHash, now)) {
     return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429);
   }
@@ -71,7 +75,7 @@ export async function onRequestPost(context) {
       loadArticles(env, url.origin),
       askArchive(env, question, SYSTEM_PROMPT, CHUNK_COUNT),
     ]);
-    if (db && ipHash) {
+    if (db) {
       await db.prepare("INSERT INTO ask_log (ip_hash, created_at) VALUES (?, ?)").bind(ipHash, now).run();
     }
     const sources = rankArticles(result.chunks, indexByPath(articles), MAX_SOURCES).map(

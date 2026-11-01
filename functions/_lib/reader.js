@@ -18,7 +18,11 @@ export const LIMITS = {
   context: 64,
   body: 2000,
   name: 60,
-  // Writes allowed per reader and per client IP in a rolling hour.
+  // Writes allowed per reader (best effort, live rows) and per client IP
+  // (write EVENTS in the append-only write_events ledger, so on/off toggles
+  // and deletes cannot erase the count) in a rolling hour. A request with no
+  // client IP (no CF-Connecting-IP header) shares one bucket, so a missing
+  // IP never means "no limit".
   writesPerHour: 30,
 };
 
@@ -159,18 +163,69 @@ export async function hashIp(db, ip) {
   return sha256Hex(`${row.value}:${ip}`);
 }
 
+// Bucket key for writes with no client IP (no CF-Connecting-IP header, e.g.
+// local dev): every reader write endpoint (reactions, annotations, ask)
+// folds a missing IP into this one constant bucket, so a missing IP can
+// never mean "no limit" and no NULL-keyed row is ever written.
+export const UNKNOWN_IP_BUCKET = "unknown";
+
 export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
   const since = now - 60 * 60 * 1000;
-  const row = await db
-    .prepare(
-      `SELECT
-         (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
-         (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-         (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
-    )
-    .bind(reader, ipHash, since)
-    .first();
-  return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
+  // A missing client IP never means "no limit": every such request shares the
+  // one coarse UNKNOWN_IP_BUCKET key.
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    const row = await db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
+           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
+           (SELECT COUNT(*) FROM write_events WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+      )
+      .bind(reader, key, since)
+      .first();
+    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
+  } catch (err) {
+    if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
+      // Migrations 0005/0006 not applied yet (functions deployed before the
+      // D1 migrations): fail closed and say exactly why. There is no
+      // append-only counter to count in this state, and any live-row fallback
+      // is either erasable by the toggle flood it exists to stop or strict
+      // enough to lock ordinary traffic out site-wide - so the write path is
+      // uniformly, visibly OFF until the migration runs (one command).
+      console.error("reader writes denied: apply D1 migrations 0005+0006 (write_events/reactions.ip_hash missing)");
+      return true;
+    }
+    // Any other database error: fail closed. Silently answering with the
+    // per-reader count would switch the security control off while the
+    // endpoint keeps working - the same class of bug as the original bypass.
+    console.error("rate-limit fail-closed: isRateLimited query failed", err);
+    return true;
+  }
+}
+
+// Append one write event to the per-IP ledger. The limiter counts these
+// rows, so deleting the underlying reaction/annotation cannot erase the
+// count the way it could when live rows were counted. Skips ONLY for the
+// known missing-table case (pre-migration window, where the degraded global
+// cap applies); anything else propagates.
+export async function recordWriteEvent(db, ipHash, now = Date.now()) {
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    // One round trip: insert the event and prune the ledger (the limiter
+    // only looks back 60 minutes, so anything older than two is dead weight;
+    // created_at is indexed for exactly this DELETE).
+    await db.batch([
+      db.prepare("INSERT INTO write_events (ip_hash, created_at) VALUES (?, ?)").bind(key, now),
+      db.prepare("DELETE FROM write_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
+    ]);
+  } catch (err) {
+    if (/no such table/i.test(err?.message ?? "")) {
+      console.error("write-event ledger missing; apply D1 migration 0006");
+      return;
+    }
+    throw err;
+  }
 }
 
 // Screen free text with a Workers AI safety model. The result is advisory: it

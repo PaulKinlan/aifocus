@@ -27,6 +27,8 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
+  recordWriteEvent,
+  UNKNOWN_IP_BUCKET,
   screenText,
   publicAnnotation,
 } from "../../_lib/reader.js";
@@ -77,7 +79,9 @@ export async function onRequestPost({ request, env }) {
 
   const reader = getReader(request);
   const now = Date.now();
-  const ipHash = await hashIp(db, request.headers.get("CF-Connecting-IP"));
+  // A missing client IP folds into the shared UNKNOWN_IP_BUCKET, so the
+  // per-IP rate limit still applies.
+  const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
   if (await isRateLimited(db, reader.id, ipHash, now)) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
@@ -124,6 +128,9 @@ export async function onRequestPost({ request, env }) {
       row.body, row.author_name, row.user_id, row.status, row.screen, row.ip_hash, row.created_at,
     )
     .run();
+  // One ledger row per accepted write: the per-IP limiter counts these, so a
+  // deleted annotation cannot erase the count.
+  await recordWriteEvent(db, ipHash, now);
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};
   const shaped = publicAnnotation(

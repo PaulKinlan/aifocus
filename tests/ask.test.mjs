@@ -33,12 +33,11 @@ function makeEnv({ ask } = {}) {
   };
 }
 
-const askReq = (question, origin = ORIGIN) =>
-  new Request(`${ORIGIN}/api/ask`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Origin: origin, "CF-Connecting-IP": "198.51.100.1" },
-    body: JSON.stringify({ question }),
-  });
+const askReq = (question, origin = ORIGIN, ip = "198.51.100.1") => {
+  const headers = { "Content-Type": "application/json", Origin: origin };
+  if (ip) headers["CF-Connecting-IP"] = ip;
+  return new Request(`${ORIGIN}/api/ask`, { method: "POST", headers, body: JSON.stringify({ question }) });
+};
 
 test("ask: returns the generated answer with essay sources", async () => {
   const calls = [];
@@ -70,6 +69,13 @@ test("ask: rate limited per client IP", async () => {
   const env = makeEnv();
   let res;
   for (let i = 0; i < 21; i += 1) res = await postAsk({ request: askReq(`question number ${i}`), env });
+  assert.equal(res.status, 429);
+});
+
+test("ask: a missing client IP still shares a rate-limit bucket", async () => {
+  const env = makeEnv();
+  let res;
+  for (let i = 0; i < 21; i += 1) res = await postAsk({ request: askReq(`question number ${i}`, ORIGIN, null), env });
   assert.equal(res.status, 429);
 });
 
