@@ -185,7 +185,7 @@
       "epoch": "2025-09-29",
       "unit": "commits per week",
       "how": "One GitHub commit search per week with only an author-date range, so it counts every public commit GitHub has indexed for that week.",
-      "risk": "GitHub's estimate for a whole week is unstable: identical queries can differ by 20% or more, and several weeks in 2026 came back at many times their neighbours, which distorts the share chart below.",
+      "risk": "GitHub's total_count is an estimate, and identical queries for the same week can differ by 20% or more, so each week needs to be sampled many times before the figure settles. Large jumps between weeks, like those in autumn 2026, may be real activity rather than noise; other published counts show similar moves.",
       "file_prefix": "total-commits-weekly",
       "resample": 2,
       "show_partial": false,
@@ -224,7 +224,7 @@
       "method": "GitHub Search API, /search/commits, with only an author-date range as the query. This is the denominator for the AI share chart.",
       "caveats": [
         "GitHub counts here spike unpredictably (early March 2026 was roughly double the norm), so the share series inherits that noise.",
-    "From w/c 10 Aug 2026 to w/c 5 Oct 2026 the Search API returned two to ten times the surrounding weeks (596M for w/c 21 Sep 2026 against about 55M either side), and repeated queries of the same week on 1 Nov 2026 differed by more than 20% (w/c 5 Oct 2026: 451M, 476M, 577M). Those weeks, and the share series across them, are not reliable; the counts are published as measured. From Nov 2026 each week is queried three times and the median kept."
+    "From w/c 10 Aug 2026 to w/c 5 Oct 2026 the Search API returned two to ten times the surrounding weeks (596M for w/c 21 Sep 2026 against about 55M either side). The level may be accurate: other published GitHub activity figures show a similar rise in that period. The sampling is the weaker part: repeated queries of the same week on 1 Nov 2026 differed by more than 20% (w/c 5 Oct 2026: 451M, 476M, 577M), so a single query is not a stable reading. From Nov 2026 each week is queried three times and the median kept, and earlier weeks are re-sampled on later runs."
       ],
       "derived": [
         {
@@ -232,7 +232,7 @@
           "title": "Share of all public commits",
           "unit": "% of public commits per week",
           "how": "Each tool's weekly commits divided by all public commits in the same week.",
-          "risk": "Inherits the errors of both series above: when GitHub's count of all commits spikes, every share drops without any change in tool use.",
+          "risk": "Inherits the sampling variance of both series above, and a jump in all public commits lowers every share even when a tool's own count is unchanged.",
           "numerator_series": "ai-commits",
           "tools": [
             "Claude (co-author)",
