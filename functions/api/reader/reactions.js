@@ -15,6 +15,7 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
+  UNKNOWN_IP_BUCKET,
 } from "../../_lib/reader.js";
 import { getSessionUser } from "../../_lib/auth.js";
 
@@ -47,17 +48,26 @@ export async function onRequestPost({ request, env }) {
   if (on) {
     // The reader cookie is client-controlled, so the per-reader count alone is
     // bypassable by rotating or dropping the cookie. The per-IP half of
-    // isRateLimited() does the real work here; hashIp() returns null when no
-    // CF-Connecting-IP header is present (local dev), and those writes then
-    // share the NULL ip_hash bucket, so the limit still applies.
-    const ipHash = await hashIp(db, request.headers.get("CF-Connecting-IP"));
+    // isRateLimited() does the real work here; a missing CF-Connecting-IP
+    // header (local dev) folds into the shared UNKNOWN_IP_BUCKET, so the
+    // limit still applies.
+    const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
     if (await isRateLimited(db, reader.id, ipHash, now)) {
       return json({ error: "Too many requests. Try again later." }, 429);
     }
-    await db
-      .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, ip_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)")
-      .bind(post, kind, reader.id, user?.id ?? null, ipHash, now)
-      .run();
+    try {
+      await db
+        .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, ip_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .bind(post, kind, reader.id, user?.id ?? null, ipHash, now)
+        .run();
+    } catch {
+      // Migration 0005 not applied yet: write without the ip_hash column
+      // rather than failing the reaction.
+      await db
+        .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
+        .bind(post, kind, reader.id, user?.id ?? null, now)
+        .run();
+    }
   } else {
     await db
       .prepare("DELETE FROM reactions WHERE post = ? AND kind = ? AND reader = ?")

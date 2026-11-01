@@ -169,17 +169,35 @@ export const UNKNOWN_IP_BUCKET = "unknown";
 
 export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
   const since = now - 60 * 60 * 1000;
-  const row = await db
-    .prepare(
-      `SELECT
-         (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
-         (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-         (SELECT COUNT(*) FROM annotations WHERE ip_hash IS ?2 AND created_at > ?3) +
-         (SELECT COUNT(*) FROM reactions WHERE ip_hash IS ?2 AND created_at > ?3) AS by_ip`,
-    )
-    .bind(reader, ipHash, since)
-    .first();
-  return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
+  // A missing client IP never means "no limit": every such request shares the
+  // one coarse UNKNOWN_IP_BUCKET key.
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    const row = await db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
+           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
+           (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) +
+           (SELECT COUNT(*) FROM reactions WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+      )
+      .bind(reader, key, since)
+      .first();
+    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
+  } catch {
+    // Migration 0005 not applied yet (functions deployed before the D1
+    // migration): degrade to the per-reader count instead of failing every
+    // annotations/reactions write with "no such column".
+    const row = await db
+      .prepare(
+        `SELECT
+           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?2) +
+           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?2) AS by_reader`,
+      )
+      .bind(reader, since)
+      .first();
+    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour;
+  }
 }
 
 // Screen free text with a Workers AI safety model. The result is advisory: it

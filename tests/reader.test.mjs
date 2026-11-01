@@ -27,6 +27,10 @@ import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib
 const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
 );
+// The tree as a functions deploy can find it: before migration 0005 ran.
+const MIGRATIONS_PRE_IP = ["0001_reader.sql", "0003_auth.sql"].map((f) =>
+  fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
+);
 const ORIGIN = "https://aifoc.us";
 const POST = "/setting-goals/";
 const POST_HTML = `<html><body><article class=h-entry><h1>setting goals</h1>
@@ -168,8 +172,26 @@ test("reactions: a missing client IP still shares a rate-limit bucket", async ()
     last = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, ip: null }), env });
     assert.equal(last.status, i < 30 ? 200 : 429);
   }
-  const row = env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions WHERE ip_hash IS NULL").get();
+  // Every header-less write lands in the one shared UNKNOWN_IP_BUCKET.
+  const row = env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions WHERE ip_hash = 'unknown'").get();
   assert.equal(row.n, 30);
+});
+
+test("reactions: survive a functions deploy that runs before migration 0005", async () => {
+  const env = makeEnv({ READER_DB: createD1(MIGRATIONS_PRE_IP) });
+  // The reactions table has no ip_hash column yet: writes must not 500.
+  let res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
+  assert.equal(res.status, 200);
+  // Rate limiting degrades to the per-reader count rather than disappearing:
+  // seed 30 annotation rows for this reader, then the next write is limited.
+  const now = Date.now();
+  for (let i = 0; i < 30; i += 1) {
+    await env.READER_DB.prepare(
+      "INSERT INTO annotations (id, post, reader, type, status, created_at) VALUES (?, ?, ?, 'comment', 'approved', ?)",
+    ).bind(`seed${i}`, POST, READER_A, now).run();
+  }
+  res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
+  assert.equal(res.status, 429);
 });
 
 test("highlights: quote must come from the post, approved immediately, deduplicated per reader", async () => {
