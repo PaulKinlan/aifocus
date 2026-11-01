@@ -52,7 +52,7 @@ function makeEnv(extra = {}) {
   };
 }
 
-function req(path, { method = "GET", body, reader, session, origin = ORIGIN, headers = {} } = {}) {
+function req(path, { method = "GET", body, reader, session, origin = ORIGIN, headers = {}, ip = "203.0.113.7" } = {}) {
   const h = new Headers(headers);
   if (body !== undefined) h.set("Content-Type", "application/json");
   if (origin) h.set("Origin", origin);
@@ -60,7 +60,7 @@ function req(path, { method = "GET", body, reader, session, origin = ORIGIN, hea
   if (reader) cookies.push(`${READER_COOKIE}=${reader}`);
   if (session) cookies.push(`${SESSION_COOKIE}=${session}`);
   if (cookies.length) h.set("Cookie", cookies.join("; "));
-  h.set("CF-Connecting-IP", "203.0.113.7");
+  if (ip) h.set("CF-Connecting-IP", ip);
   return new Request(`${ORIGIN}${path}`, { method, headers: h, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 
@@ -141,10 +141,15 @@ test("reactions: rejects unknown kinds, unknown posts and cross-origin writes", 
 
 test("reactions: rate limited per client IP even when the reader cookie rotates", async () => {
   const env = makeEnv();
-  // No cookie is ever sent back, so every request gets a fresh reader id and
-  // the per-reader count stays at zero; the per-IP count must stop the flood.
+  // The bypass: no cookie is ever sent back, so every request gets a fresh
+  // reader id, the per-reader count stays at zero, and rotated writes just
+  // keep succeeding until the per-IP count stops the flood.
+  for (let i = 0; i < 2; i += 1) {
+    const res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }), env });
+    assert.equal(res.status, 200);
+  }
   let last;
-  for (let i = 0; i < 31; i += 1) {
+  for (let i = 2; i < 31; i += 1) {
     last = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }), env });
     assert.equal(last.status, i < 30 ? 200 : 429);
   }
@@ -154,6 +159,17 @@ test("reactions: rate limited per client IP even when the reader cookie rotates"
     .get();
   assert.equal(row.n, 30);
   assert.match(row.ip_hash, /^[0-9a-f]{64}$/);
+});
+
+test("reactions: a missing client IP still shares a rate-limit bucket", async () => {
+  const env = makeEnv();
+  let last;
+  for (let i = 0; i < 31; i += 1) {
+    last = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, ip: null }), env });
+    assert.equal(last.status, i < 30 ? 200 : 429);
+  }
+  const row = env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions WHERE ip_hash IS NULL").get();
+  assert.equal(row.n, 30);
 });
 
 test("highlights: quote must come from the post, approved immediately, deduplicated per reader", async () => {

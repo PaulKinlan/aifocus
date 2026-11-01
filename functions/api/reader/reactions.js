@@ -48,8 +48,8 @@ export async function onRequestPost({ request, env }) {
     // The reader cookie is client-controlled, so the per-reader count alone is
     // bypassable by rotating or dropping the cookie. The per-IP half of
     // isRateLimited() does the real work here; hashIp() returns null when no
-    // CF-Connecting-IP header is present (local dev), which then degrades to
-    // the per-reader count.
+    // CF-Connecting-IP header is present (local dev), and those writes then
+    // share the NULL ip_hash bucket, so the limit still applies.
     const ipHash = await hashIp(db, request.headers.get("CF-Connecting-IP"));
     if (await isRateLimited(db, reader.id, ipHash, now)) {
       return json({ error: "Too many requests. Try again later." }, 429);

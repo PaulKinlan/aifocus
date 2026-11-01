@@ -18,7 +18,9 @@ export const LIMITS = {
   context: 64,
   body: 2000,
   name: 60,
-  // Writes allowed per reader and per client IP in a rolling hour.
+  // Writes allowed per reader and per client IP in a rolling hour. A request
+  // with no client IP (no CF-Connecting-IP header) shares one bucket, so a
+  // missing IP never means "no limit".
   writesPerHour: 30,
 };
 
@@ -159,6 +161,12 @@ export async function hashIp(db, ip) {
   return sha256Hex(`${row.value}:${ip}`);
 }
 
+// Bucket key for writes with no client IP (no CF-Connecting-IP header, e.g.
+// local dev): they share one coarse bucket instead of escaping the limit.
+// Used where the schema declares ip_hash NOT NULL (ask_log); nullable columns
+// (annotations, reactions) use a NULL ip_hash bucket instead.
+export const UNKNOWN_IP_BUCKET = "unknown";
+
 export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
   const since = now - 60 * 60 * 1000;
   const row = await db
@@ -166,8 +174,8 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
       `SELECT
          (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
          (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-         (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) +
-         (SELECT COUNT(*) FROM reactions WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+         (SELECT COUNT(*) FROM annotations WHERE ip_hash IS ?2 AND created_at > ?3) +
+         (SELECT COUNT(*) FROM reactions WHERE ip_hash IS ?2 AND created_at > ?3) AS by_ip`,
     )
     .bind(reader, ipHash, since)
     .first();
