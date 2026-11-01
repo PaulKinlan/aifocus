@@ -38,6 +38,7 @@ While it looks like Claude is now 14x the next tool over the year, and 36x it in
 - **Public repositories only.** Everything enterprise is invisible to this.
 - **Detection is uneven.** Claude Code writes a trailer on every commit by default, so it is over-counted relative to tools that leave no trailer, or that changed how they mark commits during the year. The Copilot agent drop above is probably exactly that.
 - **GitHub's commit search is noisy, and noisier than it was.** In September, running the same weekly query twice gave the same answer to within a commit. This weekend the same query for the week of 24 August returned 2.5M, 3.4M, 4.2M and 4.7M on four consecutive tries. I sampled every Claude week at least twice and took the median, and the other tools once, so treat individual weeks as ±20% and the trend as the thing that's solid. The final week was pulled on a Sunday afternoon, so it is a day short (note to self: fix this - I normally write on Sundays :)
+- **Github Search can also not be consistent** if someone makes a private repository public or private then this can impact historic stats from previous runs.
 
 The raw data is downloadable: [commits, 52 weeks to 2026-11-01](/data/ai-commits-2026-11-01.csv). Every row includes the GitHub search URL used to generate it and the individual samples, so you can check any number yourself. The scripts are the same ones linked from the March post.
 
