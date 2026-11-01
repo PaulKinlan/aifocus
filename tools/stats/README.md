@@ -47,11 +47,15 @@ Then:
    add or adjust the `claims` entry in `series.json` so the page keeps showing
    what was written.
 
-The journal has a wrapper and a systemd timer for step 0 (running the
-collectors unattended on the 1st): `~/journal/scripts/aifocus-stats-monthly.sh`
-and `~/journal/scripts/systemd/aifocus-stats-monthly.timer`. The wrapper writes
-the report to `~/journal/reports/aifocus-stats-<date>.md`; the review and the
-commit stay manual.
+The journal has a wrapper and a systemd timer that run the collectors
+unattended on the 1st: `~/journal/scripts/aifocus-stats-monthly.sh` and
+`~/journal/scripts/systemd/aifocus-stats-monthly.timer` (copy both units to
+`~/.config/systemd/user/` and `systemctl --user enable --now
+aifocus-stats-monthly.timer`; until 2026-11-01 they were never installed, so
+the GitHub series sat at March). The wrapper writes the report to
+`~/journal/reports/aifocus-stats-<date>.md`, then commits and pushes the data
+files only (`static/data/`, `data/stats.json`). Reviewing the report against
+the essays (step 4) stays manual.
 
 ## How the GitHub collector stays cheap
 
