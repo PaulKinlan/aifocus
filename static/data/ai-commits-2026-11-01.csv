@@ -1,313 +1,375 @@
 tool,period_start,period_end,granularity,total_count,url,samples
+Antigravity (co-author),2025-11-03,2025-11-09,weekly,3,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-03..2025-11-09&type=commits,[3]
 Claude (co-author),2025-11-03,2025-11-09,weekly,242528,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-03..2025-11-09&type=commits,"[242418, 242639]"
-Claude (co-author),2025-11-10,2025-11-16,weekly,256036,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-10..2025-11-16&type=commits,"[254975, 257098]"
-Claude (co-author),2025-11-17,2025-11-23,weekly,256431,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-17..2025-11-23&type=commits,"[254822, 258040]"
-Claude (co-author),2025-11-24,2025-11-30,weekly,279585,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-24..2025-11-30&type=commits,"[279498, 279672]"
-Claude (co-author),2025-12-01,2025-12-07,weekly,307258,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-01..2025-12-07&type=commits,"[303934, 310583]"
-Claude (co-author),2025-12-08,2025-12-14,weekly,307441,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-08..2025-12-14&type=commits,"[306972, 307910]"
-Claude (co-author),2025-12-15,2025-12-21,weekly,340960,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-15..2025-12-21&type=commits,"[340951, 340970]"
-Claude (co-author),2025-12-22,2025-12-28,weekly,366733,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-22..2025-12-28&type=commits,"[365949, 367517]"
-Claude (co-author),2025-12-29,2026-01-04,weekly,500412,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-29..2026-01-04&type=commits,"[499610, 501215]"
-Claude (co-author),2026-01-05,2026-01-11,weekly,687546,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-05..2026-01-11&type=commits,"[686750, 688342]"
-Claude (co-author),2026-01-12,2026-01-18,weekly,742218,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-12..2026-01-18&type=commits,"[711579, 772858]"
-Claude (co-author),2026-01-19,2026-01-25,weekly,819965,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-19..2026-01-25&type=commits,"[806544, 833386]"
-Claude (co-author),2026-01-26,2026-02-01,weekly,937618,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-26..2026-02-01&type=commits,"[924324, 950912]"
-Claude (co-author),2026-02-02,2026-02-08,weekly,1130359,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-02..2026-02-08&type=commits,"[1126903, 1133816]"
-Claude (co-author),2026-02-09,2026-02-15,weekly,1236629,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-09..2026-02-15&type=commits,"[1220666, 1252592]"
-Claude (co-author),2026-02-16,2026-02-22,weekly,1487837,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-16..2026-02-22&type=commits,"[1474299, 1501375]"
-Claude (co-author),2026-02-23,2026-03-01,weekly,1611150,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-23..2026-03-01&type=commits,"[1604132, 1618169]"
-Claude (co-author),2026-03-02,2026-03-08,weekly,1833957,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-02..2026-03-08&type=commits,"[1817896, 1850019]"
-Claude (co-author),2026-03-09,2026-03-15,weekly,1860327,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-09..2026-03-15&type=commits,"[1745891, 1974764]"
-Claude (co-author),2026-03-16,2026-03-22,weekly,2533011,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-16..2026-03-22&type=commits,"[2486952, 2579071]"
-Claude (co-author),2026-03-23,2026-03-29,weekly,2342256,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-23..2026-03-29&type=commits,"[2300344, 2384168]"
-Claude (co-author),2026-03-30,2026-04-05,weekly,2517449,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-30..2026-04-05&type=commits,"[2515540, 2519358]"
-Claude (co-author),2026-04-06,2026-04-12,weekly,2477088,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-06..2026-04-12&type=commits,"[2413216, 2540960]"
-Claude (co-author),2026-04-13,2026-04-19,weekly,2753825,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-13..2026-04-19&type=commits,"[2739305, 2768345]"
-Claude (co-author),2026-04-20,2026-04-26,weekly,2506117,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-20..2026-04-26&type=commits,"[2410369, 2601866]"
-Claude (co-author),2026-04-27,2026-05-03,weekly,2438951,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-27..2026-05-03&type=commits,"[2375978, 2501925]"
-Claude (co-author),2026-05-04,2026-05-10,weekly,2668718,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-04..2026-05-10&type=commits,"[2569250, 2768186]"
-Claude (co-author),2026-05-11,2026-05-17,weekly,3105591,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-11..2026-05-17&type=commits,"[3082881, 3128302]"
-Claude (co-author),2026-05-18,2026-05-24,weekly,3021060,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-18..2026-05-24&type=commits,"[3011543, 3030578]"
-Claude (co-author),2026-05-25,2026-05-31,weekly,3046156,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-25..2026-05-31&type=commits,"[2982009, 3110303]"
-Claude (co-author),2026-06-01,2026-06-07,weekly,3279473,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-01..2026-06-07&type=commits,"[3158079, 3400868]"
-Claude (co-author),2026-06-08,2026-06-14,weekly,3822836,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-08..2026-06-14&type=commits,"[3566047, 4079626]"
-Claude (co-author),2026-06-15,2026-06-21,weekly,3901782,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-15..2026-06-21&type=commits,"[3814662, 3988902]"
-Claude (co-author),2026-06-22,2026-06-28,weekly,3934608,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-22..2026-06-28&type=commits,"[3913895, 3955322]"
-Claude (co-author),2026-06-29,2026-07-05,weekly,3981850,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-29..2026-07-05&type=commits,"[3836688, 4127012]"
-Claude (co-author),2026-07-06,2026-07-12,weekly,4235322,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-06..2026-07-12&type=commits,"[4200429, 4270216]"
-Claude (co-author),2026-07-13,2026-07-19,weekly,3515247,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-13..2026-07-19&type=commits,"[3267603, 3762891]"
-Claude (co-author),2026-07-20,2026-07-26,weekly,3814576,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-20..2026-07-26&type=commits,"[3761621, 3867531]"
-Claude (co-author),2026-07-27,2026-08-02,weekly,3824837,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-27..2026-08-02&type=commits,"[3758042, 3891633]"
-Claude (co-author),2026-08-03,2026-08-09,weekly,3789854,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-03..2026-08-09&type=commits,"[3743888, 3835821]"
-Claude (co-author),2026-08-10,2026-08-16,weekly,3913325,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-10..2026-08-16&type=commits,"[3900402, 3926248]"
-Claude (co-author),2026-08-17,2026-08-23,weekly,3547606,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-17..2026-08-23&type=commits,"[3273261, 3343046, 3752167, 4490345]"
-Claude (co-author),2026-08-24,2026-08-30,weekly,3770032,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-24..2026-08-30&type=commits,"[2525094, 3388119, 4151945, 4690183]"
-Claude (co-author),2026-08-31,2026-09-06,weekly,4996970,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-31..2026-09-06&type=commits,"[4805519, 4837719, 5156221, 5950875]"
-Claude (co-author),2026-09-07,2026-09-13,weekly,4666580,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-07..2026-09-13&type=commits,"[4031844, 5301316]"
-Claude (co-author),2026-09-14,2026-09-20,weekly,5375971,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-14..2026-09-20&type=commits,"[5331157, 5420785]"
-Claude (co-author),2026-09-21,2026-09-27,weekly,6332240,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-21..2026-09-27&type=commits,"[5426197, 7238284]"
-Claude (co-author),2026-09-28,2026-10-04,weekly,8022282,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-28..2026-10-04&type=commits,"[7931466, 8113099]"
-Claude (co-author),2026-10-05,2026-10-11,weekly,8724443,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-05..2026-10-11&type=commits,"[8365780, 9083107]"
-Claude (co-author),2026-10-12,2026-10-18,weekly,8581035,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-12..2026-10-18&type=commits,"[8407469, 8754601]"
-Claude (co-author),2026-10-19,2026-10-25,weekly,10145484,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-19..2026-10-25&type=commits,"[9956789, 10334179]"
-Claude (co-author),2026-10-26,2026-11-01,weekly,10339440,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-26..2026-11-01&type=commits,"[9609246, 10185226, 10493654, 11061047]"
 Codex (co-author),2025-11-03,2025-11-09,weekly,4106,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-11-03..2025-11-09&type=commits,"[4009, 4203]"
+Copilot (co-author),2025-11-03,2025-11-09,weekly,29837,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-03..2025-11-09&type=commits,[29837]
+Copilot Agent (author),2025-11-03,2025-11-09,weekly,90766,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-03..2025-11-09&type=commits,[90766]
+Cursor (co-author),2025-11-03,2025-11-09,weekly,5543,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-03..2025-11-09&type=commits,[5543]
+Antigravity (co-author),2025-11-10,2025-11-16,weekly,1,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-10..2025-11-16&type=commits,[1]
+Claude (co-author),2025-11-10,2025-11-16,weekly,256036,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-10..2025-11-16&type=commits,"[254975, 257098]"
 Codex (co-author),2025-11-10,2025-11-16,weekly,3514,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-11-10..2025-11-16&type=commits,"[3435, 3593]"
+Copilot (co-author),2025-11-10,2025-11-16,weekly,29261,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-10..2025-11-16&type=commits,[29261]
+Copilot Agent (author),2025-11-10,2025-11-16,weekly,85899,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-10..2025-11-16&type=commits,[85899]
+Cursor (co-author),2025-11-10,2025-11-16,weekly,5743,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-10..2025-11-16&type=commits,[5743]
+Antigravity (co-author),2025-11-17,2025-11-23,weekly,240,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-17..2025-11-23&type=commits,[240]
+Claude (co-author),2025-11-17,2025-11-23,weekly,256431,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-17..2025-11-23&type=commits,"[254822, 258040]"
 Codex (co-author),2025-11-17,2025-11-23,weekly,5666,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-11-17..2025-11-23&type=commits,"[5548, 5784]"
+Copilot (co-author),2025-11-17,2025-11-23,weekly,33673,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-17..2025-11-23&type=commits,[33673]
+Copilot Agent (author),2025-11-17,2025-11-23,weekly,96813,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-17..2025-11-23&type=commits,[96813]
+Cursor (co-author),2025-11-17,2025-11-23,weekly,5223,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-17..2025-11-23&type=commits,[5223]
+Antigravity (co-author),2025-11-24,2025-11-30,weekly,446,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-24..2025-11-30&type=commits,[446]
+Claude (co-author),2025-11-24,2025-11-30,weekly,279585,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-11-24..2025-11-30&type=commits,"[279498, 279672]"
 Codex (co-author),2025-11-24,2025-11-30,weekly,3646,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-11-24..2025-11-30&type=commits,"[3495, 3797]"
+Copilot (co-author),2025-11-24,2025-11-30,weekly,27916,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-24..2025-11-30&type=commits,[27916]
+Copilot Agent (author),2025-11-24,2025-11-30,weekly,87912,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-24..2025-11-30&type=commits,[87912]
+Cursor (co-author),2025-11-24,2025-11-30,weekly,6443,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-24..2025-11-30&type=commits,[6443]
+Antigravity (co-author),2025-12-01,2025-12-07,weekly,660,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-01..2025-12-07&type=commits,[660]
+Claude (co-author),2025-12-01,2025-12-07,weekly,307258,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-01..2025-12-07&type=commits,"[303934, 310583]"
 Codex (co-author),2025-12-01,2025-12-07,weekly,3065,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-12-01..2025-12-07&type=commits,"[2979, 3151]"
+Copilot (co-author),2025-12-01,2025-12-07,weekly,28480,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-01..2025-12-07&type=commits,[28480]
+Copilot Agent (author),2025-12-01,2025-12-07,weekly,102560,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-01..2025-12-07&type=commits,[102560]
+Cursor (co-author),2025-12-01,2025-12-07,weekly,7784,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-01..2025-12-07&type=commits,[7784]
+Antigravity (co-author),2025-12-08,2025-12-14,weekly,254,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-08..2025-12-14&type=commits,[254]
+Claude (co-author),2025-12-08,2025-12-14,weekly,307441,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-08..2025-12-14&type=commits,"[306972, 307910]"
 Codex (co-author),2025-12-08,2025-12-14,weekly,3789,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-12-08..2025-12-14&type=commits,"[3720, 3859]"
+Copilot (co-author),2025-12-08,2025-12-14,weekly,29244,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-08..2025-12-14&type=commits,[29244]
+Copilot Agent (author),2025-12-08,2025-12-14,weekly,101788,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-08..2025-12-14&type=commits,[101788]
+Cursor (co-author),2025-12-08,2025-12-14,weekly,5991,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-08..2025-12-14&type=commits,[5991]
+Antigravity (co-author),2025-12-15,2025-12-21,weekly,347,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-15..2025-12-21&type=commits,[347]
+Claude (co-author),2025-12-15,2025-12-21,weekly,340960,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-15..2025-12-21&type=commits,"[340951, 340970]"
 Codex (co-author),2025-12-15,2025-12-21,weekly,4128,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-12-15..2025-12-21&type=commits,"[4055, 4201]"
+Copilot (co-author),2025-12-15,2025-12-21,weekly,26453,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-15..2025-12-21&type=commits,[26453]
+Copilot Agent (author),2025-12-15,2025-12-21,weekly,92586,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-15..2025-12-21&type=commits,[92586]
+Cursor (co-author),2025-12-15,2025-12-21,weekly,6313,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-15..2025-12-21&type=commits,[6313]
+Antigravity (co-author),2025-12-22,2025-12-28,weekly,310,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-22..2025-12-28&type=commits,[310]
+Claude (co-author),2025-12-22,2025-12-28,weekly,366733,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-22..2025-12-28&type=commits,"[365949, 367517]"
 Codex (co-author),2025-12-22,2025-12-28,weekly,4813,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-12-22..2025-12-28&type=commits,"[4531, 5095]"
+Copilot (co-author),2025-12-22,2025-12-28,weekly,19369,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-22..2025-12-28&type=commits,[19369]
+Copilot Agent (author),2025-12-22,2025-12-28,weekly,76907,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-22..2025-12-28&type=commits,[76907]
+Cursor (co-author),2025-12-22,2025-12-28,weekly,4970,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-22..2025-12-28&type=commits,[4970]
+Antigravity (co-author),2025-12-29,2026-01-04,weekly,1283,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-29..2026-01-04&type=commits,[1283]
+Claude (co-author),2025-12-29,2026-01-04,weekly,500412,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2025-12-29..2026-01-04&type=commits,"[499610, 501215]"
 Codex (co-author),2025-12-29,2026-01-04,weekly,4932,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2025-12-29..2026-01-04&type=commits,"[4848, 5016]"
+Copilot (co-author),2025-12-29,2026-01-04,weekly,20739,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-29..2026-01-04&type=commits,[20739]
+Copilot Agent (author),2025-12-29,2026-01-04,weekly,93604,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-29..2026-01-04&type=commits,[93604]
+Cursor (co-author),2025-12-29,2026-01-04,weekly,6951,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-29..2026-01-04&type=commits,[6951]
+Antigravity (co-author),2026-01-05,2026-01-11,weekly,1088,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-05..2026-01-11&type=commits,[1088]
+Claude (co-author),2026-01-05,2026-01-11,weekly,687546,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-05..2026-01-11&type=commits,"[686750, 688342]"
 Codex (co-author),2026-01-05,2026-01-11,weekly,9715,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-01-05..2026-01-11&type=commits,"[9488, 9943]"
+Copilot (co-author),2026-01-05,2026-01-11,weekly,26274,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-05..2026-01-11&type=commits,[26274]
+Copilot Agent (author),2026-01-05,2026-01-11,weekly,110430,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-05..2026-01-11&type=commits,[110430]
+Cursor (co-author),2026-01-05,2026-01-11,weekly,7765,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-05..2026-01-11&type=commits,[7765]
+Antigravity (co-author),2026-01-12,2026-01-18,weekly,4427,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-12..2026-01-18&type=commits,[4427]
+Claude (co-author),2026-01-12,2026-01-18,weekly,742218,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-12..2026-01-18&type=commits,"[711579, 772858]"
 Codex (co-author),2026-01-12,2026-01-18,weekly,9872,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-01-12..2026-01-18&type=commits,"[9686, 10058]"
+Copilot (co-author),2026-01-12,2026-01-18,weekly,28179,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-12..2026-01-18&type=commits,[28179]
+Copilot Agent (author),2026-01-12,2026-01-18,weekly,107568,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-12..2026-01-18&type=commits,[107568]
+Cursor (co-author),2026-01-12,2026-01-18,weekly,8517,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-12..2026-01-18&type=commits,[8517]
+Antigravity (co-author),2026-01-19,2026-01-25,weekly,3050,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-19..2026-01-25&type=commits,[3050]
+Claude (co-author),2026-01-19,2026-01-25,weekly,819965,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-19..2026-01-25&type=commits,"[806544, 833386]"
 Codex (co-author),2026-01-19,2026-01-25,weekly,8728,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-01-19..2026-01-25&type=commits,"[8598, 8859]"
+Copilot (co-author),2026-01-19,2026-01-25,weekly,33936,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-19..2026-01-25&type=commits,[33936]
+Copilot Agent (author),2026-01-19,2026-01-25,weekly,101037,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-19..2026-01-25&type=commits,[101037]
+Cursor (co-author),2026-01-19,2026-01-25,weekly,9752,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-19..2026-01-25&type=commits,[9752]
+Antigravity (co-author),2026-01-26,2026-02-01,weekly,2120,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-26..2026-02-01&type=commits,[2120]
+Claude (co-author),2026-01-26,2026-02-01,weekly,937618,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-01-26..2026-02-01&type=commits,"[924324, 950912]"
 Codex (co-author),2026-01-26,2026-02-01,weekly,11886,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-01-26..2026-02-01&type=commits,"[11616, 12156]"
+Copilot (co-author),2026-01-26,2026-02-01,weekly,33563,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-26..2026-02-01&type=commits,[33563]
+Copilot Agent (author),2026-01-26,2026-02-01,weekly,119749,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-26..2026-02-01&type=commits,[119749]
+Cursor (co-author),2026-01-26,2026-02-01,weekly,46779,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-26..2026-02-01&type=commits,[46779]
+Antigravity (co-author),2026-02-02,2026-02-08,weekly,2640,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-02..2026-02-08&type=commits,[2640]
+Claude (co-author),2026-02-02,2026-02-08,weekly,1130359,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-02..2026-02-08&type=commits,"[1126903, 1133816]"
 Codex (co-author),2026-02-02,2026-02-08,weekly,26738,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-02-02..2026-02-08&type=commits,"[25827, 27650]"
+Copilot (co-author),2026-02-02,2026-02-08,weekly,33882,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-02..2026-02-08&type=commits,[33882]
+Copilot Agent (author),2026-02-02,2026-02-08,weekly,144225,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-02..2026-02-08&type=commits,[144225]
+Cursor (co-author),2026-02-02,2026-02-08,weekly,139172,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-02..2026-02-08&type=commits,[139172]
+Antigravity (co-author),2026-02-09,2026-02-15,weekly,3502,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-09..2026-02-15&type=commits,[3502]
+Claude (co-author),2026-02-09,2026-02-15,weekly,1236629,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-09..2026-02-15&type=commits,"[1220666, 1252592]"
 Codex (co-author),2026-02-09,2026-02-15,weekly,24263,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-02-09..2026-02-15&type=commits,"[22764, 25763]"
+Copilot (co-author),2026-02-09,2026-02-15,weekly,43001,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-09..2026-02-15&type=commits,[43001]
+Copilot Agent (author),2026-02-09,2026-02-15,weekly,152276,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-09..2026-02-15&type=commits,[152276]
+Cursor (co-author),2026-02-09,2026-02-15,weekly,189907,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-09..2026-02-15&type=commits,[189907]
+Antigravity (co-author),2026-02-16,2026-02-22,weekly,4921,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-16..2026-02-22&type=commits,[4921]
+Claude (co-author),2026-02-16,2026-02-22,weekly,1487837,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-16..2026-02-22&type=commits,"[1474299, 1501375]"
 Codex (co-author),2026-02-16,2026-02-22,weekly,26031,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-02-16..2026-02-22&type=commits,"[24736, 27326]"
+Copilot (co-author),2026-02-16,2026-02-22,weekly,78858,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-16..2026-02-22&type=commits,[78858]
+Copilot Agent (author),2026-02-16,2026-02-22,weekly,137246,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-16..2026-02-22&type=commits,[137246]
+Cursor (co-author),2026-02-16,2026-02-22,weekly,200174,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-16..2026-02-22&type=commits,[200174]
+Antigravity (co-author),2026-02-23,2026-03-01,weekly,3064,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-23..2026-03-01&type=commits,[3064]
+Claude (co-author),2026-02-23,2026-03-01,weekly,1611150,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-02-23..2026-03-01&type=commits,"[1604132, 1618169]"
 Codex (co-author),2026-02-23,2026-03-01,weekly,29823,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-02-23..2026-03-01&type=commits,"[28217, 31429]"
+Copilot (co-author),2026-02-23,2026-03-01,weekly,88330,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-23..2026-03-01&type=commits,[88330]
+Copilot Agent (author),2026-02-23,2026-03-01,weekly,125248,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-23..2026-03-01&type=commits,[125248]
+Cursor (co-author),2026-02-23,2026-03-01,weekly,119049,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-23..2026-03-01&type=commits,[119049]
+Antigravity (co-author),2026-03-02,2026-03-08,weekly,1938,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-02..2026-03-08&type=commits,[1938]
+Claude (co-author),2026-03-02,2026-03-08,weekly,1833957,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-02..2026-03-08&type=commits,"[1817896, 1850019]"
 Codex (co-author),2026-03-02,2026-03-08,weekly,43741,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-02..2026-03-08&type=commits,"[41050, 46432]"
-Codex (co-author),2026-03-09,2026-03-15,weekly,34875,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-09..2026-03-15&type=commits,"[34875]"
-Codex (co-author),2026-03-16,2026-03-22,weekly,42537,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-16..2026-03-22&type=commits,"[42537]"
-Codex (co-author),2026-03-23,2026-03-29,weekly,49310,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-23..2026-03-29&type=commits,"[49310]"
-Codex (co-author),2026-03-30,2026-04-05,weekly,37657,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-30..2026-04-05&type=commits,"[37657]"
-Codex (co-author),2026-04-06,2026-04-12,weekly,45924,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-06..2026-04-12&type=commits,"[45924]"
-Codex (co-author),2026-04-13,2026-04-19,weekly,56551,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-13..2026-04-19&type=commits,"[56551]"
-Codex (co-author),2026-04-20,2026-04-26,weekly,68052,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-20..2026-04-26&type=commits,"[68052]"
-Codex (co-author),2026-04-27,2026-05-03,weekly,71726,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-27..2026-05-03&type=commits,"[71726]"
-Codex (co-author),2026-05-04,2026-05-10,weekly,85288,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-04..2026-05-10&type=commits,"[85288]"
-Codex (co-author),2026-05-11,2026-05-17,weekly,95096,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-11..2026-05-17&type=commits,"[95096]"
-Codex (co-author),2026-05-18,2026-05-24,weekly,80402,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-18..2026-05-24&type=commits,"[80402]"
-Codex (co-author),2026-05-25,2026-05-31,weekly,79695,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-25..2026-05-31&type=commits,"[79695]"
-Codex (co-author),2026-06-01,2026-06-07,weekly,72915,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-01..2026-06-07&type=commits,"[72915]"
-Codex (co-author),2026-06-08,2026-06-14,weekly,83379,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-08..2026-06-14&type=commits,"[83379]"
-Codex (co-author),2026-06-15,2026-06-21,weekly,103338,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-15..2026-06-21&type=commits,"[103338]"
-Codex (co-author),2026-06-22,2026-06-28,weekly,78479,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-22..2026-06-28&type=commits,"[78479]"
-Codex (co-author),2026-06-29,2026-07-05,weekly,82278,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-29..2026-07-05&type=commits,"[82278]"
-Codex (co-author),2026-07-06,2026-07-12,weekly,96546,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-06..2026-07-12&type=commits,"[96546]"
-Codex (co-author),2026-07-13,2026-07-19,weekly,103239,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-13..2026-07-19&type=commits,"[103239]"
-Codex (co-author),2026-07-20,2026-07-26,weekly,94776,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-20..2026-07-26&type=commits,"[94776]"
-Codex (co-author),2026-07-27,2026-08-02,weekly,89504,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-27..2026-08-02&type=commits,"[89504]"
-Codex (co-author),2026-08-03,2026-08-09,weekly,80659,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-03..2026-08-09&type=commits,"[80659]"
-Codex (co-author),2026-08-10,2026-08-16,weekly,84230,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-10..2026-08-16&type=commits,"[84230]"
-Codex (co-author),2026-08-17,2026-08-23,weekly,79467,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-17..2026-08-23&type=commits,"[79467]"
-Codex (co-author),2026-08-24,2026-08-30,weekly,93122,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-24..2026-08-30&type=commits,"[93122]"
-Codex (co-author),2026-08-31,2026-09-06,weekly,109107,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-31..2026-09-06&type=commits,"[109107]"
-Codex (co-author),2026-09-07,2026-09-13,weekly,116640,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-07..2026-09-13&type=commits,"[116640]"
-Codex (co-author),2026-09-14,2026-09-20,weekly,95741,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-14..2026-09-20&type=commits,"[95741]"
-Codex (co-author),2026-09-21,2026-09-27,weekly,112456,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-21..2026-09-27&type=commits,"[112456]"
-Codex (co-author),2026-09-28,2026-10-04,weekly,173271,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-28..2026-10-04&type=commits,"[173271]"
-Codex (co-author),2026-10-05,2026-10-11,weekly,217487,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-05..2026-10-11&type=commits,"[217487]"
-Codex (co-author),2026-10-12,2026-10-18,weekly,223928,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-12..2026-10-18&type=commits,"[223928]"
-Codex (co-author),2026-10-19,2026-10-25,weekly,209912,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-19..2026-10-25&type=commits,"[209912]"
-Codex (co-author),2026-10-26,2026-11-01,weekly,181737,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-26..2026-11-01&type=commits,"[181737]"
-Copilot (co-author),2025-11-03,2025-11-09,weekly,29837,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-03..2025-11-09&type=commits,"[29837]"
-Copilot (co-author),2025-11-10,2025-11-16,weekly,29261,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-10..2025-11-16&type=commits,"[29261]"
-Copilot (co-author),2025-11-17,2025-11-23,weekly,33673,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-17..2025-11-23&type=commits,"[33673]"
-Copilot (co-author),2025-11-24,2025-11-30,weekly,27916,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-11-24..2025-11-30&type=commits,"[27916]"
-Copilot (co-author),2025-12-01,2025-12-07,weekly,28480,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-01..2025-12-07&type=commits,"[28480]"
-Copilot (co-author),2025-12-08,2025-12-14,weekly,29244,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-08..2025-12-14&type=commits,"[29244]"
-Copilot (co-author),2025-12-15,2025-12-21,weekly,26453,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-15..2025-12-21&type=commits,"[26453]"
-Copilot (co-author),2025-12-22,2025-12-28,weekly,19369,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-22..2025-12-28&type=commits,"[19369]"
-Copilot (co-author),2025-12-29,2026-01-04,weekly,20739,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2025-12-29..2026-01-04&type=commits,"[20739]"
-Copilot (co-author),2026-01-05,2026-01-11,weekly,26274,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-05..2026-01-11&type=commits,"[26274]"
-Copilot (co-author),2026-01-12,2026-01-18,weekly,28179,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-12..2026-01-18&type=commits,"[28179]"
-Copilot (co-author),2026-01-19,2026-01-25,weekly,33936,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-19..2026-01-25&type=commits,"[33936]"
-Copilot (co-author),2026-01-26,2026-02-01,weekly,33563,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-01-26..2026-02-01&type=commits,"[33563]"
-Copilot (co-author),2026-02-02,2026-02-08,weekly,33882,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-02..2026-02-08&type=commits,"[33882]"
-Copilot (co-author),2026-02-09,2026-02-15,weekly,43001,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-09..2026-02-15&type=commits,"[43001]"
-Copilot (co-author),2026-02-16,2026-02-22,weekly,78858,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-16..2026-02-22&type=commits,"[78858]"
-Copilot (co-author),2026-02-23,2026-03-01,weekly,88330,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-02-23..2026-03-01&type=commits,"[88330]"
-Copilot (co-author),2026-03-02,2026-03-08,weekly,105488,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-02..2026-03-08&type=commits,"[105488]"
-Copilot (co-author),2026-03-09,2026-03-15,weekly,103513,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-09..2026-03-15&type=commits,"[103513]"
-Copilot (co-author),2026-03-16,2026-03-22,weekly,105672,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-16..2026-03-22&type=commits,"[105672]"
-Copilot (co-author),2026-03-23,2026-03-29,weekly,107849,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-23..2026-03-29&type=commits,"[107849]"
-Copilot (co-author),2026-03-30,2026-04-05,weekly,119635,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-30..2026-04-05&type=commits,"[119635]"
-Copilot (co-author),2026-04-06,2026-04-12,weekly,129701,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-06..2026-04-12&type=commits,"[129701]"
-Copilot (co-author),2026-04-13,2026-04-19,weekly,132972,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-13..2026-04-19&type=commits,"[132972]"
-Copilot (co-author),2026-04-20,2026-04-26,weekly,225966,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-20..2026-04-26&type=commits,"[225966]"
-Copilot (co-author),2026-04-27,2026-05-03,weekly,294504,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-27..2026-05-03&type=commits,"[294504]"
-Copilot (co-author),2026-05-04,2026-05-10,weekly,187504,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-04..2026-05-10&type=commits,"[187504]"
-Copilot (co-author),2026-05-11,2026-05-17,weekly,124661,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-11..2026-05-17&type=commits,"[124661]"
-Copilot (co-author),2026-05-18,2026-05-24,weekly,103473,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-18..2026-05-24&type=commits,"[103473]"
-Copilot (co-author),2026-05-25,2026-05-31,weekly,93448,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-25..2026-05-31&type=commits,"[93448]"
-Copilot (co-author),2026-06-01,2026-06-07,weekly,80092,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-01..2026-06-07&type=commits,"[80092]"
-Copilot (co-author),2026-06-08,2026-06-14,weekly,69344,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-08..2026-06-14&type=commits,"[69344]"
-Copilot (co-author),2026-06-15,2026-06-21,weekly,65310,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-15..2026-06-21&type=commits,"[65310]"
-Copilot (co-author),2026-06-22,2026-06-28,weekly,79694,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-22..2026-06-28&type=commits,"[79694]"
-Copilot (co-author),2026-06-29,2026-07-05,weekly,71321,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-29..2026-07-05&type=commits,"[71321]"
-Copilot (co-author),2026-07-06,2026-07-12,weekly,73366,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-06..2026-07-12&type=commits,"[73366]"
-Copilot (co-author),2026-07-13,2026-07-19,weekly,70358,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-13..2026-07-19&type=commits,"[70358]"
-Copilot (co-author),2026-07-20,2026-07-26,weekly,69424,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-20..2026-07-26&type=commits,"[69424]"
-Copilot (co-author),2026-07-27,2026-08-02,weekly,73075,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-27..2026-08-02&type=commits,"[73075]"
-Copilot (co-author),2026-08-03,2026-08-09,weekly,72086,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-03..2026-08-09&type=commits,"[72086]"
-Copilot (co-author),2026-08-10,2026-08-16,weekly,71634,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-10..2026-08-16&type=commits,"[71634]"
-Copilot (co-author),2026-08-17,2026-08-23,weekly,67120,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-17..2026-08-23&type=commits,"[67120]"
-Copilot (co-author),2026-08-24,2026-08-30,weekly,66830,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-24..2026-08-30&type=commits,"[66830]"
-Copilot (co-author),2026-08-31,2026-09-06,weekly,82094,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-31..2026-09-06&type=commits,"[82094]"
-Copilot (co-author),2026-09-07,2026-09-13,weekly,84040,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-07..2026-09-13&type=commits,"[84040]"
-Copilot (co-author),2026-09-14,2026-09-20,weekly,79867,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-14..2026-09-20&type=commits,"[79867]"
-Copilot (co-author),2026-09-21,2026-09-27,weekly,76570,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-21..2026-09-27&type=commits,"[76570]"
-Copilot (co-author),2026-09-28,2026-10-04,weekly,115705,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-28..2026-10-04&type=commits,"[115705]"
-Copilot (co-author),2026-10-05,2026-10-11,weekly,171820,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-05..2026-10-11&type=commits,"[171820]"
-Copilot (co-author),2026-10-12,2026-10-18,weekly,170975,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-12..2026-10-18&type=commits,"[170975]"
-Copilot (co-author),2026-10-19,2026-10-25,weekly,188902,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-19..2026-10-25&type=commits,"[188902]"
-Copilot (co-author),2026-10-26,2026-11-01,weekly,196071,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-26..2026-11-01&type=commits,"[196071]"
-Copilot Agent (author),2025-11-03,2025-11-09,weekly,90766,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-03..2025-11-09&type=commits,"[90766]"
-Copilot Agent (author),2025-11-10,2025-11-16,weekly,85899,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-10..2025-11-16&type=commits,"[85899]"
-Copilot Agent (author),2025-11-17,2025-11-23,weekly,96813,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-17..2025-11-23&type=commits,"[96813]"
-Copilot Agent (author),2025-11-24,2025-11-30,weekly,87912,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-11-24..2025-11-30&type=commits,"[87912]"
-Copilot Agent (author),2025-12-01,2025-12-07,weekly,102560,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-01..2025-12-07&type=commits,"[102560]"
-Copilot Agent (author),2025-12-08,2025-12-14,weekly,101788,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-08..2025-12-14&type=commits,"[101788]"
-Copilot Agent (author),2025-12-15,2025-12-21,weekly,92586,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-15..2025-12-21&type=commits,"[92586]"
-Copilot Agent (author),2025-12-22,2025-12-28,weekly,76907,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-22..2025-12-28&type=commits,"[76907]"
-Copilot Agent (author),2025-12-29,2026-01-04,weekly,93604,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2025-12-29..2026-01-04&type=commits,"[93604]"
-Copilot Agent (author),2026-01-05,2026-01-11,weekly,110430,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-05..2026-01-11&type=commits,"[110430]"
-Copilot Agent (author),2026-01-12,2026-01-18,weekly,107568,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-12..2026-01-18&type=commits,"[107568]"
-Copilot Agent (author),2026-01-19,2026-01-25,weekly,101037,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-19..2026-01-25&type=commits,"[101037]"
-Copilot Agent (author),2026-01-26,2026-02-01,weekly,119749,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-01-26..2026-02-01&type=commits,"[119749]"
-Copilot Agent (author),2026-02-02,2026-02-08,weekly,144225,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-02..2026-02-08&type=commits,"[144225]"
-Copilot Agent (author),2026-02-09,2026-02-15,weekly,152276,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-09..2026-02-15&type=commits,"[152276]"
-Copilot Agent (author),2026-02-16,2026-02-22,weekly,137246,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-16..2026-02-22&type=commits,"[137246]"
-Copilot Agent (author),2026-02-23,2026-03-01,weekly,125248,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-02-23..2026-03-01&type=commits,"[125248]"
-Copilot Agent (author),2026-03-02,2026-03-08,weekly,132555,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-02..2026-03-08&type=commits,"[132555]"
-Copilot Agent (author),2026-03-09,2026-03-15,weekly,136979,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-09..2026-03-15&type=commits,"[136979]"
-Copilot Agent (author),2026-03-16,2026-03-22,weekly,117621,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-16..2026-03-22&type=commits,"[117621]"
-Copilot Agent (author),2026-03-23,2026-03-29,weekly,113481,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-23..2026-03-29&type=commits,"[113481]"
-Copilot Agent (author),2026-03-30,2026-04-05,weekly,121064,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-30..2026-04-05&type=commits,"[121064]"
-Copilot Agent (author),2026-04-06,2026-04-12,weekly,130413,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-06..2026-04-12&type=commits,"[130413]"
-Copilot Agent (author),2026-04-13,2026-04-19,weekly,128006,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-13..2026-04-19&type=commits,"[128006]"
-Copilot Agent (author),2026-04-20,2026-04-26,weekly,94423,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-20..2026-04-26&type=commits,"[94423]"
-Copilot Agent (author),2026-04-27,2026-05-03,weekly,79915,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-27..2026-05-03&type=commits,"[79915]"
-Copilot Agent (author),2026-05-04,2026-05-10,weekly,92491,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-04..2026-05-10&type=commits,"[92491]"
-Copilot Agent (author),2026-05-11,2026-05-17,weekly,84490,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-11..2026-05-17&type=commits,"[84490]"
-Copilot Agent (author),2026-05-18,2026-05-24,weekly,64589,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-18..2026-05-24&type=commits,"[64589]"
-Copilot Agent (author),2026-05-25,2026-05-31,weekly,53585,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-25..2026-05-31&type=commits,"[53585]"
-Copilot Agent (author),2026-06-01,2026-06-07,weekly,38494,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-01..2026-06-07&type=commits,"[38494]"
-Copilot Agent (author),2026-06-08,2026-06-14,weekly,27120,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-08..2026-06-14&type=commits,"[27120]"
-Copilot Agent (author),2026-06-15,2026-06-21,weekly,22729,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-15..2026-06-21&type=commits,"[22729]"
-Copilot Agent (author),2026-06-22,2026-06-28,weekly,23326,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-22..2026-06-28&type=commits,"[23326]"
-Copilot Agent (author),2026-06-29,2026-07-05,weekly,25795,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-29..2026-07-05&type=commits,"[25795]"
-Copilot Agent (author),2026-07-06,2026-07-12,weekly,29155,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-06..2026-07-12&type=commits,"[29155]"
-Copilot Agent (author),2026-07-13,2026-07-19,weekly,25662,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-13..2026-07-19&type=commits,"[25662]"
-Copilot Agent (author),2026-07-20,2026-07-26,weekly,23912,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-20..2026-07-26&type=commits,"[23912]"
-Copilot Agent (author),2026-07-27,2026-08-02,weekly,24148,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-27..2026-08-02&type=commits,"[24148]"
-Copilot Agent (author),2026-08-03,2026-08-09,weekly,23833,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-03..2026-08-09&type=commits,"[23833]"
-Copilot Agent (author),2026-08-10,2026-08-16,weekly,24228,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-10..2026-08-16&type=commits,"[24228]"
-Copilot Agent (author),2026-08-17,2026-08-23,weekly,21598,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-17..2026-08-23&type=commits,"[21598]"
-Copilot Agent (author),2026-08-24,2026-08-30,weekly,20749,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-24..2026-08-30&type=commits,"[20749]"
-Copilot Agent (author),2026-08-31,2026-09-06,weekly,26427,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-31..2026-09-06&type=commits,"[26427]"
-Copilot Agent (author),2026-09-07,2026-09-13,weekly,26658,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-07..2026-09-13&type=commits,"[26658]"
-Copilot Agent (author),2026-09-14,2026-09-20,weekly,27592,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-14..2026-09-20&type=commits,"[27592]"
-Copilot Agent (author),2026-09-21,2026-09-27,weekly,23525,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-21..2026-09-27&type=commits,"[23525]"
-Copilot Agent (author),2026-09-28,2026-10-04,weekly,24943,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-28..2026-10-04&type=commits,"[24943]"
-Copilot Agent (author),2026-10-05,2026-10-11,weekly,23410,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-05..2026-10-11&type=commits,"[23410]"
-Copilot Agent (author),2026-10-12,2026-10-18,weekly,20322,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-12..2026-10-18&type=commits,"[20322]"
-Copilot Agent (author),2026-10-19,2026-10-25,weekly,18060,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-19..2026-10-25&type=commits,"[18060]"
-Copilot Agent (author),2026-10-26,2026-11-01,weekly,13731,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-26..2026-11-01&type=commits,"[13731]"
-Cursor (co-author),2025-11-03,2025-11-09,weekly,5543,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-03..2025-11-09&type=commits,"[5543]"
-Cursor (co-author),2025-11-10,2025-11-16,weekly,5743,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-10..2025-11-16&type=commits,"[5743]"
-Cursor (co-author),2025-11-17,2025-11-23,weekly,5223,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-17..2025-11-23&type=commits,"[5223]"
-Cursor (co-author),2025-11-24,2025-11-30,weekly,6443,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-11-24..2025-11-30&type=commits,"[6443]"
-Cursor (co-author),2025-12-01,2025-12-07,weekly,7784,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-01..2025-12-07&type=commits,"[7784]"
-Cursor (co-author),2025-12-08,2025-12-14,weekly,5991,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-08..2025-12-14&type=commits,"[5991]"
-Cursor (co-author),2025-12-15,2025-12-21,weekly,6313,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-15..2025-12-21&type=commits,"[6313]"
-Cursor (co-author),2025-12-22,2025-12-28,weekly,4970,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-22..2025-12-28&type=commits,"[4970]"
-Cursor (co-author),2025-12-29,2026-01-04,weekly,6951,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2025-12-29..2026-01-04&type=commits,"[6951]"
-Cursor (co-author),2026-01-05,2026-01-11,weekly,7765,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-05..2026-01-11&type=commits,"[7765]"
-Cursor (co-author),2026-01-12,2026-01-18,weekly,8517,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-12..2026-01-18&type=commits,"[8517]"
-Cursor (co-author),2026-01-19,2026-01-25,weekly,9752,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-19..2026-01-25&type=commits,"[9752]"
-Cursor (co-author),2026-01-26,2026-02-01,weekly,46779,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-01-26..2026-02-01&type=commits,"[46779]"
-Cursor (co-author),2026-02-02,2026-02-08,weekly,139172,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-02..2026-02-08&type=commits,"[139172]"
-Cursor (co-author),2026-02-09,2026-02-15,weekly,189907,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-09..2026-02-15&type=commits,"[189907]"
-Cursor (co-author),2026-02-16,2026-02-22,weekly,200174,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-16..2026-02-22&type=commits,"[200174]"
-Cursor (co-author),2026-02-23,2026-03-01,weekly,119049,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-02-23..2026-03-01&type=commits,"[119049]"
-Cursor (co-author),2026-03-02,2026-03-08,weekly,27816,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-02..2026-03-08&type=commits,"[27816]"
-Cursor (co-author),2026-03-09,2026-03-15,weekly,26291,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-09..2026-03-15&type=commits,"[26291]"
-Cursor (co-author),2026-03-16,2026-03-22,weekly,31354,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-16..2026-03-22&type=commits,"[31354]"
-Cursor (co-author),2026-03-23,2026-03-29,weekly,34685,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-23..2026-03-29&type=commits,"[34685]"
-Cursor (co-author),2026-03-30,2026-04-05,weekly,29184,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-30..2026-04-05&type=commits,"[29184]"
-Cursor (co-author),2026-04-06,2026-04-12,weekly,34997,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-06..2026-04-12&type=commits,"[34997]"
-Cursor (co-author),2026-04-13,2026-04-19,weekly,36936,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-13..2026-04-19&type=commits,"[36936]"
-Cursor (co-author),2026-04-20,2026-04-26,weekly,38209,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-20..2026-04-26&type=commits,"[38209]"
-Cursor (co-author),2026-04-27,2026-05-03,weekly,118622,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-27..2026-05-03&type=commits,"[118622]"
-Cursor (co-author),2026-05-04,2026-05-10,weekly,295072,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-04..2026-05-10&type=commits,"[295072]"
-Cursor (co-author),2026-05-11,2026-05-17,weekly,309775,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-11..2026-05-17&type=commits,"[309775]"
-Cursor (co-author),2026-05-18,2026-05-24,weekly,326452,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-18..2026-05-24&type=commits,"[326452]"
-Cursor (co-author),2026-05-25,2026-05-31,weekly,348309,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-25..2026-05-31&type=commits,"[348309]"
-Cursor (co-author),2026-06-01,2026-06-07,weekly,352655,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-01..2026-06-07&type=commits,"[352655]"
-Cursor (co-author),2026-06-08,2026-06-14,weekly,370900,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-08..2026-06-14&type=commits,"[370900]"
-Cursor (co-author),2026-06-15,2026-06-21,weekly,339869,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-15..2026-06-21&type=commits,"[339869]"
-Cursor (co-author),2026-06-22,2026-06-28,weekly,340153,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-22..2026-06-28&type=commits,"[340153]"
-Cursor (co-author),2026-06-29,2026-07-05,weekly,349111,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-29..2026-07-05&type=commits,"[349111]"
-Cursor (co-author),2026-07-06,2026-07-12,weekly,1376437,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-06..2026-07-12&type=commits,"[1376437]"
-Cursor (co-author),2026-07-13,2026-07-19,weekly,392039,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-13..2026-07-19&type=commits,"[392039]"
-Cursor (co-author),2026-07-20,2026-07-26,weekly,435605,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-20..2026-07-26&type=commits,"[435605]"
-Cursor (co-author),2026-07-27,2026-08-02,weekly,425252,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-27..2026-08-02&type=commits,"[425252]"
-Cursor (co-author),2026-08-03,2026-08-09,weekly,421255,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-03..2026-08-09&type=commits,"[421255]"
-Cursor (co-author),2026-08-10,2026-08-16,weekly,432137,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-10..2026-08-16&type=commits,"[432137]"
-Cursor (co-author),2026-08-17,2026-08-23,weekly,406769,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-17..2026-08-23&type=commits,"[406769]"
-Cursor (co-author),2026-08-24,2026-08-30,weekly,396610,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-24..2026-08-30&type=commits,"[396610]"
-Cursor (co-author),2026-08-31,2026-09-06,weekly,403934,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-31..2026-09-06&type=commits,"[403934]"
-Cursor (co-author),2026-09-07,2026-09-13,weekly,389600,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-07..2026-09-13&type=commits,"[389600]"
-Cursor (co-author),2026-09-14,2026-09-20,weekly,375678,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-14..2026-09-20&type=commits,"[375678]"
-Cursor (co-author),2026-09-21,2026-09-27,weekly,351095,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-21..2026-09-27&type=commits,"[351095]"
-Cursor (co-author),2026-09-28,2026-10-04,weekly,346844,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-28..2026-10-04&type=commits,"[346844]"
-Cursor (co-author),2026-10-05,2026-10-11,weekly,349035,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-05..2026-10-11&type=commits,"[349035]"
-Cursor (co-author),2026-10-12,2026-10-18,weekly,359649,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-12..2026-10-18&type=commits,"[359649]"
-Cursor (co-author),2026-10-19,2026-10-25,weekly,329350,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-19..2026-10-25&type=commits,"[329350]"
-Cursor (co-author),2026-10-26,2026-11-01,weekly,289522,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-26..2026-11-01&type=commits,"[289522]"
-Antigravity (co-author),2025-11-03,2025-11-09,weekly,3,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-03..2025-11-09&type=commits,"[3]"
-Antigravity (co-author),2025-11-10,2025-11-16,weekly,1,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-10..2025-11-16&type=commits,"[1]"
-Antigravity (co-author),2025-11-17,2025-11-23,weekly,240,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-17..2025-11-23&type=commits,"[240]"
-Antigravity (co-author),2025-11-24,2025-11-30,weekly,446,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-11-24..2025-11-30&type=commits,"[446]"
-Antigravity (co-author),2025-12-01,2025-12-07,weekly,660,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-01..2025-12-07&type=commits,"[660]"
-Antigravity (co-author),2025-12-08,2025-12-14,weekly,254,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-08..2025-12-14&type=commits,"[254]"
-Antigravity (co-author),2025-12-15,2025-12-21,weekly,347,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-15..2025-12-21&type=commits,"[347]"
-Antigravity (co-author),2025-12-22,2025-12-28,weekly,310,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-22..2025-12-28&type=commits,"[310]"
-Antigravity (co-author),2025-12-29,2026-01-04,weekly,1283,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2025-12-29..2026-01-04&type=commits,"[1283]"
-Antigravity (co-author),2026-01-05,2026-01-11,weekly,1088,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-05..2026-01-11&type=commits,"[1088]"
-Antigravity (co-author),2026-01-12,2026-01-18,weekly,4427,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-12..2026-01-18&type=commits,"[4427]"
-Antigravity (co-author),2026-01-19,2026-01-25,weekly,3050,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-19..2026-01-25&type=commits,"[3050]"
-Antigravity (co-author),2026-01-26,2026-02-01,weekly,2120,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-01-26..2026-02-01&type=commits,"[2120]"
-Antigravity (co-author),2026-02-02,2026-02-08,weekly,2640,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-02..2026-02-08&type=commits,"[2640]"
-Antigravity (co-author),2026-02-09,2026-02-15,weekly,3502,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-09..2026-02-15&type=commits,"[3502]"
-Antigravity (co-author),2026-02-16,2026-02-22,weekly,4921,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-16..2026-02-22&type=commits,"[4921]"
-Antigravity (co-author),2026-02-23,2026-03-01,weekly,3064,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-02-23..2026-03-01&type=commits,"[3064]"
-Antigravity (co-author),2026-03-02,2026-03-08,weekly,1938,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-02..2026-03-08&type=commits,"[1938]"
-Antigravity (co-author),2026-03-09,2026-03-15,weekly,2220,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-09..2026-03-15&type=commits,"[2220]"
-Antigravity (co-author),2026-03-16,2026-03-22,weekly,2726,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-16..2026-03-22&type=commits,"[2726]"
-Antigravity (co-author),2026-03-23,2026-03-29,weekly,3593,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-23..2026-03-29&type=commits,"[3593]"
-Antigravity (co-author),2026-03-30,2026-04-05,weekly,1515,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-30..2026-04-05&type=commits,"[1515]"
-Antigravity (co-author),2026-04-06,2026-04-12,weekly,1715,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-06..2026-04-12&type=commits,"[1715]"
-Antigravity (co-author),2026-04-13,2026-04-19,weekly,1771,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-13..2026-04-19&type=commits,"[1771]"
-Antigravity (co-author),2026-04-20,2026-04-26,weekly,1588,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-20..2026-04-26&type=commits,"[1588]"
-Antigravity (co-author),2026-04-27,2026-05-03,weekly,2295,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-27..2026-05-03&type=commits,"[2295]"
-Antigravity (co-author),2026-05-04,2026-05-10,weekly,1287,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-04..2026-05-10&type=commits,"[1287]"
-Antigravity (co-author),2026-05-11,2026-05-17,weekly,3076,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-11..2026-05-17&type=commits,"[3076]"
-Antigravity (co-author),2026-05-18,2026-05-24,weekly,3848,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-18..2026-05-24&type=commits,"[3848]"
-Antigravity (co-author),2026-05-25,2026-05-31,weekly,4674,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-25..2026-05-31&type=commits,"[4674]"
-Antigravity (co-author),2026-06-01,2026-06-07,weekly,4284,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-01..2026-06-07&type=commits,"[4284]"
-Antigravity (co-author),2026-06-08,2026-06-14,weekly,4731,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-08..2026-06-14&type=commits,"[4731]"
-Antigravity (co-author),2026-06-15,2026-06-21,weekly,5203,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-15..2026-06-21&type=commits,"[5203]"
-Antigravity (co-author),2026-06-22,2026-06-28,weekly,4997,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-22..2026-06-28&type=commits,"[4997]"
-Antigravity (co-author),2026-06-29,2026-07-05,weekly,4851,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-29..2026-07-05&type=commits,"[4851]"
-Antigravity (co-author),2026-07-06,2026-07-12,weekly,5962,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-06..2026-07-12&type=commits,"[5962]"
-Antigravity (co-author),2026-07-13,2026-07-19,weekly,5997,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-13..2026-07-19&type=commits,"[5997]"
-Antigravity (co-author),2026-07-20,2026-07-26,weekly,8240,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-20..2026-07-26&type=commits,"[8240]"
-Antigravity (co-author),2026-07-27,2026-08-02,weekly,4276,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-27..2026-08-02&type=commits,"[4276]"
-Antigravity (co-author),2026-08-03,2026-08-09,weekly,4007,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-03..2026-08-09&type=commits,"[4007]"
-Antigravity (co-author),2026-08-10,2026-08-16,weekly,4561,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-10..2026-08-16&type=commits,"[4561]"
-Antigravity (co-author),2026-08-17,2026-08-23,weekly,5496,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-17..2026-08-23&type=commits,"[5496]"
-Antigravity (co-author),2026-08-24,2026-08-30,weekly,4570,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-24..2026-08-30&type=commits,"[4570]"
-Antigravity (co-author),2026-08-31,2026-09-06,weekly,6735,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-31..2026-09-06&type=commits,"[6735]"
-Antigravity (co-author),2026-09-07,2026-09-13,weekly,6168,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-07..2026-09-13&type=commits,"[6168]"
-Antigravity (co-author),2026-09-14,2026-09-20,weekly,5452,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-14..2026-09-20&type=commits,"[5452]"
-Antigravity (co-author),2026-09-21,2026-09-27,weekly,6224,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-21..2026-09-27&type=commits,"[6224]"
-Antigravity (co-author),2026-09-28,2026-10-04,weekly,7796,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-28..2026-10-04&type=commits,"[7796]"
-Antigravity (co-author),2026-10-05,2026-10-11,weekly,8408,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-05..2026-10-11&type=commits,"[8408]"
-Antigravity (co-author),2026-10-12,2026-10-18,weekly,9953,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-12..2026-10-18&type=commits,"[9953]"
-Antigravity (co-author),2026-10-19,2026-10-25,weekly,9408,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-19..2026-10-25&type=commits,"[9408]"
-Antigravity (co-author),2026-10-26,2026-11-01,weekly,8640,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-26..2026-11-01&type=commits,"[8640]"
+Copilot (co-author),2026-03-02,2026-03-08,weekly,105488,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-02..2026-03-08&type=commits,[105488]
+Copilot Agent (author),2026-03-02,2026-03-08,weekly,132555,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-02..2026-03-08&type=commits,[132555]
+Cursor (co-author),2026-03-02,2026-03-08,weekly,27816,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-02..2026-03-08&type=commits,[27816]
+Antigravity (co-author),2026-03-09,2026-03-15,weekly,2220,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-09..2026-03-15&type=commits,[2220]
+Claude (co-author),2026-03-09,2026-03-15,weekly,1860327,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-09..2026-03-15&type=commits,"[1745891, 1974764]"
+Codex (co-author),2026-03-09,2026-03-15,weekly,34875,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-09..2026-03-15&type=commits,[34875]
+Copilot (co-author),2026-03-09,2026-03-15,weekly,103513,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-09..2026-03-15&type=commits,[103513]
+Copilot Agent (author),2026-03-09,2026-03-15,weekly,136979,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-09..2026-03-15&type=commits,[136979]
+Cursor (co-author),2026-03-09,2026-03-15,weekly,26291,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-09..2026-03-15&type=commits,[26291]
+Antigravity (co-author),2026-03-16,2026-03-22,weekly,2726,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-16..2026-03-22&type=commits,[2726]
+Claude (co-author),2026-03-16,2026-03-22,weekly,2533011,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-16..2026-03-22&type=commits,"[2486952, 2579071]"
+Codex (co-author),2026-03-16,2026-03-22,weekly,42537,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-16..2026-03-22&type=commits,[42537]
+Copilot (co-author),2026-03-16,2026-03-22,weekly,105672,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-16..2026-03-22&type=commits,[105672]
+Copilot Agent (author),2026-03-16,2026-03-22,weekly,117621,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-16..2026-03-22&type=commits,[117621]
+Cursor (co-author),2026-03-16,2026-03-22,weekly,31354,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-16..2026-03-22&type=commits,[31354]
+Antigravity (co-author),2026-03-23,2026-03-29,weekly,3593,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-23..2026-03-29&type=commits,[3593]
+Claude (co-author),2026-03-23,2026-03-29,weekly,2342256,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-23..2026-03-29&type=commits,"[2300344, 2384168]"
+Codex (co-author),2026-03-23,2026-03-29,weekly,49310,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-23..2026-03-29&type=commits,[49310]
+Copilot (co-author),2026-03-23,2026-03-29,weekly,107849,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-23..2026-03-29&type=commits,[107849]
+Copilot Agent (author),2026-03-23,2026-03-29,weekly,113481,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-23..2026-03-29&type=commits,[113481]
+Cursor (co-author),2026-03-23,2026-03-29,weekly,34685,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-23..2026-03-29&type=commits,[34685]
+Devin (author),2026-03-23,2026-03-29,weekly,4321,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-03-23..2026-03-29&type=commits,"[4321, 4321]"
+Jules (author),2026-03-23,2026-03-29,weekly,24435,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-03-23..2026-03-29&type=commits,"[24435, 24435]"
+Antigravity (co-author),2026-03-30,2026-04-05,weekly,1515,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-03-30..2026-04-05&type=commits,[1515]
+Claude (co-author),2026-03-30,2026-04-05,weekly,2517449,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-03-30..2026-04-05&type=commits,"[2515540, 2519358]"
+Codex (co-author),2026-03-30,2026-04-05,weekly,37657,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-03-30..2026-04-05&type=commits,[37657]
+Copilot (co-author),2026-03-30,2026-04-05,weekly,119635,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-03-30..2026-04-05&type=commits,[119635]
+Copilot Agent (author),2026-03-30,2026-04-05,weekly,121064,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-03-30..2026-04-05&type=commits,[121064]
+Cursor (co-author),2026-03-30,2026-04-05,weekly,29184,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-03-30..2026-04-05&type=commits,[29184]
+Devin (author),2026-03-30,2026-04-05,weekly,4845,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-03-30..2026-04-05&type=commits,"[4845, 4845]"
+Jules (author),2026-03-30,2026-04-05,weekly,22494,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-03-30..2026-04-05&type=commits,"[22475, 22494]"
+Antigravity (co-author),2026-04-06,2026-04-12,weekly,1715,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-06..2026-04-12&type=commits,[1715]
+Claude (co-author),2026-04-06,2026-04-12,weekly,2477088,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-06..2026-04-12&type=commits,"[2413216, 2540960]"
+Codex (co-author),2026-04-06,2026-04-12,weekly,45924,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-06..2026-04-12&type=commits,[45924]
+Copilot (co-author),2026-04-06,2026-04-12,weekly,129701,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-06..2026-04-12&type=commits,[129701]
+Copilot Agent (author),2026-04-06,2026-04-12,weekly,130413,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-06..2026-04-12&type=commits,[130413]
+Cursor (co-author),2026-04-06,2026-04-12,weekly,34997,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-06..2026-04-12&type=commits,[34997]
+Devin (author),2026-04-06,2026-04-12,weekly,5375,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-04-06..2026-04-12&type=commits,"[5372, 5375]"
+Jules (author),2026-04-06,2026-04-12,weekly,20949,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-04-06..2026-04-12&type=commits,"[20949, 20949]"
+Antigravity (co-author),2026-04-13,2026-04-19,weekly,1771,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-13..2026-04-19&type=commits,[1771]
+Claude (co-author),2026-04-13,2026-04-19,weekly,2753825,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-13..2026-04-19&type=commits,"[2739305, 2768345]"
+Codex (co-author),2026-04-13,2026-04-19,weekly,56551,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-13..2026-04-19&type=commits,[56551]
+Copilot (co-author),2026-04-13,2026-04-19,weekly,132972,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-13..2026-04-19&type=commits,[132972]
+Copilot Agent (author),2026-04-13,2026-04-19,weekly,128006,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-13..2026-04-19&type=commits,[128006]
+Cursor (co-author),2026-04-13,2026-04-19,weekly,36936,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-13..2026-04-19&type=commits,[36936]
+Devin (author),2026-04-13,2026-04-19,weekly,9409,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-04-13..2026-04-19&type=commits,"[9409, 9409]"
+Jules (author),2026-04-13,2026-04-19,weekly,20094,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-04-13..2026-04-19&type=commits,"[20094, 20094]"
+Antigravity (co-author),2026-04-20,2026-04-26,weekly,1588,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-20..2026-04-26&type=commits,[1588]
+Claude (co-author),2026-04-20,2026-04-26,weekly,2506117,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-20..2026-04-26&type=commits,"[2410369, 2601866]"
+Codex (co-author),2026-04-20,2026-04-26,weekly,68052,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-20..2026-04-26&type=commits,[68052]
+Copilot (co-author),2026-04-20,2026-04-26,weekly,225966,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-20..2026-04-26&type=commits,[225966]
+Copilot Agent (author),2026-04-20,2026-04-26,weekly,94423,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-20..2026-04-26&type=commits,[94423]
+Cursor (co-author),2026-04-20,2026-04-26,weekly,38209,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-20..2026-04-26&type=commits,[38209]
+Devin (author),2026-04-20,2026-04-26,weekly,13864,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-04-20..2026-04-26&type=commits,"[13864, 13864]"
+Jules (author),2026-04-20,2026-04-26,weekly,18653,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-04-20..2026-04-26&type=commits,"[18653, 18653]"
+Antigravity (co-author),2026-04-27,2026-05-03,weekly,2295,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-04-27..2026-05-03&type=commits,[2295]
+Claude (co-author),2026-04-27,2026-05-03,weekly,2438951,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-04-27..2026-05-03&type=commits,"[2375978, 2501925]"
+Codex (co-author),2026-04-27,2026-05-03,weekly,71726,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-04-27..2026-05-03&type=commits,[71726]
+Copilot (co-author),2026-04-27,2026-05-03,weekly,294504,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-04-27..2026-05-03&type=commits,[294504]
+Copilot Agent (author),2026-04-27,2026-05-03,weekly,79915,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-04-27..2026-05-03&type=commits,[79915]
+Cursor (co-author),2026-04-27,2026-05-03,weekly,118622,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-04-27..2026-05-03&type=commits,[118622]
+Devin (author),2026-04-27,2026-05-03,weekly,11842,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-04-27..2026-05-03&type=commits,"[11842, 11842]"
+Jules (author),2026-04-27,2026-05-03,weekly,17954,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-04-27..2026-05-03&type=commits,"[17954, 17954]"
+Antigravity (co-author),2026-05-04,2026-05-10,weekly,1287,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-04..2026-05-10&type=commits,[1287]
+Claude (co-author),2026-05-04,2026-05-10,weekly,2668718,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-04..2026-05-10&type=commits,"[2569250, 2768186]"
+Codex (co-author),2026-05-04,2026-05-10,weekly,85288,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-04..2026-05-10&type=commits,[85288]
+Copilot (co-author),2026-05-04,2026-05-10,weekly,187504,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-04..2026-05-10&type=commits,[187504]
+Copilot Agent (author),2026-05-04,2026-05-10,weekly,92491,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-04..2026-05-10&type=commits,[92491]
+Cursor (co-author),2026-05-04,2026-05-10,weekly,295072,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-04..2026-05-10&type=commits,[295072]
+Devin (author),2026-05-04,2026-05-10,weekly,7220,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-05-04..2026-05-10&type=commits,"[7220, 7220]"
+Jules (author),2026-05-04,2026-05-10,weekly,19024,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-05-04..2026-05-10&type=commits,"[19024, 19024]"
+Antigravity (co-author),2026-05-11,2026-05-17,weekly,3076,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-11..2026-05-17&type=commits,[3076]
+Claude (co-author),2026-05-11,2026-05-17,weekly,3105591,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-11..2026-05-17&type=commits,"[3082881, 3128302]"
+Codex (co-author),2026-05-11,2026-05-17,weekly,95096,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-11..2026-05-17&type=commits,[95096]
+Copilot (co-author),2026-05-11,2026-05-17,weekly,124661,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-11..2026-05-17&type=commits,[124661]
+Copilot Agent (author),2026-05-11,2026-05-17,weekly,84490,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-11..2026-05-17&type=commits,[84490]
+Cursor (co-author),2026-05-11,2026-05-17,weekly,309775,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-11..2026-05-17&type=commits,[309775]
+Devin (author),2026-05-11,2026-05-17,weekly,6025,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-05-11..2026-05-17&type=commits,"[6025, 6025]"
+Jules (author),2026-05-11,2026-05-17,weekly,20143,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-05-11..2026-05-17&type=commits,"[20143, 20143]"
+Antigravity (co-author),2026-05-18,2026-05-24,weekly,3848,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-18..2026-05-24&type=commits,[3848]
+Claude (co-author),2026-05-18,2026-05-24,weekly,3021060,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-18..2026-05-24&type=commits,"[3011543, 3030578]"
+Codex (co-author),2026-05-18,2026-05-24,weekly,80402,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-18..2026-05-24&type=commits,[80402]
+Copilot (co-author),2026-05-18,2026-05-24,weekly,103473,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-18..2026-05-24&type=commits,[103473]
+Copilot Agent (author),2026-05-18,2026-05-24,weekly,64589,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-18..2026-05-24&type=commits,[64589]
+Cursor (co-author),2026-05-18,2026-05-24,weekly,326452,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-18..2026-05-24&type=commits,[326452]
+Devin (author),2026-05-18,2026-05-24,weekly,6043,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-05-18..2026-05-24&type=commits,"[6043, 6043]"
+Jules (author),2026-05-18,2026-05-24,weekly,21375,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-05-18..2026-05-24&type=commits,"[21375, 21375]"
+Antigravity (co-author),2026-05-25,2026-05-31,weekly,4674,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-05-25..2026-05-31&type=commits,[4674]
+Claude (co-author),2026-05-25,2026-05-31,weekly,3046156,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-05-25..2026-05-31&type=commits,"[2982009, 3110303]"
+Codex (co-author),2026-05-25,2026-05-31,weekly,79695,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-05-25..2026-05-31&type=commits,[79695]
+Copilot (co-author),2026-05-25,2026-05-31,weekly,93448,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-05-25..2026-05-31&type=commits,[93448]
+Copilot Agent (author),2026-05-25,2026-05-31,weekly,53585,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-05-25..2026-05-31&type=commits,[53585]
+Cursor (co-author),2026-05-25,2026-05-31,weekly,348309,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-05-25..2026-05-31&type=commits,[348309]
+Devin (author),2026-05-25,2026-05-31,weekly,4325,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-05-25..2026-05-31&type=commits,"[4325, 4325]"
+Jules (author),2026-05-25,2026-05-31,weekly,20116,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-05-25..2026-05-31&type=commits,"[20116, 20116]"
+Antigravity (co-author),2026-06-01,2026-06-07,weekly,4284,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-01..2026-06-07&type=commits,[4284]
+Claude (co-author),2026-06-01,2026-06-07,weekly,3279473,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-01..2026-06-07&type=commits,"[3158079, 3400868]"
+Codex (co-author),2026-06-01,2026-06-07,weekly,72915,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-01..2026-06-07&type=commits,[72915]
+Copilot (co-author),2026-06-01,2026-06-07,weekly,80092,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-01..2026-06-07&type=commits,[80092]
+Copilot Agent (author),2026-06-01,2026-06-07,weekly,38494,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-01..2026-06-07&type=commits,[38494]
+Cursor (co-author),2026-06-01,2026-06-07,weekly,352655,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-01..2026-06-07&type=commits,[352655]
+Devin (author),2026-06-01,2026-06-07,weekly,6157,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-06-01..2026-06-07&type=commits,"[6157, 6157]"
+Jules (author),2026-06-01,2026-06-07,weekly,17633,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-06-01..2026-06-07&type=commits,"[17633, 17633]"
+Antigravity (co-author),2026-06-08,2026-06-14,weekly,4731,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-08..2026-06-14&type=commits,[4731]
+Claude (co-author),2026-06-08,2026-06-14,weekly,3822836,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-08..2026-06-14&type=commits,"[3566047, 4079626]"
+Codex (co-author),2026-06-08,2026-06-14,weekly,83379,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-08..2026-06-14&type=commits,[83379]
+Copilot (co-author),2026-06-08,2026-06-14,weekly,69344,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-08..2026-06-14&type=commits,[69344]
+Copilot Agent (author),2026-06-08,2026-06-14,weekly,27120,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-08..2026-06-14&type=commits,[27120]
+Cursor (co-author),2026-06-08,2026-06-14,weekly,370900,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-08..2026-06-14&type=commits,[370900]
+Devin (author),2026-06-08,2026-06-14,weekly,6386,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-06-08..2026-06-14&type=commits,"[6386, 6386]"
+Jules (author),2026-06-08,2026-06-14,weekly,17277,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-06-08..2026-06-14&type=commits,"[17277, 17277]"
+Antigravity (co-author),2026-06-15,2026-06-21,weekly,5203,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-15..2026-06-21&type=commits,[5203]
+Claude (co-author),2026-06-15,2026-06-21,weekly,3901782,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-15..2026-06-21&type=commits,"[3814662, 3988902]"
+Codex (co-author),2026-06-15,2026-06-21,weekly,103338,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-15..2026-06-21&type=commits,[103338]
+Copilot (co-author),2026-06-15,2026-06-21,weekly,65310,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-15..2026-06-21&type=commits,[65310]
+Copilot Agent (author),2026-06-15,2026-06-21,weekly,22729,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-15..2026-06-21&type=commits,[22729]
+Cursor (co-author),2026-06-15,2026-06-21,weekly,339869,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-15..2026-06-21&type=commits,[339869]
+Devin (author),2026-06-15,2026-06-21,weekly,5352,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-06-15..2026-06-21&type=commits,"[5352, 5352]"
+Jules (author),2026-06-15,2026-06-21,weekly,16780,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-06-15..2026-06-21&type=commits,"[16780, 16780]"
+Antigravity (co-author),2026-06-22,2026-06-28,weekly,4997,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-22..2026-06-28&type=commits,[4997]
+Claude (co-author),2026-06-22,2026-06-28,weekly,3934608,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-22..2026-06-28&type=commits,"[3913895, 3955322]"
+Codex (co-author),2026-06-22,2026-06-28,weekly,78479,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-22..2026-06-28&type=commits,[78479]
+Copilot (co-author),2026-06-22,2026-06-28,weekly,79694,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-22..2026-06-28&type=commits,[79694]
+Copilot Agent (author),2026-06-22,2026-06-28,weekly,23326,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-22..2026-06-28&type=commits,[23326]
+Cursor (co-author),2026-06-22,2026-06-28,weekly,340153,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-22..2026-06-28&type=commits,[340153]
+Devin (author),2026-06-22,2026-06-28,weekly,5841,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-06-22..2026-06-28&type=commits,"[5841, 5841]"
+Jules (author),2026-06-22,2026-06-28,weekly,17841,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-06-22..2026-06-28&type=commits,"[17841, 17841]"
+Antigravity (co-author),2026-06-29,2026-07-05,weekly,4851,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-06-29..2026-07-05&type=commits,[4851]
+Claude (co-author),2026-06-29,2026-07-05,weekly,3981850,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-06-29..2026-07-05&type=commits,"[3836688, 4127012]"
+Codex (co-author),2026-06-29,2026-07-05,weekly,82278,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-06-29..2026-07-05&type=commits,[82278]
+Copilot (co-author),2026-06-29,2026-07-05,weekly,71321,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-06-29..2026-07-05&type=commits,[71321]
+Copilot Agent (author),2026-06-29,2026-07-05,weekly,25795,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-06-29..2026-07-05&type=commits,[25795]
+Cursor (co-author),2026-06-29,2026-07-05,weekly,349111,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-06-29..2026-07-05&type=commits,[349111]
+Devin (author),2026-06-29,2026-07-05,weekly,4324,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-06-29..2026-07-05&type=commits,"[4324, 4324]"
+Jules (author),2026-06-29,2026-07-05,weekly,15594,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-06-29..2026-07-05&type=commits,"[15594, 15594]"
+Antigravity (co-author),2026-07-06,2026-07-12,weekly,5962,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-06..2026-07-12&type=commits,[5962]
+Claude (co-author),2026-07-06,2026-07-12,weekly,4235322,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-06..2026-07-12&type=commits,"[4200429, 4270216]"
+Codex (co-author),2026-07-06,2026-07-12,weekly,96546,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-06..2026-07-12&type=commits,[96546]
+Copilot (co-author),2026-07-06,2026-07-12,weekly,73366,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-06..2026-07-12&type=commits,[73366]
+Copilot Agent (author),2026-07-06,2026-07-12,weekly,29155,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-06..2026-07-12&type=commits,[29155]
+Cursor (co-author),2026-07-06,2026-07-12,weekly,1376437,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-06..2026-07-12&type=commits,[1376437]
+Devin (author),2026-07-06,2026-07-12,weekly,4204,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-07-06..2026-07-12&type=commits,"[4204, 4204]"
+Jules (author),2026-07-06,2026-07-12,weekly,16028,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-07-06..2026-07-12&type=commits,"[16028, 16028]"
+Antigravity (co-author),2026-07-13,2026-07-19,weekly,5997,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-13..2026-07-19&type=commits,[5997]
+Claude (co-author),2026-07-13,2026-07-19,weekly,3515247,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-13..2026-07-19&type=commits,"[3267603, 3762891]"
+Codex (co-author),2026-07-13,2026-07-19,weekly,103239,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-13..2026-07-19&type=commits,[103239]
+Copilot (co-author),2026-07-13,2026-07-19,weekly,70358,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-13..2026-07-19&type=commits,[70358]
+Copilot Agent (author),2026-07-13,2026-07-19,weekly,25662,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-13..2026-07-19&type=commits,[25662]
+Cursor (co-author),2026-07-13,2026-07-19,weekly,392039,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-13..2026-07-19&type=commits,[392039]
+Devin (author),2026-07-13,2026-07-19,weekly,4933,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-07-13..2026-07-19&type=commits,"[4933, 4933]"
+Jules (author),2026-07-13,2026-07-19,weekly,15778,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-07-13..2026-07-19&type=commits,"[15778, 15778]"
+Antigravity (co-author),2026-07-20,2026-07-26,weekly,8240,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-20..2026-07-26&type=commits,[8240]
+Claude (co-author),2026-07-20,2026-07-26,weekly,3814576,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-20..2026-07-26&type=commits,"[3761621, 3867531]"
+Codex (co-author),2026-07-20,2026-07-26,weekly,94776,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-20..2026-07-26&type=commits,[94776]
+Copilot (co-author),2026-07-20,2026-07-26,weekly,69424,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-20..2026-07-26&type=commits,[69424]
+Copilot Agent (author),2026-07-20,2026-07-26,weekly,23912,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-20..2026-07-26&type=commits,[23912]
+Cursor (co-author),2026-07-20,2026-07-26,weekly,435605,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-20..2026-07-26&type=commits,[435605]
+Devin (author),2026-07-20,2026-07-26,weekly,3780,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-07-20..2026-07-26&type=commits,"[3780, 3780]"
+Jules (author),2026-07-20,2026-07-26,weekly,14957,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-07-20..2026-07-26&type=commits,"[14957, 14957]"
+Antigravity (co-author),2026-07-27,2026-08-02,weekly,4276,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-07-27..2026-08-02&type=commits,[4276]
+Claude (co-author),2026-07-27,2026-08-02,weekly,3824837,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-07-27..2026-08-02&type=commits,"[3758042, 3891633]"
+Codex (co-author),2026-07-27,2026-08-02,weekly,89504,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-07-27..2026-08-02&type=commits,[89504]
+Copilot (co-author),2026-07-27,2026-08-02,weekly,73075,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-07-27..2026-08-02&type=commits,[73075]
+Copilot Agent (author),2026-07-27,2026-08-02,weekly,24148,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-07-27..2026-08-02&type=commits,[24148]
+Cursor (co-author),2026-07-27,2026-08-02,weekly,425252,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-07-27..2026-08-02&type=commits,[425252]
+Devin (author),2026-07-27,2026-08-02,weekly,4811,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-07-27..2026-08-02&type=commits,"[4811, 4811]"
+Jules (author),2026-07-27,2026-08-02,weekly,15136,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-07-27..2026-08-02&type=commits,"[15136, 15136]"
+Antigravity (co-author),2026-08-03,2026-08-09,weekly,4007,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-03..2026-08-09&type=commits,[4007]
+Claude (co-author),2026-08-03,2026-08-09,weekly,3789854,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-03..2026-08-09&type=commits,"[3743888, 3835821]"
+Codex (co-author),2026-08-03,2026-08-09,weekly,80659,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-03..2026-08-09&type=commits,[80659]
+Copilot (co-author),2026-08-03,2026-08-09,weekly,72086,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-03..2026-08-09&type=commits,[72086]
+Copilot Agent (author),2026-08-03,2026-08-09,weekly,23833,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-03..2026-08-09&type=commits,[23833]
+Cursor (co-author),2026-08-03,2026-08-09,weekly,421255,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-03..2026-08-09&type=commits,[421255]
+Devin (author),2026-08-03,2026-08-09,weekly,7279,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-08-03..2026-08-09&type=commits,"[7279, 7279]"
+Jules (author),2026-08-03,2026-08-09,weekly,13105,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-08-03..2026-08-09&type=commits,"[13105, 13105]"
+Antigravity (co-author),2026-08-10,2026-08-16,weekly,4561,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-10..2026-08-16&type=commits,[4561]
+Claude (co-author),2026-08-10,2026-08-16,weekly,3913325,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-10..2026-08-16&type=commits,"[3900402, 3926248]"
+Codex (co-author),2026-08-10,2026-08-16,weekly,84230,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-10..2026-08-16&type=commits,[84230]
+Copilot (co-author),2026-08-10,2026-08-16,weekly,71634,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-10..2026-08-16&type=commits,[71634]
+Copilot Agent (author),2026-08-10,2026-08-16,weekly,24228,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-10..2026-08-16&type=commits,[24228]
+Cursor (co-author),2026-08-10,2026-08-16,weekly,432137,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-10..2026-08-16&type=commits,[432137]
+Devin (author),2026-08-10,2026-08-16,weekly,7938,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-08-10..2026-08-16&type=commits,"[7938, 7938]"
+Jules (author),2026-08-10,2026-08-16,weekly,13748,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-08-10..2026-08-16&type=commits,"[13748, 13748]"
+Antigravity (co-author),2026-08-17,2026-08-23,weekly,5496,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-17..2026-08-23&type=commits,[5496]
+Claude (co-author),2026-08-17,2026-08-23,weekly,3547606,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-17..2026-08-23&type=commits,"[3273261, 3343046, 3752167, 4490345]"
+Codex (co-author),2026-08-17,2026-08-23,weekly,79467,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-17..2026-08-23&type=commits,[79467]
+Copilot (co-author),2026-08-17,2026-08-23,weekly,67120,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-17..2026-08-23&type=commits,[67120]
+Copilot Agent (author),2026-08-17,2026-08-23,weekly,21598,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-17..2026-08-23&type=commits,[21598]
+Cursor (co-author),2026-08-17,2026-08-23,weekly,406769,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-17..2026-08-23&type=commits,[406769]
+Devin (author),2026-08-17,2026-08-23,weekly,6483,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-08-17..2026-08-23&type=commits,"[6483, 6483]"
+Jules (author),2026-08-17,2026-08-23,weekly,15087,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-08-17..2026-08-23&type=commits,"[15087, 15087]"
+Antigravity (co-author),2026-08-24,2026-08-30,weekly,4570,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-24..2026-08-30&type=commits,[4570]
+Claude (co-author),2026-08-24,2026-08-30,weekly,3770032,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-24..2026-08-30&type=commits,"[2525094, 3388119, 4151945, 4690183]"
+Codex (co-author),2026-08-24,2026-08-30,weekly,93122,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-24..2026-08-30&type=commits,[93122]
+Copilot (co-author),2026-08-24,2026-08-30,weekly,66830,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-24..2026-08-30&type=commits,[66830]
+Copilot Agent (author),2026-08-24,2026-08-30,weekly,20749,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-24..2026-08-30&type=commits,[20749]
+Cursor (co-author),2026-08-24,2026-08-30,weekly,396610,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-24..2026-08-30&type=commits,[396610]
+Devin (author),2026-08-24,2026-08-30,weekly,5762,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-08-24..2026-08-30&type=commits,"[5762, 5762]"
+Jules (author),2026-08-24,2026-08-30,weekly,15858,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-08-24..2026-08-30&type=commits,"[15858, 15858]"
+Antigravity (co-author),2026-08-31,2026-09-06,weekly,6735,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-08-31..2026-09-06&type=commits,[6735]
+Claude (co-author),2026-08-31,2026-09-06,weekly,4996970,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-08-31..2026-09-06&type=commits,"[4805519, 4837719, 5156221, 5950875]"
+Codex (co-author),2026-08-31,2026-09-06,weekly,109107,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-08-31..2026-09-06&type=commits,[109107]
+Copilot (co-author),2026-08-31,2026-09-06,weekly,82094,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-08-31..2026-09-06&type=commits,[82094]
+Copilot Agent (author),2026-08-31,2026-09-06,weekly,26427,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-08-31..2026-09-06&type=commits,[26427]
+Cursor (co-author),2026-08-31,2026-09-06,weekly,403934,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-08-31..2026-09-06&type=commits,[403934]
+Devin (author),2026-08-31,2026-09-06,weekly,7496,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-08-31..2026-09-06&type=commits,"[7496, 7496]"
+Jules (author),2026-08-31,2026-09-06,weekly,15582,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-08-31..2026-09-06&type=commits,"[15582, 15582]"
+Antigravity (co-author),2026-09-07,2026-09-13,weekly,6168,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-07..2026-09-13&type=commits,[6168]
+Claude (co-author),2026-09-07,2026-09-13,weekly,4666580,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-07..2026-09-13&type=commits,"[4031844, 5301316]"
+Codex (co-author),2026-09-07,2026-09-13,weekly,116640,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-07..2026-09-13&type=commits,[116640]
+Copilot (co-author),2026-09-07,2026-09-13,weekly,84040,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-07..2026-09-13&type=commits,[84040]
+Copilot Agent (author),2026-09-07,2026-09-13,weekly,26658,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-07..2026-09-13&type=commits,[26658]
+Cursor (co-author),2026-09-07,2026-09-13,weekly,389600,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-07..2026-09-13&type=commits,[389600]
+Devin (author),2026-09-07,2026-09-13,weekly,6853,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-09-07..2026-09-13&type=commits,"[6853, 6853]"
+Jules (author),2026-09-07,2026-09-13,weekly,15498,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-09-07..2026-09-13&type=commits,"[15498, 15498]"
+Antigravity (co-author),2026-09-14,2026-09-20,weekly,5452,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-14..2026-09-20&type=commits,[5452]
+Claude (co-author),2026-09-14,2026-09-20,weekly,5375971,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-14..2026-09-20&type=commits,"[5331157, 5420785]"
+Codex (co-author),2026-09-14,2026-09-20,weekly,95741,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-14..2026-09-20&type=commits,[95741]
+Copilot (co-author),2026-09-14,2026-09-20,weekly,79867,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-14..2026-09-20&type=commits,[79867]
+Copilot Agent (author),2026-09-14,2026-09-20,weekly,27592,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-14..2026-09-20&type=commits,[27592]
+Cursor (co-author),2026-09-14,2026-09-20,weekly,375678,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-14..2026-09-20&type=commits,[375678]
+Devin (author),2026-09-14,2026-09-20,weekly,11984,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-09-14..2026-09-20&type=commits,"[11984, 11984]"
+Jules (author),2026-09-14,2026-09-20,weekly,14998,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-09-14..2026-09-20&type=commits,"[14998, 14998]"
+Antigravity (co-author),2026-09-21,2026-09-27,weekly,6224,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-21..2026-09-27&type=commits,[6224]
+Claude (co-author),2026-09-21,2026-09-27,weekly,6332240,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-21..2026-09-27&type=commits,"[5426197, 7238284]"
+Codex (co-author),2026-09-21,2026-09-27,weekly,112456,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-21..2026-09-27&type=commits,[112456]
+Copilot (co-author),2026-09-21,2026-09-27,weekly,76570,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-21..2026-09-27&type=commits,[76570]
+Copilot Agent (author),2026-09-21,2026-09-27,weekly,23525,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-21..2026-09-27&type=commits,[23525]
+Cursor (co-author),2026-09-21,2026-09-27,weekly,351095,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-21..2026-09-27&type=commits,[351095]
+Devin (author),2026-09-21,2026-09-27,weekly,19922,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-09-21..2026-09-27&type=commits,"[19917, 19922]"
+Jules (author),2026-09-21,2026-09-27,weekly,15207,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-09-21..2026-09-27&type=commits,"[15207, 15207]"
+Antigravity (co-author),2026-09-28,2026-10-04,weekly,7796,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-09-28..2026-10-04&type=commits,[7796]
+Claude (co-author),2026-09-28,2026-10-04,weekly,8022282,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-09-28..2026-10-04&type=commits,"[7931466, 8113099]"
+Codex (co-author),2026-09-28,2026-10-04,weekly,173271,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-09-28..2026-10-04&type=commits,[173271]
+Copilot (co-author),2026-09-28,2026-10-04,weekly,115705,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-09-28..2026-10-04&type=commits,[115705]
+Copilot Agent (author),2026-09-28,2026-10-04,weekly,24943,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-09-28..2026-10-04&type=commits,[24943]
+Cursor (co-author),2026-09-28,2026-10-04,weekly,346844,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-09-28..2026-10-04&type=commits,[346844]
+Devin (author),2026-09-28,2026-10-04,weekly,24210,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-09-28..2026-10-04&type=commits,"[24210, 24210]"
+Jules (author),2026-09-28,2026-10-04,weekly,14460,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-09-28..2026-10-04&type=commits,"[14460, 14460]"
+Antigravity (co-author),2026-10-05,2026-10-11,weekly,8408,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-05..2026-10-11&type=commits,[8408]
+Claude (co-author),2026-10-05,2026-10-11,weekly,8724443,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-05..2026-10-11&type=commits,"[8365780, 9083107]"
+Codex (co-author),2026-10-05,2026-10-11,weekly,217487,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-05..2026-10-11&type=commits,[217487]
+Copilot (co-author),2026-10-05,2026-10-11,weekly,171820,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-05..2026-10-11&type=commits,[171820]
+Copilot Agent (author),2026-10-05,2026-10-11,weekly,23410,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-05..2026-10-11&type=commits,[23410]
+Cursor (co-author),2026-10-05,2026-10-11,weekly,349035,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-05..2026-10-11&type=commits,[349035]
+Devin (author),2026-10-05,2026-10-11,weekly,25430,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-10-05..2026-10-11&type=commits,"[25342, 25430]"
+Jules (author),2026-10-05,2026-10-11,weekly,14920,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-10-05..2026-10-11&type=commits,"[14920, 14920]"
+Antigravity (co-author),2026-10-12,2026-10-18,weekly,9953,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-12..2026-10-18&type=commits,[9953]
+Claude (co-author),2026-10-12,2026-10-18,weekly,8581035,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-12..2026-10-18&type=commits,"[8407469, 8754601]"
+Codex (co-author),2026-10-12,2026-10-18,weekly,223928,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-12..2026-10-18&type=commits,[223928]
+Copilot (co-author),2026-10-12,2026-10-18,weekly,170975,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-12..2026-10-18&type=commits,[170975]
+Copilot Agent (author),2026-10-12,2026-10-18,weekly,20322,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-12..2026-10-18&type=commits,[20322]
+Cursor (co-author),2026-10-12,2026-10-18,weekly,359649,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-12..2026-10-18&type=commits,[359649]
+Devin (author),2026-10-12,2026-10-18,weekly,12068,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-10-12..2026-10-18&type=commits,"[12068, 12068]"
+Jules (author),2026-10-12,2026-10-18,weekly,14589,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-10-12..2026-10-18&type=commits,"[14589, 14589]"
+Antigravity (co-author),2026-10-19,2026-10-25,weekly,9408,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-19..2026-10-25&type=commits,[9408]
+Claude (co-author),2026-10-19,2026-10-25,weekly,10145484,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-19..2026-10-25&type=commits,"[9956789, 10334179]"
+Codex (co-author),2026-10-19,2026-10-25,weekly,209912,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-19..2026-10-25&type=commits,[209912]
+Copilot (co-author),2026-10-19,2026-10-25,weekly,188902,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-19..2026-10-25&type=commits,[188902]
+Copilot Agent (author),2026-10-19,2026-10-25,weekly,18060,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-19..2026-10-25&type=commits,[18060]
+Cursor (co-author),2026-10-19,2026-10-25,weekly,329350,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-19..2026-10-25&type=commits,[329350]
+Devin (author),2026-10-19,2026-10-25,weekly,12686,https://github.com/search?q=author%3Adevin-ai-integration%5Bbot%5D%20author-date%3A2026-10-19..2026-10-25&type=commits,"[12686, 12686]"
+Jules (author),2026-10-19,2026-10-25,weekly,12958,https://github.com/search?q=author%3Agoogle-labs-jules%5Bbot%5D%20author-date%3A2026-10-19..2026-10-25&type=commits,"[12958, 12958]"
+Antigravity (co-author),2026-10-26,2026-11-01,weekly,8640,https://github.com/search?q=Co-Authored-By%3A%20Antigravity%20author-date%3A2026-10-26..2026-11-01&type=commits,[8640]
+Claude (co-author),2026-10-26,2026-11-01,weekly,10339440,https://github.com/search?q=Co-Authored-By%3A%20Claude%20author-date%3A2026-10-26..2026-11-01&type=commits,"[9609246, 10185226, 10493654, 11061047]"
+Codex (co-author),2026-10-26,2026-11-01,weekly,181737,https://github.com/search?q=Co-Authored-By%3A%20Codex%20author-date%3A2026-10-26..2026-11-01&type=commits,[181737]
+Copilot (co-author),2026-10-26,2026-11-01,weekly,196071,https://github.com/search?q=Co-Authored-By%3A%20GitHub%20Copilot%20author-date%3A2026-10-26..2026-11-01&type=commits,[196071]
+Copilot Agent (author),2026-10-26,2026-11-01,weekly,13731,https://github.com/search?q=author%3Acopilot-swe-agent%5Bbot%5D%20author-date%3A2026-10-26..2026-11-01&type=commits,[13731]
+Cursor (co-author),2026-10-26,2026-11-01,weekly,289522,https://github.com/search?q=Co-Authored-By%3A%20Cursor%20author-date%3A2026-10-26..2026-11-01&type=commits,[289522]
