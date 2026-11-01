@@ -166,7 +166,8 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
       `SELECT
          (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
          (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-         (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+         (SELECT COUNT(*) FROM annotations WHERE ip_hash = ?2 AND created_at > ?3) +
+         (SELECT COUNT(*) FROM reactions WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
     )
     .bind(reader, ipHash, since)
     .first();

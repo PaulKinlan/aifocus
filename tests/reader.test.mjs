@@ -24,7 +24,7 @@ import {
 import { verifyAccess, resetAccessCache } from "../functions/_lib/access.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
-const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql"].map((f) =>
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
 );
 const ORIGIN = "https://aifoc.us";
@@ -137,6 +137,23 @@ test("reactions: rejects unknown kinds, unknown posts and cross-origin writes", 
   assert.equal(res.status, 403);
   res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, origin: null }), env });
   assert.equal(res.status, 403);
+});
+
+test("reactions: rate limited per client IP even when the reader cookie rotates", async () => {
+  const env = makeEnv();
+  // No cookie is ever sent back, so every request gets a fresh reader id and
+  // the per-reader count stays at zero; the per-IP count must stop the flood.
+  let last;
+  for (let i = 0; i < 31; i += 1) {
+    last = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }), env });
+    assert.equal(last.status, i < 30 ? 200 : 429);
+  }
+  // Exactly the 30 accepted writes are stored, each with the salted IP hash.
+  const row = env.READER_DB.raw
+    .prepare("SELECT COUNT(*) AS n, ip_hash FROM reactions GROUP BY ip_hash")
+    .get();
+  assert.equal(row.n, 30);
+  assert.match(row.ip_hash, /^[0-9a-f]{64}$/);
 });
 
 test("highlights: quote must come from the post, approved immediately, deduplicated per reader", async () => {
