@@ -383,3 +383,111 @@ test("the CLI exits 0 when every internal link resolves", (t) => {
   });
   assert.match(stdout, /^link-check: OK - 1 internal anchors over 2 pages/);
 });
+
+test("nasty and malformed hrefs never crash the checker and follow documented behaviour (aifocus-qs1)", (t) => {
+  const cases = [
+    {
+      name: "host-invalid bracket href (single backslash)",
+      href: String.raw`\[::1`,
+      expected: { external: 0, internal: 1, resolved: 0, broken: ["/[::1"] },
+    },
+    {
+      name: "host-invalid bracket href (double backslash authority)",
+      href: String.raw`\\[::1`,
+      expected: { external: 0, internal: 1, resolved: 0, broken: [String.raw`\\[::1`] },
+    },
+    {
+      name: "http with missing host",
+      href: "http://",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "https with unclosed bracket host",
+      href: "https://[",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "missing scheme prefix ://",
+      href: "://",
+      expected: { external: 0, internal: 1, resolved: 0, broken: ["/://"] },
+    },
+    {
+      name: "javascript pseudo-protocol",
+      href: "javascript:alert(1)",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "mailto scheme",
+      href: "mailto:",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "bare protocol-relative slashes",
+      href: "//",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "bare percent sign",
+      href: "%",
+      expected: { external: 0, internal: 1, resolved: 0, broken: ["/%"] },
+    },
+    {
+      name: "bare fragment",
+      href: "#",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "empty href",
+      href: "",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+    {
+      name: "raw control character",
+      href: "\x01",
+      expected: { external: 0, internal: 1, resolved: 1, broken: [] },
+    },
+    {
+      name: "bare double backslash",
+      href: "\\\\",
+      expected: { external: 0, internal: 1, resolved: 0, broken: ["\\\\"] },
+    },
+    {
+      name: "double backslash external host",
+      href: "\\\\example.com",
+      expected: { external: 1, internal: 0, resolved: 0, broken: [] },
+    },
+  ];
+
+  for (const { name, href, expected } of cases) {
+    const root = builtSite(t, {
+      "index.html": page(`<a href="${href}">test link</a>`),
+    });
+
+    let result;
+    assert.doesNotThrow(() => {
+      result = scanSite(root);
+    }, `${name} (${JSON.stringify(href)}) threw an unexpected error`);
+
+    assert.equal(
+      result.external,
+      expected.external,
+      `${name} (${JSON.stringify(href)}): external count mismatch`,
+    );
+    assert.equal(
+      result.internal,
+      expected.internal,
+      `${name} (${JSON.stringify(href)}): internal count mismatch`,
+    );
+    assert.equal(
+      result.resolved,
+      expected.resolved,
+      `${name} (${JSON.stringify(href)}): resolved count mismatch`,
+    );
+    assert.deepEqual(
+      brokenTargets(result),
+      expected.broken,
+      `${name} (${JSON.stringify(href)}): broken targets mismatch`,
+    );
+  }
+});
+
