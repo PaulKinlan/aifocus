@@ -3,3 +3,6 @@ node_modules/
 .DS_Store
 assets/jsconfig.json
 resources/
+
+# Python bytecode from tools/stats
+__pycache__/

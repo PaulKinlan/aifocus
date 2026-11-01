@@ -1132,6 +1132,54 @@
       ]
     },
     {
+      "id": "react-w3techs",
+      "title": "React and friends on W3Techs",
+      "kind": "w3techs",
+      "granularity": "monthly",
+      "cumulative": false,
+      "unit": "% of websites surveyed",
+      "file_prefix": "w3techs-js-libraries",
+      "primary": "React",
+      "value_format": "percent",
+      "tools": [
+        {
+          "name": "React",
+          "label": "React",
+          "method": "w3techs.com history_overview/javascript_library",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Next.js",
+          "label": "Next.js",
+          "method": "w3techs.com history_overview/javascript_library",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "jQuery",
+          "label": "jQuery",
+          "method": "w3techs.com history_overview/javascript_library",
+          "query": "",
+          "slot": 5
+        }
+      ],
+      "posts": [
+        {
+          "title": "dead framework theory",
+          "url": "/dead-framework-theory/",
+          "date": "2025-10-12"
+        }
+      ],
+      "claims": [],
+      "method": "tools/stats/collect-w3techs.py reads the monthly JavaScript-library table at https://w3techs.com/technologies/history_overview/javascript_library/all: the share of websites in the W3Techs survey (the top ten million by traffic) that use each library, as read on the 1st of each month and stored against the month that had just ended. It is the automated stand-in for the BuiltWith figures, which can only be read in a browser.",
+      "caveats": [
+        "A share of a traffic-ranked sample, not a count of all domains, so it is not comparable with BuiltWith or the HTTP Archive origin counts, only with itself.",
+        "W3Techs shows one trailing year per page; each run re-fetches the whole year.",
+        "Only libraries that appear in the W3Techs table can be tracked; a tool missing from the page is reported on stderr and skipped."
+      ]
+    },
+    {
       "id": "openrouter-tokens",
       "title": "Tokens routed through OpenRouter",
       "kind": "openrouter-chart",
