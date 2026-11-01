@@ -1103,6 +1103,20 @@
           "method": "trends.builtwith.com/javascript/React",
           "query": "",
           "slot": 4
+        },
+        {
+          "name": "BuiltWith: React in top 100k",
+          "label": "Top 100k sites",
+          "method": "trends.builtwith.com/javascript/React",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "BuiltWith: React live and expired",
+          "label": "Live and expired sites",
+          "method": "trends.builtwith.com/javascript/React",
+          "query": "",
+          "slot": 6
         }
       ],
       "posts": [
@@ -1116,19 +1130,21 @@
         {
           "text": "BuiltWith: React live sites (about 55 million)",
           "tool": "BuiltWith: React live sites",
-          "period": "2025-10-12",
+          "period": "2025-10-09",
           "value": 55000000
         },
         {
           "text": "BuiltWith: React in the top 1m (160k)",
           "tool": "BuiltWith: React in top 1m",
-          "period": "2025-10-12",
+          "period": "2025-10-09",
           "value": 160000
         }
       ],
-      "method": "Manual snapshots. Read https://trends.builtwith.com/javascript/React in a browser and append one row per figure to static/data/manual/react-builtwith.csv with the date, the value and the page URL. The page sits behind a BuiltWith bot check (an image puzzle), so it cannot be fetched by a script and is not part of tools/stats/update.sh.",
+      "method": "Hand-recorded readings of https://trends.builtwith.com/javascript/React (Site Totals and Traffic). The page sits behind an image puzzle, so each month open it in a browser, copy the page text and run `python3 tools/stats/manual-add.py react-builtwith --paste`, which extracts the live-sites and top-1m figures and rebuilds; other figures can be added by name.",
       "caveats": [
-        "BuiltWith counts hundreds of millions of root domains, including parked and inactive sites, so its totals are not comparable with the HTTP Archive series, only with earlier BuiltWith readings."
+        "BuiltWith counts hundreds of millions of root domains, including parked and inactive sites, so its totals are not comparable with the HTTP Archive or W3Techs series, only with earlier BuiltWith readings.",
+        "Between October 2025 and November 2026 BuiltWith moved about 42 million React sites from \"live\" to \"expired\" (expired went from 33.7M to 76.2M while live and expired together grew from 87.4M to 107.9M), so the live count fell 42% without React losing sites. The top-1m and top-100k figures are the ones to compare over time.",
+        "The October 2025 rows come from the Wayback Machine's copy of the page; later readings are pasted from the live page because it sits behind a bot check."
       ]
     },
     {

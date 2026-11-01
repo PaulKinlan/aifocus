@@ -41,4 +41,4 @@ While it looks like Claude is now 14x the next tool over the year, and 36x it in
 
 The raw data is downloadable: [commits, 52 weeks to 2026-11-01](/data/ai-commits-2026-11-01.csv). Every row includes the GitHub search URL used to generate it and the individual samples, so you can check any number yourself. The scripts are the same ones linked from the March post.
 
-These numbers now live on a page that is re-measured at the start of every month, with every figure from this post and the March one shown next to its current value: [aifoc.us/stats](/stats/) as well as other data that I've used in other posts (such as Dead Framework Theory).
+These numbers now live on a page that is re-measured at the start of every month, with every figure from this post and the March one shown next to its current value: [aifoc.us/stats](/stats/) as well as other data that I've used in other posts (such as Dead Framework Theory) that I care about.
