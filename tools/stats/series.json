@@ -185,7 +185,7 @@
       "epoch": "2025-09-29",
       "unit": "commits per week",
       "how": "One GitHub commit search per week with only an author-date range, so it counts every public commit GitHub has indexed for that week.",
-      "risk": "GitHub's total_count is an estimate, and identical queries for the same week can differ by 20% or more, so each week needs to be sampled many times before the figure settles. Large jumps between weeks, like those in autumn 2026, may be real activity rather than noise; other published counts show similar moves.",
+      "risk": "GitHub's total_count is an estimate, and identical queries for the same week can differ by 20% or more, so each week needs to be sampled many times before the figure settles. Large jumps between weeks, like those in autumn 2026, may be real activity: GitHub's <a href=\"https://github.blog/news-insights/octoverse/octoverse-commits-pushes-reach-new-highs-in-2026-as-developers-build-with-agents/\">Octoverse 2026 report</a> puts September 2026 commits at about six times September 2025.",
       "file_prefix": "total-commits-weekly",
       "resample": 2,
       "show_partial": false,
@@ -224,7 +224,7 @@
       "method": "GitHub Search API, /search/commits, with only an author-date range as the query. This is the denominator for the AI share chart.",
       "caveats": [
         "GitHub counts here spike unpredictably (early March 2026 was roughly double the norm), so the share series inherits that noise.",
-    "From w/c 10 Aug 2026 to w/c 5 Oct 2026 the Search API returned two to ten times the surrounding weeks (596M for w/c 21 Sep 2026 against about 55M either side). The level may be accurate: other published GitHub activity figures show a similar rise in that period. The sampling is the weaker part: repeated queries of the same week on 1 Nov 2026 differed by more than 20% (w/c 5 Oct 2026: 451M, 476M, 577M), so a single query is not a stable reading. From Nov 2026 each week is queried three times and the median kept, and earlier weeks are re-sampled on later runs."
+    "From w/c 10 Aug 2026 to w/c 5 Oct 2026 the Search API returned two to ten times the surrounding weeks (596M for w/c 21 Sep 2026 against about 55M either side). The level may be accurate. GitHub's <a href=\"https://github.blog/news-insights/octoverse/octoverse-commits-pushes-reach-new-highs-in-2026-as-developers-build-with-agents/\">Octoverse 2026 report</a> (28 Oct 2026) counts 34.3 billion commits from Oct 2025 to Sep 2026 against 12.9 billion the year before, says the rise accelerated sharply after June, and puts September 2026 at about six times September 2025; that report covers public and private repositories, while this series is public only. The sampling is the weaker part: repeated queries of the same week on 1 Nov 2026 differed by more than 20% (w/c 5 Oct 2026: 451M, 476M, 577M), so a single query is not a stable reading. From Nov 2026 each week is queried three times and the median kept, and earlier weeks are re-sampled on later runs."
       ],
       "derived": [
         {

@@ -87,8 +87,9 @@
     {{- end }}
     <details class="stat-method">
       <summary>Full method, caveats and raw data</summary>
-      {{ with .method }}<p>{{ . }}</p>{{ end }}
-      {{ with .caveats }}<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
+      {{/* method, caveats, how and risk come from tools/stats/series.json, our own text, and may carry links. */}}
+      {{ with .method }}<p>{{ . | safeHTML }}</p>{{ end }}
+      {{ with .caveats }}<ul>{{ range . }}<li>{{ . | safeHTML }}</li>{{ end }}</ul>{{ end }}
       {{ with .runs }}<p>Runs: {{ range $i, $r := . }}{{ if $i }}, {{ end }}<a href="{{ $r.file }}">{{ $r.date }}</a> ({{ $r.rows }} rows){{ end }}.</p>{{ end }}
     </details>
   </section>
@@ -106,7 +107,7 @@
 {{ define "stats-body" }}
 {{ $s := . }}
 {{- if or $s.how $s.risk }}
-<p class="stat-how">{{ with $s.how }}<b>Method:</b> {{ . }}{{ end }}{{ if and $s.how $s.risk }} {{ end }}{{ with $s.risk }}<b>Risk:</b> {{ . }}{{ end }}</p>
+<p class="stat-how">{{ with $s.how }}<b>Method:</b> {{ . | safeHTML }}{{ end }}{{ if and $s.how $s.risk }} {{ end }}{{ with $s.risk }}<b>Risk:</b> {{ . | safeHTML }}{{ end }}</p>
 {{- end }}
 {{ $primary := dict }}
 {{ range $s.tools }}{{ if eq .name $s.primary }}{{ $primary = . }}{{ end }}{{ end }}
