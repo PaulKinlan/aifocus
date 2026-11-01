@@ -322,6 +322,7 @@ def build_derived(series, series_out, compiled_by_id):
         by_name = {t["name"]: t for t in tools_out}
         out.append({
             "id": d["id"], "title": d["title"], "unit": d["unit"], "granularity": series["granularity"], "value_format": "percent",
+            "how": d.get("how", ""), "risk": d.get("risk", ""),
             "tools": tools_out, "chart_tools": [t["name"] for t in tools_out],
             "claims": build_claims(d.get("claims", []), by_name, series["granularity"]),
             "table": build_table(series, tools_out, [t["name"] for t in tools_out]),
@@ -349,6 +350,7 @@ def compile_series(series):
         "id": series["id"], "title": series["title"], "kind": series.get("kind"), "unit": series["unit"],
         "granularity": series["granularity"], "value_format": vf, "method": series.get("method", ""),
         "caveats": series.get("caveats", []), "posts": series.get("posts", []), "updated": updated,
+        "how": series.get("how", ""), "risk": series.get("risk", ""),
         "runs": runs, "period_count": len(complete_periods),
         "first_period": complete_periods[0] if complete_periods else None,
         "last_period": complete_periods[-1] if complete_periods else None,

@@ -18,7 +18,9 @@
 .stat h2 { font-size: 1.35rem; margin: 0 0 .25rem; }
 .stat h2 a { text-decoration: none; color: inherit; }
 .stat h3 { font-size: 1.1rem; margin: 1rem 0 .25rem; }
-.stat-meta { margin: 0 0 1rem; color: var(--muted); font-size: .9rem; }
+.stat-meta { margin: 0 0 .75rem; color: var(--muted); font-size: .9rem; }
+.stat-how { margin: 0 0 1rem; font-size: .9rem; }
+.stat-how b { font-weight: 600; }
 .stat-kpis { display: flex; flex-wrap: wrap; gap: .75rem; margin: 0 0 1rem; }
 .kpi { flex: 1 1 10rem; min-width: 0; padding: .6rem .8rem; background: var(--bg-secondary); border-radius: var(--radius); }
 .kpi-label { display: block; font-size: .8rem; color: var(--muted); }
@@ -81,7 +83,7 @@
     {{ template "stats-body" . }}
     {{- end }}
     <details class="stat-method">
-      <summary>Method, caveats and raw data</summary>
+      <summary>Full method, caveats and raw data</summary>
       {{ with .method }}<p>{{ . }}</p>{{ end }}
       {{ with .caveats }}<ul>{{ range . }}<li>{{ . }}</li>{{ end }}</ul>{{ end }}
       {{ with .runs }}<p>Runs: {{ range $i, $r := . }}{{ if $i }}, {{ end }}<a href="{{ $r.file }}">{{ $r.date }}</a> ({{ $r.rows }} rows){{ end }}.</p>{{ end }}
@@ -100,6 +102,9 @@
 {{/* One series (or derived series): headline numbers, chart, as-written table, period table. */}}
 {{ define "stats-body" }}
 {{ $s := . }}
+{{- if or $s.how $s.risk }}
+<p class="stat-how">{{ with $s.how }}<b>Method:</b> {{ . }}{{ end }}{{ if and $s.how $s.risk }} {{ end }}{{ with $s.risk }}<b>Risk:</b> {{ . }}{{ end }}</p>
+{{- end }}
 {{ $primary := dict }}
 {{ range $s.tools }}{{ if eq .name $s.primary }}{{ $primary = . }}{{ end }}{{ end }}
 {{ with $primary }}{{ with .latest }}

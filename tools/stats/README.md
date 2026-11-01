@@ -80,14 +80,19 @@ the essays (step 4) stays manual.
    (`bucket_id`), or `manual` (a CSV under `static/data/manual/`).
 2. Give the tools you want on the chart a `slot` (1-8; colour follows the
    slot), or set `chart_top` to pick the top N by latest value.
-3. Add `claims` for the figures the essay states, with the period they refer to.
+3. Give the series a one-sentence `how` (what is queried and counted) and a
+   one-sentence `risk` (the main way the number can mislead); both are shown
+   under the section heading. `method` and `caveats` are the long version,
+   shown in the collapsed details block. A `derived` entry takes its own
+   `how` and `risk`.
+4. Add `claims` for the figures the essay states, with the period they refer to.
    Set `"cumulative": false` on a series whose values are levels (origins, a
    share) rather than counts per period, so no running total is shown.
    Set `"show_partial": false` to leave incomplete periods out of the chart,
    table and derived series instead of drawing them as hollow points (the
    row stays in the CSV; `total-commits` does this because a five-day week
    reads as a collapse next to full weeks).
-4. Run the collector (or write the manual CSV), then `python3 tools/stats/build.py`.
+5. Run the collector (or write the manual CSV), then `python3 tools/stats/build.py`.
 
 ## Sources that still need a hand
 
