@@ -226,3 +226,27 @@ function setupChart(figure) {
 for (const figure of document.querySelectorAll("[data-stat-chart]")) {
   try { setupChart(figure); } catch (err) { console.error("stats chart failed", err); }
 }
+
+// Section permalinks: the # after each heading is a normal link to the
+// section's id, so it works without JavaScript. With it, a click also copies
+// the absolute URL, so one chart can be shared without editing the address bar.
+for (const link of document.querySelectorAll(".stat-link")) {
+  link.addEventListener("click", async () => {
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== "function") return;
+    try {
+      await navigator.clipboard.writeText(new URL(link.getAttribute("href"), location.href).href);
+    } catch {
+      return; // clipboard denied: the hash navigation still happened
+    }
+    let note = link.nextElementSibling;
+    if (!note || !note.classList.contains("stat-copied")) {
+      note = document.createElement("span");
+      note.className = "stat-copied";
+      note.setAttribute("role", "status");
+      link.after(note);
+    }
+    note.textContent = "Link copied";
+    clearTimeout(note._timer);
+    note._timer = setTimeout(() => { note.textContent = ""; }, 1800);
+  });
+}

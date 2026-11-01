@@ -16,7 +16,10 @@
 .stats-toc li a { display: inline-block; padding: .2rem .6rem; border: 1px solid var(--line); border-radius: 999px; font-size: .85rem; text-decoration: none; }
 .stat { border-top: 1px solid var(--line); padding: 1.5rem 0 1rem; min-width: 0; }
 .stat h2 { font-size: 1.35rem; margin: 0 0 .25rem; }
-.stat h2 a { text-decoration: none; color: inherit; }
+.stat, .stat h3 { scroll-margin-top: 1rem; }
+.stat-link { margin-left: .2rem; text-decoration: none; color: var(--muted); font-weight: normal; }
+.stat-link:hover, .stat-link:focus-visible { color: inherit; text-decoration: underline; }
+.stat-copied { margin-left: .5rem; font-size: .8rem; font-weight: normal; color: var(--muted); }
 .stat h3 { font-size: 1.1rem; margin: 1rem 0 .25rem; }
 .stat-meta { margin: 0 0 .75rem; color: var(--muted); font-size: .9rem; }
 .stat-how { margin: 0 0 1rem; font-size: .9rem; }
@@ -71,7 +74,7 @@
   </ul></nav>
   {{- range $stats.series }}
   <section class="stat" id="{{ .id }}">
-    <h2><a href="#{{ .id }}">{{ .title }}</a></h2>
+    <h2>{{ .title }} <a class="stat-link" href="#{{ .id }}" aria-label="Link to {{ .title }}" title="Link to this section">#</a></h2>
     <p class="stat-meta">
       {{- with .posts }}From {{ range $i, $p := . }}{{ if $i }} and {{ end }}<a href="{{ $p.url }}">{{ $p.title }}</a>{{ end }}{{ end }}
       {{- with .updated }} · measured {{ . }}{{ end }}
@@ -79,7 +82,7 @@
     </p>
     {{ template "stats-body" . }}
     {{- range .derived }}
-    <h3 id="{{ .id }}">{{ .title }}</h3>
+    <h3 id="{{ .id }}">{{ .title }} <a class="stat-link" href="#{{ .id }}" aria-label="Link to {{ .title }}" title="Link to this chart">#</a></h3>
     {{ template "stats-body" . }}
     {{- end }}
     <details class="stat-method">
