@@ -806,6 +806,39 @@ test("a hook edit while an old render is in-flight: new request does not join ol
   assert.match(calls.screenshots[1].options.html, /Updated Hook B/);
 });
 
+test("D1 settings read failure during hashIp fails closed with 302 fallback and zero browser renders", async () => {
+  let browserRan = false;
+  const env = {
+    ASSETS: {
+      fetch: async () => new Response(CARD),
+    },
+    READER_DB: {
+      prepare: () => {
+        throw new Error("D1 settings failure");
+      },
+    },
+    BROWSER: {
+      quickAction: async () => {
+        browserRan = true;
+        throw new Error("browser should not run");
+      },
+    },
+  };
+
+  const res = await serveCard({
+    request: new Request("https://aifoc.us/og/agent-do-my-agent-loop.png", {
+      headers: { "CF-Connecting-IP": "203.0.113.1" },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+
+  assert.equal(res.status, 302, "must return HTTP 302 redirect fallback");
+  assert.equal(res.headers.get("X-Og-Card"), "fallback: rate limited");
+  assert.equal(browserRan, false, "Browser Run must never execute on D1 error");
+});
+
+
 
 
 

@@ -373,9 +373,15 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
 
   const db = env?.READER_DB;
   const now = Date.now();
-  const clientIp = request.headers.get("CF-Connecting-IP");
-  const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
-  const allowed = await reserveOgSlot(db, ipHash, now);
+  let allowed = false;
+  try {
+    const clientIp = request.headers.get("CF-Connecting-IP");
+    const ipHash = (db ? await hashIp(db, clientIp) : null) ?? UNKNOWN_IP_BUCKET;
+    allowed = await reserveOgSlot(db, ipHash, now);
+  } catch (err) {
+    console.error("og rate limit error: failing closed (requires 0007_search_log.sql)", err?.message || err);
+    allowed = false;
+  }
 
   if (!allowed) {
     // Leader is denied! Reject before publishing so joiners never attach to a doomed flight.
