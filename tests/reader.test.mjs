@@ -202,6 +202,19 @@ test("reactions: rate limit counts write events, so on/off toggling cannot outru
   assert.equal(offAfter.status, 429);
 });
 
+test("reactions: the write-event ledger prunes rows older than two hours", async () => {
+  const env = makeEnv();
+  env.READER_DB.raw
+    .prepare("INSERT INTO write_events (ip_hash, created_at) VALUES ('stale', ?)")
+    .run(Date.now() - 3 * 60 * 60 * 1000);
+  // An accepted write prunes opportunistically (the limiter only looks back
+  // 60 minutes, so the stale row is dead weight).
+  const res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, reader: READER_A }), env });
+  assert.equal(res.status, 200);
+  // Only the fresh event survives; the stale one is gone.
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM write_events").get().n, 1);
+});
+
 test("reactions: a functions deploy that runs before migration 0005 denies writes loudly", async () => {
   const env = makeEnv({ READER_DB: createD1(MIGRATIONS_PRE_IP) });
   // The reactions table has no ip_hash column and there is no write_events
