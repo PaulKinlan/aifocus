@@ -212,11 +212,13 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
 export async function recordWriteEvent(db, ipHash, now = Date.now()) {
   const key = ipHash ?? UNKNOWN_IP_BUCKET;
   try {
-    await db.prepare("INSERT INTO write_events (ip_hash, created_at) VALUES (?, ?)").bind(key, now).run();
-    // Opportunistic cleanup keeps the ledger small without a scheduled job
-    // (same pattern as sessions in _lib/auth.js): the limiter only looks
-    // back 60 minutes, so anything older than two is dead weight.
-    await db.prepare("DELETE FROM write_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000).run();
+    // One round trip: insert the event and prune the ledger (the limiter
+    // only looks back 60 minutes, so anything older than two is dead weight;
+    // created_at is indexed for exactly this DELETE).
+    await db.batch([
+      db.prepare("INSERT INTO write_events (ip_hash, created_at) VALUES (?, ?)").bind(key, now),
+      db.prepare("DELETE FROM write_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
+    ]);
   } catch (err) {
     if (/no such table/i.test(err?.message ?? "")) {
       console.error("write-event ledger missing; apply D1 migration 0006");
