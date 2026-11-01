@@ -378,6 +378,50 @@ test("Bluesky: a token for a different DID, or a wrong issuer, is refused", asyn
   assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM users").get().n, 0);
 });
 
+test("Bluesky start aborts a discovery response that streams past the size cap", async () => {
+  // No Content-Length header (the lying/absent case): the body streams 150KB
+  // and the bounded reader must abort at the 64KB cap, cancel the underlying
+  // request, and treat the truncated read as an error.
+  const env = makeEnv();
+  const log = [];
+  let cancelled = false;
+  const stream = new ReadableStream({
+    start(controller) {
+      const chunk = new TextEncoder().encode("a".repeat(50 * 1024));
+      for (let i = 0; i < 3; i += 1) controller.enqueue(chunk);
+      controller.close();
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  await withFetch(blueskyFetch({ log, resolve: () => new Response(stream, { headers: { "Content-Type": "application/json" } }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.equal(cancelled, true, "the underlying request is cancelled at the cap");
+  assert.equal(log.length, 1, "nothing is fetched beyond the aborted hop");
+
+  // A lying Content-Length (small header, huge body) is rejected the same way.
+  const env2 = makeEnv();
+  let cancelled2 = false;
+  const stream2 = new ReadableStream({
+    start(controller) {
+      const chunk = new TextEncoder().encode("a".repeat(50 * 1024));
+      for (let i = 0; i < 3; i += 1) controller.enqueue(chunk);
+      controller.close();
+    },
+    cancel() {
+      cancelled2 = true;
+    },
+  });
+  await withFetch(blueskyFetch({ resolve: () => new Response(stream2, { headers: { "Content-Length": "16", "Content-Type": "application/json" } }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env2, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.equal(cancelled2, true, "a lying Content-Length does not skip the cap");
+});
+
 test("Bluesky start refuses discovery that points off the public internet", async () => {
   // did:web names its own host: honouring it would let the caller pick the
   // host we fetch next, so only did:plc (from the pinned plc.directory) is
@@ -392,7 +436,8 @@ test("Bluesky start refuses discovery that points off the public internet", asyn
   assert.ok(log[0].includes("public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle"));
 
   // The DID document's PDS endpoint is third-party data: internal hosts are
-  // refused before anything is fetched from them.
+  // refused before anything is fetched from them. Multiple trailing dots are
+  // normalized away too ('service.internal..' is the same unresolvable name).
   const env2 = makeEnv();
   const log2 = [];
   await withFetch(blueskyFetch({ log: log2, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://169.254.169.254/" }] }) }), async () => {
@@ -401,6 +446,14 @@ test("Bluesky start refuses discovery that points off the public internet", asyn
   });
   assert.equal(log2.length, 2, "appview + plc only");
   assert.ok(!log2.some((l) => l.includes("169.254.169.254")), "the internal host is never fetched");
+
+  const env2b = makeEnv();
+  const log2b = [];
+  await withFetch(blueskyFetch({ log: log2b, plcDoc: () => json({ id: DID, service: [{ id: "#atproto_pds", serviceEndpoint: "https://service.internal../" }] }) }), async () => {
+    const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env2b, params: { provider: "bluesky" } });
+    assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+  });
+  assert.ok(!log2b.some((l) => l.includes("service.internal")), "the multi-dot internal host is never fetched");
 
   // The authorization server issuer is validated the same way.
   const env3 = makeEnv();

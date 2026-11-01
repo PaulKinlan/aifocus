@@ -49,7 +49,7 @@ function publicHostnameProblem(host) {
 function assertPublicHttpsUrl(url) {
   const u = url instanceof URL ? url : new URL(url);
   if (u.protocol !== "https:") throw new Error(`bluesky: ${u.host} is not https`);
-  const host = u.hostname.replace(/\.$/, "");
+  const host = u.hostname.replace(/\.+$/, "");
   const reason = publicHostnameProblem(host);
   if (reason) throw new Error(`bluesky: ${u.host} rejected: ${reason}`);
   if (u.port && u.port !== "443") throw new Error(`bluesky: ${u.host} uses a non-standard port`);
@@ -79,23 +79,55 @@ export function normalizeHandle(raw) {
   return HANDLE_RE.test(handle) ? handle : null;
 }
 
+// Read a response body with a hard cap. A declared Content-Length over the
+// cap is rejected up front (it can be absent or a lie, so it is not the only
+// guard); otherwise the body is streamed through a bounded reader that
+// aborts at the cap and cancels the underlying request. A body that never
+// completes cleanly is an error, never valid JSON.
+async function readCappedText(res) {
+  const declared = Number(res.headers.get("Content-Length") || "0");
+  if (declared > MAX_JSON_CHARS) {
+    try {
+      await res.body?.cancel();
+    } catch {}
+    throw new Error("bluesky: response too large");
+  }
+  const reader = res.body.getReader();
+  try {
+    const decoder = new TextDecoder();
+    let text = "";
+    let received = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.length;
+      if (received > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+      text += decoder.decode(value, { stream: true });
+    }
+    return text;
+  } catch (err) {
+    try {
+      await reader.cancel(err);
+    } catch {}
+    throw err;
+  }
+}
+
 const getJson = async (url, fetchImpl) => {
-  assertPublicHttpsUrl(url);
+  // Fetch the validated URL (u.href), not the raw input.
+  const u = assertPublicHttpsUrl(url);
   // Redirects are never followed: each hop must re-qualify as a public https
   // host, so a discovery response cannot bounce a fetch onto an internal
   // address. 5s timeout and a 64KB body cap bound what one hop can cost.
-  const res = await fetchImpl(url, {
+  const res = await fetchImpl(u.href, {
     headers: { Accept: "application/json" },
     redirect: "manual",
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (res.status < 200 || res.status >= 300) {
-    throw new Error(`bluesky: ${new URL(url).host}${new URL(url).pathname} HTTP ${res.status}`);
+    throw new Error(`bluesky: ${u.host}${u.pathname} HTTP ${res.status}`);
   }
-  const declared = Number(res.headers.get("Content-Length") || "0");
-  if (declared > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
-  const text = await res.text();
-  if (text.length > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+  const text = await readCappedText(res);
   return JSON.parse(text);
 };
 
@@ -167,23 +199,23 @@ export async function dpopProof(privateJwk, { htm, htu, nonce }) {
 // POST a form with a DPoP proof, retrying once with the server's nonce when
 // it answers use_dpop_nonce (servers require a nonce on the first request).
 export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
-  assertPublicHttpsUrl(url);
+  // Fetch the validated URL (u.href), not the raw input.
+  const u = assertPublicHttpsUrl(url);
   let currentNonce = nonce || null;
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const res = await fetchImpl(url, {
+    const res = await fetchImpl(u.href, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         Accept: "application/json",
-        DPoP: await dpopProof(privateJwk, { htm: "POST", htu: url, nonce: currentNonce }),
+        DPoP: await dpopProof(privateJwk, { htm: "POST", htu: u.href, nonce: currentNonce }),
       },
       body: new URLSearchParams(form),
       redirect: "manual",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     const nextNonce = res.headers.get("DPoP-Nonce");
-    const text = await res.text();
-    if (text.length > MAX_JSON_CHARS) throw new Error("bluesky: response too large");
+    const text = await readCappedText(res);
     let body;
     try {
       body = JSON.parse(text);
