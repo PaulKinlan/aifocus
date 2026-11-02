@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   onRequest,
   isUnsafePath,
@@ -9,6 +12,7 @@ import {
   prefersMarkdown,
   estimateTokens,
   isValidLatestPostPath,
+  RESERVED_ROOTS,
 } from "../functions/_middleware.js";
 
 test("isUnsafePath: rejects traversal and backslashes in raw and parsed paths", () => {
@@ -115,6 +119,10 @@ test("isValidContentPath: validates allowed published content roots", () => {
   assert.equal(isValidContentPath("/css/style.css"), false);
   assert.equal(isValidContentPath("/js/main.js"), false);
   assert.equal(isValidContentPath("/where-prompts-run-demo/"), false);
+  assert.equal(isValidContentPath("/account/"), false);
+  assert.equal(isValidContentPath("/account"), false);
+  assert.equal(isValidContentPath("/stats/"), false);
+  assert.equal(isValidContentPath("/stats"), false);
 
   // Rejected: uppercase reserved roots and section indexes
   assert.equal(isValidContentPath("/POSTS/"), false);
@@ -300,6 +308,10 @@ test("onRequest: encoded traversal and backslashes are rejected without calling 
 
 test("onRequest: rejects paths outside allowed content roots without calling ASSETS.fetch", async () => {
   const restrictedPaths = [
+    "https://aifocus.blog/account/",
+    "https://aifocus.blog/account",
+    "https://aifocus.blog/stats/",
+    "https://aifocus.blog/stats",
     "https://aifocus.blog/posts/",
     "https://aifocus.blog/POSTS/",
     "https://aifocus.blog/CSS/",
@@ -481,5 +493,162 @@ test("onRequest: leaves other methods and routes, including feed, JSON, archive 
     assert.equal(response.status, 200, `${method} ${path}`);
     assert.equal(await response.text(), "existing route", `${method} ${path}`);
     assert.equal(assetCalled, false, `${method} ${path}`);
+  }
+});
+
+test("onRequest: negotiation drives reserved behavior for /account and /stats while normal content negotiates markdown", async () => {
+  const cases = [
+    {
+      path: "/account/",
+      isReserved: true,
+      htmlBody: "<html>Account Page</html>",
+    },
+    {
+      path: "/stats/",
+      isReserved: true,
+      htmlBody: "<html>Stats Page</html>",
+    },
+    {
+      path: "/model-half-life/",
+      isReserved: false,
+      markdownBody: "# Model Half-Life\nSome markdown text",
+      htmlBody: "<html>Post Page</html>",
+    },
+  ];
+
+  for (const c of cases) {
+    let assetFetchCalled = false;
+    let fetchedPath = null;
+    let nextCalled = false;
+
+    const fakeEnv = {
+      ASSETS: {
+        fetch: async (req) => {
+          assetFetchCalled = true;
+          fetchedPath = new URL(req.url).pathname;
+          if (c.markdownBody) {
+            return new Response(c.markdownBody, {
+              status: 200,
+              headers: { "Content-Type": "text/markdown" },
+            });
+          }
+          return new Response("Not found", { status: 404 });
+        },
+      },
+    };
+
+    const req = new Request("https://aifocus.blog" + c.path, {
+      headers: { Accept: "text/markdown" },
+    });
+
+    const context = {
+      request: req,
+      next: async () => {
+        nextCalled = true;
+        return new Response(c.htmlBody, {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        });
+      },
+      env: fakeEnv,
+    };
+
+    const res = await onRequest(context);
+
+    if (c.isReserved) {
+      // Reserved roots must take reserved behaviour: bypass negotiation,
+      // never call ASSETS.fetch, and delegate straight to next() HTML.
+      assert.equal(assetFetchCalled, false, `ASSETS.fetch must not be called for reserved route: ${c.path}`);
+      assert.equal(nextCalled, true, `next() must be called for reserved route: ${c.path}`);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get("Content-Type"), "text/html");
+      assert.equal(res.headers.get("Vary"), "Accept");
+      assert.equal(await res.text(), c.htmlBody);
+    } else {
+      // Normal content route negotiates markdown: fetches markdown asset,
+      // decorates with tokens, does not call next().
+      assert.equal(assetFetchCalled, true, `ASSETS.fetch must be called for content route: ${c.path}`);
+      assert.equal(fetchedPath, "/model-half-life/index.md");
+      assert.equal(nextCalled, false, `next() must not be called for content route: ${c.path}`);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get("Content-Type"), "text/markdown; charset=utf-8");
+      assert.equal(res.headers.get("Vary"), "Accept");
+      assert.ok(res.headers.has("x-markdown-tokens"));
+      const body = await res.text();
+      assert.match(body, /# Model Half-Life/);
+    }
+  }
+});
+
+test("RESERVED_ROOTS: covers every reserved route across content, static, functions, and output", () => {
+  const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+  // 1. Content utility pages: every top-level .md in content/
+  const contentDir = path.join(rootDir, "content");
+  if (fs.existsSync(contentDir)) {
+    for (const ent of fs.readdirSync(contentDir, { withFileTypes: true })) {
+      if (ent.isFile() && ent.name.endsWith(".md") && !ent.name.startsWith("_")) {
+        const slug = ent.name.replace(/\.md$/, "");
+        assert.ok(
+          RESERVED_ROOTS.has(slug),
+          `RESERVED_ROOTS must include content page slug: ${slug} (from content/${ent.name})`
+        );
+        assert.equal(isValidContentPath(`/${slug}/`), false, `/${slug}/ must not be a valid content path`);
+        assert.equal(isValidContentPath(`/${slug}`), false, `/${slug} must not be a valid content path`);
+      } else if (ent.isDirectory() && ent.name !== "posts" && !ent.name.startsWith("_") && !ent.name.startsWith(".")) {
+        // Any non-post top-level directory in content (e.g. authors)
+        assert.ok(
+          RESERVED_ROOTS.has(ent.name),
+          `RESERVED_ROOTS must include content section: ${ent.name} (from content/${ent.name})`
+        );
+        assert.equal(isValidContentPath(`/${ent.name}/`), false, `/${ent.name}/ must not be a valid content path`);
+      }
+    }
+  }
+
+  // 2. Static asset directories: every top-level directory in static/
+  const staticDir = path.join(rootDir, "static");
+  if (fs.existsSync(staticDir)) {
+    for (const ent of fs.readdirSync(staticDir, { withFileTypes: true })) {
+      if (ent.isDirectory() && !ent.name.startsWith(".") && !ent.name.startsWith("_")) {
+        assert.ok(
+          RESERVED_ROOTS.has(ent.name),
+          `RESERVED_ROOTS must include static directory: ${ent.name} (from static/${ent.name})`
+        );
+        assert.equal(isValidContentPath(`/${ent.name}/`), false, `/${ent.name}/ must not be a valid content path`);
+      }
+    }
+  }
+
+  // 3. Functions routes: every top-level directory in functions/ (excluding private _lib)
+  const functionsDir = path.join(rootDir, "functions");
+  if (fs.existsSync(functionsDir)) {
+    for (const ent of fs.readdirSync(functionsDir, { withFileTypes: true })) {
+      if (ent.isDirectory() && !ent.name.startsWith("_") && !ent.name.startsWith(".")) {
+        assert.ok(
+          RESERVED_ROOTS.has(ent.name),
+          `RESERVED_ROOTS must include function route directory: ${ent.name} (from functions/${ent.name})`
+        );
+        assert.equal(isValidContentPath(`/${ent.name}/`), false, `/${ent.name}/ must not be a valid content path`);
+      }
+    }
+  }
+
+  // 4. Built output (if public/ exists from a build): every non-post top-level directory
+  const publicDir = path.join(rootDir, "public");
+  if (fs.existsSync(publicDir)) {
+    for (const ent of fs.readdirSync(publicDir, { withFileTypes: true })) {
+      if (ent.isDirectory() && !ent.name.startsWith(".") && !ent.name.startsWith("_")) {
+        const hasIndexMd = fs.existsSync(path.join(publicDir, ent.name, "index.md"));
+        // If it does not have index.md, it is not a markdown-negotiable post page
+        if (!hasIndexMd) {
+          assert.ok(
+            RESERVED_ROOTS.has(ent.name),
+            `RESERVED_ROOTS must include non-post built directory: ${ent.name} (from public/${ent.name})`
+          );
+          assert.equal(isValidContentPath(`/${ent.name}/`), false, `/${ent.name}/ must not be a valid content path`);
+        }
+      }
+    }
   }
 });
