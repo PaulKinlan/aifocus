@@ -442,9 +442,18 @@ def main():
 
     text = json.dumps(slim(compiled), separators=(",", ":"), ensure_ascii=False) + "\n"
     if args.check:
-        current = open(OUT, encoding="utf-8").read() if os.path.exists(OUT) else ""
-        strip = lambda s: re.sub(r'"generated": "[^"]*"', "", s)
-        if strip(current) != strip(text):
+        # Compare PARSED data, not serialised text: the two documents are
+        # rendered the same way and `generated` is a build timestamp that
+        # legitimately differs between the file and a fresh build.
+        def without_generated(doc):
+            return None if doc is None else {k: v for k, v in doc.items() if k != "generated"}
+
+        try:
+            with open(OUT, encoding="utf-8") as f:
+                current = json.load(f)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            current = None
+        if without_generated(current) != without_generated(slim(compiled)):
             sys.exit("data/stats.json is stale: run python3 tools/stats/build.py")
         print("data/stats.json is up to date")
         return
