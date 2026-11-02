@@ -25,7 +25,7 @@ In the March post Claude Code had gone from 180K public GitHub commits a week to
 
 When I looked at it in March I was quite surprised by how steep the growth was, however the shape has changed since then. The first half of the year was a steady climb: 243K, 500K in the new year, 1 million by February, 2.5 million by the end of March. After this latest run you can see that it sat between 2.4 and 4.2 million a week from April through August.  Then the second pop starts in the week of 31 August 2026 and does not stop: 5.0M, 4.7M, 5.4M, 6.3M, 8.0M, 8.7M, 8.6M, 10.1M, 10.3M. Something changed at the end of August and while the commit data doesn't say it around the same time Fable 5.1 launched and then Opus 5.5 launched later in the month, but I don't actually know what really changed. What it does show is Claude Code's weekly output almost doubling in two months, after five months of steady growth.
 
-What I find incredible in the moth since I run the data for my Tweet we have gone from 7M to over 10 million commits a week.
+What I find incredible in the month since I run the data for my Tweet we have gone from 7M to over 10 million commits a week.
 
 The methodology here is to use the GitHub Search API and sample the number of results that are returned (it's not consistent so you have to sample it a couple of times).
 
