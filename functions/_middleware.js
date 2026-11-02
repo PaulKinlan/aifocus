@@ -15,8 +15,21 @@ const MARKDOWN_TYPES = new Set([
 
 // Top-level paths that are not post or tutorial content roots and must never
 // trigger markdown negotiation.
+//
+// Source of truth:
+// 1. Content utility pages: every standalone page in content/*.md (account, admin, ask, search, stats)
+// 2. Hugo sections and taxonomies: posts (archive), authors (taxonomy), categories, tags, training, tutorials
+// 3. Cloudflare Pages Functions routes: api (functions/api/), og (functions/og/), functions
+// 4. Static assets and demo directories: data (static/data/), images (static/images/),
+//    where-prompts-run-demo (static/where-prompts-run-demo/), css, js, fonts, static
+// 5. Root page: ""
+//
+// Enforced by tests/middleware.test.mjs ("RESERVED_ROOTS covers every reserved route across content, static, functions, and output")
+// which dynamically scans content/, static/, functions/, and output to guarantee
+// no newly added top-level utility page, asset folder, or function route drifts from this list.
 const RESERVED_ROOTS = new Set([
   "",
+  "account",
   "admin",
   "api",
   "ask",
@@ -32,6 +45,7 @@ const RESERVED_ROOTS = new Set([
   "posts",
   "search",
   "static",
+  "stats",
   "tags",
   "training",
   "tutorials",
