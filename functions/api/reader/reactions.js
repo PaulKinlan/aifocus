@@ -64,10 +64,11 @@ export async function onRequestPost({ request, env }) {
         .run();
     } catch (err) {
       if (!/no such column|has no column named/i.test(err?.message ?? "")) throw err;
-      // Migration 0005 not applied yet: write without the ip_hash column
-      // rather than failing the reaction. The degraded limiter above counts
-      // these rows in its global bucket, so they stay visible to it.
-      console.error("reaction write degraded: reactions.ip_hash missing; apply D1 migration 0005");
+      // Defensive only: with migrations 0005/0006 applied this cannot fire —
+      // isRateLimited fails closed before we get here when the schema is
+      // behind. If it ever does fire, write without the ip_hash column and
+      // say so loudly.
+      console.error("reaction write without ip_hash: reactions.ip_hash missing; apply D1 migration 0005");
       await db
         .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
         .bind(post, kind, reader.id, user?.id ?? null, now)
