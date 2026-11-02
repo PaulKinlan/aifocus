@@ -205,9 +205,8 @@ export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
 
 // Append one write event to the per-IP ledger. The limiter counts these
 // rows, so deleting the underlying reaction/annotation cannot erase the
-// count the way it could when live rows were counted. Skips ONLY for the
-// known missing-table case (pre-migration window, where the degraded global
-// cap applies); anything else propagates.
+// count. Skips ONLY for the known missing-table case (pre-migration window,
+// where isRateLimited fails closed); anything else propagates.
 export async function recordWriteEvent(db, ipHash, now = Date.now()) {
   const key = ipHash ?? UNKNOWN_IP_BUCKET;
   try {
