@@ -20,6 +20,7 @@ import {
   htmlToText,
   getReader,
   READER_COOKIE,
+  LIMITS,
 } from "../functions/_lib/reader.js";
 import { verifyAccess, resetAccessCache } from "../functions/_lib/access.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
@@ -260,6 +261,41 @@ test("highlights: quote must come from the post, approved immediately, deduplica
   assert.equal(state.highlights.length, 1);
   assert.equal(state.highlights[0].count, 2);
   assert.equal(state.highlights[0].mine, false);
+});
+
+test("concurrent signed-in comment burst is capped at the per-IP limit", async () => {
+  // aifocus-e2o: the AI-screening await used to sit between the limit check
+  // and the ledger insert, so concurrent comments all read the same
+  // pre-burst count and were accepted wholesale. The write-event reservation
+  // is now the limiter: with screening slowed to 50 ms, 60 concurrent
+  // comments from one IP must still be bounded by LIMITS.writesPerHour, and
+  // exactly the accepted writes appear in the ledger.
+  const env = makeEnv({
+    AI: {
+      run: async () => {
+        await new Promise((r) => setTimeout(r, 50));
+        return { response: { safe: true } };
+      },
+    },
+  });
+  const { session } = await signIn(env, "burst");
+  const fire = (i) =>
+    postAnnotation({
+      request: req("/api/reader/annotations", {
+        method: "POST",
+        body: { post: POST, type: "comment", body: `burst comment ${i}` },
+        reader: READER_A,
+        session,
+      }),
+      env,
+    });
+  const responses = await Promise.all(Array.from({ length: 60 }, (_, i) => fire(i)));
+  const accepted = responses.filter((r) => r.status === 201).length;
+  const denied = responses.filter((r) => r.status === 429).length;
+  assert.equal(accepted + denied, 60, "every request is accepted or 429");
+  assert.ok(accepted <= LIMITS.writesPerHour, `accepted ${accepted} exceeded the per-IP budget ${LIMITS.writesPerHour}`);
+  const events = await env.READER_DB.prepare("SELECT COUNT(*) AS n FROM write_events").first();
+  assert.equal(events.n, accepted, "the ledger holds exactly the accepted requests");
 });
 
 test("notes and comments: require sign-in", async () => {

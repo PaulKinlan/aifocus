@@ -168,61 +168,73 @@ export async function hashIp(db, ip) {
 // client IP never means "no limit" and no NULL-keyed row is ever written.
 export const UNKNOWN_IP_BUCKET = "unknown";
 
-export async function isRateLimited(db, reader, ipHash, now = Date.now()) {
+// The per-reader half of the write budget: live annotation/reaction rows per
+// reader, best effort (a client can rotate the cookie, so this is the
+// auxiliary bound). The per-IP half is enforced ATOMICALLY by
+// reserveWriteEvent(), which the endpoints call before doing any work.
+export async function isRateLimited(db, reader, now = Date.now()) {
   const since = now - 60 * 60 * 1000;
-  // A missing client IP never means "no limit": every such request shares the
-  // one coarse UNKNOWN_IP_BUCKET key.
-  const key = ipHash ?? UNKNOWN_IP_BUCKET;
   try {
     const row = await db
       .prepare(
         `SELECT
-           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?3) +
-           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?3) AS by_reader,
-           (SELECT COUNT(*) FROM write_events WHERE ip_hash = ?2 AND created_at > ?3) AS by_ip`,
+           (SELECT COUNT(*) FROM annotations WHERE reader = ?1 AND created_at > ?2) +
+           (SELECT COUNT(*) FROM reactions WHERE reader = ?1 AND created_at > ?2) AS by_reader`,
       )
-      .bind(reader, key, since)
+      .bind(reader, since)
       .first();
-    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour || (row?.by_ip ?? 0) >= LIMITS.writesPerHour;
+    return (row?.by_reader ?? 0) >= LIMITS.writesPerHour;
   } catch (err) {
     if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
-      // Migrations 0005/0006 not applied yet (functions deployed before the
-      // D1 migrations): fail closed and say exactly why. There is no
-      // append-only counter to count in this state, and any live-row fallback
-      // is either erasable by the toggle flood it exists to stop or strict
-      // enough to lock ordinary traffic out site-wide - so the write path is
-      // uniformly, visibly OFF until the migration runs (one command).
-      console.error("reader writes denied: apply D1 migrations 0005+0006 (write_events/reactions.ip_hash missing)");
+      // Schema not applied yet (functions deployed before the D1 migrations):
+      // fail closed and say exactly why. Any live-row fallback is either
+      // erasable by the toggle flood it exists to stop or strict enough to
+      // lock ordinary traffic out site-wide - so the write path is uniformly,
+      // visibly OFF until the migrations run (one command).
+      console.error("reader writes denied: apply D1 migrations (annotations/reactions missing)");
       return true;
     }
-    // Any other database error: fail closed. Silently answering with the
-    // per-reader count would switch the security control off while the
-    // endpoint keeps working - the same class of bug as the original bypass.
+    // Any other database error: fail closed. Silently answering with a pass
+    // would switch the security control off while the endpoint keeps working
+    // - the same class of bug as the original bypass.
     console.error("rate-limit fail-closed: isRateLimited query failed", err);
     return true;
   }
 }
 
-// Append one write event to the per-IP ledger. The limiter counts these
-// rows, so deleting the underlying reaction/annotation cannot erase the
-// count. Skips ONLY for the known missing-table case (pre-migration window,
-// where isRateLimited fails closed); anything else propagates.
-export async function recordWriteEvent(db, ipHash, now = Date.now()) {
+// Atomically reserve one write event per client IP: the conditional INSERT is
+// the limiter itself, so a concurrent burst cannot all read the same
+// pre-burst count and slip through the gap between check and ledger insert
+// (aifocus-e2o - on the comment path the AI-screening await used to sit in
+// exactly that gap). Returns false - DENY - when the IP is over budget, when
+// the ledger is missing (schema behind the deploy), or on any database
+// error; it never answers "allow" on a storage failure.
+export async function reserveWriteEvent(db, ipHash, now = Date.now()) {
   const key = ipHash ?? UNKNOWN_IP_BUCKET;
   try {
-    // One round trip: insert the event and prune the ledger (the limiter
-    // only looks back 60 minutes, so anything older than two is dead weight;
-    // created_at is indexed for exactly this DELETE).
-    await db.batch([
-      db.prepare("INSERT INTO write_events (ip_hash, created_at) VALUES (?, ?)").bind(key, now),
+    // One round trip: reserve only if under the cap, and prune the ledger
+    // (the window looks back 60 minutes, so anything older than two is dead
+    // weight; created_at is indexed for exactly this DELETE).
+    const results = await db.batch([
+      db.prepare(
+        `INSERT INTO write_events (ip_hash, created_at)
+         SELECT ?1, ?2
+         WHERE (SELECT COUNT(*) FROM write_events WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+      ).bind(key, now, now - 60 * 60 * 1000, LIMITS.writesPerHour),
       db.prepare("DELETE FROM write_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
     ]);
+    return (results[0]?.meta?.changes ?? results[0]?.changes ?? 0) > 0;
   } catch (err) {
     if (/no such table/i.test(err?.message ?? "")) {
-      console.error("write-event ledger missing; apply D1 migration 0006");
-      return;
+      // Migration 0006 not applied yet: fail closed and say exactly why -
+      // the write path is OFF until the migration runs (one command).
+      console.error("reader writes denied: write_events missing; apply D1 migration 0006");
+    } else {
+      // Any other database error: fail closed. The limiter must never
+      // answer "allow" because its storage hiccuped.
+      console.error("rate-limit fail-closed: write reservation failed", err);
     }
-    throw err;
+    return false;
   }
 }
 
