@@ -233,13 +233,33 @@ const pngHeaders = (extra = {}) => ({
   ...extra,
 });
 
+export function classifyError(err) {
+  const msg = String(err?.message || err || "");
+  const name = String(err?.name || "");
+  if (name === "TimeoutError" || /timed? ?out|timeout/i.test(msg)) {
+    return "timeout";
+  }
+  if (/screenshot HTTP|HTTP \d{3}|fetch failed|failed to fetch|upstream|ECONNREFUSED|ENOTFOUND|network|socket/i.test(msg)) {
+    return "upstream";
+  }
+  if (/no such table|no such column|has no column|syntax error|schema|sqlite|d1|disk I\/O/i.test(msg)) {
+    return "schema";
+  }
+  return "render";
+}
+
 function fallback(origin, reason) {
+  const label = typeof reason === "object" && reason !== null
+    ? classifyError(reason)
+    : typeof reason === "string" && reason.startsWith("render failed: ")
+      ? classifyError(reason.slice("render failed: ".length))
+      : reason;
   return new Response(null, {
     status: 302,
     headers: {
       Location: new URL(FALLBACK_IMAGE, origin).href,
       "Cache-Control": "public, max-age=300",
-      "X-Og-Card": `fallback: ${reason}`,
+      "X-Og-Card": `fallback: ${label}`,
     },
   });
 }
@@ -306,8 +326,9 @@ async function renderCard({ env, origin, pagePath, version, html, fixed, row, bu
   } catch (err) {
     console.error("og render", pagePath, err?.message || err);
     // The reason travels in the X-Og-Card header so a failing card can be
-    // diagnosed from a browser; it is our own error text, trimmed.
-    return fallback(origin, `render failed: ${String(err?.message || err).replace(/[\r\n]+/g, " ").slice(0, 160)}`);
+    // diagnosed from a browser without disclosing internal details (hostnames,
+    // table names, raw error text); full details are logged above.
+    return fallback(origin, classifyError(err));
   }
 }
 
@@ -427,7 +448,7 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
     } catch (err) {
       controller.abort();
       console.error("og render error", pagePath, err?.message || err);
-      return fallback(origin, "render failed");
+      return fallback(origin, classifyError(err));
     } finally {
       clearTimeout(timerId);
       inFlightRenders.delete(flightKey);
@@ -443,7 +464,7 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
     return response.clone();
   } catch (err) {
     console.error("og serveCard error", pagePath, err?.message || err);
-    return fallback(origin, "render failed");
+    return fallback(origin, classifyError(err));
   }
 }
 
