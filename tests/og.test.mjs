@@ -15,6 +15,7 @@ import {
   HOOK_MAX_CHARS,
   OG_RENDERS_PER_HOUR,
   reserveOgSlot,
+  classifyError,
   _inFlightRenders,
   _inFlightReservations,
   _recentRenders,
@@ -237,6 +238,98 @@ test("render failures and unknown pages fall back to the site card", async () =>
 
   res = await run(env, ["nope.gif"]);
   assert.equal(res.status, 404);
+});
+
+test("failing render returns fallback response with error class in X-Og-Card, omitting raw upstream details and table names while logging full detail", async () => {
+  const originalError = console.error;
+  const logs = [];
+  console.error = (...args) => {
+    logs.push(args);
+  };
+
+  try {
+    // 1. Upstream failure containing internal hostname and error detail
+    const upstreamDetail = "Internal Server Error from renderer-host.internal:9222";
+    const { env: upstreamEnv } = makeEnv({
+      browser: () => new Response(upstreamDetail, { status: 502 }),
+    });
+
+    const upstreamRes = await run(upstreamEnv);
+    assert.equal(upstreamRes.status, 302);
+    assert.equal(upstreamRes.headers.get("Location"), `${ORIGIN}/images/card.jpeg`);
+    assert.equal(upstreamRes.headers.get("X-Og-Card"), "fallback: upstream");
+    assert.ok(!upstreamRes.headers.get("X-Og-Card").includes("renderer-host.internal"));
+    assert.ok(!upstreamRes.headers.get("X-Og-Card").includes(upstreamDetail));
+
+    // Full detail reached server log with request context
+    const upstreamLog = logs.find(
+      (args) => args[0] === "og render" && args[1] === PAGE && String(args[2]).includes("renderer-host.internal"),
+    );
+    assert.ok(upstreamLog, "server log must receive full upstream error detail with pagePath context");
+
+    // 2. Schema / D1 failure containing table name
+    logs.length = 0;
+    const { env: schemaEnv } = makeEnv({
+      browser: () => {
+        throw new Error("no such table: og_render_log");
+      },
+    });
+
+    const schemaRes = await run(schemaEnv);
+    assert.equal(schemaRes.status, 302);
+    assert.equal(schemaRes.headers.get("Location"), `${ORIGIN}/images/card.jpeg`);
+    assert.equal(schemaRes.headers.get("X-Og-Card"), "fallback: schema");
+    assert.ok(!schemaRes.headers.get("X-Og-Card").includes("og_render_log"));
+    assert.ok(!schemaRes.headers.get("X-Og-Card").includes("no such table"));
+
+    // Full detail reached server log with request context
+    const schemaLog = logs.find(
+      (args) => args[0] === "og render" && args[1] === PAGE && String(args[2]).includes("no such table: og_render_log"),
+    );
+    assert.ok(schemaLog, "server log must receive table name in full error detail with pagePath context");
+
+    // 3. Timeout failure in renderer
+    logs.length = 0;
+    const { env: timeoutEnv } = makeEnv({
+      browser: () => {
+        throw new Error("navigation timeout of 15000 ms exceeded");
+      },
+    });
+
+    const timeoutRes = await run(timeoutEnv);
+    assert.equal(timeoutRes.status, 302);
+    assert.equal(timeoutRes.headers.get("Location"), `${ORIGIN}/images/card.jpeg`);
+    assert.equal(timeoutRes.headers.get("X-Og-Card"), "fallback: timeout");
+    assert.ok(!timeoutRes.headers.get("X-Og-Card").includes("15000 ms"));
+
+    // 4. General render failure (e.g. binding missing)
+    logs.length = 0;
+    const { env: renderEnv } = makeEnv();
+    delete renderEnv.BROWSER;
+
+    const renderRes = await run(renderEnv);
+    assert.equal(renderRes.status, 302);
+    assert.equal(renderRes.headers.get("Location"), `${ORIGIN}/images/card.jpeg`);
+    assert.equal(renderRes.headers.get("X-Og-Card"), "fallback: render");
+    assert.ok(!renderRes.headers.get("X-Og-Card").includes("BROWSER binding missing"));
+  } finally {
+    console.error = originalError;
+  }
+});
+
+test("classifyError maps failure modes to short stable classes", () => {
+  assert.equal(classifyError(new Error("navigation timeout of 15000 ms exceeded")), "timeout");
+  assert.equal(classifyError({ name: "TimeoutError", message: "timed out" }), "timeout");
+  assert.equal(classifyError(new Error("screenshot HTTP 500: boom")), "upstream");
+  assert.equal(classifyError(new Error("fetch failed")), "upstream");
+  assert.equal(classifyError(new Error("connect ECONNREFUSED 127.0.0.1:9222")), "upstream");
+  assert.equal(classifyError(new Error("no such table: og_render_log")), "schema");
+  assert.equal(classifyError(new Error("no such table: og_hooks")), "schema");
+  assert.equal(classifyError(new Error("D1_ERROR: syntax error")), "schema");
+  assert.equal(classifyError(new Error("BROWSER binding missing")), "render");
+  assert.equal(classifyError(new Error("empty screenshot")), "render");
+  assert.equal(classifyError(new Error("something completely unexpected")), "render");
+  assert.equal(classifyError(null), "render");
 });
 
 test("admin share cards: require Access, set a hook by hand, regenerate, and purge stored PNGs", async () => {
