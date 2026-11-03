@@ -15,7 +15,7 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
-  recordWriteEvent,
+  reserveWriteEvent,
   UNKNOWN_IP_BUCKET,
 } from "../../_lib/reader.js";
 import { getSessionUser } from "../../_lib/auth.js";
@@ -47,13 +47,19 @@ export async function onRequestPost({ request, env }) {
   const user = await getSessionUser(request, db);
   const now = Date.now();
   // The reader cookie is client-controlled, so the per-reader count alone is
-  // bypassable by rotating or dropping the cookie. The per-IP half of
-  // isRateLimited() does the real work here; a missing CF-Connecting-IP
-  // header (local dev) folds into the shared UNKNOWN_IP_BUCKET, so the limit
-  // still applies. Both toggle directions are writes and share the budget:
-  // an unthrottled 'off' would let one client delete and rewrite forever.
+  // bypassable by rotating or dropping the cookie. The per-reader count is
+  // checked first (best effort); the per-IP budget is consumed atomically by
+  // reserveWriteEvent() below, BEFORE any work, so a concurrent burst cannot
+  // all read the same pre-burst count (aifocus-e2o). A missing
+  // CF-Connecting-IP header (local dev) folds into the shared
+  // UNKNOWN_IP_BUCKET, so the limit still applies. Both toggle directions are
+  // writes and share the budget: an unthrottled 'off' would let one client
+  // delete and rewrite forever.
   const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
-  if (await isRateLimited(db, reader.id, ipHash, now)) {
+  if (await isRateLimited(db, reader.id, now)) {
+    return json({ error: "Too many requests. Try again later." }, 429);
+  }
+  if (!(await reserveWriteEvent(db, ipHash, now))) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
   if (on) {
@@ -64,10 +70,10 @@ export async function onRequestPost({ request, env }) {
         .run();
     } catch (err) {
       if (!/no such column|has no column named/i.test(err?.message ?? "")) throw err;
-      // Defensive only: with migrations 0005/0006 applied this cannot fire —
-      // isRateLimited fails closed before we get here when the schema is
-      // behind. If it ever does fire, write without the ip_hash column and
-      // say so loudly.
+      // Defensive: reachable only in the 0005-missing-but-0006-present window
+      // (the reservation on write_events succeeds, this insert then finds no
+      // ip_hash column). With both migrations applied it cannot fire. Write
+      // without the ip_hash column and say so loudly.
       console.error("reaction write without ip_hash: reactions.ip_hash missing; apply D1 migration 0005");
       await db
         .prepare("INSERT OR IGNORE INTO reactions (post, kind, reader, user_id, created_at) VALUES (?, ?, ?, ?, ?)")
@@ -80,9 +86,9 @@ export async function onRequestPost({ request, env }) {
       .bind(post, kind, reader.id)
       .run();
   }
-  // One ledger row per accepted write, on or off: the per-IP limiter counts
-  // these, so a delete cannot erase the count the way live rows could.
-  await recordWriteEvent(db, ipHash, now);
+  // The ledger row was written by reserveWriteEvent() above: one row per
+  // accepted write, on or off, so a delete cannot erase the count the way
+  // live rows could.
 
   const row = await db
     .prepare("SELECT COUNT(*) AS n FROM reactions WHERE post = ? AND kind = ?")

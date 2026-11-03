@@ -27,7 +27,7 @@ import {
   loadPostText,
   hashIp,
   isRateLimited,
-  recordWriteEvent,
+  reserveWriteEvent,
   UNKNOWN_IP_BUCKET,
   screenText,
   publicAnnotation,
@@ -82,7 +82,7 @@ export async function onRequestPost({ request, env }) {
   // A missing client IP folds into the shared UNKNOWN_IP_BUCKET, so the
   // per-IP rate limit still applies.
   const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
-  if (await isRateLimited(db, reader.id, ipHash, now)) {
+  if (await isRateLimited(db, reader.id, now)) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
 
@@ -97,6 +97,16 @@ export async function onRequestPost({ request, env }) {
     if (existing) {
       return json({ annotation: publicAnnotation(existing, { mine: true }) });
     }
+  }
+
+  // Reserve the per-IP slot BEFORE any slow work. The AI-screening await used
+  // to sit between the limit check and the ledger insert, so a concurrent
+  // burst all read the same pre-burst count and was accepted wholesale
+  // (aifocus-e2o). The reservation is the accepted request's ledger row: the
+  // per-IP limiter counts these, so a deleted annotation cannot erase the
+  // count.
+  if (!(await reserveWriteEvent(db, ipHash, now))) {
+    return json({ error: "Too many requests. Try again later." }, 429);
   }
 
   const screen = needsBody ? await screenText(env, [exact, body].filter(Boolean).join("\n\n")) : null;
@@ -128,9 +138,6 @@ export async function onRequestPost({ request, env }) {
       row.body, row.author_name, row.user_id, row.status, row.screen, row.ip_hash, row.created_at,
     )
     .run();
-  // One ledger row per accepted write: the per-IP limiter counts these, so a
-  // deleted annotation cannot erase the count.
-  await recordWriteEvent(db, ipHash, now);
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};
   const shaped = publicAnnotation(
