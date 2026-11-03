@@ -9,7 +9,7 @@
 #      This one reads the OUTPUT, not the change: a link can be wrong in a way no diff shows,
 #      which is how aifocus-8mx shipped a live 404 through a green gate.
 #   5. the published stats document is in sync with its sources
-#      (python3 tools/stats/build.py --check; ~0.23 s measured cold, aifocus-3wi).
+#      (python3 tools/stats/build.py --check; measured cold in tools/check.conf, aifocus-3wi).
 #      This one also reads the committed data, not the change: the checker used to false-fail
 #      daily (aifocus-6xz) and an unrun check is the same as no check.
 #
