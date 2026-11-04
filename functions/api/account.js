@@ -8,7 +8,7 @@
 // Rows written before signing in carry only the anonymous reader cookie and
 // are not included.
 
-import { getSessionUser, listIdentities, publicUser } from "../_lib/auth.js";
+import { getSessionUser, listIdentities, publicUser, clearSessionCookie } from "../_lib/auth.js";
 import { configuredProviders } from "../_lib/providers/index.js";
 import { json } from "../_lib/reader.js";
 
@@ -58,4 +58,46 @@ export async function onRequestGet({ request, env }) {
     counts,
     limitPerKind: LIMIT_PER_KIND,
   });
+}
+
+// DELETE /api/account
+//
+// Erase the signed-in account: everything written under it, the sign-in methods
+// linked to it, its sessions, any in-flight link flow and the account row
+// itself. Hard delete - there is no soft-delete window or archive, and nothing
+// is retained for attribution, because the rows that carried the attribution
+// are the rows being deleted. Rows written before signing in carry only the
+// anonymous reader cookie (no user_id), so they are not part of the account and
+// are left alone; other readers' rows are never in scope.
+export async function onRequestDelete({ request, env }) {
+  const db = env?.READER_DB;
+  if (!db) return json({ error: "Accounts are not available" }, 503);
+  const user = await getSessionUser(request, db);
+  if (!user) return json({ error: "Not signed in" }, 401);
+
+  let results;
+  try {
+    results = await db.batch([
+      db.prepare("DELETE FROM annotations WHERE user_id = ?").bind(user.id),
+      db.prepare("DELETE FROM reactions WHERE user_id = ?").bind(user.id),
+      db.prepare("DELETE FROM identities WHERE user_id = ?").bind(user.id),
+      db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id),
+      db.prepare("DELETE FROM oauth_states WHERE link_user_id = ?").bind(user.id),
+      db.prepare("DELETE FROM users WHERE id = ?").bind(user.id),
+    ]);
+  } catch (err) {
+    // Partial failure is possible in a batch, so say so rather than reporting a
+    // delete that may not have happened. The account can be deleted again; the
+    // statements are idempotent.
+    console.error("account delete failed", err?.message || err);
+    return json({ error: "Could not delete the account. Please try again." }, 503);
+  }
+
+  const deleted = {
+    annotations: results[0]?.meta?.changes ?? results[0]?.changes ?? 0,
+    reactions: results[1]?.meta?.changes ?? results[1]?.changes ?? 0,
+    identities: results[2]?.meta?.changes ?? results[2]?.changes ?? 0,
+    sessions: results[3]?.meta?.changes ?? results[3]?.changes ?? 0,
+  };
+  return json({ deleted }, 200, { "Set-Cookie": clearSessionCookie() });
 }

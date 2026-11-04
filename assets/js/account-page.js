@@ -204,6 +204,24 @@ const load = async () => {
   if (statusEl.textContent === "Loading…") statusEl.textContent = "";
 };
 
+const deleteAccount = async (button) => {
+  if (!confirm("Delete your account? This removes your profile, the sign-in methods linked to it and everything you wrote under it. It cannot be undone.")) return;
+  button.disabled = true;
+  try {
+    const result = await api("/api/account", { method: "DELETE" });
+    const { annotations = 0, reactions = 0, identities = 0 } = result.deleted || {};
+    items = [];
+    counts = {};
+    signedIn.hidden = true;
+    await showSignedOut();
+    statusEl.textContent = `Account deleted: ${annotations} item${annotations === 1 ? "" : "s"}, `
+      + `${reactions} reaction${reactions === 1 ? "" : "s"} and ${identities} sign-in method${identities === 1 ? "" : "s"} removed.`;
+  } catch (err) {
+    button.disabled = false;
+    statusEl.textContent = `Could not delete the account: ${err.message}`;
+  }
+};
+
 for (const button of filters) {
   button.addEventListener("click", () => {
     filter = button.dataset.filter;
@@ -211,6 +229,8 @@ for (const button of filters) {
     renderActivity();
   });
 }
+
+document.querySelector("#account-delete")?.addEventListener("click", (event) => deleteAccount(event.currentTarget));
 
 const signinResult = takeSignInResult();
 if (signinResult) statusEl.textContent = signinResult;

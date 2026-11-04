@@ -54,6 +54,14 @@
       </div>
       <ul class="account-list" id="account-activity"></ul>
     </section>
+    <section aria-labelledby="account-delete-heading">
+      <h2 id="account-delete-heading">Delete this account</h2>
+      <p class="account-meta" id="account-delete-note">Deleting removes your profile, the sign-in methods linked to it,
+        and every note, comment, highlight and reaction written under it. Nothing is kept: there is no
+        archive or soft-delete window. Written before you signed in, reactions and highlights belong to
+        this browser rather than the account, and they are not touched.</p>
+      <p><button type="button" id="account-delete">Delete my account</button></p>
+    </section>
   </div>
 </section>
 {{- with resources.Get "js/account-page.js" }}
