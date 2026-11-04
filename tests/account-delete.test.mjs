@@ -150,3 +150,27 @@ test("it deletes the account's own rows and nothing else", async () => {
     1,
   );
 });
+
+test("reading the account never deletes anything", async () => {
+  // Erasure is only reachable through DELETE: a prefetch, a crawler or a stray
+  // link that GETs /api/account must leave every row in place.
+  const env = makeEnv();
+  const { ana } = await seed(env);
+  for (let i = 0; i < 3; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const res = await getAccount({ request: req("/api/account", { session: ana.session }), env });
+    assert.equal(res.status, 200);
+  }
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM users WHERE id = ?", ana.user.id), 1);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM annotations WHERE user_id = ?", ana.user.id), 1);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?", ana.user.id), 1);
+});
+
+test("a second delete after the first is refused, not repeated", async () => {
+  const env = makeEnv();
+  const { ana } = await seed(env);
+  const first = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
+  assert.equal(first.status, 200);
+  const second = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
+  assert.equal(second.status, 401);
+});

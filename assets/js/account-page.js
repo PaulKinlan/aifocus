@@ -204,9 +204,22 @@ const load = async () => {
   if (statusEl.textContent === "Loading…") statusEl.textContent = "";
 };
 
+// Erasure needs an explicit, typed confirmation - not a single click and not a
+// link - so a stray click or an entrained agent cannot delete an account. The
+// button stays disabled until the reader types the word.
+const DELETE_WORD = "delete";
+const deleteConfirmInput = document.querySelector("#account-delete-confirm");
+const deleteButton = document.querySelector("#account-delete");
+
+const syncDeleteButton = () => {
+  if (!deleteConfirmInput || !deleteButton) return;
+  deleteButton.disabled = deleteConfirmInput.value.trim().toLowerCase() !== DELETE_WORD;
+};
+
 const deleteAccount = async (button) => {
-  if (!confirm("Delete your account? This removes your profile, the sign-in methods linked to it and everything you wrote under it. It cannot be undone.")) return;
+  if (!deleteConfirmInput || deleteConfirmInput.value.trim().toLowerCase() !== DELETE_WORD) return;
   button.disabled = true;
+  if (deleteConfirmInput) deleteConfirmInput.disabled = true;
   try {
     const result = await api("/api/account", { method: "DELETE" });
     const { annotations = 0, reactions = 0, identities = 0 } = result.deleted || {};
@@ -217,10 +230,27 @@ const deleteAccount = async (button) => {
     statusEl.textContent = `Account deleted: ${annotations} item${annotations === 1 ? "" : "s"}, `
       + `${reactions} reaction${reactions === 1 ? "" : "s"} and ${identities} sign-in method${identities === 1 ? "" : "s"} removed.`;
   } catch (err) {
-    button.disabled = false;
+    // Keep the account usable after a failure: re-enable only after the reader
+    // retypes the word, so a retry is still deliberate.
+    if (deleteConfirmInput) {
+      deleteConfirmInput.disabled = false;
+      deleteConfirmInput.value = "";
+    }
+    syncDeleteButton();
     statusEl.textContent = `Could not delete the account: ${err.message}`;
   }
 };
+
+if (deleteConfirmInput) {
+  deleteConfirmInput.addEventListener("input", syncDeleteButton);
+  // Enter in the field only submits once the word matches, via the button.
+  deleteConfirmInput.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    if (deleteButton && !deleteButton.disabled) deleteButton.click();
+  });
+}
+syncDeleteButton();
 
 for (const button of filters) {
   button.addEventListener("click", () => {
@@ -230,7 +260,7 @@ for (const button of filters) {
   });
 }
 
-document.querySelector("#account-delete")?.addEventListener("click", (event) => deleteAccount(event.currentTarget));
+deleteButton?.addEventListener("click", (event) => deleteAccount(event.currentTarget));
 
 const signinResult = takeSignInResult();
 if (signinResult) statusEl.textContent = signinResult;
