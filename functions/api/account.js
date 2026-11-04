@@ -8,7 +8,7 @@
 // Rows written before signing in carry only the anonymous reader cookie and
 // are not included.
 
-import { getSessionUser, listIdentities, publicUser } from "../_lib/auth.js";
+import { getSessionUser, listIdentities, publicUser, clearSessionCookie } from "../_lib/auth.js";
 import { configuredProviders } from "../_lib/providers/index.js";
 import { json } from "../_lib/reader.js";
 
@@ -58,4 +58,60 @@ export async function onRequestGet({ request, env }) {
     counts,
     limitPerKind: LIMIT_PER_KIND,
   });
+}
+
+// --- Erasure policy -------------------------------------------------------
+//
+// POLICY: hard delete, scoped to the account. Everything keyed to the account
+// goes, including the rows that carried the attribution, so nothing is retained
+// for attribution and there is no soft-delete window or archive. Rows written
+// before signing in carry only the anonymous reader cookie (`user_id IS NULL`),
+// are not part of the account, and are left alone.
+//
+// This function is the whole policy. To switch to anonymise-tombstone - keep
+// the discussion but stop identifying the author - replace ONLY the last two
+// statements with an UPDATE that clears display_name/avatar_url/profile_url and
+// sets status = 'blocked', keep the identities/sessions/oauth_states deletes
+// (they are the sign-in surface, not attribution), and decide deliberately
+// whether annotations become `UPDATE annotations SET user_id = NULL, body =
+// NULL` (thread keeps its shape) or stay deleted. Nothing outside this function
+// assumes a hard delete: the caller only reports the change counts.
+const erasureStatements = (db, userId) => [
+  db.prepare("DELETE FROM annotations WHERE user_id = ?").bind(userId),
+  db.prepare("DELETE FROM reactions WHERE user_id = ?").bind(userId),
+  db.prepare("DELETE FROM identities WHERE user_id = ?").bind(userId),
+  db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId),
+  db.prepare("DELETE FROM oauth_states WHERE link_user_id = ?").bind(userId),
+  db.prepare("DELETE FROM users WHERE id = ?").bind(userId),
+];
+
+// DELETE /api/account
+//
+// Erase the signed-in account through the policy above. Erasure is only ever a
+// DELETE: the GET handler reads and never writes, so a prefetch, a crawler or a
+// stray link cannot delete an account.
+export async function onRequestDelete({ request, env }) {
+  const db = env?.READER_DB;
+  if (!db) return json({ error: "Accounts are not available" }, 503);
+  const user = await getSessionUser(request, db);
+  if (!user) return json({ error: "Not signed in" }, 401);
+
+  let results;
+  try {
+    results = await db.batch(erasureStatements(db, user.id));
+  } catch (err) {
+    // Partial failure is possible in a batch, so say so rather than reporting a
+    // delete that may not have happened. The account can be deleted again; the
+    // statements are idempotent.
+    console.error("account delete failed", err?.message || err);
+    return json({ error: "Could not delete the account. Please try again." }, 503);
+  }
+
+  const deleted = {
+    annotations: results[0]?.meta?.changes ?? results[0]?.changes ?? 0,
+    reactions: results[1]?.meta?.changes ?? results[1]?.changes ?? 0,
+    identities: results[2]?.meta?.changes ?? results[2]?.changes ?? 0,
+    sessions: results[3]?.meta?.changes ?? results[3]?.changes ?? 0,
+  };
+  return json({ deleted }, 200, { "Set-Cookie": clearSessionCookie() });
 }

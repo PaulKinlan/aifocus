@@ -142,17 +142,30 @@ export async function onRequestPost({ request, env }) {
     ip_hash: ipHash,
     created_at: now,
   };
-  await db
+  // The account can be erased while this request is in flight: getSessionUser()
+  // above ran before the DELETE committed and nothing else re-checks it. The
+  // insert is therefore conditional on the account row still existing, in the
+  // same statement, so an erasure that lands mid-request cannot be followed by
+  // a row carrying the deleted account's id, name and content (aifocus-z2j0).
+  const insert = await db
     .prepare(
       `INSERT INTO annotations
         (id, post, reader, type, quote_exact, quote_prefix, quote_suffix, body, author_name, user_id, status, screen, ip_hash, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14
+       WHERE ?10 IS NULL OR EXISTS (SELECT 1 FROM users WHERE id = ?10)`,
     )
     .bind(
       row.id, row.post, row.reader, row.type, row.quote_exact, row.quote_prefix, row.quote_suffix,
       row.body, row.author_name, row.user_id, row.status, row.screen, row.ip_hash, row.created_at,
     )
     .run();
+  const inserted = insert?.meta?.changes ?? insert?.changes ?? 0;
+  if (inserted === 0) {
+    // No row written and this was a signed-in write: the account was erased
+    // between the session check and here, so the request is no longer signed
+    // in. Report that instead of a phantom annotation.
+    return json({ error: "Not signed in" }, 401);
+  }
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};
   const shaped = publicAnnotation(

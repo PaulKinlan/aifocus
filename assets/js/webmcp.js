@@ -4,6 +4,7 @@
 // Registers tools on navigator.modelContext so MCP-capable agents running
 // in the browser can contact Paul and explore the article catalogue.
 
+import { articleFetchPath, findArticle } from "./article-url.js";
 import { loadArticleIndex, searchSite } from "./site-search.js";
 
 const OWNER_EMAIL = "paul@aifoc.us";
@@ -142,9 +143,10 @@ const registerTools = (modelContext) => {
   modelContext.registerTool({
     name: "read_article",
     description:
-      "Fetch the full text of an article on aifoc.us given its URL (from " +
-      "list_articles or search_articles). Returns the article's title and " +
-      "body as plain text.",
+      "Fetch the full text of a published article on aifoc.us given its URL " +
+      "(from list_articles or search_articles). Returns the article's title and " +
+      "body as plain text. Only URLs these tools return can be read; account, " +
+      "admin and API paths are not articles.",
     inputSchema: {
       type: "object",
       properties: {
@@ -183,8 +185,33 @@ const registerTools = (modelContext) => {
           `read_article only reads articles on ${window.location.origin}.`,
         );
       }
-      const res = await fetch(resolved.toString(), {
+      // A matching origin is not enough: this fetch is same-origin and carries
+      // the reader's session cookie, so /api/account and /admin/ would return
+      // private data to the agent. Only the essays in /index.json - the same
+      // list list_articles and search_articles hand out - may be read.
+      let index;
+      try {
+        index = await loadArticleIndex();
+      } catch {
+        throw new Error(
+          "The article index is unavailable, so read_article cannot confirm " +
+            "that URL is a published article. Try again in a moment.",
+        );
+      }
+      const article = findArticle(index?.articles, resolved.pathname);
+      const target = articleFetchPath(article);
+      if (!article || !target) {
+        throw new Error(
+          `read_article only reads published articles on ${window.location.origin}; ` +
+            `${resolved.pathname.slice(0, 200)} is not one. Use list_articles or ` +
+            "search_articles for URLs.",
+        );
+      }
+      const res = await fetch(new URL(target, window.location.origin).toString(), {
         headers: { Accept: "text/html" },
+        // The page is public, so the request rides no cookie even if a path
+        // ever gets past the check above.
+        credentials: "omit",
       });
       if (!res.ok) {
         throw new Error(`Failed to fetch article: HTTP ${res.status}`);

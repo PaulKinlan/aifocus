@@ -24,6 +24,11 @@ export const LIMITS = {
   // client IP (no CF-Connecting-IP header) shares one bucket, so a missing
   // IP never means "no limit".
   writesPerHour: 30,
+  // Reader-state reads allowed per client IP in a rolling hour, counted in the
+  // append-only read_events ledger (migration 0009). Generous on purpose: a
+  // reader has to open 600 post pages in an hour to trip it, while an
+  // anonymous loop that used to drive unbounded D1 queries now stops at 600.
+  readsPerHour: 600,
 };
 
 export function json(body, status = 200, extraHeaders = {}) {
@@ -235,6 +240,82 @@ export async function reserveWriteEvent(db, ipHash, now = Date.now()) {
       console.error("rate-limit fail-closed: write reservation failed", err);
     }
     return false;
+  }
+}
+
+// Pre-migration fallback for the read budget. Until migration 0009 is applied
+// the D1 ledger does not exist, and an unmetered fallback is exactly the hole
+// the limiter closes (aifocus-s9o: 605 same-IP reads, 605 accepted). A per-IP
+// counter in this isolate's memory stands in instead. It is best effort - each
+// isolate has its own map and isolates are short-lived - which is the same
+// class of bound as the per-reader half of the write budget, but a loop in one
+// isolate is capped rather than unbounded, and the log line still names the
+// migration.
+const memoryReads = new Map();
+const MEMORY_BUDGET_WINDOW_MS = 60 * 60 * 1000;
+const MEMORY_BUDGET_MAX_KEYS = 5000;
+let warnedMissingLedger = false;
+
+const memoryReadAllowed = (key, now) => {
+  let entry = memoryReads.get(key);
+  if (!entry || now - entry.start >= MEMORY_BUDGET_WINDOW_MS) {
+    if (!entry && memoryReads.size >= MEMORY_BUDGET_MAX_KEYS) {
+      // A full map must not become a memory leak: drop expired windows first,
+      // and the oldest key if every window is still live. A dropped key only
+      // restarts its window.
+      for (const [otherKey, other] of memoryReads) {
+        if (now - other.start >= MEMORY_BUDGET_WINDOW_MS) memoryReads.delete(otherKey);
+      }
+      if (memoryReads.size >= MEMORY_BUDGET_MAX_KEYS) {
+        memoryReads.delete(memoryReads.keys().next().value);
+      }
+    }
+    entry = { start: now, count: 0 };
+    memoryReads.set(key, entry);
+  }
+  entry.count += 1;
+  return entry.count <= LIMITS.readsPerHour;
+};
+
+// Atomically reserve one reader-state read per client IP. The conditional
+// INSERT is the limiter itself, so a concurrent burst cannot all read the same
+// pre-burst count and slip through. Returns "ok" (reserved), "limited" (over
+// budget, DENY) or "error" (the storage failed, and the caller fails closed).
+//
+// Unlike the write path, a MISSING table does not deny the read: refusing reads
+// would take reactions, notes and comments off every post until an operator
+// runs one migration command, and this repo has no deploy gate to enforce the
+// order. It is still capped - by the per-isolate counter above - so a
+// pre-migration deployment is bounded rather than unmetered (aifocus-s9o).
+export async function reserveReadEvent(db, ipHash, now = Date.now()) {
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    // One round trip: reserve only if under the cap, and prune expired rows
+    // (the window looks back 60 minutes, so anything older than two is dead
+    // weight; created_at is indexed for exactly this DELETE).
+    const results = await db.batch([
+      db.prepare(
+        `INSERT INTO read_events (ip_hash, created_at)
+         SELECT ?1, ?2
+         WHERE (SELECT COUNT(*) FROM read_events WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+      ).bind(key, now, now - 60 * 60 * 1000, LIMITS.readsPerHour),
+      db.prepare("DELETE FROM read_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
+    ]);
+    const changes = results[0]?.meta?.changes ?? results[0]?.changes ?? 0;
+    return changes > 0 ? "ok" : "limited";
+  } catch (err) {
+    if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
+      if (!warnedMissingLedger) {
+        warnedMissingLedger = true;
+        console.error(
+          "reader reads capped in-process: read_events missing; apply D1 migration 0009 " +
+            "(the cap is per isolate until then)",
+        );
+      }
+      return memoryReadAllowed(key, now) ? "ok" : "limited";
+    }
+    console.error("rate-limit fail-closed: read reservation failed", err);
+    return "error";
   }
 }
 

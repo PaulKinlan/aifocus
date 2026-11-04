@@ -9,6 +9,7 @@
 // block they quote (see renderMarginNotes); those elements are marked
 // data-reader-ui and skipped by the text index.
 
+import { quotePatternFor } from "./quote-pattern.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const section = document.querySelector("#reader");
@@ -86,8 +87,6 @@ const offsetOf = (index, node, offset) => {
   return entry ? entry.start : index.text.length;
 };
 
-const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 const similarity = (a, b) => {
   const x = a.replace(/\s+/g, " ").trim();
   const y = b.replace(/\s+/g, " ").trim();
@@ -100,9 +99,11 @@ const similarity = (a, b) => {
 // quote occurs more than once, the occurrence whose surrounding text best
 // matches the stored prefix and suffix wins.
 const findRange = (index, quote) => {
-  const words = quote.exact.trim().split(/\s+/).map(escapeRegExp);
-  if (words.length === 0 || !words[0]) return null;
-  const pattern = new RegExp(words.join("\\s+"), "g");
+  const pattern = quotePatternFor(quote.exact);
+  if (!pattern) return null;
+  // matchAll works from a copy, but reset anyway so the shared pattern cannot
+  // carry a stale position into the next note.
+  pattern.lastIndex = 0;
   let best = null;
   for (const match of index.text.matchAll(pattern)) {
     const before = index.text.slice(Math.max(0, match.index - 64), match.index);
@@ -303,13 +304,15 @@ const renderMarginNotes = () => {
     if (!groups.has(block)) groups.set(block, []);
     groups.get(block).push(note);
   }
-  const marginMode = wideEnough() ? "wide" : "narrow";
-  content.classList.toggle("reader-has-margin-notes", marginMode === "wide");
+  // Read the available space before the class write below: measuring after it
+  // would make the toggle itself force a layout.
+  const wide = wideEnough();
+  content.classList.toggle("reader-has-margin-notes", wide);
   // Notes arrive in creation order; lay them out top to bottom so the overlap
   // adjustment only ever pushes an aside down past the one above it.
   const ordered = [...groups].sort(([a], [b]) =>
     a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
-  let lastBottom = -Infinity;
+  const asides = [];
   for (const [block, notes] of ordered) {
     const aside = document.createElement("aside");
     aside.className = "reader-margin-notes";
@@ -322,16 +325,30 @@ const renderMarginNotes = () => {
     list.append(...notes.map(renderMarginNote));
     details.append(summary, list);
     aside.append(details);
-    if (marginMode === "wide") {
+    if (wide) {
       details.open = true;
       block.before(aside);
-      // Keep stacked notes on neighbouring blocks from overlapping.
-      const top = aside.offsetTop;
-      if (top < lastBottom + 8) aside.style.marginTop = `${lastBottom + 8 - top}px`;
-      lastBottom = aside.offsetTop + aside.offsetHeight;
+      asides.push(aside);
     } else {
       block.after(aside);
     }
+  }
+  if (!wide) return;
+  // Keep stacked notes on neighbouring blocks from overlapping. Reading each
+  // aside's position as it is inserted made every note force its own layout;
+  // the inserts are writes, so all the geometry is read in one pass (the first
+  // read flushes layout once and the rest are cached) before the offsets are
+  // written back. Each aside is absolutely positioned, so moving one does not
+  // move the next, and the offsets stay the same as when they were interleaved.
+  const boxes = asides.map((aside) => ({ aside, top: aside.offsetTop, height: aside.offsetHeight }));
+  let lastBottom = -Infinity;
+  for (const { aside, top, height } of boxes) {
+    let start = top;
+    if (top < lastBottom + 8) {
+      aside.style.marginTop = `${lastBottom + 8 - top}px`;
+      start = lastBottom + 8;
+    }
+    lastBottom = start + height;
   }
 };
 
