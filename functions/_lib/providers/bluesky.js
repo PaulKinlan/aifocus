@@ -306,15 +306,11 @@ export async function complete({ origin, params, verifier, data, request, fetchI
       }
     }
   }
-  if (!dpopKey && data?.dpopKey) {
-    dpopKey = data.dpopKey;
-  }
   if (!dpopKey) throw new Error("bluesky: missing DPoP key");
+  if (!data?.dpopThumbprint) throw new Error("bluesky: missing DPoP thumbprint in state");
 
-  if (data?.dpopThumbprint) {
-    const thumbprint = await dpopThumbprint(dpopKey);
-    if (thumbprint !== data.dpopThumbprint) throw new Error("bluesky: DPoP key thumbprint mismatch");
-  }
+  const thumbprint = await dpopThumbprint(dpopKey);
+  if (thumbprint !== data.dpopThumbprint) throw new Error("bluesky: DPoP key thumbprint mismatch");
 
   const { body } = await dpopPost(
     data.tokenEndpoint,

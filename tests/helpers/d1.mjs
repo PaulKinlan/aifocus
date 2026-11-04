@@ -37,9 +37,16 @@ export function createD1(migrations) {
       return new Statement(db, sql);
     },
     async batch(statements) {
-      const out = [];
-      for (const s of statements) out.push(await s.exec());
-      return out;
+      db.exec("BEGIN");
+      try {
+        const out = [];
+        for (const s of statements) out.push(await s.exec());
+        db.exec("COMMIT");
+        return out;
+      } catch (err) {
+        db.exec("ROLLBACK");
+        throw err;
+      }
     },
   };
 }
