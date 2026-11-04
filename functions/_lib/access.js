@@ -121,7 +121,3 @@ export function adminActionStmt(db, { id = randomId(), actor, action, subject, b
     .bind(id, actor, action, subject, beforeStr, afterStr, now);
 }
 
-export async function recordAdminAction(db, params) {
-  return adminActionStmt(db, params).run();
-}
-
