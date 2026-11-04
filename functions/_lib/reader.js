@@ -243,7 +243,7 @@ export async function reserveWriteEvent(db, ipHash, now = Date.now()) {
   }
 }
 
-// Pre-migration fallback for the read budget. Until migration 0009 is applied
+// Pre-migration fallback for the read budget. Until migration 0010 is applied
 // the D1 ledger does not exist, and an unmetered fallback is exactly the hole
 // the limiter closes (aifocus-s9o: 605 same-IP reads, 605 accepted). A per-IP
 // counter in this isolate's memory stands in instead. It is best effort - each
@@ -308,7 +308,7 @@ export async function reserveReadEvent(db, ipHash, now = Date.now()) {
       if (!warnedMissingLedger) {
         warnedMissingLedger = true;
         console.error(
-          "reader reads capped in-process: read_events missing; apply D1 migration 0009 " +
+          "reader reads capped in-process: read_events missing; apply D1 migration 0010 " +
             "(the cap is per isolate until then)",
         );
       }
