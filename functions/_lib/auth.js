@@ -250,6 +250,33 @@ export function withParam(path, key, value) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+// Provider error text is logged, never reflected to the reader: a token-endpoint
+// error can carry an authorization code, a callback URL with its query, or
+// provider-supplied text containing newlines (aifocus-e3x). Keep the event and a
+// short, single-line, credential-free summary - enough to tell a network
+// failure from a rejected grant, not enough to log a secret.
+const LOG_SUMMARY_MAX = 160;
+const LOG_REDACTIONS = [
+  // Query strings and fragments carry codes, state and tokens.
+  [/[?#][^\s"'<>]*/g, " ?[redacted]"],
+  // The same names can appear without a URL, e.g. in a provider error string.
+  [/\b(code|state|access_token|refresh_token|id_token|client_secret|nonce|request_uri)=[^\s&"'<>]+/gi, "$1=[redacted]"],
+  // Authorization header shapes that reach us through an error message.
+  [/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/=:-]+/gi, "$1 [redacted]"],
+  // Control characters, including the newlines that would forge a log line.
+  [/[\u0000-\u001f\u007f]+/g, " "],
+];
+
+export function providerErrorSummary(err) {
+  const raw = typeof err?.message === "string" ? err.message : String(err ?? "");
+  let text = raw;
+  for (const [pattern, replacement] of LOG_REDACTIONS) text = text.replace(pattern, replacement);
+  text = text.replace(/\s+/g, " ").trim();
+  if (text.length > LOG_SUMMARY_MAX) text = `${text.slice(0, LOG_SUMMARY_MAX)}…`;
+  const name = typeof err?.name === "string" && err.name !== "Error" ? `${err.name}: ` : "";
+  return `${name}${text}`;
+}
+
 export function redirect(location, cookies = []) {
   const headers = new Headers({ Location: location, "Cache-Control": "no-store" });
   for (const c of cookies) headers.append("Set-Cookie", c);

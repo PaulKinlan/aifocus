@@ -167,6 +167,54 @@ test("callback: declined consent and provider errors send the reader back with a
   assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM users").get().n, 0);
 });
 
+test("provider errors are logged with credentials and URLs removed, on one line", async () => {
+  const { providerErrorSummary } = await import("../functions/_lib/auth.js");
+  // A provider's `error` field is untrusted text. Left unredacted it can carry
+  // the authorization code, the callback URL, a client secret and a newline
+  // that forges a fresh log line (aifocus-e3x).
+  const raw = new Error(
+    "invalid_grant: code=gho_SECRETCODE at https://aifoc.us/api/auth/callback/github?code=gho_SECRETCODE&state=abc\nclient_secret=SEKRET Authorization: Bearer gho_ALSO_SECRET",
+  );
+  raw.name = "ProviderError";
+  const summary = providerErrorSummary(raw);
+  assert.ok(!summary.includes("gho_SECRETCODE"), summary);
+  assert.ok(!summary.includes("SEKRET"), summary);
+  assert.ok(!summary.includes("gho_ALSO_SECRET"), summary);
+  assert.ok(!summary.includes("code=") || summary.includes("code=[redacted]"), "only redacted key=value forms survive");
+  assert.ok(summary.startsWith("ProviderError: invalid_grant"), "the classification survives");
+  assert.ok(!summary.includes("\n"), "newlines never reach the log line");
+  assert.ok(summary.length <= 200, "the summary is capped");
+  // Short, harmless messages stay readable - the point is redaction, not silence.
+  assert.equal(providerErrorSummary(new Error("github: /user HTTP 502")), "github: /user HTTP 502");
+  assert.equal(providerErrorSummary(undefined), "");
+});
+
+test("a failing token exchange logs no code, secret or URL while the reader still sees a reason", async () => {
+  const env = makeEnv();
+  const logged = [];
+  const realError = console.error;
+  console.error = (...args) => logged.push(args.map((a) => String(a)).join(" "));
+  try {
+    await withFetch(
+      () => json({ error: "bad_verification_code code=gho_LEAKED https://github.com/login/oauth/access_token?code=gho_LEAKED&client_secret=ghs_LEAKED" }),
+      async () => {
+        const { res } = await signInVia(env, "github");
+        assert.equal(res.headers.get("Location"), "/setting-goals/?signin=failed", "the reader is still told it failed");
+      },
+    );
+  } finally {
+    console.error = realError;
+  }
+  assert.equal(logged.length, 1, "exactly one failure line");
+  const [line] = logged;
+  assert.match(line, /^auth callback github failed /, line);
+  assert.ok(!line.includes("gho_LEAKED"), line);
+  assert.ok(!line.includes("ghs_LEAKED"), line);
+  assert.ok(!line.includes("?code"), "the query string is replaced, not trimmed");
+  assert.match(line, /\?\[redacted\]/, line);
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM sessions").get().n, 0, "no session was created");
+});
+
 test("unconfigured providers are not offered and cannot start", async () => {
   const env = makeEnv({ X_CLIENT_ID: "", GITHUB_CLIENT_SECRET: "" });
   const res = await start({ request: req("/api/auth/start/x?return=/p/"), env, params: { provider: "x" } });
