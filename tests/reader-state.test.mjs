@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 import { createD1 } from "./helpers/d1.mjs";
 import { onRequestGet as getState } from "../functions/api/reader/state.js";
-import { READER_COOKIE, LIMITS, UNKNOWN_IP_BUCKET, hashIp } from "../functions/_lib/reader.js";
+import { READER_COOKIE, LIMITS, UNKNOWN_IP_BUCKET, hashIp, reserveReadEvent } from "../functions/_lib/reader.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
 const migration = (name) => fileURLToPath(new URL(`../migrations/${name}`, import.meta.url));
@@ -128,20 +128,57 @@ test("the ledger prunes rows older than the two-hour window", async () => {
   assert.equal(Number(stale.n), 0);
 });
 
-test("before migration 0009 lands the endpoint still serves and says so", async () => {
+test("before migration 0009 the endpoint serves but is still capped in-process", async () => {
   const env = makeEnv(MIGRATIONS_PRE_LEDGER);
+  const ip = "198.51.100.42"; // this test's own window in the fallback map
   const errors = [];
   const original = console.error;
   console.error = (...args) => errors.push(args.join(" "));
+  const statuses = [];
   try {
-    const res = await call(env, { ip: "203.0.113.7" });
-    assert.equal(res.status, 200);
-    assert.ok((await res.json()).reactions);
+    for (let i = 0; i < LIMITS.readsPerHour + 5; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      statuses.push((await call(env, { ip })).status);
+    }
+    // A different IP is unaffected by that window.
+    statuses.push((await call(env, { ip: "198.51.100.43" })).status);
   } finally {
     console.error = original;
   }
+  assert.equal(statuses.filter((s) => s === 200).length, LIMITS.readsPerHour + 1);
+  assert.equal(statuses.filter((s) => s === 429).length, 5);
+  assert.ok(statuses.at(-1) === 200, "another IP keeps reading");
   assert.ok(
     errors.some((line) => /read_events missing; apply D1 migration 0009/.test(line)),
     `expected the pre-migration warning, got: ${JSON.stringify(errors)}`,
   );
+  // The warning is per isolate, not per request.
+  assert.equal(errors.length, 1);
+});
+
+test("an over-budget pre-migration window recovers after the hour", async () => {
+  // reserveReadEvent takes `now`, so the fallback window can be moved forward
+  // without waiting.
+  const env = makeEnv(MIGRATIONS_PRE_LEDGER);
+  const ip = "198.51.100.44";
+  const start = Date.now();
+  for (let i = 0; i < LIMITS.readsPerHour; i += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    assert.equal(await reserveReadEvent(env.READER_DB, await hashIp(env.READER_DB, ip), start), "ok");
+  }
+  const hash = await hashIp(env.READER_DB, ip);
+  assert.equal(await reserveReadEvent(env.READER_DB, hash, start + 1000), "limited");
+  assert.equal(await reserveReadEvent(env.READER_DB, hash, start + 60 * 60 * 1000 + 1), "ok");
+});
+
+test("a storage failure on the reservation fails closed, it does not serve unmetered", async () => {
+  const broken = {
+    prepare: () => ({ bind: () => ({ first: async () => ({ value: "salt" }), run: async () => ({}) }) }),
+    batch: async () => {
+      throw new Error("database is down");
+    },
+  };
+  const res = await getState({ request: req({ ip: "203.0.113.90" }), env: { READER_DB: broken } });
+  assert.equal(res.status, 503);
+  assert.match((await res.json()).error, /Reader state is unavailable/);
 });

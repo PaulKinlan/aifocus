@@ -243,15 +243,50 @@ export async function reserveWriteEvent(db, ipHash, now = Date.now()) {
   }
 }
 
+// Pre-migration fallback for the read budget. Until migration 0009 is applied
+// the D1 ledger does not exist, and an unmetered fallback is exactly the hole
+// the limiter closes (aifocus-s9o: 605 same-IP reads, 605 accepted). A per-IP
+// counter in this isolate's memory stands in instead. It is best effort - each
+// isolate has its own map and isolates are short-lived - which is the same
+// class of bound as the per-reader half of the write budget, but a loop in one
+// isolate is capped rather than unbounded, and the log line still names the
+// migration.
+const memoryReads = new Map();
+const MEMORY_BUDGET_WINDOW_MS = 60 * 60 * 1000;
+const MEMORY_BUDGET_MAX_KEYS = 5000;
+let warnedMissingLedger = false;
+
+const memoryReadAllowed = (key, now) => {
+  let entry = memoryReads.get(key);
+  if (!entry || now - entry.start >= MEMORY_BUDGET_WINDOW_MS) {
+    if (!entry && memoryReads.size >= MEMORY_BUDGET_MAX_KEYS) {
+      // A full map must not become a memory leak: drop expired windows first,
+      // and the oldest key if every window is still live. A dropped key only
+      // restarts its window.
+      for (const [otherKey, other] of memoryReads) {
+        if (now - other.start >= MEMORY_BUDGET_WINDOW_MS) memoryReads.delete(otherKey);
+      }
+      if (memoryReads.size >= MEMORY_BUDGET_MAX_KEYS) {
+        memoryReads.delete(memoryReads.keys().next().value);
+      }
+    }
+    entry = { start: now, count: 0 };
+    memoryReads.set(key, entry);
+  }
+  entry.count += 1;
+  return entry.count <= LIMITS.readsPerHour;
+};
+
 // Atomically reserve one reader-state read per client IP. The conditional
 // INSERT is the limiter itself, so a concurrent burst cannot all read the same
 // pre-burst count and slip through. Returns "ok" (reserved), "limited" (over
 // budget, DENY) or "error" (the storage failed, and the caller fails closed).
 //
-// Unlike the write path, a MISSING table is not a deny: a read is not a
-// security boundary, and refusing reads would take reactions, notes and
-// comments off every post until an operator runs one command. The cap starts
-// working the moment the migration lands, and the log line says so until then.
+// Unlike the write path, a MISSING table does not deny the read: refusing reads
+// would take reactions, notes and comments off every post until an operator
+// runs one migration command, and this repo has no deploy gate to enforce the
+// order. It is still capped - by the per-isolate counter above - so a
+// pre-migration deployment is bounded rather than unmetered (aifocus-s9o).
 export async function reserveReadEvent(db, ipHash, now = Date.now()) {
   const key = ipHash ?? UNKNOWN_IP_BUCKET;
   try {
@@ -270,8 +305,14 @@ export async function reserveReadEvent(db, ipHash, now = Date.now()) {
     return changes > 0 ? "ok" : "limited";
   } catch (err) {
     if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
-      console.error("reader reads unmetered: read_events missing; apply D1 migration 0009");
-      return "ok";
+      if (!warnedMissingLedger) {
+        warnedMissingLedger = true;
+        console.error(
+          "reader reads capped in-process: read_events missing; apply D1 migration 0009 " +
+            "(the cap is per isolate until then)",
+        );
+      }
+      return memoryReadAllowed(key, now) ? "ok" : "limited";
     }
     console.error("rate-limit fail-closed: read reservation failed", err);
     return "error";
