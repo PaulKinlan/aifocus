@@ -38,11 +38,6 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Invalid post or reaction" }, 400);
   }
 
-  const url = new URL(request.url);
-  if ((await loadPostText(env, url.origin, post)) === null) {
-    return json({ error: "Unknown post" }, 404);
-  }
-
   const reader = getReader(request);
   const user = await getSessionUser(request, db);
   const now = Date.now();
@@ -55,12 +50,21 @@ export async function onRequestPost({ request, env }) {
   // UNKNOWN_IP_BUCKET, so the limit still applies. Both toggle directions are
   // writes and share the budget: an unthrottled 'off' would let one client
   // delete and rewrite forever.
+  //
+  // "Before any work" includes the post-text fetch: the ASSETS fetch used to
+  // run above this block, so a burst could all pay for it and only then be
+  // counted (aifocus-80p, the same ordering hole as the annotation path).
   const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
   if (await isRateLimited(db, reader.id, now)) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
   if (!(await reserveWriteEvent(db, ipHash, now))) {
     return json({ error: "Too many requests. Try again later." }, 429);
+  }
+
+  const url = new URL(request.url);
+  if ((await loadPostText(env, url.origin, post)) === null) {
+    return json({ error: "Unknown post" }, 404);
   }
   if (on) {
     try {

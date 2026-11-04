@@ -70,13 +70,6 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Write something first" }, 400);
   }
 
-  const url = new URL(request.url);
-  const postText = await loadPostText(env, url.origin, post);
-  if (postText === null) return json({ error: "Unknown post" }, 404);
-  if (needsQuote && !looseText(postText).includes(looseText(exact))) {
-    return json({ error: "That passage is not in this post" }, 400);
-  }
-
   const reader = getReader(request);
   const now = Date.now();
   // A missing client IP folds into the shared UNKNOWN_IP_BUCKET, so the
@@ -86,7 +79,39 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
 
-  // One highlight per passage per reader.
+  // Reserve the per-IP slot BEFORE any slow work. Everything above this line
+  // is local CPU (JSON parse, path/type/quote-length checks) or a single-row
+  // read; everything below it is work an anonymous caller can make us repeat
+  // - an ASSETS fetch plus parse of the whole post, and on the note and
+  // comment paths a Workers AI screening call. That fetch used to run before
+  // the reservation, so a burst could all pay for it and only then be counted
+  // (aifocus-80p; the AI-screening await had the same shape, fixed at the
+  // other end of this handler for aifocus-e2o).
+  //
+  // The slot is NOT refunded when the post is unknown or the quote is not in
+  // the post: a refund would let the same caller pay the fetch cost, get the
+  // slot back, and repeat - which is the hole this reservation exists to
+  // close. A rejected attempt is a spent attempt.
+  //
+  // The reservation is the request's ledger row: the per-IP limiter counts
+  // these, so a deleted annotation cannot erase the count.
+  if (!(await reserveWriteEvent(db, ipHash, now))) {
+    return json({ error: "Too many requests. Try again later." }, 429);
+  }
+
+  const url = new URL(request.url);
+  const postText = await loadPostText(env, url.origin, post);
+  if (postText === null) return json({ error: "Unknown post" }, 404);
+  if (needsQuote && !looseText(postText).includes(looseText(exact))) {
+    return json({ error: "That passage is not in this post" }, 400);
+  }
+
+  // One highlight per passage per reader. This read sits AFTER the post and
+  // quote checks on purpose: answering a duplicate before them let a repeat
+  // request return a stored highlight for a post that is no longer published,
+  // or for a quote that no longer matches the post, without validation
+  // (aifocus-1wz). A duplicate therefore spends its slot and one post fetch -
+  // the price of not letting the fast path skip the endpoint's invariants.
   if (type === "highlight") {
     const existing = await db
       .prepare(
@@ -97,16 +122,6 @@ export async function onRequestPost({ request, env }) {
     if (existing) {
       return json({ annotation: publicAnnotation(existing, { mine: true }) });
     }
-  }
-
-  // Reserve the per-IP slot BEFORE any slow work. The AI-screening await used
-  // to sit between the limit check and the ledger insert, so a concurrent
-  // burst all read the same pre-burst count and was accepted wholesale
-  // (aifocus-e2o). The reservation is the accepted request's ledger row: the
-  // per-IP limiter counts these, so a deleted annotation cannot erase the
-  // count.
-  if (!(await reserveWriteEvent(db, ipHash, now))) {
-    return json({ error: "Too many requests. Try again later." }, 429);
   }
 
   const screen = needsBody ? await screenText(env, [exact, body].filter(Boolean).join("\n\n")) : null;
