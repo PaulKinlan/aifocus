@@ -397,6 +397,51 @@ test("admin share cards: require Access, set a hook by hand, regenerate, and pur
   }
 });
 
+test("admin og: batch atomicity rolls back hook mutation if audit logging fails (aifocus-gsch, aifocus-xtk1)", async () => {
+  resetAccessCache();
+  const { privateKey, publicKey } = await crypto.subtle.generateKey(
+    { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" },
+    true,
+    ["sign", "verify"],
+  );
+  const TEAM = "team.cloudflareaccess.com";
+  const AUD = "aud-tag";
+  const jwk = { ...(await crypto.subtle.exportKey("jwk", publicKey)), kid: "k1", alg: "RS256" };
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString("base64url");
+  const input = `${b64({ alg: "RS256", kid: "k1" })}.${b64({ aud: AUD, iss: `https://${TEAM}`, exp: Math.floor(Date.now() / 1000) + 600, email: "paul@aifoc.us" })}`;
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, new TextEncoder().encode(input));
+  const auth = { "Cf-Access-Jwt-Assertion": `${input}.${Buffer.from(sig).toString("base64url")}` };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ keys: [jwk] }));
+
+  try {
+    const { env } = makeEnv();
+    Object.assign(env, { ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD });
+    const req = (body) =>
+      new Request(`${ORIGIN}/api/admin/og`, {
+        method: "POST",
+        headers: { Origin: ORIGIN, ...auth, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+    // Simulate an audit table failure by creating an aborting trigger on admin_actions
+    env.READER_DB.raw.exec(
+      "CREATE TRIGGER audit_fail BEFORE INSERT ON admin_actions BEGIN SELECT RAISE(ABORT, 'audit insert failed'); END;"
+    );
+
+    await assert.rejects(
+      async () => postOg({ request: req({ path: PAGE, hook: "Hook that should roll back" }), env }),
+      /audit insert failed/
+    );
+
+    // Verify that the og_hooks row was rolled back and does not exist
+    const hookRow = env.READER_DB.raw.prepare("SELECT * FROM og_hooks WHERE path = ?").get(PAGE);
+    assert.equal(hookRow, undefined, "og_hooks row must not persist when batch fails");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test("concurrent requests for the same uncached card use single-flight and only render once", async () => {
   const { env, calls } = makeEnv({
     ai: async () => {
