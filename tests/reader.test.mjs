@@ -25,7 +25,7 @@ import {
 import { verifyAccess, resetAccessCache } from "../functions/_lib/access.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
-const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0006_write_events.sql"].map((f) =>
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0006_write_events.sql", "0009_admin_actions.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
 );
 // The tree as a functions deploy can find it: before migration 0005 ran.
@@ -504,6 +504,12 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     assert.equal((await postTrust({ request: req("/api/admin/trust", { method: "POST", body: trustBody, headers: auth }), env })).status, 200);
     const trusted = await (await getTrust({ request: req("/api/admin/trust", { headers: auth }), env })).json();
     assert.deepEqual(trusted.users.map((u) => u.id), [user.id]);
+    const trustAction = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE action = 'trust'").get();
+    assert.ok(trustAction);
+    assert.equal(trustAction.actor, "paul@aifoc.us");
+    assert.equal(trustAction.subject, user.id);
+    assert.deepEqual(JSON.parse(trustAction.before), { trusted: false });
+    assert.deepEqual(JSON.parse(trustAction.after), { trusted: true });
 
     // A trusted account's next comment is published straight away, unless
     // the safety screen flags it.
@@ -518,6 +524,12 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     res = await postModerate({ request: req("/api/admin/moderate", { method: "POST", body: { ids: [flagged.id], status: "spam" }, headers: auth }), env });
     assert.equal((await res.json()).updated, 1);
     assert.equal(env.READER_DB.raw.prepare("SELECT trusted FROM users WHERE id = ?").get(user.id).trusted, 0);
+    const untrustAction = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE action = 'untrust'").get();
+    assert.ok(untrustAction);
+    assert.equal(untrustAction.actor, "paul@aifoc.us");
+    assert.equal(untrustAction.subject, user.id);
+    assert.deepEqual(JSON.parse(untrustAction.before), { trusted: true });
+    assert.deepEqual(JSON.parse(untrustAction.after), { trusted: false });
 
     const queueAfter = await (await getQueue({ request: req("/api/admin/queue?status=spam", { headers: auth }), env })).json();
     assert.equal(queueAfter.items[0].author_name, "BO");
@@ -538,6 +550,12 @@ test("admin queue and moderation: require Access, then approve makes a note publ
     assert.equal((await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" } }), env })).status, 403);
     res = await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" }, headers: auth }), env });
     assert.equal(res.status, 200);
+    const blockAction = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE action = 'block'").get();
+    assert.ok(blockAction);
+    assert.equal(blockAction.actor, "paul@aifoc.us");
+    assert.equal(blockAction.subject, user.id);
+    assert.deepEqual(JSON.parse(blockAction.before), { status: "active", trusted: false });
+    assert.deepEqual(JSON.parse(blockAction.after), { status: "blocked", trusted: false });
     res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "blocked" }, reader: READER_A, session }), env });
     assert.equal(res.status, 401);
   } finally {
@@ -575,4 +593,54 @@ test("account: lists the signed-in account's own items across posts, with status
   assert.equal(more.counts.highlight, more.limitPerKind + 5);
   assert.equal(more.annotations.filter((a) => a.type === "highlight").length, more.limitPerKind);
   assert.ok(more.annotations.some((a) => a.type === "comment"));
+});
+
+test("admin actions audit: privileged trust and block mutations are attributed (aifocus-f7r)", async () => {
+  resetAccessCache();
+  const { sign, fetchImpl } = await makeSigner();
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = fetchImpl;
+  try {
+    const env = { ...makeEnv(), ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD };
+    const token = await sign({ aud: AUD, iss: `https://${TEAM}`, exp: Math.floor(Date.now() / 1000) + 600, email: "mod@example.com" });
+    const auth = { "Cf-Access-Jwt-Assertion": token };
+
+    const { user } = await signIn(env, "target-user");
+
+    // 1. Trust an account -> records admin_action
+    const resTrust = await postTrust({ request: req("/api/admin/trust", { method: "POST", body: { userId: user.id, trusted: true }, headers: auth }), env });
+    assert.equal(resTrust.status, 200);
+
+    // 2. Untrust an account directly -> records untrust admin_action
+    const resUntrust = await postTrust({ request: req("/api/admin/trust", { method: "POST", body: { userId: user.id, trusted: false }, headers: auth }), env });
+    assert.equal(resUntrust.status, 200);
+
+    // 3. Block account -> records block admin_action
+    const resBlock = await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "blocked" }, headers: auth }), env });
+    assert.equal(resBlock.status, 200);
+
+    // 4. Unblock account -> records unblock admin_action
+    const resUnblock = await postAccounts({ request: req("/api/admin/accounts", { method: "POST", body: { userId: user.id, status: "active" }, headers: auth }), env });
+    assert.equal(resUnblock.status, 200);
+
+    // 5. Invalid user -> 404, no action recorded
+    const res404 = await postTrust({ request: req("/api/admin/trust", { method: "POST", body: { userId: "0".repeat(22), trusted: true }, headers: auth }), env });
+    assert.equal(res404.status, 404);
+
+    // Verify audit rows
+    const rows = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE subject = ? ORDER BY created_at ASC").all(user.id);
+    assert.equal(rows.length, 4);
+    assert.deepEqual(rows.map((r) => r.action), ["trust", "untrust", "block", "unblock"]);
+    assert.ok(rows.every((r) => r.actor === "mod@example.com"));
+    assert.deepEqual(JSON.parse(rows[0].before), { trusted: false });
+    assert.deepEqual(JSON.parse(rows[0].after), { trusted: true });
+    assert.deepEqual(JSON.parse(rows[1].before), { trusted: true });
+    assert.deepEqual(JSON.parse(rows[1].after), { trusted: false });
+    assert.deepEqual(JSON.parse(rows[2].before), { status: "active", trusted: false });
+    assert.deepEqual(JSON.parse(rows[2].after), { status: "blocked", trusted: false });
+    assert.deepEqual(JSON.parse(rows[3].before), { status: "blocked", trusted: false });
+    assert.deepEqual(JSON.parse(rows[3].after), { status: "active", trusted: false });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });

@@ -8,7 +8,7 @@
 // Cloudflare Access identity (see functions/_lib/access.js).
 
 import { json, isSameOrigin } from "../../_lib/reader.js";
-import { verifyAccess } from "../../_lib/access.js";
+import { verifyAccess, adminActionStmt } from "../../_lib/access.js";
 
 const USER_ID_RE = /^[A-Za-z0-9_-]{22}$/;
 
@@ -44,10 +44,20 @@ export async function onRequestPost({ request, env }) {
   if (typeof userId !== "string" || !USER_ID_RE.test(userId) || typeof input?.trusted !== "boolean") {
     return json({ error: "Invalid userId or trusted" }, 400);
   }
-  const result = await db
-    .prepare("UPDATE users SET trusted = ?, updated_at = ? WHERE id = ?")
-    .bind(input.trusted ? 1 : 0, Date.now(), userId)
-    .run();
-  if (!result?.meta?.changes) return json({ error: "No such account" }, 404);
+  const current = await db.prepare("SELECT trusted FROM users WHERE id = ?").bind(userId).first();
+  if (!current) return json({ error: "No such account" }, 404);
+
+  const now = Date.now();
+  await db.batch([
+    db.prepare("UPDATE users SET trusted = ?, updated_at = ? WHERE id = ?").bind(input.trusted ? 1 : 0, now, userId),
+    adminActionStmt(db, {
+      actor: who.email,
+      action: input.trusted ? "trust" : "untrust",
+      subject: userId,
+      before: { trusted: Boolean(current.trusted) },
+      after: { trusted: input.trusted },
+      now,
+    }),
+  ]);
   return json({ userId, trusted: input.trusted });
 }

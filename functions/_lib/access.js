@@ -102,3 +102,26 @@ export async function verifyAccess(request, env, { fetchImpl = fetch, now = Date
 
   return { email: payload.email || payload.sub || "unknown" };
 }
+
+export function randomId() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Records an attributable privileged admin action in the admin_actions audit table.
+export function adminActionStmt(db, { id = randomId(), actor, action, subject, before = null, after = null, now = Date.now() }) {
+  const beforeStr = before === null ? null : typeof before === "string" ? before : JSON.stringify(before);
+  const afterStr = after === null ? null : typeof after === "string" ? after : JSON.stringify(after);
+  return db
+    .prepare(
+      `INSERT INTO admin_actions (id, actor, action, subject, before, after, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(id, actor, action, subject, beforeStr, afterStr, now);
+}
+
+export async function recordAdminAction(db, params) {
+  return adminActionStmt(db, params).run();
+}
+
