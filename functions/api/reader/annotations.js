@@ -79,21 +79,6 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Too many requests. Try again later." }, 429);
   }
 
-  // One highlight per passage per reader. A repeated highlight answers with
-  // the existing row and spends no slot, so this read stays on the cheap side
-  // of the reservation.
-  if (type === "highlight") {
-    const existing = await db
-      .prepare(
-        "SELECT * FROM annotations WHERE post = ? AND reader = ? AND type = 'highlight' AND quote_exact = ?",
-      )
-      .bind(post, reader.id, exact)
-      .first();
-    if (existing) {
-      return json({ annotation: publicAnnotation(existing, { mine: true }) });
-    }
-  }
-
   // Reserve the per-IP slot BEFORE any slow work. Everything above this line
   // is local CPU (JSON parse, path/type/quote-length checks) or a single-row
   // read; everything below it is work an anonymous caller can make us repeat
@@ -119,6 +104,24 @@ export async function onRequestPost({ request, env }) {
   if (postText === null) return json({ error: "Unknown post" }, 404);
   if (needsQuote && !looseText(postText).includes(looseText(exact))) {
     return json({ error: "That passage is not in this post" }, 400);
+  }
+
+  // One highlight per passage per reader. This read sits AFTER the post and
+  // quote checks on purpose: answering a duplicate before them let a repeat
+  // request return a stored highlight for a post that is no longer published,
+  // or for a quote that no longer matches the post, without validation
+  // (aifocus-1wz). A duplicate therefore spends its slot and one post fetch -
+  // the price of not letting the fast path skip the endpoint's invariants.
+  if (type === "highlight") {
+    const existing = await db
+      .prepare(
+        "SELECT * FROM annotations WHERE post = ? AND reader = ? AND type = 'highlight' AND quote_exact = ?",
+      )
+      .bind(post, reader.id, exact)
+      .first();
+    if (existing) {
+      return json({ annotation: publicAnnotation(existing, { mine: true }) });
+    }
   }
 
   const screen = needsBody ? await screenText(env, [exact, body].filter(Boolean).join("\n\n")) : null;

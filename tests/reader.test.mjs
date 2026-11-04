@@ -626,3 +626,34 @@ test("reactions: an unknown post still spends a write slot before the post fetch
   assert.equal(counts.fetches, LIMITS.writesPerHour);
   assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions").get().n, 0);
 });
+
+test("a duplicate highlight still passes post and quote validation (aifocus-1wz)", async () => {
+  const env = makeEnv();
+  const quote = { exact: "reverse engineering" };
+  const send = () => postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "highlight", quote }, reader: READER_A }), env });
+
+  assert.equal((await send()).status, 201, "the first highlight is stored");
+
+  // The post is no longer published. A repeat must not answer with the stored
+  // row: validation against the current post is the endpoint's contract, and
+  // the duplicate shortcut used to return the old row before checking anything.
+  const withIndex = env.ASSETS.fetch;
+  env.ASSETS.fetch = async (request) => {
+    if (new URL(request.url).pathname === "/index.json") return new Response(JSON.stringify({ articles: [] }));
+    return withIndex(request);
+  };
+  assert.equal((await send()).status, 404, "unpublished post is refused even for a duplicate");
+
+  // The post changed so the quote no longer occurs in it.
+  env.ASSETS.fetch = async (request) => {
+    const path = new URL(request.url).pathname;
+    if (path === "/index.json") {
+      return new Response(JSON.stringify({ articles: [{ url: `${ORIGIN}${POST}`, title: "setting goals" }] }));
+    }
+    if (path === POST) {
+      return new Response('<html><body><article class=h-entry><div class=e-content><p>rewritten entirely</p></div></article></body></html>');
+    }
+    return new Response("not found", { status: 404 });
+  };
+  assert.equal((await send()).status, 400, "a quote that no longer matches is refused");
+});
