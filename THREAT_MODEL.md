@@ -57,8 +57,8 @@ anyone who can read a backup, a replica or a debug session".
 |:---|:---|:---|
 | Cross-origin writes | `isSameOrigin()` requires the `Origin` header to equal the request's own origin; a request with no `Origin` is rejected, not allowed | `functions/_lib/reader.js`, called by every POST handler |
 | CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `_lib/reader.js`, `_lib/auth.js` |
-| Metering | a per-IP budget consumed **before** the work it pays for: `write_events` for reader writes (30/hour, the conditional INSERT is the limiter), `search_log` for search (30/hour), `ask_log` for ask (20/hour), an in-flight reservation for share-card renders | `_lib/reader.js reserveWriteEvent`, `api/search.js reserveSearchSlot`, `api/ask.js`, `_lib/og.js` |
-| Metering failure mode | every limiter **fails closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work | `_lib/reader.js`, `api/search.js`, `api/ask.js` |
+| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), ask (20/hour) and share-card renders. The write and search meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `_lib/reader.js reserveWriteEvent`, `api/search.js reserveSearchSlot`, `api/ask.js`, `_lib/og.js` |
+| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `_lib/reader.js reserveWriteEvent`, `api/search.js reserveSearchSlot`, `api/auth/start/[provider].js reserveAuthStartSlot` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `api/ask.js` |
 | Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `api/admin/*` modules), and there is no prefix-level guard | `_lib/access.js`, `api/admin/*` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `_lib/auth.js` |
@@ -81,7 +81,7 @@ can be checked rather than re-argued.
 
 1. **Redirect destination derived from a path expression, and the "post-auth
    redirect does not enforce same-origin" variant** (`_middleware.js:252`).
-   `isValidLatestPostPath()` accepts only `^/(posts/)?[a-z0-9-]+/$`, and
+   `isValidLatestPostPath()` accepts only `/^\/(?:posts\/)?[a-z0-9][a-z0-9-]*\/$/i` (single segment, first character alphanumeric), and
    `new URL(path, url.origin)` cannot leave the origin for a value that starts
    with `/`. Re-opens if the destination ever comes from a query parameter, a
    header, or the contents of `latest-post.txt` beyond that regex.
