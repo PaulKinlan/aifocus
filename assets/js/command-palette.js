@@ -64,12 +64,21 @@ const build = () => {
   list = el("div", { id: "palette-list", class: "palette-list", role: "listbox", "aria-label": "Results and actions" });
   answerView = el("section", { class: "palette-answer", "aria-label": "Answer", hidden: true });
   hint = el("p", { class: "palette-hint", role: "status", "aria-live": "polite" });
-  const closeButton = el("button", { type: "button", class: "palette-close", "aria-label": "Close", text: "Esc" });
-  closeButton.addEventListener("click", () => dialog.close());
+  const closeButton = el("button", {
+    type: "button",
+    class: "palette-close",
+    "aria-label": "Close",
+    text: "Esc",
+    commandfor: "command-palette-dialog",
+    command: "close",
+  });
+  if (!("command" in HTMLButtonElement.prototype)) {
+    closeButton.addEventListener("click", () => dialog.close());
+  }
 
   dialog = el(
     "dialog",
-    { class: "palette", "aria-label": "Command palette", closedby: "any" },
+    { id: "command-palette-dialog", class: "palette", "aria-label": "Command palette", closedby: "any" },
     el("div", { class: "palette-field" }, input, closeButton),
     list,
     answerView,

@@ -26,6 +26,14 @@
   }
 }
 
+@view-transition {
+  navigation: auto;
+}
+
+html {
+  background-color: var(--background);
+}
+
 /* Visually hidden class */
 .visually-hidden {
   position: absolute;
@@ -593,6 +601,7 @@ footer {
   text-align: center; /* As per image */
   color: #000000;
   margin: 0; /* Remove default h1 margin */
+  view-transition-name: site-wordmark;
 }
 
 .site-navigation {
@@ -960,6 +969,12 @@ footer {
     transition: none !important;
     animation: none !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 
