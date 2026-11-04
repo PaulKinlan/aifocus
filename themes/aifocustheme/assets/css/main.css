@@ -976,6 +976,14 @@ footer {
   ::view-transition-new(*) {
     animation: none !important;
   }
+
+  /* Turning the navigation transition off is the stronger guarantee: it skips
+     the pseudo-element tree entirely instead of animating it to zero, so a
+     reduced-motion reader gets an instant swap even where an engine ignores the
+     animation override. */
+  @view-transition {
+    navigation: none;
+  }
 }
 
 @media (forced-colors: active) {

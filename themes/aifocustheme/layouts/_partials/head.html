@@ -59,6 +59,13 @@
 {{ end }}
 <meta name="theme-color" content="#fdfcf8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1c1a17" media="(prefers-color-scheme: dark)">
+{{/* Cross-document view transitions (main.css: @view-transition) animate the old
+     page into the new one. Until the new page's above-the-fold markup is parsed
+     the incoming snapshot can be blank, so hold rendering on the site wordmark,
+     which closes early in <header>. Deliberately not <main>: that closes after
+     the whole essay, and blocking there would stall the transition. Browsers
+     without rel=expect ignore the link. */}}
+<link rel="expect" href="#site-branding" blocking="render">
 <script type="speculationrules">
   {
     "prerender": [{ "where": { "href_matches": "/*" }, "eagerness": "moderate" }],
