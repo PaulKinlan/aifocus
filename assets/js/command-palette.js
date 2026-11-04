@@ -22,6 +22,10 @@ let answerView;
 let hint;
 let options = [];
 let activeIndex = -1;
+// The element that currently carries aria-selected="true". render() replaces
+// the option elements, so the element is what decides whether setActive has
+// anything to write, not the index it last ran with.
+let activeOption = null;
 let mode = "all"; // "all" or "ask"
 let savedRange = null;
 let groups = [];
@@ -208,9 +212,14 @@ const setActive = (index, { scroll = true } = {}) => {
   // While the answer view is shown the combobox is collapsed, so nothing in
   // the hidden list may become the active descendant.
   if (list.hidden) index = -1;
-  options[activeIndex]?.setAttribute("aria-selected", "false");
+  // pointermove fires continuously over a row and normally names the row that
+  // is already active; rewriting the same three attributes on every event was
+  // pure work.
+  if (index === activeIndex && options[index] === activeOption) return;
+  activeOption?.setAttribute("aria-selected", "false");
   activeIndex = index;
   const option = options[index];
+  activeOption = option ?? null;
   if (option) {
     option.setAttribute("aria-selected", "true");
     input.setAttribute("aria-activedescendant", option.id);
