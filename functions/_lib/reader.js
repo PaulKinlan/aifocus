@@ -24,6 +24,11 @@ export const LIMITS = {
   // client IP (no CF-Connecting-IP header) shares one bucket, so a missing
   // IP never means "no limit".
   writesPerHour: 30,
+  // Reader-state reads allowed per client IP in a rolling hour, counted in the
+  // append-only read_events ledger (migration 0009). Generous on purpose: a
+  // reader has to open 600 post pages in an hour to trip it, while an
+  // anonymous loop that used to drive unbounded D1 queries now stops at 600.
+  readsPerHour: 600,
 };
 
 export function json(body, status = 200, extraHeaders = {}) {
@@ -235,6 +240,41 @@ export async function reserveWriteEvent(db, ipHash, now = Date.now()) {
       console.error("rate-limit fail-closed: write reservation failed", err);
     }
     return false;
+  }
+}
+
+// Atomically reserve one reader-state read per client IP. The conditional
+// INSERT is the limiter itself, so a concurrent burst cannot all read the same
+// pre-burst count and slip through. Returns "ok" (reserved), "limited" (over
+// budget, DENY) or "error" (the storage failed, and the caller fails closed).
+//
+// Unlike the write path, a MISSING table is not a deny: a read is not a
+// security boundary, and refusing reads would take reactions, notes and
+// comments off every post until an operator runs one command. The cap starts
+// working the moment the migration lands, and the log line says so until then.
+export async function reserveReadEvent(db, ipHash, now = Date.now()) {
+  const key = ipHash ?? UNKNOWN_IP_BUCKET;
+  try {
+    // One round trip: reserve only if under the cap, and prune expired rows
+    // (the window looks back 60 minutes, so anything older than two is dead
+    // weight; created_at is indexed for exactly this DELETE).
+    const results = await db.batch([
+      db.prepare(
+        `INSERT INTO read_events (ip_hash, created_at)
+         SELECT ?1, ?2
+         WHERE (SELECT COUNT(*) FROM read_events WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+      ).bind(key, now, now - 60 * 60 * 1000, LIMITS.readsPerHour),
+      db.prepare("DELETE FROM read_events WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
+    ]);
+    const changes = results[0]?.meta?.changes ?? results[0]?.changes ?? 0;
+    return changes > 0 ? "ok" : "limited";
+  } catch (err) {
+    if (/no such table|no such column|has no column named/i.test(err?.message ?? "")) {
+      console.error("reader reads unmetered: read_events missing; apply D1 migration 0009");
+      return "ok";
+    }
+    console.error("rate-limit fail-closed: read reservation failed", err);
+    return "error";
   }
 }
 

@@ -13,6 +13,8 @@ import {
   normalizePostPath,
   looseText,
   publicAnnotation,
+  hashIp,
+  reserveReadEvent,
 } from "../../_lib/reader.js";
 import { getSessionUser, publicUser } from "../../_lib/auth.js";
 import { configuredProviders } from "../../_lib/providers/index.js";
@@ -22,8 +24,28 @@ export async function onRequestGet({ request, env }) {
   if (!db) return json({ error: "Reader features are not configured" }, 503);
 
   const url = new URL(request.url);
+  // Validate before spending anything: a junk post path must not consume the
+  // caller's read budget.
   const post = normalizePostPath(url.searchParams.get("post"));
   if (!post) return json({ error: "Missing or invalid post" }, 400);
+
+  // Every post page view lands here, and the batch below is three D1 queries
+  // with a 500-row annotations join, so an anonymous caller looping one slug
+  // used to drive it without limit. Reserve the read budget first, then do the
+  // work (aifocus-0cz).
+  let ipHash = null;
+  try {
+    ipHash = await hashIp(db, request.headers.get("CF-Connecting-IP"));
+  } catch (err) {
+    console.error("reader state: ip hash failed, using the shared bucket", err?.message || err);
+  }
+  const budget = await reserveReadEvent(db, ipHash);
+  if (budget === "limited") {
+    return json({ error: "Too many reader requests. Please try again later." }, 429);
+  }
+  if (budget === "error") {
+    return json({ error: "Reader state is unavailable. Please try again later." }, 503);
+  }
 
   const cookie = readCookie(request, READER_COOKIE);
   const reader = cookie && /^[0-9a-f]{32}$/.test(cookie) ? cookie : null;
@@ -77,6 +99,17 @@ export async function onRequestGet({ request, env }) {
     if (row.type === "comment") comments.push(publicAnnotation(row, { mine: isMine }));
   }
 
+  // A signed-out request with no reader cookie gets the same payload for every
+  // visitor of a post, so it may be reused briefly (aifocus-0cz: one page view
+  // should not be one D1 batch on every reload). Vary: Cookie stops a cached
+  // anonymous body from being served to a visitor whose own reactions, notes
+  // or comments would be in theirs. Anything tied to a reader session is
+  // personal and is never stored.
+  const anonymous = reader === null && user === null;
+  const cacheHeaders = anonymous
+    ? { "Cache-Control": "public, max-age=60, s-maxage=300", Vary: "Cookie" }
+    : { "Cache-Control": "no-store", Vary: "Cookie" };
+
   return json({
     post,
     reactions,
@@ -86,5 +119,5 @@ export async function onRequestGet({ request, env }) {
     comments,
     viewer: publicUser(user),
     providers: configuredProviders(env),
-  });
+  }, 200, cacheHeaders);
 }
