@@ -259,8 +259,11 @@ const LOG_SUMMARY_MAX = 160;
 const LOG_REDACTIONS = [
   // Query strings and fragments carry codes, state and tokens.
   [/[?#][^\s"'<>]*/g, " ?[redacted]"],
-  // The same names can appear without a URL, e.g. in a provider error string.
-  [/\b(code|state|access_token|refresh_token|id_token|client_secret|nonce|request_uri)=[^\s&"'<>]+/gi, "$1=[redacted]"],
+  // The same names can appear outside a URL, in every shape provider text takes:
+  // key=value, `key = value`, JSON `"key":"value"` and quoted values. The
+  // optional quotes and whitespace around `:`/`=` are what a plain key=value
+  // rule missed (aifocus-3s9).
+  [/\b(code|state|access_token|refresh_token|id_token|client_secret|nonce|request_uri|password)["']?\s*[:=]\s*["']?[^\s&"'<>]+["']?/gi, "$1=[redacted]"],
   // Authorization header shapes that reach us through an error message.
   [/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/=:-]+/gi, "$1 [redacted]"],
   // Control characters, including the newlines that would forge a log line.

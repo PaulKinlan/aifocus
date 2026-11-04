@@ -186,6 +186,23 @@ test("provider errors are logged with credentials and URLs removed, on one line"
   assert.ok(summary.length <= 200, "the summary is capped");
   // Short, harmless messages stay readable - the point is redaction, not silence.
   assert.equal(providerErrorSummary(new Error("github: /user HTTP 502")), "github: /user HTTP 502");
+
+  // Provider text is not a URL or a clean key=value: the same names arrive
+  // quoted, spaced, JSON-encoded and with a colon separator, and a value
+  // wrapped in quotes used to survive because the old pattern stopped at the
+  // quote (aifocus-3s9).
+  for (const raw of [
+    'invalid_grant client_secret="ghs_QUOTED_SECRET"',
+    "invalid_grant code = gho_SPACED_SECRET",
+    "invalid_grant code: gho_COLON_SECRET",
+    '{"error":"invalid_grant","code":"gho_JSON_SECRET","state":"st_STATE_SECRET"}',
+    "token exchange failed, access_token='at_QUOTED_SINGLE'",
+  ]) {
+    const out = providerErrorSummary(new Error(raw));
+    for (const secret of ["ghs_QUOTED_SECRET", "gho_SPACED_SECRET", "gho_COLON_SECRET", "gho_JSON_SECRET", "st_STATE_SECRET", "at_QUOTED_SINGLE"]) {
+      assert.ok(!out.includes(secret), `${secret} leaked from ${raw}: ${out}`);
+    }
+  }
   assert.equal(providerErrorSummary(undefined), "");
 });
 
