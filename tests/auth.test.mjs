@@ -14,7 +14,7 @@ import { onRequestGet as callback } from "../functions/api/auth/callback/[provid
 import { onRequestGet as me } from "../functions/api/auth/me.js";
 import { onRequestPost as logout } from "../functions/api/auth/logout.js";
 import { onRequestGet as clientMetadataRoute } from "../functions/api/auth/client-metadata.js";
-import { dpopProof, generateDpopKey, normalizeHandle } from "../functions/_lib/providers/bluesky.js";
+import { dpopProof, generateDpopKey, normalizeHandle, DPOP_COOKIE, dpopThumbprint } from "../functions/_lib/providers/bluesky.js";
 
 const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0008_auth_start_log.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
@@ -79,11 +79,12 @@ async function signInVia(env, provider, { cookies = {}, query = "", code = "c0de
   const begin = await start({ request: req(`/api/auth/start/${provider}?return=/setting-goals/${query}`, { cookies }), env, params: { provider } });
   assert.equal(begin.status, 302);
   const location = new URL(begin.headers.get("Location"));
-  const state = setCookies(begin)[STATE_COOKIE];
+  const startCookies = setCookies(begin);
+  const state = startCookies[STATE_COOKIE];
   assert.ok(state);
   const params = new URLSearchParams({ code, state, ...extraParams });
   const res = await callback({
-    request: req(`/api/auth/callback/${provider}?${params}`, { cookies: { ...cookies, [STATE_COOKIE]: state } }),
+    request: req(`/api/auth/callback/${provider}?${params}`, { cookies: { ...cookies, ...startCookies } }),
     env,
     params: { provider },
   });
@@ -322,8 +323,9 @@ function blueskyFetch({ tokenSub = DID, log = [], resolve, plcDoc } = {}) {
       assert.equal(form.get("scope"), "atproto");
       assert.equal(form.get("login_hint"), "ana.example.com");
       assert.ok(init.headers.DPoP);
-      if (!parNonceSent) {
-        parNonceSent = true;
+      const [, p] = init.headers.DPoP.split(".");
+      const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(p)));
+      if (!payload.nonce) {
         return json({ error: "use_dpop_nonce" }, { status: 400, headers: { "DPoP-Nonce": "nonce-1", "Content-Type": "application/json" } });
       }
       return json({ request_uri: "urn:ietf:params:oauth:request_uri:abc", expires_in: 60 }, { status: 201 });
@@ -353,6 +355,7 @@ test("Bluesky: handle -> PDS -> authorization server, PAR with DPoP nonce retry,
     assert.equal(location.searchParams.get("request_uri"), "urn:ietf:params:oauth:request_uri:abc");
     assert.equal(res.headers.get("Location"), "/setting-goals/#reader");
     const session = setCookies(res)[SESSION_COOKIE];
+    assert.equal(setCookies(res)[DPOP_COOKIE], "", "DPoP cookie is cleared on callback");
     const body = await (await me({ request: req("/api/auth/me", { cookies: { [SESSION_COOKIE]: session } }), env })).json();
     assert.equal(body.user.displayName, "Ana B");
     assert.equal(body.user.profileUrl, `https://bsky.app/profile/${DID}`);
@@ -361,6 +364,95 @@ test("Bluesky: handle -> PDS -> authorization server, PAR with DPoP nonce retry,
   assert.equal(log.filter((l) => l === `POST ${AS}/par`).length, 2, "PAR retried once with the nonce");
   const row = env.READER_DB.raw.prepare("SELECT provider_id FROM identities").get();
   assert.equal(row.provider_id, DID, "the DID, not the handle, identifies the account");
+});
+
+test("Bluesky: DPoP private key is held in cookie and not plaintext in oauth_states (aifocus-lsf)", async () => {
+  const env = makeEnv();
+  await withFetch(blueskyFetch(), async () => {
+    // 1. Begin auth flow
+    const begin = await start({
+      request: req("/api/auth/start/bluesky?return=/setting-goals/&handle=ana.example.com"),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(begin.status, 302);
+    const startCookies = setCookies(begin);
+    const state = startCookies[STATE_COOKIE];
+    const dpopCookieVal = startCookies[DPOP_COOKIE];
+    assert.ok(state, "state cookie set");
+    assert.ok(dpopCookieVal, "DPoP cookie set in start response");
+
+    // Inspect the Set-Cookie line for scoping attributes
+    const setCookieHeaders = begin.headers.getSetCookie();
+    const dpopLine = setCookieHeaders.find((h) => h.startsWith(`${DPOP_COOKIE}=`));
+    assert.ok(dpopLine, "Set-Cookie has DPoP cookie");
+    assert.match(dpopLine, /Path=\/api\/auth\/callback\/bluesky/i, "DPoP cookie scoped to callback path");
+    assert.match(dpopLine, /HttpOnly/i, "DPoP cookie is HttpOnly");
+    assert.match(dpopLine, /SameSite=Lax/i, "DPoP cookie is SameSite=Lax");
+
+    // Inspect oauth_states in D1 to verify no private key at rest
+    const row = env.READER_DB.raw.prepare("SELECT * FROM oauth_states WHERE state = ?").get(state);
+    assert.ok(row, "oauth_states row exists");
+    const data = JSON.parse(row.data);
+    assert.equal(data.dpopKey, undefined, "no dpopKey stored in oauth_states.data");
+    assert.equal(data.d, undefined, "no private key parameter stored in oauth_states.data");
+    assert.ok(data.dpopThumbprint, "public dpopThumbprint stored in oauth_states.data");
+
+    // Verify thumbprint of the cookie key matches data.dpopThumbprint
+    const b64urlDecode = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(s.length / 4) * 4, "=")), (c) => c.charCodeAt(0));
+    const parsedJwk = JSON.parse(new TextDecoder().decode(b64urlDecode(dpopCookieVal)));
+    assert.ok(parsedJwk.d, "cookie holds the private key");
+    assert.equal(await dpopThumbprint(parsedJwk), data.dpopThumbprint, "cookie thumbprint matches DB thumbprint");
+
+    // 2. Callback without DPoP cookie fails
+    const failResNoCookie = await callback({
+      request: req(`/api/auth/callback/bluesky?code=c0de&state=${state}&iss=${AS}`, {
+        cookies: { [STATE_COOKIE]: state },
+      }),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(failResNoCookie.headers.get("Location"), "/setting-goals/?signin=failed");
+    assert.equal(setCookies(failResNoCookie)[DPOP_COOKIE], "", "DPoP cookie cleared on failure");
+
+    // 3. Callback with mismatched/forged DPoP cookie fails
+    const begin2 = await start({
+      request: req("/api/auth/start/bluesky?return=/setting-goals/&handle=ana.example.com"),
+      env,
+      params: { provider: "bluesky" },
+    });
+    const state2 = setCookies(begin2)[STATE_COOKIE];
+    const otherKey = await generateDpopKey();
+    const enc = new TextEncoder();
+    const forgedCookie = base64url(enc.encode(JSON.stringify(otherKey)));
+    const failResForged = await callback({
+      request: req(`/api/auth/callback/bluesky?code=c0de&state=${state2}&iss=${AS}`, {
+        cookies: { [STATE_COOKIE]: state2, [DPOP_COOKIE]: forgedCookie },
+      }),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(failResForged.headers.get("Location"), "/setting-goals/?signin=failed");
+    assert.equal(setCookies(failResForged)[DPOP_COOKIE], "", "DPoP cookie cleared on failure");
+
+    // 4. Callback with correct cookie succeeds and clears cookie
+    const begin3 = await start({
+      request: req("/api/auth/start/bluesky?return=/setting-goals/&handle=ana.example.com"),
+      env,
+      params: { provider: "bluesky" },
+    });
+    const startCookies3 = setCookies(begin3);
+    const state3 = startCookies3[STATE_COOKIE];
+    const successRes = await callback({
+      request: req(`/api/auth/callback/bluesky?code=c0de&state=${state3}&iss=${AS}`, {
+        cookies: { ...startCookies3 },
+      }),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(successRes.headers.get("Location"), "/setting-goals/#reader");
+    assert.equal(setCookies(successRes)[DPOP_COOKIE], "", "DPoP cookie cleared on success");
+  });
 });
 
 test("Bluesky: a token for a different DID, or a wrong issuer, is refused", async () => {

@@ -60,20 +60,24 @@ export async function onRequestGet({ request, env, params }) {
   try {
     let location;
     let data = null;
+    let extraCookies = [];
     if (provider.begin) {
       // Bluesky: discovery and a pushed authorization request happen first,
       // and the state row carries the data the callback needs.
       const rawHandle = url.searchParams.get("handle");
       const handle = rawHandle ? normalizeHandle(rawHandle) : null;
       if (rawHandle && rawHandle.trim() && !handle) return redirect(withParam(returnTo, "signin", "bad-handle"));
-      ({ url: location, data } = await provider.begin({ origin: url.origin, handle, state, challenge }));
+      const started = await provider.begin({ origin: url.origin, handle, state, challenge });
+      location = started.url;
+      data = started.data;
+      if (started.cookies) extraCookies = started.cookies;
     } else {
       const redirectUri = `${url.origin}/api/auth/callback/${provider.id}`;
       location = provider.authorizeUrl({ env, redirectUri, state, challenge });
     }
     const current = await getSessionUser(request, db);
     await saveOAuthState(db, { state, provider: provider.id, verifier, returnTo, data, linkUserId: current?.id ?? null });
-    return redirect(location, [stateCookie(state)]);
+    return redirect(location, [stateCookie(state), ...extraCookies]);
   } catch (err) {
     console.error(`auth start ${provider.id} failed`, err?.message ?? err);
     return redirect(withParam(returnTo, "signin", "failed"));

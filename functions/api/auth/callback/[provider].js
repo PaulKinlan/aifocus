@@ -23,13 +23,14 @@ export async function onRequestGet({ request, env, params }) {
   const url = new URL(request.url);
   const provider = getProvider(params.provider);
   const db = env?.READER_DB;
+  const cleanup = provider?.cleanupCookies ? provider.cleanupCookies() : [];
   if (!provider || !provider.isConfigured(env) || !db) {
-    return redirect("/?signin=unavailable", [clearStateCookie()]);
+    return redirect("/?signin=unavailable", [clearStateCookie(), ...cleanup]);
   }
 
   const saved = await takeOAuthState(db, request, provider.id, url.searchParams.get("state"));
-  if (!saved) return redirect("/?signin=expired", [clearStateCookie()]);
-  const back = (reason) => redirect(withParam(saved.return_to, "signin", reason), [clearStateCookie()]);
+  if (!saved) return redirect("/?signin=expired", [clearStateCookie(), ...cleanup]);
+  const back = (reason) => redirect(withParam(saved.return_to, "signin", reason), [clearStateCookie(), ...cleanup]);
 
   // The reader declined on the provider's page.
   if (url.searchParams.get("error")) return back("cancelled");
@@ -42,6 +43,7 @@ export async function onRequestGet({ request, env, params }) {
       redirectUri: `${url.origin}/api/auth/callback/${provider.id}`,
       verifier: saved.verifier,
       data: saved.data,
+      request,
     });
     // Linking only applies while the same account is still signed in.
     const current = saved.link_user_id ? await getSessionUser(request, db) : null;
@@ -57,7 +59,7 @@ export async function onRequestGet({ request, env, params }) {
     const target = new URL(saved.return_to, url.origin);
     // Essays scroll to the reader section; /account/ stays at the top.
     if (!target.pathname.startsWith("/account/")) target.hash = "reader";
-    return redirect(`${target.pathname}${target.search}${target.hash}`, [clearStateCookie(), sessionCookie(token)]);
+    return redirect(`${target.pathname}${target.search}${target.hash}`, [clearStateCookie(), ...cleanup, sessionCookie(token)]);
   } catch (err) {
     console.error(`auth callback ${provider.id} failed`, err?.message ?? err);
     return back("failed");
