@@ -39,6 +39,60 @@ const askReq = (question, origin = ORIGIN, ip = "198.51.100.1") => {
   return new Request(`${ORIGIN}/api/ask`, { method: "POST", headers, body: JSON.stringify({ question }) });
 };
 
+test("ask: fails closed when READER_DB is unbound - no inference runs", async () => {
+  // aifocus-5ft: a missing binding must disable the billed endpoint, not
+  // serve it unmetered. Zero AI invocations, 503, short cache.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  delete env.READER_DB;
+  const res = await postAsk({ request: askReq("what is this essay about"), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 0, "the billed inference must not run without a binding");
+  assert.match(res.headers.get("Cache-Control") ?? "", /max-age=30/);
+  const body = await res.json();
+  assert.match(body.error, /unavailable/i);
+});
+
+test("ask: fails closed when the rate-limit query errors", async () => {
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  env.READER_DB = {
+    prepare: () => {
+      throw new Error("d1 unavailable");
+    },
+  };
+  const res = await postAsk({ request: askReq("what is this essay about"), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 0, "a limiter error must not open the billed path");
+});
+
+test("ask: ALLOW_UNMETERED_ASK=1 keeps local/dev working without a binding", async () => {
+  // The deliberate dev escape hatch: explicit flag, not an accident of a
+  // missing binding.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "Goals give the agent an end state.", data: [{ filename: "aifoc.us/setting-goals/", score: 0.9, content: [{ text: "goal text" }] }] };
+    },
+  });
+  delete env.READER_DB;
+  env.ALLOW_UNMETERED_ASK = "1";
+  const res = await postAsk({ request: askReq("what is this essay about"), env });
+  assert.equal(res.status, 200);
+  assert.equal(calls, 1);
+});
+
 test("ask: returns the generated answer with essay sources", async () => {
   const calls = [];
   const env = makeEnv({

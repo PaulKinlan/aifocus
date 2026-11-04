@@ -16,7 +16,6 @@ const ASKS_PER_HOUR = 20;
 const CHUNK_COUNT = 8;
 const MAX_SOURCES = 5;
 const CACHE_SECONDS = 60 * 60;
-
 export const SYSTEM_PROMPT = [
   "You answer questions about essays published on aifoc.us by Paul Kinlan.",
   "Use only the retrieved excerpts provided as context.",
@@ -25,8 +24,15 @@ export const SYSTEM_PROMPT = [
   "Do not include URLs; the page lists the source essays separately.",
 ].join(" ");
 
+// This endpoint spends money per question, so the limiter must NEVER answer
+// "allowed" when it cannot run: a missing READER_DB binding or a failed
+// query THROWS, and the caller maps that to 503 before any inference runs
+// (aifocus-5ft - it used to return false and serve billed inference
+// unmetered). A local/dev run that wants the endpoint without D1 sets
+// ALLOW_UNMETERED_ASK=1 explicitly in the environment; the missing binding
+// alone is never an excuse.
 async function isRateLimited(db, ipHash, now) {
-  if (!db) return false;
+  if (!db) throw new Error("READER_DB unavailable for ask rate limiting");
   const row = await db
     .prepare("SELECT COUNT(*) AS n FROM ask_log WHERE ip_hash = ? AND created_at > ?")
     .bind(ipHash, now - 60 * 60 * 1000)
@@ -60,13 +66,33 @@ export async function onRequestPost(context) {
 
   const db = env?.READER_DB;
   const now = Date.now();
-  // A missing client IP shares one coarse bucket rather than escaping the
-  // limit; ask_log.ip_hash is NOT NULL, so the bucket is a sentinel value.
-  const ipHash = db
-    ? (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET
-    : null;
-  if (await isRateLimited(db, ipHash, now)) {
-    return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429);
+  let ipHash = UNKNOWN_IP_BUCKET;
+
+  // Fail closed before the billed call: a missing binding or a limiter error
+  // is a deployment problem, answered 503 with a short cache, not an
+  // unmetered inference path (aifocus-5ft; mirrors /api/search). hashIp is
+  // inside the guard too: a binding that cannot serve the salt lookup cannot
+  // serve the limiter either. An explicit ALLOW_UNMETERED_ASK=1 keeps
+  // local/dev working - deliberately, loudly, and never by accident of a
+  // missing binding.
+  if (!db && ["1", "true", "yes"].includes(String(env?.ALLOW_UNMETERED_ASK ?? "").toLowerCase())) {
+    console.error("ask: running WITHOUT its rate limiter (READER_DB missing, ALLOW_UNMETERED_ASK set) - billed inference, dev only");
+  } else {
+    try {
+      // A missing client IP shares one coarse bucket rather than escaping
+      // the limit; ask_log.ip_hash is NOT NULL, so the bucket is a sentinel.
+      ipHash = (db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null) ?? UNKNOWN_IP_BUCKET;
+      if (await isRateLimited(db, ipHash, now)) {
+        return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429, {
+          "Cache-Control": "no-store",
+        });
+      }
+    } catch (err) {
+      console.error("ask denied: rate limiter unavailable (READER_DB binding missing or error)", err?.message || err);
+      return json({ error: "Ask is temporarily unavailable" }, 503, {
+        "Cache-Control": "max-age=30",
+      });
+    }
   }
 
   let body;
