@@ -27,17 +27,26 @@ export const SYSTEM_PROMPT = [
 // This endpoint spends money per question, so the limiter must NEVER answer
 // "allowed" when it cannot run: a missing READER_DB binding or a failed
 // query THROWS, and the caller maps that to 503 before any inference runs
-// (aifocus-5ft - it used to return false and serve billed inference
-// unmetered). A local/dev run that wants the endpoint without D1 sets
-// ALLOW_UNMETERED_ASK=1 explicitly in the environment; the missing binding
-// alone is never an excuse.
-async function isRateLimited(db, ipHash, now) {
+// (aifocus-5ft). A local/dev run that wants the endpoint without D1 sets
+// ALLOW_UNMETERED_ASK=1 explicitly in the environment AND must not be on the
+// production origin - the flag alone is never enough (aifocus-e7e review
+// finding: a deployment guard, not an assertion).
+async function reserveAskSlot(db, ipHash, now) {
   if (!db) throw new Error("READER_DB unavailable for ask rate limiting");
-  const row = await db
-    .prepare("SELECT COUNT(*) AS n FROM ask_log WHERE ip_hash = ? AND created_at > ?")
-    .bind(ipHash, now - 60 * 60 * 1000)
-    .first();
-  return (row?.n ?? 0) >= ASKS_PER_HOUR;
+  // One atomic batch: reserve only if under the per-IP budget, and prune
+  // spent slots older than the lookback window. The conditional INSERT is
+  // the limiter itself (reserveAuthStartSlot/reserveWriteEvent pattern): a
+  // concurrent burst of DISTINCT questions cannot all read the same
+  // pre-insert count and slip through the check-then-act gap.
+  const results = await db.batch([
+    db.prepare(
+      `INSERT INTO ask_log (ip_hash, created_at)
+       SELECT ?1, ?2
+       WHERE (SELECT COUNT(*) FROM ask_log WHERE ip_hash = ?1 AND created_at > ?3) < ?4`,
+    ).bind(ipHash, now, now - 60 * 60 * 1000, ASKS_PER_HOUR),
+    db.prepare("DELETE FROM ask_log WHERE created_at <= ?").bind(now - 2 * 60 * 60 * 1000),
+  ]);
+  return (results[0]?.meta?.changes ?? results[0]?.changes ?? 0) > 0;
 }
 
 export async function onRequestPost(context) {
@@ -66,23 +75,29 @@ export async function onRequestPost(context) {
 
   const db = env?.READER_DB;
   const now = Date.now();
-  let ipHash = UNKNOWN_IP_BUCKET;
+  const devEscape =
+    !db &&
+    ["1", "true", "yes"].includes(String(env?.ALLOW_UNMETERED_ASK ?? "").toLowerCase()) &&
+    url.origin !== "https://aifoc.us";
 
   // Fail closed before the billed call: a missing binding or a limiter error
   // is a deployment problem, answered 503 with a short cache, not an
   // unmetered inference path (aifocus-5ft; mirrors /api/search). hashIp is
   // inside the guard too: a binding that cannot serve the salt lookup cannot
-  // serve the limiter either. An explicit ALLOW_UNMETERED_ASK=1 keeps
-  // local/dev working - deliberately, loudly, and never by accident of a
-  // missing binding.
-  if (!db && ["1", "true", "yes"].includes(String(env?.ALLOW_UNMETERED_ASK ?? "").toLowerCase())) {
-    console.error("ask: running WITHOUT its rate limiter (READER_DB missing, ALLOW_UNMETERED_ASK set) - billed inference, dev only");
+  // serve the limiter either. The ALLOW_UNMETERED_ASK escape hatch needs the
+  // explicit flag AND a non-production origin; on production it is IGNORED
+  // and logged loudly (aifocus-e7e).
+  if (devEscape) {
+    console.error("ask: running WITHOUT its rate limiter (READER_DB missing, ALLOW_UNMETERED_ASK on non-production origin) - billed inference, dev only");
   } else {
     try {
       // A missing client IP shares one coarse bucket rather than escaping
       // the limit; ask_log.ip_hash is NOT NULL, so the bucket is a sentinel.
-      ipHash = (db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null) ?? UNKNOWN_IP_BUCKET;
-      if (await isRateLimited(db, ipHash, now)) {
+      const ipHash = (db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null) ?? UNKNOWN_IP_BUCKET;
+      // reserveAskSlot throws when db is missing (the deployment error is a
+      // 503 below) - so the billed call is unreachable without a binding,
+      // except through the explicit non-production escape hatch above.
+      if (!(await reserveAskSlot(db, ipHash, now))) {
         return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429, {
           "Cache-Control": "no-store",
         });
@@ -101,9 +116,6 @@ export async function onRequestPost(context) {
       loadArticles(env, url.origin),
       askArchive(env, question, SYSTEM_PROMPT, CHUNK_COUNT),
     ]);
-    if (db) {
-      await db.prepare("INSERT INTO ask_log (ip_hash, created_at) VALUES (?, ?)").bind(ipHash, now).run();
-    }
     const sources = rankArticles(result.chunks, indexByPath(articles), MAX_SOURCES).map(
       ({ title, url: href, date, snippet }) => ({ title, url: href, date, snippet }),
     );
