@@ -104,8 +104,8 @@
  * not leave every lane blocked on a healthy build while iterating on the checker.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { parse } from "parse5";
@@ -153,18 +153,45 @@ function htmlPages(dir) {
 
 // 'file': an exact generated file. 'dir': a directory that serves index.html,
 // which is what a static host resolves /foo and /foo/ to.
+//
+// A pathname can walk out of the build tree once it is decoded: a committed
+// href of /a%2F..%2F..%2Fpackage.json becomes /a/../../package.json, and the
+// join below would then stat a real file above public/ and call the link
+// resolved. No host would serve that path, so an escape is unresolved by
+// definition (aifocus-uid) - and the file above the root must never be read.
 function resolveTarget(root, pathname) {
-  const base = join(root, pathname.replace(/^\/+/, ""));
-  try {
-    if (statSync(base).isFile()) return "file";
-  } catch {
-    // fall through to the directory case
-  }
-  try {
-    if (statSync(join(base, "index.html")).isFile()) return "dir";
-  } catch {
-    // unresolvable
-  }
+  const confinedRoot = resolve(root);
+  const withinRoot = (target) => target === confinedRoot || target.startsWith(confinedRoot.endsWith(sep) ? confinedRoot : confinedRoot + sep);
+  // Containment has to be checked on the REAL path as well as the lexical one:
+  // resolve() does not read symlinks and statSync follows them, so a committed
+  // symlink inside public/ pointing at ../../package.json would otherwise count
+  // as a resolved link (aifocus-xi8). realpathSync throws on a missing target,
+  // which is the unresolved case anyway.
+  const realRoot = (() => {
+    try {
+      return realpathSync(confinedRoot);
+    } catch {
+      return confinedRoot;
+    }
+  })();
+  const realFile = (candidate) => {
+    let real;
+    try {
+      real = realpathSync(candidate);
+    } catch {
+      return false;
+    }
+    if (real !== realRoot && !real.startsWith(realRoot.endsWith(sep) ? realRoot : realRoot + sep)) return false;
+    try {
+      return statSync(real).isFile();
+    } catch {
+      return false;
+    }
+  };
+  const base = resolve(join(confinedRoot, pathname.replace(/^\/+/, "")));
+  if (!withinRoot(base)) return null;
+  if (realFile(base)) return "file";
+  if (realFile(join(base, "index.html"))) return "dir";
   return null;
 }
 

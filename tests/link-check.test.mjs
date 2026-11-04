@@ -24,7 +24,7 @@
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -170,6 +170,48 @@ test("a percent-encoded target that does not exist still fails", (t) => {
   });
 
   assert.deepEqual(brokenTargets(scanSite(root)), ["/a b/"]);
+});
+
+test("a decoded path that escapes public/ is unresolved, not stat-ed (aifocus-uid)", (t) => {
+  // A committed href can decode to a path that walks out of the build tree -
+  // %2F is a slash, and the decoder runs after URL resolution. /a/../../x
+  // reaches the repository above public/, where a file such as package.json
+  // really exists: the gate must call the link broken rather than count it as
+  // resolved, because no host would ever serve that path.
+  const dir = mkdtempSync(join(tmpdir(), "aifocus-link-check-escape-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const root = join(dir, "public");
+  mkdirSync(root, { recursive: true });
+  writeFileSync(join(root, "index.html"), page('<a href="/a%2F..%2F..%2Fpackage.json">escape</a>'));
+  writeFileSync(join(dir, "package.json"), '{"name":"outside-the-build"}');
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), ["/a/../../package.json"]);
+  assert.equal(result.resolved, 0);
+});
+
+test("a symlink inside the build tree that points outside it is unresolved (aifocus-xi8)", (t) => {
+  // The lexical confine is not enough: statSync follows symlinks, so a committed
+  // symlink is a second way to make a target outside public/ look resolvable.
+  const dir = mkdtempSync(join(tmpdir(), "aifocus-link-check-symlink-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const root = join(dir, "public");
+  mkdirSync(root, { recursive: true });
+  writeFileSync(join(root, "index.html"), page('<a href="/esc.json">escape</a>'));
+  writeFileSync(join(dir, "package.json"), '{"name":"outside-the-build"}');
+  symlinkSync(join(dir, "package.json"), join(root, "esc.json"));
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), ["/esc.json"]);
+  assert.equal(result.resolved, 0);
+
+  // A symlink that stays inside the tree is still a legitimate target.
+  writeFileSync(join(root, "real.json"), "{}");
+  symlinkSync(join(root, "real.json"), join(root, "alias.json"));
+  writeFileSync(join(root, "ok.html"), page('<a href="/alias.json">inside</a>'));
+  const inside = scanSite(root);
+  assert.deepEqual(brokenTargets(inside), ["/esc.json"], "only the escaping link is broken");
+  assert.equal(inside.resolved, 1);
 });
 
 test("a malformed escape is checked as written rather than crashing the gate", (t) => {
