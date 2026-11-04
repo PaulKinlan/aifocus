@@ -452,6 +452,50 @@ test("Bluesky: DPoP private key is held in cookie and not plaintext in oauth_sta
     });
     assert.equal(successRes.headers.get("Location"), "/setting-goals/#reader");
     assert.equal(setCookies(successRes)[DPOP_COOKIE], "", "DPoP cookie cleared on success");
+
+    // 5. Legacy fallback regression: state row with dpopKey in data and NO cookie must fail (aifocus-z3nl, aifocus-4c06)
+    const begin4 = await start({
+      request: req("/api/auth/start/bluesky?return=/setting-goals/&handle=ana.example.com"),
+      env,
+      params: { provider: "bluesky" },
+    });
+    const state4 = setCookies(begin4)[STATE_COOKIE];
+    const legacyKey = await generateDpopKey();
+    const row4 = env.READER_DB.raw.prepare("SELECT data FROM oauth_states WHERE state = ?").get(state4);
+    const data4 = JSON.parse(row4.data);
+    data4.dpopKey = legacyKey;
+    env.READER_DB.raw.prepare("UPDATE oauth_states SET data = ? WHERE state = ?").run(JSON.stringify(data4), state4);
+
+    const failLegacy = await callback({
+      request: req(`/api/auth/callback/bluesky?code=c0de&state=${state4}&iss=${AS}`, {
+        cookies: { [STATE_COOKIE]: state4 },
+      }),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(failLegacy.headers.get("Location"), "/setting-goals/?signin=failed");
+
+    // 6. State missing dpopThumbprint with cookie present must fail (aifocus-z3nl, aifocus-4c06)
+    const begin5 = await start({
+      request: req("/api/auth/start/bluesky?return=/setting-goals/&handle=ana.example.com"),
+      env,
+      params: { provider: "bluesky" },
+    });
+    const startCookies5 = setCookies(begin5);
+    const state5 = startCookies5[STATE_COOKIE];
+    const row5 = env.READER_DB.raw.prepare("SELECT data FROM oauth_states WHERE state = ?").get(state5);
+    const data5 = JSON.parse(row5.data);
+    delete data5.dpopThumbprint;
+    env.READER_DB.raw.prepare("UPDATE oauth_states SET data = ? WHERE state = ?").run(JSON.stringify(data5), state5);
+
+    const failNoThumbprint = await callback({
+      request: req(`/api/auth/callback/bluesky?code=c0de&state=${state5}&iss=${AS}`, {
+        cookies: { ...startCookies5 },
+      }),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(failNoThumbprint.headers.get("Location"), "/setting-goals/?signin=failed");
   });
 });
 
