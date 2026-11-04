@@ -576,3 +576,53 @@ test("account: lists the signed-in account's own items across posts, with status
   assert.equal(more.annotations.filter((a) => a.type === "highlight").length, more.limitPerKind);
   assert.ok(more.annotations.some((a) => a.type === "comment"));
 });
+
+// The write budget is meant to bound work, not just stored rows. Both write
+// endpoints used to fetch the post's text (loadPostText: an /index.json read
+// plus the page) before the per-IP slot was reserved, so a burst could all pay
+// that cost and only then be counted, and a rejected body was free
+// (aifocus-80p). These two cases pin the ordering from outside the handler:
+// count the fetches, not the responses.
+function countingEnv(pathname = "/index.json") {
+  const env = makeEnv();
+  const inner = env.ASSETS.fetch;
+  const counts = { fetches: 0 };
+  env.ASSETS.fetch = async (request) => {
+    if (new URL(request.url).pathname === pathname) counts.fetches += 1;
+    return inner(request);
+  };
+  return { env, counts };
+}
+
+test("annotations: a rejected quote still spends a write slot, and a denied caller never fetches the post", async () => {
+  const { env, counts } = countingEnv();
+  const notInPost = { exact: "words that are not in the essay" };
+  // Every attempt is rejected after validation, and every rejection now costs
+  // the IP one slot: a refund would hand back the budget the fetch just spent.
+  for (let i = 0; i < LIMITS.writesPerHour; i += 1) {
+    const res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "highlight", quote: notInPost } }), env });
+    assert.equal(res.status, 400);
+  }
+  assert.equal(counts.fetches, LIMITS.writesPerHour);
+  // The next attempt is refused at the reservation, so the expensive work does
+  // not run at all for a request that was never going to be accepted.
+  const denied = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "highlight", quote: { exact: "reverse engineering" } } }), env });
+  assert.equal(denied.status, 429);
+  assert.equal(counts.fetches, LIMITS.writesPerHour);
+  // The ledger counted attempts, and no annotation was written.
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM write_events").get().n, LIMITS.writesPerHour);
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM annotations").get().n, 0);
+});
+
+test("reactions: an unknown post still spends a write slot before the post fetch", async () => {
+  const { env, counts } = countingEnv();
+  for (let i = 0; i < LIMITS.writesPerHour; i += 1) {
+    const res = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: "/no-such-post/", kind: "useful" } }), env });
+    assert.equal(res.status, 404);
+  }
+  assert.equal(counts.fetches, LIMITS.writesPerHour);
+  const denied = await postReaction({ request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }), env });
+  assert.equal(denied.status, 429);
+  assert.equal(counts.fetches, LIMITS.writesPerHour);
+  assert.equal(env.READER_DB.raw.prepare("SELECT COUNT(*) AS n FROM reactions").get().n, 0);
+});
