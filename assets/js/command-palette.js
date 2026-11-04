@@ -76,7 +76,12 @@ const build = () => {
     commandfor: "command-palette-dialog",
     command: "close",
   });
-  if (!("command" in HTMLButtonElement.prototype)) {
+  // Invoker Commands close the dialog from the button's attributes. Feature
+  // detect on commandForElement: `command` exists on the prototype in engines
+  // where the invoker path is not wired up, so checking it hands those browsers
+  // a close button that does nothing. This site ships no runtime dependencies,
+  // so engines without the feature get this listener rather than a polyfill.
+  if (!("commandForElement" in HTMLButtonElement.prototype)) {
     closeButton.addEventListener("click", () => dialog.close());
   }
 
