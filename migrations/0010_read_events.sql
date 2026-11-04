@@ -1,4 +1,4 @@
--- aifocus-reader migration 0009: append-only read-event ledger for the
+-- aifocus-reader migration 0010: append-only read-event ledger for the
 -- per-IP cap on /api/reader/state.
 --
 -- Every post page view fetches reader state, which is a three-statement D1

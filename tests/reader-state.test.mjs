@@ -10,8 +10,8 @@ import { READER_COOKIE, LIMITS, UNKNOWN_IP_BUCKET, hashIp, reserveReadEvent } fr
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../functions/_lib/auth.js";
 
 const migration = (name) => fileURLToPath(new URL(`../migrations/${name}`, import.meta.url));
-const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0009_read_events.sql"].map(migration);
-// The tree as it looks before migration 0009 has been applied.
+const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0010_read_events.sql"].map(migration);
+// The tree as it looks before migration 0010 has been applied.
 const MIGRATIONS_PRE_LEDGER = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql"].map(migration);
 
 const ORIGIN = "https://aifoc.us";
@@ -128,7 +128,7 @@ test("the ledger prunes rows older than the two-hour window", async () => {
   assert.equal(Number(stale.n), 0);
 });
 
-test("before migration 0009 the endpoint serves but is still capped in-process", async () => {
+test("before migration 0010 the endpoint serves but is still capped in-process", async () => {
   const env = makeEnv(MIGRATIONS_PRE_LEDGER);
   const ip = "198.51.100.42"; // this test's own window in the fallback map
   const errors = [];
@@ -149,7 +149,7 @@ test("before migration 0009 the endpoint serves but is still capped in-process",
   assert.equal(statuses.filter((s) => s === 429).length, 5);
   assert.ok(statuses.at(-1) === 200, "another IP keeps reading");
   assert.ok(
-    errors.some((line) => /read_events missing; apply D1 migration 0009/.test(line)),
+    errors.some((line) => /read_events missing; apply D1 migration 0010/.test(line)),
     `expected the pre-migration warning, got: ${JSON.stringify(errors)}`,
   );
   // The warning is per isolate, not per request.
