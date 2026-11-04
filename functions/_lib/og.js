@@ -125,18 +125,21 @@ export async function readHook(db, pagePath) {
 
 // Manual hooks replace whatever is stored. AI hooks are only inserted when no
 // row exists, so a generation that finishes after an /admin/ edit cannot undo it.
-export async function writeHook(db, pagePath, hook, source, model = null) {
+export function writeHookStmt(db, pagePath, hook, source, model = null, now = Date.now()) {
   const onConflict = source === "manual"
     ? `DO UPDATE SET hook = excluded.hook, source = excluded.source,
          model = excluded.model, updated_at = excluded.updated_at`
     : "DO NOTHING";
-  await db
+  return db
     .prepare(
       `INSERT INTO og_hooks (path, hook, source, model, updated_at) VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(path) ${onConflict}`,
     )
-    .bind(pagePath, hook, source, model, Date.now())
-    .run();
+    .bind(pagePath, hook, source, model, now);
+}
+
+export async function writeHook(db, pagePath, hook, source, model = null) {
+  return writeHookStmt(db, pagePath, hook, source, model).run();
 }
 
 export async function generateHook(env, title, markdown) {
