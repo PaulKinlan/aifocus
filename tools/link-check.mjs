@@ -104,7 +104,7 @@
  * not leave every lane blocked on a healthy build while iterating on the checker.
  */
 
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -162,18 +162,36 @@ function htmlPages(dir) {
 function resolveTarget(root, pathname) {
   const confinedRoot = resolve(root);
   const withinRoot = (target) => target === confinedRoot || target.startsWith(confinedRoot.endsWith(sep) ? confinedRoot : confinedRoot + sep);
+  // Containment has to be checked on the REAL path as well as the lexical one:
+  // resolve() does not read symlinks and statSync follows them, so a committed
+  // symlink inside public/ pointing at ../../package.json would otherwise count
+  // as a resolved link (aifocus-xi8). realpathSync throws on a missing target,
+  // which is the unresolved case anyway.
+  const realRoot = (() => {
+    try {
+      return realpathSync(confinedRoot);
+    } catch {
+      return confinedRoot;
+    }
+  })();
+  const realFile = (candidate) => {
+    let real;
+    try {
+      real = realpathSync(candidate);
+    } catch {
+      return false;
+    }
+    if (real !== realRoot && !real.startsWith(realRoot.endsWith(sep) ? realRoot : realRoot + sep)) return false;
+    try {
+      return statSync(real).isFile();
+    } catch {
+      return false;
+    }
+  };
   const base = resolve(join(confinedRoot, pathname.replace(/^\/+/, "")));
   if (!withinRoot(base)) return null;
-  try {
-    if (statSync(base).isFile()) return "file";
-  } catch {
-    // fall through to the directory case
-  }
-  try {
-    if (statSync(join(base, "index.html")).isFile()) return "dir";
-  } catch {
-    // unresolvable
-  }
+  if (realFile(base)) return "file";
+  if (realFile(join(base, "index.html"))) return "dir";
   return null;
 }
 
