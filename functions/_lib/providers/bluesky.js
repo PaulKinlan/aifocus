@@ -14,7 +14,7 @@
 // flow starts at bsky.social and the returned DID is checked against its own
 // PDS's authorization server afterwards.
 
-import { base64url, randomToken } from "../auth.js";
+import { base64url, base64urlDecode, randomToken, readCookie, sha256, STATE_TTL_MS } from "../auth.js";
 
 export const id = "bluesky";
 export const label = "Bluesky";
@@ -177,6 +177,28 @@ export async function authServerMetadata(issuer, fetchImpl) {
 
 // --- DPoP (RFC 9449) ----------------------------------------------------------
 
+export const DPOP_COOKIE = "aifocus_dpop";
+
+export function dpopCookie(privateJwk) {
+  const serialized = base64url(enc.encode(JSON.stringify(privateJwk)));
+  return `${DPOP_COOKIE}=${serialized}; Path=/api/auth/callback/bluesky; Max-Age=${STATE_TTL_MS / 1000}; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export function clearDpopCookie() {
+  return `${DPOP_COOKIE}=; Path=/api/auth/callback/bluesky; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export function cleanupCookies() {
+  return [clearDpopCookie()];
+}
+
+// RFC 7638 JSON Web Key (JWK) Thumbprint for the ES256 key: hash only the public members.
+export async function dpopThumbprint(jwk) {
+  if (!jwk || typeof jwk !== "object") throw new Error("bluesky: invalid JWK for thumbprint");
+  const canonical = JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y });
+  return base64url(await sha256(canonical));
+}
+
 export async function generateDpopKey() {
   const pair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   return crypto.subtle.exportKey("jwk", pair.privateKey);
@@ -245,6 +267,7 @@ export async function begin({ origin, handle, state, challenge, fetchImpl = fetc
   }
   const meta = await authServerMetadata(issuer, fetchImpl);
   const dpopKey = await generateDpopKey();
+  const dpopThumbprintValue = await dpopThumbprint(dpopKey);
   const form = {
     client_id: clientId(origin),
     response_type: "code",
@@ -261,14 +284,38 @@ export async function begin({ origin, handle, state, challenge, fetchImpl = fetc
   url.search = new URLSearchParams({ client_id: clientId(origin), request_uri: body.request_uri });
   return {
     url: url.toString(),
-    data: { did, issuer, tokenEndpoint: meta.token_endpoint, dpopKey, nonce },
+    data: { did, issuer, tokenEndpoint: meta.token_endpoint, dpopThumbprint: dpopThumbprintValue, nonce },
+    cookies: [dpopCookie(dpopKey)],
   };
 }
 
-export async function complete({ origin, params, verifier, data, fetchImpl = fetch }) {
+export async function complete({ origin, params, verifier, data, request, fetchImpl = fetch }) {
   const code = params.get("code");
   if (!code) throw new Error("bluesky: missing code");
   if (params.get("iss") !== data.issuer) throw new Error("bluesky: issuer mismatch on callback");
+
+  let dpopKey = null;
+  if (request) {
+    const rawCookie = readCookie(request, DPOP_COOKIE);
+    if (rawCookie) {
+      try {
+        const dec = new TextDecoder();
+        dpopKey = JSON.parse(dec.decode(base64urlDecode(rawCookie)));
+      } catch {
+        throw new Error("bluesky: invalid DPoP key cookie");
+      }
+    }
+  }
+  if (!dpopKey && data?.dpopKey) {
+    dpopKey = data.dpopKey;
+  }
+  if (!dpopKey) throw new Error("bluesky: missing DPoP key");
+
+  if (data?.dpopThumbprint) {
+    const thumbprint = await dpopThumbprint(dpopKey);
+    if (thumbprint !== data.dpopThumbprint) throw new Error("bluesky: DPoP key thumbprint mismatch");
+  }
+
   const { body } = await dpopPost(
     data.tokenEndpoint,
     {
@@ -278,7 +325,7 @@ export async function complete({ origin, params, verifier, data, fetchImpl = fet
       client_id: clientId(origin),
       code_verifier: verifier,
     },
-    data.dpopKey,
+    dpopKey,
     data.nonce,
     fetchImpl,
   );

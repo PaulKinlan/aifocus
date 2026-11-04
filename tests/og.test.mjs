@@ -27,7 +27,7 @@ import { hashIp } from "../functions/_lib/reader.js";
 
 const ORIGIN = "https://aifoc.us";
 const PAGE = "/agent-do-my-agent-loop/";
-const MIGRATIONS = ["0001_reader.sql", "0004_og_hooks.sql", "0007_search_log.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)));
+const MIGRATIONS = ["0001_reader.sql", "0004_og_hooks.sql", "0007_search_log.sql", "0009_admin_actions.sql"].map((f) => fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)));
 
 // Shaped like the minified Hugo output of layouts/page.ogcard.html.
 const CARD = `<!doctype html><html><head><meta name=og-card-version content="d6cf95e357"></head>
@@ -373,10 +373,22 @@ test("admin share cards: require Access, set a hook by hand, regenerate, and pur
     let out = await res.json();
     assert.deepEqual([out.hook, out.source, out.purged], ["A line I wrote.", "manual", 1]);
     assert.equal(env.OG_CARDS.store.size, 0);
+    const hookAction = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE action = 'og_hook'").get();
+    assert.ok(hookAction);
+    assert.equal(hookAction.actor, "paul@aifoc.us");
+    assert.equal(hookAction.subject, PAGE);
+    assert.deepEqual(JSON.parse(hookAction.before), { hook: "One agent loop now runs emaila.gent, mix.email and a dozen other tools.", source: "ai" });
+    assert.deepEqual(JSON.parse(hookAction.after), { hook: "A line I wrote.", source: "manual" });
 
     res = await postOg({ request: req("POST", { path: PAGE, regenerate: true }), env });
     out = await res.json();
     assert.equal(out.source, null);
+    const regenAction = env.READER_DB.raw.prepare("SELECT * FROM admin_actions WHERE action = 'og_regenerate'").get();
+    assert.ok(regenAction);
+    assert.equal(regenAction.actor, "paul@aifoc.us");
+    assert.equal(regenAction.subject, PAGE);
+    assert.deepEqual(JSON.parse(regenAction.before), { hook: "A line I wrote.", source: "manual" });
+    assert.equal(regenAction.after, null);
 
     assert.equal((await postOg({ request: req("POST", { path: "../etc", hook: "x" }), env })).status, 400);
     assert.equal((await postOg({ request: req("POST", { path: PAGE, hook: "   " }), env })).status, 400);

@@ -4,7 +4,7 @@
 // Cloudflare Access identity (see functions/_lib/access.js).
 
 import { json, isSameOrigin, MODERATION_STATUSES } from "../../_lib/reader.js";
-import { verifyAccess } from "../../_lib/access.js";
+import { verifyAccess, adminActionStmt } from "../../_lib/access.js";
 
 export async function onRequestPost({ request, env }) {
   const who = await verifyAccess(request, env);
@@ -36,11 +36,34 @@ export async function onRequestPost({ request, env }) {
   // /api/admin/trust. Marking a note or comment as spam does remove its
   // account's trust, so later ones wait in the queue again.
   if (status === "spam") {
+    const placeholders = ids.map(() => "?").join(", ");
+    const { results: trustedAuthors = [] } = await db
+      .prepare(
+        `SELECT DISTINCT u.id FROM users u
+         JOIN annotations a ON a.user_id = u.id
+         WHERE a.id IN (${placeholders}) AND a.type != 'highlight' AND u.trusted = 1`,
+      )
+      .bind(...ids)
+      .all();
+
     const untrust = db.prepare(
       `UPDATE users SET trusted = 0, updated_at = ?
        WHERE id = (SELECT user_id FROM annotations WHERE id = ? AND type != 'highlight' AND user_id IS NOT NULL)`,
     );
-    await db.batch(ids.map((id) => untrust.bind(now, id)));
+    const batch = ids.map((id) => untrust.bind(now, id));
+    for (const u of trustedAuthors) {
+      batch.push(
+        adminActionStmt(db, {
+          actor: who.email,
+          action: "untrust",
+          subject: u.id,
+          before: { trusted: true },
+          after: { trusted: false },
+          now,
+        }),
+      );
+    }
+    await db.batch(batch);
   }
   return json({ status, updated });
 }

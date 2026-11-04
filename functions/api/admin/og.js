@@ -9,8 +9,8 @@
 // verified Cloudflare Access identity (see functions/_lib/access.js).
 
 import { json, isSameOrigin } from "../../_lib/reader.js";
-import { verifyAccess } from "../../_lib/access.js";
-import { cleanHook, purgeCards, writeHook } from "../../_lib/og.js";
+import { verifyAccess, adminActionStmt } from "../../_lib/access.js";
+import { cleanHook, purgeCards, writeHookStmt } from "../../_lib/og.js";
 
 const PATH_RE = /^\/(?:[a-z0-9][a-z0-9-]{0,120}\/){1,3}$/i;
 
@@ -64,11 +64,35 @@ export async function onRequestPost({ request, env }) {
   if (typeof path !== "string" || !PATH_RE.test(path)) return json({ error: "Invalid path" }, 400);
 
   if (input.regenerate === true) {
-    await db.prepare("DELETE FROM og_hooks WHERE path = ?").bind(path).run();
+    const current = await db.prepare("SELECT hook, source FROM og_hooks WHERE path = ?").bind(path).first();
+    const now = Date.now();
+    await db.batch([
+      db.prepare("DELETE FROM og_hooks WHERE path = ?").bind(path),
+      adminActionStmt(db, {
+        actor: who.email,
+        action: "og_regenerate",
+        subject: path,
+        before: current ? { hook: current.hook, source: current.source } : null,
+        after: null,
+        now,
+      }),
+    ]);
   } else {
     const hook = cleanHook(input?.hook);
     if (!hook) return json({ error: "Hook is empty" }, 400);
-    await writeHook(db, path, hook, "manual");
+    const current = await db.prepare("SELECT hook, source FROM og_hooks WHERE path = ?").bind(path).first();
+    const now = Date.now();
+    await db.batch([
+      writeHookStmt(db, path, hook, "manual", null, now),
+      adminActionStmt(db, {
+        actor: who.email,
+        action: "og_hook",
+        subject: path,
+        before: current ? { hook: current.hook, source: current.source } : null,
+        after: { hook, source: "manual" },
+        now,
+      }),
+    ]);
   }
   // Stored PNGs are keyed by their hook, so a changed hook is never served
   // from an old image; purging only frees the space and can safely fail.

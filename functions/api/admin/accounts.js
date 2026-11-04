@@ -11,7 +11,7 @@
 // linked handle, so an account outside the newest LIMIT can still be found.
 
 import { json, isSameOrigin } from "../../_lib/reader.js";
-import { verifyAccess } from "../../_lib/access.js";
+import { verifyAccess, adminActionStmt } from "../../_lib/access.js";
 
 const USER_ID_RE = /^[A-Za-z0-9_-]{22}$/;
 const LIMIT = 500;
@@ -65,10 +65,23 @@ export async function onRequestPost({ request, env }) {
   if (typeof userId !== "string" || !USER_ID_RE.test(userId) || !["active", "blocked"].includes(status)) {
     return json({ error: "Invalid userId or status" }, 400);
   }
-  const result = await db
-    .prepare("UPDATE users SET status = ?, trusted = CASE WHEN ? = 'blocked' THEN 0 ELSE trusted END, updated_at = ? WHERE id = ?")
-    .bind(status, status, Date.now(), userId)
-    .run();
-  if (!result?.meta?.changes) return json({ error: "No such account" }, 404);
+  const current = await db.prepare("SELECT status, trusted FROM users WHERE id = ?").bind(userId).first();
+  if (!current) return json({ error: "No such account" }, 404);
+
+  const now = Date.now();
+  const nextTrusted = status === "blocked" ? 0 : current.trusted;
+  await db.batch([
+    db
+      .prepare("UPDATE users SET status = ?, trusted = CASE WHEN ? = 'blocked' THEN 0 ELSE trusted END, updated_at = ? WHERE id = ?")
+      .bind(status, status, now, userId),
+    adminActionStmt(db, {
+      actor: who.email,
+      action: status === "blocked" ? "block" : "unblock",
+      subject: userId,
+      before: { status: current.status, trusted: Boolean(current.trusted) },
+      after: { status, trusted: Boolean(nextTrusted) },
+      now,
+    }),
+  ]);
   return json({ userId, status });
 }
