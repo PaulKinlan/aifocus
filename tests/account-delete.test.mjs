@@ -174,3 +174,91 @@ test("a second delete after the first is refused, not repeated", async () => {
   const second = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
   assert.equal(second.status, 401);
 });
+
+test("a comment in flight when the account is erased does not land afterwards", async () => {
+  // aifocus-z2j0: getSessionUser() resolves before the erase, the write then
+  // completes after it. Screening is the slow step, so the erase runs from
+  // inside AI.run, between the session check and the insert.
+  const env = makeEnv();
+  const ana = await signIn(env.READER_DB, "ana");
+  let erased = false;
+  env.AI = {
+    run: async () => {
+      if (!erased) {
+        erased = true;
+        const res = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
+        assert.equal(res.status, 200);
+      }
+      return { response: { safe: true } };
+    },
+  };
+
+  const res = await postAnnotation({
+    request: req("/api/reader/annotations", {
+      method: "POST",
+      body: { post: POST, type: "comment", body: "written while the account was being deleted" },
+      session: ana.session,
+    }),
+    env,
+  });
+  assert.equal(res.status, 401, "the write is refused once the account is gone");
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM users WHERE id = ?", ana.user.id), 0);
+  assert.equal(
+    rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM annotations WHERE body = ?", "written while the account was being deleted"),
+    0,
+    "no annotation survives the erase",
+  );
+  assert.equal(
+    rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM annotations WHERE author_name = ?", "ANA"),
+    0,
+    "no orphan row keeps the account's name",
+  );
+});
+
+test("a reaction in flight when the account is erased does not land afterwards", async () => {
+  // The erase lands between the session check and the reaction insert: the
+  // write reservation (db.batch) is the last await before the insert, so the
+  // account is deleted from inside it.
+  const env = makeEnv();
+  const ana = await signIn(env.READER_DB, "ana");
+  const realBatch = env.READER_DB.batch.bind(env.READER_DB);
+  let erased = false;
+  env.READER_DB.batch = async (statements) => {
+    if (!erased) {
+      erased = true;
+      // Run the real erasure (its own batch re-enters here with the flag set,
+      // so it goes straight through): the write path must cope with the account
+      // disappearing after getSessionUser() resolved.
+      const res = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
+      assert.equal(res.status, 200);
+    }
+    return realBatch(statements);
+  };
+
+  const res = await postReaction({
+    request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" }, session: ana.session }),
+    env,
+  });
+  assert.equal(res.status, 401, `the write is refused once the account is gone (got ${res.status}: ${await res.clone().text()})`);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM users WHERE id = ?", ana.user.id), 0);
+  assert.equal(
+    rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM reactions WHERE user_id IS NOT NULL"),
+    0,
+    "no reaction keeps the deleted account's id",
+  );
+});
+
+test("an anonymous write after an erase is still allowed, without attribution", async () => {
+  // Erasure is scoped to the account: the same browser may keep reacting as an
+  // anonymous reader, and those rows carry no user_id.
+  const env = makeEnv();
+  const ana = await signIn(env.READER_DB, "ana");
+  const del = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session }), env });
+  assert.equal(del.status, 200);
+  const res = await postReaction({
+    request: req("/api/reader/reactions", { method: "POST", body: { post: POST, kind: "useful" } }),
+    env,
+  });
+  assert.equal(res.status, 200);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM reactions WHERE user_id IS NULL"), 1);
+});
