@@ -39,6 +39,111 @@ const askReq = (question, origin = ORIGIN, ip = "198.51.100.1") => {
   return new Request(`${ORIGIN}/api/ask`, { method: "POST", headers, body: JSON.stringify({ question }) });
 };
 
+test("ask: fails closed when READER_DB is unbound - no inference runs", async () => {
+  // aifocus-5ft: a missing binding must disable the billed endpoint, not
+  // serve it unmetered. Zero AI invocations, 503, short cache.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  delete env.READER_DB;
+  const res = await postAsk({ request: askReq("what is this essay about"), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 0, "the billed inference must not run without a binding");
+  assert.match(res.headers.get("Cache-Control") ?? "", /max-age=30/);
+  const body = await res.json();
+  assert.match(body.error, /unavailable/i);
+});
+
+test("ask: fails closed when the rate-limit query errors", async () => {
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  env.READER_DB = {
+    prepare: () => {
+      throw new Error("d1 unavailable");
+    },
+  };
+  const res = await postAsk({ request: askReq("what is this essay about"), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 0, "a limiter error must not open the billed path");
+});
+
+test("ask: ALLOW_UNMETERED_ASK=1 keeps local/dev working without a binding", async () => {
+  // The deliberate dev escape hatch: explicit flag AND a non-production
+  // origin, never an accident of a missing binding.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "Goals give the agent an end state.", data: [{ filename: "aifoc.us/setting-goals/", score: 0.9, content: [{ text: "goal text" }] }] };
+    },
+  });
+  delete env.READER_DB;
+  env.ALLOW_UNMETERED_ASK = "1";
+  // A genuine local request: URL and Origin both non-production (askReq
+  // hardcodes the production URL, so build this one by hand).
+  const req = new Request("http://localhost:8788/api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "http://localhost:8788", "CF-Connecting-IP": "198.51.100.1" },
+    body: JSON.stringify({ question: "what is this essay about" }),
+  });
+  const res = await postAsk({ request: req, env });
+  assert.equal(res.status, 200);
+  assert.equal(calls, 1);
+});
+
+test("ask: ALLOW_UNMETERED_ASK is ignored on the production origin", async () => {
+  // aifocus-e7e: the flag is a dev escape hatch, not a production switch -
+  // on https://aifoc.us it must not open the unmetered path.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  delete env.READER_DB;
+  env.ALLOW_UNMETERED_ASK = "1";
+  const res = await postAsk({ request: askReq("what is this essay about", ORIGIN), env });
+  assert.equal(res.status, 503);
+  assert.equal(calls, 0, "the billed inference must not run on production, flag or not");
+});
+
+test("ask: concurrent distinct questions from one IP are capped at the per-IP budget", async () => {
+  // Second 5ft-round defect: the limiter was check-then-act - isRateLimited
+  // counted ask_log and the INSERT happened after the inference await, so a
+  // concurrent burst of DISTINCT questions (which caches.default does not
+  // dedupe) all read the same pre-insert count. The reservation is now an
+  // atomic conditional INSERT: with inference slowed to 30 ms, 40 concurrent
+  // distinct questions from one IP must admit at most 20, and ask_log must
+  // hold exactly the admitted set.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      await new Promise((r) => setTimeout(r, 30));
+      return { response: "Goals give the agent an end state.", data: [{ filename: "aifoc.us/setting-goals/", score: 0.9, content: [{ text: "goal text" }] }] };
+    },
+  });
+  const fire = (i) => postAsk({ request: askReq(`distinct question ${i} about the archive`), env });
+  const responses = await Promise.all(Array.from({ length: 40 }, (_, i) => fire(i)));
+  const answered = responses.filter((r) => r.status === 200).length;
+  const limited = responses.filter((r) => r.status === 429).length;
+  assert.equal(answered + limited, 40);
+  assert.ok(answered <= 20, `${answered} billed answers exceeded the per-IP budget of 20`);
+  const rows = await env.READER_DB.prepare("SELECT COUNT(*) AS n FROM ask_log").first();
+  assert.equal(rows.n, answered, "ask_log holds exactly the billed requests");
+  assert.equal(calls, answered);
+});
+
 test("ask: returns the generated answer with essay sources", async () => {
   const calls = [];
   const env = makeEnv({
