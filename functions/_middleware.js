@@ -263,6 +263,12 @@ export async function onRequest(context) {
   }
 
   // Direct `.md` request — serve as markdown with token count if path is safe.
+  // Eligibility here is deliberate and broader than page negotiation: any
+  // PUBLISHED .md is served decorated - `static/` ships .md artifacts such as
+  // /sandbox-summary.md - while RESERVED_ROOTS and isValidContentPath govern
+  // which PAGE paths negotiate a markdown sibling. The only two refusals are an
+  // unsafe raw path and a non-OK upstream (decorateMarkdown returns those
+  // untouched), so no error response is ever relabelled as markdown.
   if (url.pathname.endsWith(".md")) {
     const response = await next();
     if (!isUnsafePath(request.url, url.pathname)) {
@@ -292,12 +298,21 @@ export async function onRequest(context) {
         headers: request.headers,
       });
       // On Cloudflare Pages the static asset binding is exposed as env.ASSETS.
+      // With no binding there is nothing to consult, so fall through to the
+      // HTML response: self-fetching here would re-enter this same handler,
+      // and with ASSETS still absent every hop would spawn another subrequest
+      // until Cloudflare's cap turned an optional enhancement into an error
+      // page (aifocus-zcy). A binding that throws is the same story - the HTML
+      // fallback is one line below, so a transient failure must not 500.
       const fetcher = env && env.ASSETS ? env.ASSETS : null;
-      const mdResponse = fetcher
-        ? await fetcher.fetch(assetRequest)
-        : await fetch(assetRequest);
-      if (mdResponse.ok) {
-        return decorateMarkdown(mdResponse);
+      if (fetcher) {
+        let mdResponse = null;
+        try {
+          mdResponse = await fetcher.fetch(assetRequest);
+        } catch {
+          mdResponse = null;
+        }
+        if (mdResponse?.ok) return decorateMarkdown(mdResponse);
       }
       // Fall through to the HTML response if no markdown variant exists.
     }

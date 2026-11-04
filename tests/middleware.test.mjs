@@ -417,6 +417,66 @@ test("onRequest: serves direct .md requests with decoration when safe", async ()
   assert.equal(res.headers.get("Vary"), "Accept");
 });
 
+test("onRequest: without the ASSETS binding, markdown negotiation falls through to HTML instead of self-fetching", async () => {
+  // The old fallback called fetch() against the site's own origin, which
+  // re-enters this same handler with ASSETS still absent: each request spawned
+  // another subrequest until Cloudflare's cap replaced the reader's HTML with an
+  // error page (aifocus-zcy). Without a binding there is nothing to consult.
+  const realFetch = globalThis.fetch;
+  const fetchCalls = [];
+  globalThis.fetch = async (input) => {
+    fetchCalls.push(String(input?.url ?? input));
+    return new Response("# should never be fetched", { headers: { "Content-Type": "text/markdown" } });
+  };
+  let nextCalled = 0;
+  try {
+    const req = new Request("https://aifocus.blog/model-half-life/", {
+      headers: { Accept: "text/markdown" },
+    });
+    const res = await onRequest({
+      request: req,
+      next: async () => {
+        nextCalled += 1;
+        return new Response("<html>Post</html>", { status: 200, headers: { "Content-Type": "text/html" } });
+      },
+      env: {},
+    });
+    assert.equal(fetchCalls.length, 0, "no self-fetch without a binding");
+    assert.equal(nextCalled, 1, "the HTML response is served exactly once");
+    assert.equal(res.status, 200);
+    assert.equal(res.headers.get("Content-Type"), "text/html");
+    assert.equal(res.headers.has("x-markdown-tokens"), false);
+    assert.equal(res.headers.get("Vary"), "Accept", "negotiation is still advertised");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test("onRequest: a failing ASSETS fetch degrades to the HTML response, not a 500", async () => {
+  const req = new Request("https://aifocus.blog/model-half-life/", {
+    headers: { Accept: "text/markdown" },
+  });
+  let nextCalled = 0;
+  const res = await onRequest({
+    request: req,
+    next: async () => {
+      nextCalled += 1;
+      return new Response("<html>Post</html>", { status: 200, headers: { "Content-Type": "text/html" } });
+    },
+    env: {
+      ASSETS: {
+        fetch: async () => {
+          throw new Error("binding unavailable");
+        },
+      },
+    },
+  });
+  assert.equal(nextCalled, 1);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Content-Type"), "text/html");
+  assert.equal(res.headers.has("x-markdown-tokens"), false);
+});
+
 test("onRequest: does not decorate unsafe direct .md requests", async () => {
   const req = new Request("https://aifocus.blog/..%2f_headers.md");
   const context = {
