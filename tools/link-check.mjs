@@ -105,7 +105,7 @@
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { parse } from "parse5";
@@ -153,8 +153,17 @@ function htmlPages(dir) {
 
 // 'file': an exact generated file. 'dir': a directory that serves index.html,
 // which is what a static host resolves /foo and /foo/ to.
+//
+// A pathname can walk out of the build tree once it is decoded: a committed
+// href of /a%2F..%2F..%2Fpackage.json becomes /a/../../package.json, and the
+// join below would then stat a real file above public/ and call the link
+// resolved. No host would serve that path, so an escape is unresolved by
+// definition (aifocus-uid) - and the file above the root must never be read.
 function resolveTarget(root, pathname) {
-  const base = join(root, pathname.replace(/^\/+/, ""));
+  const confinedRoot = resolve(root);
+  const withinRoot = (target) => target === confinedRoot || target.startsWith(confinedRoot.endsWith(sep) ? confinedRoot : confinedRoot + sep);
+  const base = resolve(join(confinedRoot, pathname.replace(/^\/+/, "")));
+  if (!withinRoot(base)) return null;
   try {
     if (statSync(base).isFile()) return "file";
   } catch {

@@ -172,6 +172,24 @@ test("a percent-encoded target that does not exist still fails", (t) => {
   assert.deepEqual(brokenTargets(scanSite(root)), ["/a b/"]);
 });
 
+test("a decoded path that escapes public/ is unresolved, not stat-ed (aifocus-uid)", (t) => {
+  // A committed href can decode to a path that walks out of the build tree -
+  // %2F is a slash, and the decoder runs after URL resolution. /a/../../x
+  // reaches the repository above public/, where a file such as package.json
+  // really exists: the gate must call the link broken rather than count it as
+  // resolved, because no host would ever serve that path.
+  const dir = mkdtempSync(join(tmpdir(), "aifocus-link-check-escape-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const root = join(dir, "public");
+  mkdirSync(root, { recursive: true });
+  writeFileSync(join(root, "index.html"), page('<a href="/a%2F..%2F..%2Fpackage.json">escape</a>'));
+  writeFileSync(join(dir, "package.json"), '{"name":"outside-the-build"}');
+
+  const result = scanSite(root);
+  assert.deepEqual(brokenTargets(result), ["/a/../../package.json"]);
+  assert.equal(result.resolved, 0);
+});
+
 test("a malformed escape is checked as written rather than crashing the gate", (t) => {
   const root = builtSite(t, {
     "index.html": page('<a href="/a%zzb/">malformed</a>'),
