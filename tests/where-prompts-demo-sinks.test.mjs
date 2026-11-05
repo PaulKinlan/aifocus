@@ -10,22 +10,29 @@ import { fileURLToPath } from 'node:url';
 // enforcing the escape - and the first cut of this guard only recognised one
 // syntactic shape of that sink while the real assignment was `x.innerHTML =
 // lines.join('')`. The demo now contains no markup-sink token at all, so the
-// guard bans the tokens outright on comment-stripped source: any shape
-// (template literal, join, variable, append-adjacent) fails.
+// guard scans the RAW source (comments included) and bans the tokens outright:
+// a comment mentioning a sink token turns the gate red, which fails safe.
 
 const demoPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../static/where-prompts-run-demo/demo.js');
-// Raw source, comments included: the demo legitimately contains no markup-sink
-// token anywhere, not even in prose, so the ban needs no comment stripping.
 const source = fs.readFileSync(demoPath, 'utf8');
 
-const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'document.write'];
+const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUnsafe', 'srcdoc', 'createContextualFragment', 'document.write'];
+// Sinks assembled by splitting the token across string concatenation evade a
+// literal ban: catch the bracket-access concat form (el["inner" + "HTML"]).
+const SINK_PATTERNS = [/\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/];
 
 test('demo contains no markup-sink token of any shape', () => {
   const hits = SINK_TOKENS.filter((t) => source.includes(t));
+  const patternHits = SINK_PATTERNS.filter((p) => p.test(source));
   assert.deepEqual(
     hits,
     [],
     `markup sink reintroduced (any assignment shape fails this guard): ${hits.join(', ')}`,
+  );
+  assert.deepEqual(
+    patternHits.map((p) => String(p)),
+    [],
+    `split-token markup sink reintroduced: ${patternHits.filter((p) => p.test(source)).map(String).join(', ')}`,
   );
 });
 

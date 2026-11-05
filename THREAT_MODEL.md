@@ -15,8 +15,8 @@ file in the same branch.
 ## 1. The system
 
 - A Hugo site built into `public/` and served by Cloudflare Pages.
-- Pages Functions in `functions/`, one module per route, plus `functions/`
-  `functions/_lib/` helpers and `functions/_middleware.js` (which runs on every request).
+- Pages Functions in `functions/`, one module per route, plus `functions/_lib/`
+  helpers and `functions/_middleware.js` (which runs on every request).
 - Bindings, from `wrangler.toml`: `AI` (Workers AI), `BROWSER` (Browser Run),
   `OG_CARDS` (R2 bucket `aifocus-og`), `READER_DB` (D1 `aifocus-reader`), plus
   the `[vars]` `AI_SEARCH_PUBLIC_URL`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`,
