@@ -522,17 +522,32 @@ let activeFile = null;
 async function refreshTree() {
   const treeEl = $('tree');
   const entries = await opfsWalk('');
+  treeEl.textContent = '';
   if (entries.length === 0) {
-    treeEl.innerHTML = `<div class="hint">No files yet. Write something below to kick off the journal.</div>`;
+    const hint = document.createElement('div');
+    hint.className = 'hint';
+    hint.textContent = 'No files yet. Write something below to kick off the journal.';
+    treeEl.append(hint);
     $('fileCount').textContent = 'empty';
     return;
   }
   $('fileCount').textContent = `${entries.filter((e) => e.kind === 'file').length} files`;
-  const lines = entries.map((e) => {
-    if (e.kind === 'dir') return `<div class="dir">${escapeHtml(e.path)}/</div>`;
-    return `<a class="file${activeFile === e.path ? ' active' : ''}" data-path="${escapeHtml(e.path)}">${escapeHtml(e.path)}</a>`;
-  });
-  treeEl.innerHTML = lines.join('');
+  // Built with DOM APIs so untrusted OPFS paths cannot become markup - the
+  // old escape-only innerHTML join was safe by convention with no guard.
+  for (const e of entries) {
+    if (e.kind === 'dir') {
+      const d = document.createElement('div');
+      d.className = 'dir';
+      d.textContent = `${e.path}/`;
+      treeEl.append(d);
+    } else {
+      const a = document.createElement('a');
+      a.className = activeFile === e.path ? 'file active' : 'file';
+      a.dataset.path = e.path;
+      a.textContent = e.path;
+      treeEl.append(a);
+    }
+  }
   treeEl.querySelectorAll('.file').forEach((el) => {
     el.addEventListener('click', () => openFile(el.dataset.path));
   });
@@ -555,19 +570,31 @@ async function openFile(path) {
 
 function appendTranscript(kind, payload) {
   const t = $('transcript');
-  if (t.querySelector('.empty-transcript')) t.innerHTML = '';
+  const empty = t.querySelector('.empty-transcript');
+  if (empty) empty.remove();
   const div = document.createElement('div');
   div.className = `msg ${kind}`;
-  if (kind === 'user') {
-    div.innerHTML = `<div class="kind">you</div><div>${escapeHtml(payload)}</div>`;
-  } else if (kind === 'assistant') {
-    div.innerHTML = `<div class="kind">agent</div><div>${escapeHtml(payload)}</div>`;
+  // textContent everywhere: provider payloads must never reach markup.
+  if (kind === 'user' || kind === 'assistant' || kind === 'error') {
+    const label = document.createElement('div');
+    label.className = 'kind';
+    label.textContent = kind === 'user' ? 'you' : kind === 'assistant' ? 'agent' : 'error';
+    const body = document.createElement('div');
+    body.textContent = payload;
+    div.append(label, body);
   } else if (kind === 'tool') {
-    div.innerHTML = `<div class="kind">tool · ${escapeHtml(payload.name)}</div>
-      <pre>${escapeHtml(JSON.stringify(payload.input ?? {}, null, 2))}</pre>
-      ${payload.result !== undefined ? `<pre style="color: var(--text-dim);">${escapeHtml(truncate(payload.result, 500))}</pre>` : ''}`;
-  } else if (kind === 'error') {
-    div.innerHTML = `<div class="kind">error</div><div>${escapeHtml(payload)}</div>`;
+    const label = document.createElement('div');
+    label.className = 'kind';
+    label.textContent = `tool · ${payload.name}`;
+    const pre = document.createElement('pre');
+    pre.textContent = JSON.stringify(payload.input ?? {}, null, 2);
+    div.append(label, pre);
+    if (payload.result !== undefined) {
+      const out = document.createElement('pre');
+      out.style.color = 'var(--text-dim)';
+      out.textContent = truncate(payload.result, 500);
+      div.append(out);
+    }
   }
   t.appendChild(div);
   queueTranscriptScroll();
@@ -594,9 +621,8 @@ function truncate(s, n) {
   return s.slice(0, n) + `\n… (${s.length - n} more chars)`;
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+// escapeHtml was removed: every interpolating innerHTML sink was converted to
+// DOM building (textContent), so there is no markup path left to escape for.
 
 async function handleSend() {
   const providerId = getProviderId();
@@ -713,7 +739,11 @@ $('reset').addEventListener('click', async () => {
   const viewer = $('viewer');
   try {
     await opfsRemoveAll();
-    $('transcript').innerHTML = '<div class="empty-transcript">Sandbox cleared.</div>';
+    $('transcript').textContent = '';
+    const cleared = document.createElement('div');
+    cleared.className = 'empty-transcript';
+    cleared.textContent = 'Sandbox cleared.';
+    $('transcript').append(cleared);
     viewer.className = 'viewer empty';
     viewer.textContent = 'Click a file to view its contents.';
     activeFile = null;
