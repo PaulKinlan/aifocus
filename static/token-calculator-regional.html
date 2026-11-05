@@ -13,7 +13,8 @@
     --tc-heading: #334155;
     --tc-muted: #64748b;
     --tc-subtle: #666;
-    --tc-note: #94a3b8;
+    --tc-note: #64748b;
+    --tc-note-dark: #94a3b8;
     --tc-surface: #fff;
     --tc-surface-card: #f8fafc;
     --tc-border: #e2e8f0;
@@ -30,6 +31,7 @@
     --tc-bg-dark: #0f172a;
     --tc-text-dark: #e2e8f0;
     --tc-muted-dark: #94a3b8;
+    --tc-note-dark: #94a3b8;
     --tc-surface-dark: #1e293b;
     --tc-border-dark: #334155;
     --tc-border-input-dark: #475569;
@@ -90,7 +92,7 @@
 
   .region-card.highlight { border-color: var(--tc-accent); }
   .region-name { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--tc-heading); }
-  .region-salary { font-size: 0.72rem; color: var(--tc-muted); margin-bottom: 0.3rem; }
+  .region-salary { font-size: 0.75rem; color: var(--tc-muted); margin-bottom: 0.3rem; }
 
   .region-stat {
     text-align: center;
@@ -100,13 +102,13 @@
     border-radius: 6px;
   }
   .region-stat .number { font-size: 1.2rem; font-weight: 800; color: var(--tc-accent-strong); }
-  .region-stat .unit { font-size: 0.6rem; color: var(--tc-muted); }
+  .region-stat .unit { font-size: 0.75rem; color: var(--tc-muted); }
 
   .region-row {
     display: flex;
     justify-content: space-between;
     padding: 0.2rem 0;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     border-bottom: 1px solid var(--tc-border-hairline);
   }
   .region-row:last-child { border-bottom: none; }
@@ -129,7 +131,7 @@
   table.matrix {
     border-collapse: collapse;
     width: 100%;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
   }
 
@@ -144,7 +146,7 @@
     background: var(--tc-surface-card);
     font-weight: 700;
     color: var(--tc-heading);
-    font-size: 0.68rem;
+    font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
@@ -166,13 +168,13 @@
   }
 
   table.matrix td .cost {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: var(--tc-muted);
     display: block;
   }
 
   table.matrix td .tokens {
-    font-size: 0.62rem;
+    font-size: 0.75rem;
     color: var(--tc-note);
     display: block;
   }
@@ -206,11 +208,12 @@
   }
 
   .note {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--tc-note);
     margin-top: 1rem;
     line-height: 1.4;
   }
+  .note a { color: var(--tc-note); }
 
   @media (prefers-color-scheme: dark) {
     body { background: var(--tc-bg-dark); color: var(--tc-text-dark); }
@@ -230,6 +233,7 @@
     table.matrix td.worse { background: var(--tc-worse-tint-dark); }
     table.matrix td.na { background: var(--tc-worse-tint-dark); color: var(--tc-negative-text-dark); }
     .matrix-label { color: var(--tc-text-dark); }
+    table.matrix td .tokens, .note, .note a { color: var(--tc-note-dark); }
   }
 </style>
 </head>
@@ -298,14 +302,14 @@
 </div>
 
 <p class="note">
-  Senior engineer total comp estimates from <a href="https://www.levels.fyi/t/software-engineer/levels/senior" target="_blank" style="color: var(--tc-note);">levels.fyi</a> (2025-2026):
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/san-francisco-bay-area" target="_blank" style="color: var(--tc-note);">Bay Area</a> $400K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-states" target="_blank" style="color: var(--tc-note);">US avg</a> $250K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/greater-toronto-area" target="_blank" style="color: var(--tc-note);">Canada</a> $170K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/london-gbr" target="_blank" style="color: var(--tc-note);">UK London</a> $150K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/germany" target="_blank" style="color: var(--tc-note);">Germany</a> $130K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-kingdom" target="_blank" style="color: var(--tc-note);">UK other</a> $100K,
-  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/bengaluru-ind" target="_blank" style="color: var(--tc-note);">India</a> $60K.
+  Senior engineer total comp estimates from <a href="https://www.levels.fyi/t/software-engineer/levels/senior" target="_blank">levels.fyi</a> (2025-2026):
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/san-francisco-bay-area" target="_blank">Bay Area</a> $400K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-states" target="_blank">US avg</a> $250K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/greater-toronto-area" target="_blank">Canada</a> $170K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/london-gbr" target="_blank">UK London</a> $150K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/germany" target="_blank">Germany</a> $130K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/united-kingdom" target="_blank">UK other</a> $100K,
+  <a href="https://www.levels.fyi/t/software-engineer/levels/senior/locations/bengaluru-ind" target="_blank">India</a> $60K.
   Jensen: salary + 50% in tokens. Steve: fire the engineer, redirect salary. In the matrix, savings from hiring in a cheaper region are redirected to tokens. Token prices are global. The arbitrage is real: same AI model, same quality engineer, dramatically different throughput depending on where you hire.
 </p>
 
@@ -401,13 +405,13 @@
 
     let html = '<tr><th class="corner">Hire in &rarr;<br>Budget from &darr;</th>';
     REGIONS.forEach(dest => {
-      html += `<th>${dest.name}<br><span style="font-weight:400;text-transform:none;font-size:0.62rem;">${fmtMoney(dest.salary)}</span></th>`;
+      html += `<th>${dest.name}<br><span style="font-weight:400;text-transform:none;font-size:0.75rem;">${fmtMoney(dest.salary)}</span></th>`;
     });
     html += '</tr>';
 
     REGIONS.forEach(src => {
       const budget = budgetFn(src);
-      html += `<tr><th class="row-header">${src.name}<br><span style="font-weight:400;font-size:0.62rem;">Budget: ${fmtMoney(budget)}</span></th>`;
+      html += `<tr><th class="row-header">${src.name}<br><span style="font-weight:400;font-size:0.75rem;">Budget: ${fmtMoney(budget)}</span></th>`;
 
       REGIONS.forEach(dest => {
         const tokenBudget = budget - dest.salary;

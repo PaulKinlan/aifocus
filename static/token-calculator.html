@@ -15,7 +15,7 @@
     --tc-heading: #334155;
     --tc-muted: #64748b;
     --tc-subtle: #666;
-    --tc-note: #94a3b8;
+    --tc-note: #64748b;
     --tc-surface: #fff;
     --tc-surface-card: #f8fafc;
     --tc-border: #e2e8f0;
@@ -31,6 +31,7 @@
     --tc-bg-dark: #0f172a;
     --tc-text-dark: #e2e8f0;
     --tc-muted-dark: #94a3b8;
+    --tc-note-dark: #94a3b8;
     --tc-surface-dark: #1e293b;
     --tc-border-dark: #334155;
     --tc-border-input-dark: #475569;
@@ -192,7 +193,7 @@
   .huang .big-stat .number { color: var(--tc-accent-strong); }
 
   .big-stat .unit {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--tc-muted);
     margin-top: 0.15rem;
   }
@@ -220,7 +221,7 @@
     text-align: center;
   }
 
-  .summary-item .label { font-size: 0.72rem; color: var(--tc-muted); }
+  .summary-item .label { font-size: 0.75rem; color: var(--tc-muted); }
   .summary-item .val { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
   .summary-item .val.neg { color: var(--tc-negative); }
   .summary-item .val.pos { color: var(--tc-positive); }
@@ -252,7 +253,7 @@
 
   .tasks-period {
     display: block;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: var(--tc-muted);
   }
 
@@ -324,7 +325,7 @@
   }
 
   .note {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--tc-note);
     margin-top: 1rem;
     line-height: 1.4;
@@ -351,6 +352,7 @@
     .tasks-period { color: var(--tc-muted-dark); }
     .charts-section { background: var(--tc-surface-dark); border-color: var(--tc-border-dark); }
     .charts-section h3, .chart-wrap h4 { color: var(--tc-muted-dark); }
+    .note, .note a { color: var(--tc-note-dark); }
   }
 </style>
 </head>
