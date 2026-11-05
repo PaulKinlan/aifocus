@@ -533,7 +533,7 @@ async function refreshTree() {
   }
   $('fileCount').textContent = `${entries.filter((e) => e.kind === 'file').length} files`;
   // Built with DOM APIs so untrusted OPFS paths cannot become markup - the
-  // old escape-only innerHTML join was safe by convention with no guard.
+  // old escape-only markup-sink join was safe by convention with no guard.
   for (const e of entries) {
     if (e.kind === 'dir') {
       const d = document.createElement('div');
@@ -621,7 +621,7 @@ function truncate(s, n) {
   return s.slice(0, n) + `\n… (${s.length - n} more chars)`;
 }
 
-// escapeHtml was removed: every interpolating innerHTML sink was converted to
+// escapeHtml was removed: every interpolating markup sink was converted to
 // DOM building (textContent), so there is no markup path left to escape for.
 
 async function handleSend() {
