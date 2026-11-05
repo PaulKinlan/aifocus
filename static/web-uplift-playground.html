@@ -7,26 +7,38 @@
 <title>web-uplift playground: seeded issues the agent finds</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root { color-scheme: light dark; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: light-dark(#fafafa, #14161a); color: light-dark(#1a1a1a, #e6e6e6); line-height: 1.5; }
+:root {
+  color-scheme: light dark;
+  /* Audit-page palette tokens: one role, one value. */
+  --bg: light-dark(#fafafa, #14161a);
+  --fg: light-dark(#1a1a1a, #e6e6e6);
+  --muted: light-dark(#6b6b6b, #9aa0a6);
+  --subtle: light-dark(#666, #9aa0a6);
+  --link: light-dark(#1a5fb4, #8ab4f8);
+  --card: light-dark(#fff, #1c1f25);
+  --border: light-dark(#e3e3e3, #2c3036);
+  --warn: light-dark(#8a6300, #d9a441);
+  --warn-bg: light-dark(#fff3cd, #4a3a18);
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: var(--bg); color: var(--fg); line-height: 1.5; }
 h2 { font-size: 1.02rem; font-weight: 700; }
-.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
-.subhead a, .note a { color: light-dark(#1a5fb4, #8ab4f8); }
-.legend { display: flex; gap: .8rem; font-size: .72rem; margin-bottom: .9rem; flex-wrap: wrap; color: light-dark(#666, #9aa0a6); }
+.subhead { font-size: .82rem; color: var(--subtle); margin: .2rem 0 1rem; }
+.subhead a, .note a { color: var(--link); }
+.legend { display: flex; gap: .8rem; font-size: .75rem; margin-bottom: .9rem; flex-wrap: wrap; color: var(--subtle); }
 .legend .tag { font-weight: 600; }
-.legend .planted { color: light-dark(#1a5fb4, #8ab4f8); }
-.legend .extra { color: light-dark(#8a6300, #d9a441); }
+.legend .planted { color: var(--link); }
+.legend .extra { color: var(--warn); }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: .6rem; }
-.card { background: light-dark(#fff, #1c1f25); border: 1px solid light-dark(#e3e3e3, #2c3036); border-radius: .5rem; padding: .65rem .75rem; position: relative; }
-.card .tag { position: absolute; top: .55rem; right: .55rem; font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; padding: .1rem .35rem; border-radius: 999px; }
-.tag.planted { background: light-dark(#e8f0fe, #1e2a4a); color: light-dark(#1a5fb4, #8ab4f8); }
-.tag.extra { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
-.card .sc { font-size: .62rem; font-family: ui-monospace, monospace; color: light-dark(#1a5fb4, #8ab4f8); }
-.card .pr { font-size: .68rem; color: light-dark(#888, #9aa0a6); margin: .05rem 0 .25rem; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: .5rem; padding: .65rem .75rem; position: relative; }
+.card .tag { position: absolute; top: .55rem; right: .55rem; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; padding: .1rem .35rem; border-radius: 999px; }
+.tag.planted { background: light-dark(#e8f0fe, #1e2a4a); color: var(--link); }
+.tag.extra { background: var(--warn-bg); color: var(--warn); }
+.card .sc { font-size: .75rem; font-family: ui-monospace, monospace; color: var(--link); }
+.card .pr { font-size: .75rem; color: var(--muted); margin: .05rem 0 .25rem; }
 .card .t { font-size: .82rem; font-weight: 600; margin-bottom: .2rem; padding-right: 3rem; }
-.card .e { font-size: .74rem; color: light-dark(#555, #9aa0a6); line-height: 1.4; }
-.card .e b { color: light-dark(#1a1a1a, #e6e6e6); }
-.note { font-size: .72rem; color: light-dark(#999, #777); margin-top: 1rem; line-height: 1.5; }
+.card .e { font-size: .75rem; color: light-dark(#555, #9aa0a6); line-height: 1.4; }
+.card .e b { color: var(--fg); }
+.note { font-size: .75rem; color: var(--muted); margin-top: 1rem; line-height: 1.5; }
 </style>
 </head>
 <body>

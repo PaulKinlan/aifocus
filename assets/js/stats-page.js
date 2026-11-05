@@ -123,9 +123,11 @@ function setupChart(figure) {
   host.append(tip);
 
   function render() {
+    // Measure before mutating: removing the SVG first would invalidate layout
+    // and turn this clientWidth read into a forced synchronous reflow.
+    const width = Math.max(280, host.clientWidth || 600);
     host.querySelector("svg")?.remove();
     host.querySelector(".no-js-note")?.remove();
-    const width = Math.max(280, host.clientWidth || 600);
     const height = Math.round(Math.min(360, Math.max(220, width * 0.45)));
     const m = { top: 12, right: 14, bottom: 28, left: 48 };
     const W = width - m.left - m.right, H = height - m.top - m.bottom;
@@ -186,32 +188,40 @@ function setupChart(figure) {
     const cursor = el("line", { class: "cursor", y1: m.top, y2: m.top + H, x1: 0, x2: 0, visibility: "hidden" });
     svg.append(cursor);
     const hit = el("rect", { x: m.left, y: m.top, width: W, height: H, fill: "transparent" });
+    let lastBest = -1, tipW = 0, tipH = 0;
     hit.addEventListener("pointermove", (ev) => {
       const r = svg.getBoundingClientRect();
       const px = ev.clientX - r.left;
       let best = 0, bd = Infinity;
       for (let i = 0; i < n; i++) { const d = Math.abs(x(i) - px); if (d < bd) { bd = d; best = i; } }
       cursor.setAttribute("x1", x(best)); cursor.setAttribute("x2", x(best)); cursor.setAttribute("visibility", "visible");
-      const p = data.periods[best];
-      tip.innerHTML = "";
-      const b = document.createElement("b"); b.textContent = periodLabel(p, data.granularity) + (p.partial ? " (incomplete)" : "");
-      tip.append(b);
-      for (const s of shown) {
-        const v = s.values[best];
-        if (v == null) continue;
-        const row = document.createElement("div"); row.className = "row";
-        const name = document.createElement("span");
-        const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = `var(--viz-${s.slot || s.i + 1})`;
-        name.append(sw, " ", s.label);
-        const val = document.createElement("span"); val.textContent = full(v, data.value_format);
-        row.append(name, val); tip.append(row);
+      if (best !== lastBest) {
+        lastBest = best;
+        const p = data.periods[best];
+        tip.innerHTML = "";
+        const b = document.createElement("b"); b.textContent = periodLabel(p, data.granularity) + (p.partial ? " (incomplete)" : "");
+        tip.append(b);
+        for (const s of shown) {
+          const v = s.values[best];
+          if (v == null) continue;
+          const row = document.createElement("div"); row.className = "row";
+          const name = document.createElement("span");
+          const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = `var(--viz-${s.slot || s.i + 1})`;
+          name.append(sw, " ", s.label);
+          const val = document.createElement("span"); val.textContent = full(v, data.value_format);
+          row.append(name, val); tip.append(row);
+        }
+        tip.hidden = false;
+        // Measure once per content change; the values are stale-safe for pure
+        // repositioning, so within-column pointermoves do no layout work.
+        tipW = tip.offsetWidth;
+        tipH = tip.offsetHeight;
       }
-      tip.hidden = false;
-      const left = x(best) + 12 + tip.offsetWidth > width ? x(best) - tip.offsetWidth - 12 : x(best) + 12;
+      const left = x(best) + 12 + tipW > width ? x(best) - tipW - 12 : x(best) + 12;
       tip.style.left = `${Math.max(0, left)}px`;
-      tip.style.top = `${Math.max(0, Math.min(ev.clientY - r.top - 10, height - tip.offsetHeight))}px`;
+      tip.style.top = `${Math.max(0, Math.min(ev.clientY - r.top - 10, height - tipH))}px`;
     });
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
     host.prepend(svg);
   }

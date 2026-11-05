@@ -15,13 +15,13 @@ file in the same branch.
 ## 1. The system
 
 - A Hugo site built into `public/` and served by Cloudflare Pages.
-- Pages Functions in `functions/`, one module per route, plus `functions/`
-  `_lib/` helpers and `functions/_middleware.js` (which runs on every request).
+- Pages Functions in `functions/`, one module per route, plus `functions/_lib/`
+  helpers and `functions/_middleware.js` (which runs on every request).
 - Bindings, from `wrangler.toml`: `AI` (Workers AI), `BROWSER` (Browser Run),
   `OG_CARDS` (R2 bucket `aifocus-og`), `READER_DB` (D1 `aifocus-reader`), plus
   the `[vars]` `AI_SEARCH_PUBLIC_URL`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`,
   `GITHUB_CLIENT_ID` and the `GITHUB_CLIENT_SECRET` Pages secret.
-- Schema: `migrations/0001`-`0008`. Anything that stores reader data, an IP
+- Schema: `migrations/0001`-`0010`. Anything that stores reader data, an IP
   hash or a rate-limit ledger lives there.
 - Out of scope: the agent fleet and the software factory (`~/agents`,
   `~/fleet`), the journal, and anything that only exists on a build machine.
@@ -36,6 +36,7 @@ file in the same branch.
 | Moderation authority | Approving, rejecting, trusting and deleting content is the one privilege in the system | `/admin/*`, `/api/admin/*` behind Cloudflare Access |
 | Flow secrets | OAuth secrets, authorization codes, session tokens, DPoP private keys | Pages secrets, `sessions`, `oauth_states`, `console.*` output |
 | Access configuration | `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` decide what the admin guard accepts | `wrangler.toml` `[vars]` (not secret; still load-bearing) |
+| Reader-held provider keys | The journal demo's opt-in "remember on this device" stores a live bearer credential with billing authority in origin-wide `localStorage`, readable by any script on the origin and never held server-side | reader browser storage (`wpr_demo_apikey_*`), disclosed next to the key field | 
 
 ## 3. Actors and what they can reach
 
@@ -56,16 +57,16 @@ anyone who can read a backup, a replica or a debug session".
 | Surface | Control | Enforced in |
 |:---|:---|:---|
 | Cross-origin writes | `isSameOrigin()` requires the `Origin` header to equal the request's own origin; a request with no `Origin` is rejected, not allowed | `functions/_lib/reader.js`, called by every POST handler |
-| CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `_lib/reader.js`, `_lib/auth.js` |
-| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), ask (20/hour), auth starts (30/hour) and share-card renders. The write and search meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `_lib/reader.js reserveWriteEvent`, `api/search.js reserveSearchSlot`, `api/auth/start/[provider].js reserveAuthStartSlot`, `api/ask.js`, `_lib/og.js` |
-| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `_lib/reader.js reserveWriteEvent`, `api/search.js reserveSearchSlot`, `api/auth/start/[provider].js reserveAuthStartSlot` |
-| Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `api/ask.js` |
-| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `api/admin/*` modules), and there is no prefix-level guard | `_lib/access.js`, `api/admin/*` |
-| Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `_lib/auth.js` |
-| OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `_lib/auth.js` |
-| IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `_lib/reader.js hashIp` |
+| CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `functions/_lib/reader.js`, `functions/_lib/auth.js` |
+| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), ask (20/hour), auth starts (30/hour) and share-card renders. The write and search meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/ask.js`, `functions/_lib/og.js` |
+| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot` |
+| Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
+| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard | `functions/_lib/access.js`, `functions/api/admin/*` |
+| Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
+| OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `functions/_lib/auth.js` |
+| IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
 | Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` |
-| Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `_lib/reader.js LIMITS`, `api/search.js`, `api/reader/annotations.js` |
+| Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 
 `static/_headers` is the only place the security headers are declared: the
@@ -86,19 +87,36 @@ can be checked rather than re-argued.
    with `/`. Re-opens if the destination ever comes from a query parameter, a
    header, or the contents of `latest-post.txt` beyond that regex.
 2. **`withParam()` resolves against a hardcoded `https://aifoc.us`**
-   (`_lib/auth.js:248`). It returns only `pathname + search + hash`, so the
+   (`functions/_lib/auth.js:248`). It returns only `pathname + search + hash`, so the
    origin is parsed and discarded. Not an open redirect; a preview deployment
    building links against production is a portability nit, not a security
    issue.
 3. **`innerHTML` built by joining an array in the journal demo**
-   (`static/where-prompts-run-demo/demo.js:535`). Every interpolated value is
-   passed through `escapeHtml()` (`:597`, escaping `& < > "`). Re-opens the
-   moment a field is added to that join without the escape.
+   (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
+   because every interpolated value passed through `escapeHtml()`. The join is
+   gone entirely: the tree and transcript are now DOM-built with
+   `textContent`, `escapeHtml` is removed, and
+   `tests/where-prompts-demo-sinks.test.mjs` fails the gate if an interpolating
+   `innerHTML` assignment or the helper returns (aifocus-qsv3). Re-opens only
+   if that guard is deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
    layout deliberately emits `width=1200` for screenshot fidelity, and the
    regular pages get the meta from the head partial.
+6. **Candidates anchored under `public/**`.** `public/` is Hugo build output,
+   not source: perf/media and link candidates there (share-card pages,
+   generated report pages, built link targets) are re-derived from the sources
+   each build, so the anchor is the wrong place to fix. Fixed in the source
+   page or generator instead (see aifocus-ug4k for the worked example).
+   Re-opens for a `public/` path that is hand-committed source rather than
+   build output - check `git ls-files` before dismissing.
+7. **Module paths written without the `functions/` prefix**
+   (`functions/_lib/…`, `functions/api/…` in prose and table cells). §1 fixes the convention
+   ("Pages Functions in `functions/`"), and every module path now carries the
+   full `functions/…` prefix, so the doc-missing-file candidates that read the
+   bare form as a repo-root path have nothing left to match. Re-opens when a
+   new row or sentence names a module without the prefix.
 
 ## 6. Known gaps and open work
 
@@ -143,7 +161,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 
 Re-read this file when a change:
 
-- adds or moves a route under `functions/`, especially under `api/admin/`;
+- adds or moves a route under `functions/`, especially under `functions/api/admin/`;
 - adds a binding, a `[vars]` entry, or a secret;
 - adds a migration, or changes what an existing table stores about a person;
 - changes `static/_headers` allowlists, or adds an inline script;
