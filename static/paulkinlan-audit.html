@@ -7,33 +7,55 @@
 <title>web-uplift audit: paul.kinlan.me</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-:root { color-scheme: light dark; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: light-dark(#fafafa, #14161a); color: light-dark(#1a1a1a, #e6e6e6); line-height: 1.5; }
+:root {
+  color-scheme: light dark;
+  /* Audit-page palette tokens: one role, one value. */
+  --bg: light-dark(#fafafa, #14161a);
+  --fg: light-dark(#1a1a1a, #e6e6e6);
+  --muted: light-dark(#6b6b6b, #9aa0a6);
+  --subtle: light-dark(#666, #9aa0a6);
+  --link: light-dark(#1a5fb4, #8ab4f8);
+  --good: light-dark(#1a8a3a, #57c97a);
+  --bad: light-dark(#c0392b, #e06c75);
+  --warn: light-dark(#8a6300, #d9a441);
+  --warn-bg: light-dark(#fff3cd, #4a3a18);
+  --pill-bg: light-dark(#eef0f3, #2c3036);
+  --pill-fg: light-dark(#5a6068, #b0b6bd);
+  --chip-bg: light-dark(#e8f5ec, #1e2d22);
+  --chip-border: light-dark(#bfe6c9, #2d4a35);
+  --code-bg: light-dark(#eee, #2a2e34);
+  --sev-high-bg: light-dark(#fde2e2, #4a2323);
+  --sev-high-fg: light-dark(#a02020, #e06c75);
+  --callout-bg: light-dark(#fff7ed, #2a2118);
+  --callout-border: light-dark(#fed7aa, #4a3520);
+  --callout-accent: light-dark(#c2410c, #f0a060);
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 1.25rem 1.25rem 1.5rem; background: var(--bg); color: var(--fg); line-height: 1.5; }
 h2 { font-size: 1.02rem; font-weight: 700; }
-.subhead { font-size: .82rem; color: light-dark(#666, #9aa0a6); margin: .2rem 0 1rem; }
-.subhead a, .note a { color: light-dark(#1a5fb4, #8ab4f8); }
+.subhead { font-size: .82rem; color: var(--subtle); margin: .2rem 0 1rem; }
+.subhead a, .note a { color: var(--link); }
 .headline { display: flex; gap: 1.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
 .stat .n { font-size: 1.7rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
-.stat .n.bad { color: light-dark(#c0392b, #e06c75); }
-.stat .n.good { color: light-dark(#1a8a3a, #57c97a); }
-.stat .l { font-size: .75rem; color: light-dark(#6b6b6b, #9aa0a6); text-transform: uppercase; letter-spacing: .03em; margin-top: .15rem; }
-.callout { background: light-dark(#fff7ed, #2a2118); border: 1px solid light-dark(#fed7aa, #4a3520); border-radius: .5rem; padding: .7rem .8rem; margin-bottom: 1.1rem; font-size: .8rem; }
-.callout b { color: light-dark(#c2410c, #f0a060); }
-h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: light-dark(#888, #9aa0a6); margin: 0 0 .5rem; }
+.stat .n.bad { color: var(--bad); }
+.stat .n.good { color: var(--good); }
+.stat .l { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-top: .15rem; }
+.callout { background: var(--callout-bg); border: 1px solid var(--callout-border); border-radius: .5rem; padding: .7rem .8rem; margin-bottom: 1.1rem; font-size: .8rem; }
+.callout b { color: var(--callout-accent); }
+h3 { font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 .5rem; }
 .findings { list-style: none; margin-bottom: 1.2rem; }
-.f { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; border-top: 1px solid light-dark(#eee, #2a2e34); padding: .55rem 0; }
+.f { display: grid; grid-template-columns: 1fr auto; gap: .6rem; align-items: start; border-top: 1px solid var(--code-bg); padding: .55rem 0; }
 .f:first-child { border-top: none; }
-.f .id { font-size: .75rem; font-family: ui-monospace, monospace; color: light-dark(#6b6b6b, #9aa0a6); }
+.f .id { font-size: .75rem; font-family: ui-monospace, monospace; color: var(--muted); }
 .f .t { font-size: .82rem; font-weight: 600; margin: .05rem 0 .1rem; }
-.f .fix { font-size: .76rem; color: light-dark(#666, #9aa0a6); }
-.f .fix b { color: light-dark(#1a8a3a, #57c97a); font-weight: 600; }
+.f .fix { font-size: .76rem; color: var(--subtle); }
+.f .fix b { color: var(--good); font-weight: 600; }
 .sev { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; padding: .12rem .4rem; border-radius: 999px; white-space: nowrap; height: fit-content; }
-.sev.high { background: light-dark(#fde2e2, #4a2323); color: light-dark(#a02020, #e06c75); }
-.sev.med { background: light-dark(#fff3cd, #4a3a18); color: light-dark(#8a6300, #d9a441); }
-.sev.low { background: light-dark(#eef0f3, #2c3036); color: light-dark(#5a6068, #b0b6bd); }
+.sev.high { background: var(--sev-high-bg); color: var(--sev-high-fg); }
+.sev.med { background: var(--warn-bg); color: var(--warn); }
+.sev.low { background: var(--pill-bg); color: var(--pill-fg); }
 .strengths { display: flex; flex-wrap: wrap; gap: .35rem; }
-.chip { font-size: .75rem; background: light-dark(#e8f5ec, #1e2d22); color: light-dark(#1a8a3a, #57c97a); border: 1px solid light-dark(#bfe6c9, #2d4a35); border-radius: 999px; padding: .2rem .55rem; }
-.note { font-size: .75rem; color: light-dark(#6b6b6b, #9aa0a6); margin-top: 1rem; line-height: 1.5; }
+.chip { font-size: .75rem; background: var(--chip-bg); color: var(--good); border: 1px solid var(--chip-border); border-radius: 999px; padding: .2rem .55rem; }
+.note { font-size: .75rem; color: var(--muted); margin-top: 1rem; line-height: 1.5; }
 </style>
 </head>
 <body>
