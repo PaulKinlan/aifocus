@@ -36,6 +36,7 @@ file in the same branch.
 | Moderation authority | Approving, rejecting, trusting and deleting content is the one privilege in the system | `/admin/*`, `/api/admin/*` behind Cloudflare Access |
 | Flow secrets | OAuth secrets, authorization codes, session tokens, DPoP private keys | Pages secrets, `sessions`, `oauth_states`, `console.*` output |
 | Access configuration | `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` decide what the admin guard accepts | `wrangler.toml` `[vars]` (not secret; still load-bearing) |
+| Reader-held provider keys | The journal demo's opt-in "remember on this device" stores a live bearer credential with billing authority in origin-wide `localStorage`, readable by any script on the origin and never held server-side | reader browser storage (`wpr_demo_apikey_*`), disclosed next to the key field | 
 
 ## 3. Actors and what they can reach
 
@@ -91,9 +92,13 @@ can be checked rather than re-argued.
    building links against production is a portability nit, not a security
    issue.
 3. **`innerHTML` built by joining an array in the journal demo**
-   (`static/where-prompts-run-demo/demo.js:535`). Every interpolated value is
-   passed through `escapeHtml()` (`:597`, escaping `& < > "`). Re-opens the
-   moment a field is added to that join without the escape.
+   (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
+   because every interpolated value passed through `escapeHtml()`. The join is
+   gone entirely: the tree and transcript are now DOM-built with
+   `textContent`, `escapeHtml` is removed, and
+   `tests/where-prompts-demo-sinks.test.mjs` fails the gate if an interpolating
+   `innerHTML` assignment or the helper returns (aifocus-qsv3). Re-opens only
+   if that guard is deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
