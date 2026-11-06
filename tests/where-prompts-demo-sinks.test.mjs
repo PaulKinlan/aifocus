@@ -18,19 +18,21 @@ const source = fs.readFileSync(demoPath, 'utf8');
 
 const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUnsafe', 'srcdoc', 'createContextualFragment', 'document.write'];
 
-const WS_OR_COMMENT = '(?:\\s|/\\*[\\s\\S]*?\\*/|//[^\\r\\n]*\\r?\\n)';
+const WS_OR_COMMENT = '(?:\\s|/\\*[\\s\\S]*?\\*/|//[^\\r\\n\\u2028\\u2029]*(?:\\r\\n|[\\r\\n\\u2028\\u2029]|$))';
 const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["'\`]`, 'g');
+const TEMPLATE_INTERP_PATTERN = /\$\{[^}]*\}/g;
 
-// Sinks assembled by splitting the token across string concatenation evade a
-// literal ban: collapsing quote-concatenation pairs (including whitespace, block
-// comments, or line comments between tokens) detects split tokens anywhere
-// in the string across any boundary (e.g. 'inn' + 'erHTML', 'inn'/* comment */+'erHTML').
+// Sinks assembled by splitting the token across string concatenation or template
+// interpolation evade a literal ban: collapsing quote-concatenation pairs
+// (including whitespace, block comments, or line comments terminated by any JS
+// LineTerminator: \n, \r\n, \r, \u2028, \u2029) and template expression interpolations
+// detects split tokens anywhere in the string across any boundary.
 export function findSinkTokens(src) {
   let prev = '';
   let joined = src;
   while (joined !== prev) {
     prev = joined;
-    joined = joined.replace(CONCAT_PATTERN, '');
+    joined = joined.replace(TEMPLATE_INTERP_PATTERN, '').replace(CONCAT_PATTERN, '');
   }
   return SINK_TOKENS.filter((t) => src.includes(t) || joined.includes(t));
 }
@@ -50,6 +52,11 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     'el["inn" + "erHTML"] = payload;',
     'el["inn"/* note */+"erHTML"] = payload;',
     'el["inn" // line comment\n + "erHTML"] = payload;',
+    'el["inn" // line comment\r + "erHTML"] = payload;',
+    'el["inn" // line comment\u2028 + "erHTML"] = payload;',
+    'el["inn" // line comment\u2029 + "erHTML"] = payload;',
+    'el[`inn${payload}erHTML`] = x;',
+    'el[`inn${""}erHTML`] = x;',
     'el["out" + "erHTML"] = payload;',
     'window["set" + "HTMLUnsafe"](payload);',
     'frame["src" + "doc"] = payload;',
