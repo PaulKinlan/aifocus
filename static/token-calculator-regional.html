@@ -247,7 +247,7 @@
   <div class="control-group">
     <label>Model</label>
     <div class="sublabel">Blended rate computed from input/output ratio below</div>
-    <select id="model" onchange="update()">
+    <select id="model">
       <option value="5,25">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
       <option value="3,15">Claude Sonnet 4.5/4.6 ($3/$15 per 1M)</option>
       <option value="15,120">GPT-5 Pro ($15/$120 per 1M)</option>
@@ -265,7 +265,7 @@
   <div class="control-group">
     <label>Input token ratio</label>
     <div class="slider-row">
-      <input type="range" id="input-ratio" min="50" max="99" step="1" value="93" oninput="update()">
+      <input type="range" id="input-ratio" min="50" max="99" step="1" value="93">
       <span class="value-display" id="ratio-display">93% in / 7% out</span>
     </div>
   </div>
@@ -273,7 +273,7 @@
   <div class="control-group">
     <label>Tokens per task</label>
     <div class="slider-row">
-      <input type="range" id="tokens-per-task" min="10000" max="2000000" step="10000" value="100000" oninput="update()">
+      <input type="range" id="tokens-per-task" min="10000" max="2000000" step="10000" value="100000">
       <span class="value-display" id="task-size-display">100K</span>
     </div>
   </div>
@@ -498,6 +498,12 @@
 
   buildCards();
   update();
+  // Controls that used to carry inline oninput/onchange attributes; see the
+  // script-src note in static/_headers (inline handlers would be blocked).
+  for (const control of document.querySelectorAll('#model, #input-ratio, #tokens-per-task')) {
+    control.addEventListener('input', update);
+    control.addEventListener('change', update);
+  }
 </script>
 </body>
 </html>
