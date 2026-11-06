@@ -18,15 +18,19 @@ const source = fs.readFileSync(demoPath, 'utf8');
 
 const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUnsafe', 'srcdoc', 'createContextualFragment', 'document.write'];
 
+const WS_OR_COMMENT = '(?:\\s|/\\*[\\s\\S]*?\\*/|//[^\\r\\n]*\\r?\\n)';
+const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["'\`]`, 'g');
+
 // Sinks assembled by splitting the token across string concatenation evade a
-// literal ban: collapsing quote-concatenation pairs detects split tokens
-// anywhere in the string across any boundary (e.g. 'inn' + 'erHTML', 'src' + 'doc').
+// literal ban: collapsing quote-concatenation pairs (including whitespace, block
+// comments, or line comments between tokens) detects split tokens anywhere
+// in the string across any boundary (e.g. 'inn' + 'erHTML', 'inn'/* comment */+'erHTML').
 export function findSinkTokens(src) {
   let prev = '';
   let joined = src;
   while (joined !== prev) {
     prev = joined;
-    joined = joined.replace(/["'`]\s*\+\s*["'`]/g, '');
+    joined = joined.replace(CONCAT_PATTERN, '');
   }
   return SINK_TOKENS.filter((t) => src.includes(t) || joined.includes(t));
 }
@@ -44,6 +48,8 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
   const evasions = [
     'el["inner" + "HTML"] = payload;',
     'el["inn" + "erHTML"] = payload;',
+    'el["inn"/* note */+"erHTML"] = payload;',
+    'el["inn" // line comment\n + "erHTML"] = payload;',
     'el["out" + "erHTML"] = payload;',
     'window["set" + "HTMLUnsafe"](payload);',
     'frame["src" + "doc"] = payload;',
