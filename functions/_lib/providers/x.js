@@ -6,6 +6,8 @@
 // app in the X developer portal with OAuth 2.0 turned on. Scopes are the
 // minimum that GET /2/users/me accepts.
 
+import { classifyOAuthError } from "../auth.js";
+
 export const id = "x";
 export const label = "X";
 
@@ -42,7 +44,7 @@ export async function complete({ env, params, redirectUri, verifier, fetchImpl =
     }),
   });
   const token = await tokenRes.json().catch(() => ({}));
-  if (!tokenRes.ok || !token.access_token) throw new Error(`x: token exchange failed (${token.error || tokenRes.status})`);
+  if (!tokenRes.ok || !token.access_token) throw new Error(`x: token exchange failed (${classifyOAuthError(token, tokenRes.status)})`);
 
   const userRes = await fetchImpl("https://api.x.com/2/users/me?user.fields=profile_image_url,name,username", {
     headers: { Authorization: `Bearer ${token.access_token}` },

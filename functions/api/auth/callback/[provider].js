@@ -11,6 +11,7 @@ import {
   createSession,
   getSessionUser,
   linkIdentity,
+  providerErrorSummary,
   redirect,
   sessionCookie,
   takeOAuthState,
@@ -61,7 +62,7 @@ export async function onRequestGet({ request, env, params }) {
     if (!target.pathname.startsWith("/account/")) target.hash = "reader";
     return redirect(`${target.pathname}${target.search}${target.hash}`, [clearStateCookie(), ...cleanup, sessionCookie(token)]);
   } catch (err) {
-    console.error(`auth callback ${provider.id} failed`, err?.message ?? err);
+    console.error(`auth callback ${provider.id} failed: ${providerErrorSummary(err)}`);
     return back("failed");
   }
 }

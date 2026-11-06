@@ -14,7 +14,7 @@
 // flow starts at bsky.social and the returned DID is checked against its own
 // PDS's authorization server afterwards.
 
-import { base64url, base64urlDecode, randomToken, readCookie, sha256, STATE_TTL_MS } from "../auth.js";
+import { base64url, base64urlDecode, classifyOAuthError, randomToken, readCookie, sha256, STATE_TTL_MS } from "../auth.js";
 
 export const id = "bluesky";
 export const label = "Bluesky";
@@ -249,7 +249,7 @@ export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
       currentNonce = nextNonce;
       continue;
     }
-    throw new Error(`bluesky: ${new URL(url).pathname} failed (${body?.error || res.status})`);
+    throw new Error(`bluesky: ${new URL(url).pathname} failed (${classifyOAuthError(body, res.status)})`);
   }
   throw new Error("bluesky: DPoP nonce retry failed");
 }

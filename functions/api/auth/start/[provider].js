@@ -8,6 +8,7 @@
 import {
   getSessionUser,
   pkcePair,
+  providerErrorSummary,
   randomToken,
   redirect,
   safeReturnTo,
@@ -79,7 +80,7 @@ export async function onRequestGet({ request, env, params }) {
     await saveOAuthState(db, { state, provider: provider.id, verifier, returnTo, data, linkUserId: current?.id ?? null });
     return redirect(location, [stateCookie(state), ...extraCookies]);
   } catch (err) {
-    console.error(`auth start ${provider.id} failed`, err?.message ?? err);
+    console.error(`auth start ${provider.id} failed: ${providerErrorSummary(err)}`);
     return redirect(withParam(returnTo, "signin", "failed"));
   }
 }
