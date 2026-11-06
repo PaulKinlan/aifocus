@@ -50,7 +50,9 @@ export async function complete({ env, params, redirectUri, verifier, fetchImpl =
     headers: { Authorization: `Bearer ${token.access_token}` },
   });
   if (!userRes.ok) throw new Error(`x: /2/users/me HTTP ${userRes.status}`);
-  const body = await userRes.json();
+  // A parse error would quote the response body (aifocus-8qky): fall through
+  // to the fixed shape check instead.
+  const body = await userRes.json().catch(() => null);
   const user = body?.data;
   if (!user?.id || !user?.username) throw new Error("x: unexpected /2/users/me body");
   return {

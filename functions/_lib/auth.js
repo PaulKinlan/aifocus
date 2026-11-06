@@ -274,7 +274,9 @@ export function withParam(path, key, value) {
 //    Authorization header shapes and control characters are removed; the result
 //    is one line, length-capped, and the error `name` is sanitized BEFORE it
 //    is prepended, because a custom name is attacker-influenced text like any
-//    other provider-supplied string.
+//    other provider-supplied string. A SyntaxError message quotes its input,
+//    so the summary keeps only the class (aifocus-8qky); parse failures at the
+//    throw sites are classified like any other provider error.
 const OAUTH_ERROR_CODES = new Set([
   // RFC 6749 §5.2 (token endpoint) and §4.1.2.1 (authorization endpoint).
   "invalid_request",
@@ -327,12 +329,16 @@ const LOG_REDACTIONS = [
 ];
 
 export function providerErrorSummary(err) {
+  const name = String(err?.name ?? "").replace(/[^A-Za-z0-9_$-]/g, "").slice(0, 32);
+  // A SyntaxError message quotes the offending input - arbitrary body text
+  // that keyed redaction cannot clean. Throw sites classify parse failures
+  // themselves (aifocus-8qky); this is the backstop for any that do not.
+  if (name === "SyntaxError") return "SyntaxError: [message redacted]";
   const raw = typeof err?.message === "string" ? err.message : String(err ?? "");
   let text = raw;
   for (const [pattern, replacement] of LOG_REDACTIONS) text = text.replace(pattern, replacement);
   text = text.replace(/\s+/g, " ").trim();
   if (text.length > LOG_SUMMARY_MAX) text = `${text.slice(0, LOG_SUMMARY_MAX)}…`;
-  const name = String(err?.name ?? "").replace(/[^A-Za-z0-9_$-]/g, "").slice(0, 32);
   return name && name !== "Error" ? `${name}: ${text}` : text;
 }
 

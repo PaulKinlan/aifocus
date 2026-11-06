@@ -50,7 +50,9 @@ export async function complete({ env, params, redirectUri, verifier, fetchImpl =
     },
   });
   if (!userRes.ok) throw new Error(`github: /user HTTP ${userRes.status}`);
-  const user = await userRes.json();
+  // A parse error would quote the response body (aifocus-8qky): fall through
+  // to the fixed shape check instead.
+  const user = await userRes.json().catch(() => null);
   if (!user?.id || !user?.login) throw new Error("github: unexpected /user body");
   return {
     provider: id,

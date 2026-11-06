@@ -134,7 +134,15 @@ const getJson = async (url, fetchImpl, op) => {
     throw new Error(`bluesky: ${opLabel(op)} failed (HTTP ${res.status})`);
   }
   const text = await readCappedText(res);
-  return JSON.parse(text);
+  // A SyntaxError from JSON.parse quotes the offending body text - a bare
+  // credential in a malformed 200 response would ride it into the log, and
+  // keyed redaction cannot catch it. Never surface the parse error: throw the
+  // fixed classification instead (aifocus-8qky).
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`bluesky: ${opLabel(op)} returned invalid JSON`);
+  }
 };
 
 export async function resolveHandle(handle, fetchImpl) {

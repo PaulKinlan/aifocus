@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { createD1 } from "./helpers/d1.mjs";
 import { classifyOAuthError, providerErrorSummary, STATE_COOKIE } from "../functions/_lib/auth.js";
 import { complete as githubComplete } from "../functions/_lib/providers/github.js";
-import { authServerForPds, dpopPost, generateDpopKey } from "../functions/_lib/providers/bluesky.js";
+import { authServerForPds, authServerMetadata, dpopPost, generateDpopKey } from "../functions/_lib/providers/bluesky.js";
 import { onRequestGet as start } from "../functions/api/auth/start/[provider].js";
 import { onRequestGet as callback } from "../functions/api/auth/callback/[provider].js";
 
@@ -223,6 +223,42 @@ test("bluesky start failure logs one line with no credential or pathname fragmen
     assert.ok(!line.includes(leak), `${leak} reached the log: ${line}`);
   }
   assert.ok(line.includes("auth start bluesky failed"), `unexpected log line: ${line}`);
+});
+
+test("malformed discovery JSON never reflects the body (aifocus-8qky)", async () => {
+  // The finding's exact repro: a 200 whose body is a bare token used to throw
+  // a SyntaxError that quoted it, and the summary printed it verbatim.
+  await assert.rejects(
+    () => authServerMetadata("https://auth.example", async () => new Response("gho_UNKEYED_SECRET", { status: 200 })),
+    (err) => {
+      assert.equal(err.message, "bluesky: authorization-server metadata fetch returned invalid JSON");
+      const line = providerErrorSummary(err);
+      assert.ok(!line.includes("gho_UNKEYED_SECRET"), `body reached the log: ${line}`);
+      return true;
+    },
+  );
+  // Backstop: any SyntaxError that still reaches the summary keeps its class,
+  // not its input-quoting message.
+  const syntax = new SyntaxError("Unexpected token 'g', \"gho_UNKEYED_SECRET\" is not valid JSON");
+  assert.equal(providerErrorSummary(syntax), "SyntaxError: [message redacted]");
+});
+
+test("github /user malformed body falls to the fixed shape check, not a parse error", async () => {
+  const env = { GITHUB_CLIENT_ID: "gh-id", GITHUB_CLIENT_SECRET: "gh-secret" };
+  const params = new URLSearchParams({ code: "c0de" });
+  const fetchImpl = async (input) => {
+    const url = new URL(typeof input === "string" ? input : input.url);
+    if (url.href === "https://github.com/login/oauth/access_token") return json({ access_token: "gho_token" });
+    return new Response("gho_USER_BODY_SECRET is not json", { status: 200 });
+  };
+  await assert.rejects(
+    () => githubComplete({ env, params, redirectUri: `${ORIGIN}/api/auth/callback/github`, verifier: "v", fetchImpl }),
+    (err) => {
+      assert.equal(err.message, "github: unexpected /user body");
+      assert.ok(!err.message.includes("gho_USER_BODY_SECRET"));
+      return true;
+    },
+  );
 });
 
 // --- end to end: one clean log line from start to console --------------------
