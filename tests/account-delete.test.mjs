@@ -37,8 +37,10 @@ const makeEnv = () => ({
   AI: { run: async () => ({ response: { safe: true } }) },
 });
 
-function req(path, { method = "GET", body, reader, session, ip = "203.0.113.7" } = {}) {
-  const headers = new Headers({ Origin: ORIGIN });
+function req(path, { method = "GET", body, reader, session, ip = "203.0.113.7", origin = ORIGIN } = {}) {
+  // origin: null omits the header entirely (a request that is not a browser
+  // same-origin fetch); a string stands in for a page on another origin.
+  const headers = new Headers(origin === null ? {} : { Origin: origin });
   const cookies = [];
   if (reader) cookies.push(`${READER_COOKIE}=${reader}`);
   if (session) cookies.push(`${SESSION_COOKIE}=${session}`);
@@ -261,4 +263,46 @@ test("an anonymous write after an erase is still allowed, without attribution", 
   });
   assert.equal(res.status, 200);
   assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM reactions WHERE user_id IS NULL"), 1);
+});
+
+test("a DELETE from another origin is refused and deletes nothing", async () => {
+  // aifocus-oz2h: without the Origin check, a page on any other site could fire
+  // this DELETE at a signed-in reader and erase the account. The refusal must
+  // happen before any row is touched.
+  const env = makeEnv();
+  const { ana } = await seed(env);
+  const res = await deleteAccount({
+    request: req("/api/account", { method: "DELETE", session: ana.session, origin: "https://evil.example" }),
+    env,
+  });
+  assert.equal(res.status, 403);
+  assert.equal((await res.json()).error, "Forbidden");
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM users WHERE id = ?", ana.user.id), 1);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM sessions WHERE user_id = ?", ana.user.id), 1);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM annotations WHERE user_id = ?", ana.user.id), 1);
+});
+
+test("a foreign origin cannot even learn whether anyone is signed in", async () => {
+  // The check runs before getSessionUser(), so a cross-origin probe gets 403
+  // with no session and 403 with one - the responses are indistinguishable.
+  const env = makeEnv();
+  const { ana: withSession } = await seed(env);
+  const foreign = (session) =>
+    deleteAccount({ request: req("/api/account", { method: "DELETE", session, origin: "https://evil.example" }), env });
+  const signedIn = await foreign(withSession.session);
+  const anonymous = await foreign(undefined);
+  assert.equal(signedIn.status, 403);
+  assert.equal(anonymous.status, 403);
+  assert.deepEqual(await signedIn.clone().json(), await anonymous.clone().json());
+});
+
+test("a DELETE with no Origin header is refused", async () => {
+  // isSameOrigin() treats a missing Origin as foreign. Browsers send Origin on
+  // a cross-site DELETE and on same-origin fetch DELETEs alike, so this only
+  // rejects non-browser callers, which have no session cookie to abuse.
+  const env = makeEnv();
+  const { ana } = await seed(env);
+  const res = await deleteAccount({ request: req("/api/account", { method: "DELETE", session: ana.session, origin: null }), env });
+  assert.equal(res.status, 403);
+  assert.equal(rowCount(env.READER_DB, "SELECT COUNT(*) AS n FROM users WHERE id = ?", ana.user.id), 1);
 });
