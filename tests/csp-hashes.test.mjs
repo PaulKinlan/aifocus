@@ -1,0 +1,121 @@
+// tools/csp-hashes.mjs (aifocus-5wrp): the script-src hash list is generated
+// from the built site and checked by the gate. These tests pin the properties
+// that make that useful: a new inline script is a failure with a named fix, a
+// removed one is a failure too (no stale hashes to reason about), inert script
+// types are not hashed, 'unsafe-inline' is refused in script-src while
+// style-src keeps its own, and the rewrite preserves every other token.
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  auditProblems,
+  collectHashes,
+  parsePolicy,
+  renderPolicy,
+  scriptSrcParts,
+} from "../tools/csp-hashes.mjs";
+
+const ROOT = fileURLToPath(new URL("..", import.meta.url));
+
+const site = (pages) => {
+  const dir = mkdtempSync(path.join(tmpdir(), "csp-"));
+  for (const [name, html] of Object.entries(pages)) {
+    const full = path.join(dir, name);
+    mkdirSync(path.dirname(full), { recursive: true });
+    writeFileSync(full, html);
+  }
+  return dir;
+};
+
+const page = (...scripts) => `<html><body>${scripts.join("")}</body></html>`;
+
+test("script bodies the browser enforces are hashed; inert data blocks are not", () => {
+  const dir = site({
+    "index.html": page(
+      "<script>console.log(1)</script>",
+      '<script src="/app.js"></script>',
+      '<script type="application/ld+json">{"a":1}</script>',
+      '<script type="application/json">{"a":1}</script>',
+      '<script type="importmap">{"imports":{}}</script>',
+      // Speculation rules do not run as script, but script-src still gates them:
+      // an inline block without a hash is blocked (a real violation, see the
+      // browser pass on this bead), so it must be hashed like code.
+      '<script type="speculationrules">{"prerender":[]}</script>',
+    ),
+    "nested/page.html": page("<script>console.log(1)</script>"),
+  });
+  const hashes = collectHashes(dir);
+  assert.equal(hashes.length, 2, "one hash for the script (same body on two pages) + one for the rules");
+  for (const hash of hashes) assert.match(hash, /^'sha256-[A-Za-z0-9+/=]+'$/);
+});
+
+test("data blocks that are not enforced are left out of the hash list", () => {
+  const dir = site({
+    "index.html": page(
+      '<script type="application/ld+json">{"a":1}</script>',
+      '<script type="application/json">{"a":1}</script>',
+      '<script type="importmap">{"imports":{}}</script>',
+    ),
+  });
+  assert.deepEqual(collectHashes(dir), []);
+});
+
+test("a new inline script is a failure that names the fix", () => {
+  const dir = site({ "index.html": page("<script>console.log(1)</script>") });
+  const before = collectHashes(dir);
+  assert.deepEqual(auditProblems({ built: before, declared: before, others: ["'self'"] }).problems, []);
+
+  const after = collectHashes(site({ "index.html": page("<script>console.log(1)</script>", "<script>console.log(2)</script>") }));
+  const { problems, missing } = auditProblems({ built: after, declared: before, others: ["'self'"] });
+  assert.equal(missing.length, 1);
+  assert.match(problems[0], /1 inline script\(s\) built but not allowed by script-src/);
+  assert.match(problems[0], /fix: node tools\/csp-hashes\.mjs/);
+});
+
+test("a hash whose script is gone is a failure too", () => {
+  const dir = site({ "index.html": page("<script>console.log(1)</script>") });
+  const built = collectHashes(dir);
+  const { problems, stale } = auditProblems({ built, declared: [...built, "'sha256-AAAA'"], others: [] });
+  assert.equal(stale.length, 1);
+  assert.match(problems[0], /match no built script/);
+});
+
+test("'unsafe-inline' in script-src is refused", () => {
+  const { problems } = auditProblems({ built: [], declared: [], others: ["'self'", "'unsafe-inline'"] });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /decorative/);
+});
+
+test("the rewrite keeps every other script-src token and only touches script-src", () => {
+  const policy = parsePolicy(
+    "default-src 'self'; script-src 'self' 'unsafe-inline' https://a.example 'sha256-OLD='; style-src 'self' 'unsafe-inline'; object-src 'none'",
+  );
+  const rendered = renderPolicy(policy, ["'sha256-NEW1='", "'sha256-NEW2='"]);
+  assert.equal(
+    rendered,
+    "default-src 'self'; script-src 'self' 'sha256-NEW1=' 'sha256-NEW2=' https://a.example; style-src 'self' 'unsafe-inline'; object-src 'none'",
+  );
+  // style-src keeps 'unsafe-inline': 71 style attributes cannot be hashed.
+  assert.match(rendered, /style-src 'self' 'unsafe-inline'/);
+});
+
+test("scriptSrcParts separates generated hashes from hand-written sources", () => {
+  const { hashes, others } = scriptSrcParts("script-src 'self' 'sha256-AAA=' https://cdn.example 'unsafe-inline'");
+  assert.deepEqual(hashes, ["'sha256-AAA='"]);
+  assert.deepEqual(others, ["'self'", "https://cdn.example", "'unsafe-inline'"]);
+});
+
+test("the committed static/_headers is in step with the committed build", () => {
+  // The gate runs the same check; this asserts the artefact that is checked in.
+  const headers = readFileSync(path.join(ROOT, "static/_headers"), "utf8");
+  const line = headers.split("\n").find((l) => l.trimStart().startsWith("Content-Security-Policy:"));
+  const policy = parsePolicy(line.trimStart().slice("Content-Security-Policy:".length).trim());
+  const directive = policy.find((part) => part.startsWith("script-src "));
+  const { hashes: declared, others } = scriptSrcParts(directive);
+  const built = collectHashes(path.join(ROOT, "public"));
+  assert.ok(built.length > 0, "public/ must be built before this test runs (the gate builds first)");
+  assert.deepEqual(auditProblems({ built, declared, others }).problems, []);
+});
