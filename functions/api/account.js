@@ -10,7 +10,7 @@
 
 import { getSessionUser, listIdentities, publicUser, clearSessionCookie } from "../_lib/auth.js";
 import { configuredProviders } from "../_lib/providers/index.js";
-import { json } from "../_lib/reader.js";
+import { json, isSameOrigin } from "../_lib/reader.js";
 
 // The most recent items of each kind are returned (notes, comments,
 // highlights and reactions each up to this many), so a long run of one kind
@@ -93,6 +93,12 @@ const erasureStatements = (db, userId) => [
 export async function onRequestDelete({ request, env }) {
   const db = env?.READER_DB;
   if (!db) return json({ error: "Accounts are not available" }, 503);
+  // Every mutating endpoint refuses a foreign Origin (THREAT_MODEL.md section 4),
+  // and erasure is the one where getting it wrong is unrecoverable: a page on
+  // another origin could otherwise fire this DELETE at a signed-in reader and
+  // destroy the account. Checked before the session lookup so a cross-origin
+  // probe learns nothing about whether a session exists.
+  if (!isSameOrigin(request)) return json({ error: "Forbidden" }, 403);
   const user = await getSessionUser(request, db);
   if (!user) return json({ error: "Not signed in" }, 401);
 
