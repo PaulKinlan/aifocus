@@ -56,20 +56,42 @@ export function buildCommands({ onEssay = false, hasSelection = false } = {}) {
   return groups;
 }
 
-// Every query word must appear in the label or keywords (prefix match on a
-// word boundary), so "fol rss" finds "Follow by RSS".
-export function matchesQuery(item, query) {
-  const words = (query || "").toLowerCase().split(/\s+/).filter(Boolean);
-  if (words.length === 0) return true;
-  const haystack = `${item.label} ${item.keywords || ""}`.toLowerCase();
-  return words.every((word) => new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(word)}`, "u").test(haystack));
-}
+export const WORD_PATTERN_LIMIT = 200;
+const wordPatterns = new Map();
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+export function patternForWord(word) {
+  const cached = wordPatterns.get(word);
+  if (cached) return cached;
+  if (wordPatterns.size >= WORD_PATTERN_LIMIT) {
+    wordPatterns.delete(wordPatterns.keys().next().value);
+  }
+  const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapeRegExp(word)}`, "u");
+  wordPatterns.set(word, pattern);
+  return pattern;
+}
+
+export function compileQueryPatterns(query) {
+  const words = (query || "").toLowerCase().split(/\s+/).filter(Boolean);
+  return words.map(patternForWord);
+}
+
+// Every query word must appear in the label or keywords (prefix match on a
+// word boundary), so "fol rss" finds "Follow by RSS".
+export function matchesQuery(item, queryOrPatterns) {
+  const patterns = Array.isArray(queryOrPatterns)
+    ? queryOrPatterns
+    : compileQueryPatterns(queryOrPatterns);
+  if (patterns.length === 0) return true;
+  const haystack = `${item.label} ${item.keywords || ""}`.toLowerCase();
+  return patterns.every((re) => re.test(haystack));
+}
+
 export function filterGroups(groups, query) {
+  const patterns = compileQueryPatterns(query);
   return groups
-    .map((group) => ({ ...group, items: group.items.filter((item) => matchesQuery(item, query)) }))
+    .map((group) => ({ ...group, items: group.items.filter((item) => matchesQuery(item, patterns)) }))
     .filter((group) => group.items.length > 0);
 }
 

@@ -2,9 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  WORD_PATTERN_LIMIT,
   buildCommands,
+  compileQueryPatterns,
   filterGroups,
   matchesQuery,
+  patternForWord,
   shortcutLabel,
   textFragmentUrl,
 } from "../assets/js/palette-commands.js";
@@ -43,6 +46,29 @@ test("matchesQuery needs every word as a word prefix in the label or keywords", 
   assert.equal(matchesQuery(item, "ollow"), false);
   assert.equal(matchesQuery(item, "rss newsletter"), false);
   assert.equal(matchesQuery(item, "("), false);
+
+  const patterns = compileQueryPatterns("fol rss");
+  assert.equal(matchesQuery(item, patterns), true);
+  const nonMatchingPatterns = compileQueryPatterns("rss newsletter");
+  assert.equal(matchesQuery(item, nonMatchingPatterns), false);
+});
+
+test("patternForWord memoizes RegExp instances and respects cache bounds", () => {
+  const p1 = patternForWord("testword");
+  const p2 = patternForWord("testword");
+  assert.equal(p1, p2, "patternForWord must reuse identical RegExp instance");
+
+  const queryPatterns1 = compileQueryPatterns("repeat repeat");
+  assert.equal(queryPatterns1.length, 2);
+  assert.equal(queryPatterns1[0], queryPatterns1[1], "duplicate query words reuse cached pattern");
+
+  // Populate cache to trigger eviction
+  for (let i = 0; i <= WORD_PATTERN_LIMIT + 10; i++) {
+    patternForWord(`bulkword${i}`);
+  }
+  const evicted = patternForWord("testword");
+  assert.ok(evicted instanceof RegExp);
+  assert.notEqual(evicted, p1, "evicted word pattern gets recompiled as a new instance");
 });
 
 test("filterGroups drops groups with no matching items", () => {
