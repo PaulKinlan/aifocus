@@ -257,6 +257,91 @@ export function withParam(path, key, value) {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+// --- OAuth failure logging -------------------------------------------------
+//
+// These logs are built, never reflected. Two rules keep them credential-free:
+//
+// 1. Provider text never enters an error message. The token-endpoint JSON
+//    `error` field is classified against a fixed code list (RFC 6749 §5.2 plus
+//    the OIDC, device-flow and DPoP-nonce codes the providers here document);
+//    anything else logs the HTTP status instead. Keyed redaction cannot be the
+//    boundary: a bare, unkeyed credential ("invalid_grant gho_…") matches no
+//    key=value pattern, so classification is the boundary and redaction is the
+//    backstop (aifocus-fgn7).
+// 2. Whatever still reaches a log goes through providerErrorSummary: keyed
+//    secrets in every shape provider text takes (key=value, "key = value",
+//    "key: value", JSON, quoted values — aifocus-3s9), query strings,
+//    Authorization header shapes and control characters are removed; the result
+//    is one line, length-capped, and the error `name` is sanitized BEFORE it
+//    is prepended, because a custom name is attacker-influenced text like any
+//    other provider-supplied string. A SyntaxError message quotes its input,
+//    so the summary keeps only the class (aifocus-8qky); parse failures at the
+//    throw sites are classified like any other provider error.
+const OAUTH_ERROR_CODES = new Set([
+  // RFC 6749 §5.2 (token endpoint) and §4.1.2.1 (authorization endpoint).
+  "invalid_request",
+  "invalid_client",
+  "invalid_grant",
+  "unauthorized_client",
+  "unsupported_grant_type",
+  "invalid_scope",
+  "access_denied",
+  "server_error",
+  "temporarily_unavailable",
+  // OpenID Connect Core §3.1.2.6 / §4.1.2.1.
+  "interaction_required",
+  "login_required",
+  "account_selection_required",
+  "consent_required",
+  "request_not_supported",
+  "request_uri_not_supported",
+  "registration_not_supported",
+  // RFC 8628 (device flow) and the Bluesky DPoP nonce retry.
+  "authorization_pending",
+  "slow_down",
+  "use_dpop_nonce",
+]);
+
+// Return a fixed classification for a provider error body: a whitelisted OAuth
+// error code when the provider sent one, otherwise the HTTP status. Arbitrary
+// provider text is never part of the result.
+export function classifyOAuthError(body, status) {
+  const code = typeof body?.error === "string" && OAUTH_ERROR_CODES.has(body.error) ? body.error : null;
+  return code ?? `HTTP ${status}`;
+}
+
+const LOG_SUMMARY_MAX = 160;
+const LOG_REDACTIONS = [
+  // Query strings and fragments carry codes, state and tokens.
+  [/[?#][^\s"'<>]*/g, " ?[redacted]"],
+  // The same names can appear outside a URL, in every shape provider text
+  // takes: key=value, "key = value", JSON '"key":"value"' and quoted values.
+  // Optional quotes after the key, optional whitespace either side of : or =,
+  // optional quote around the value, optional closing quote consumed.
+  [
+    /\b(code|state|access_token|refresh_token|id_token|client_secret|nonce|request_uri|password|error_description)["']?\s*[:=]\s*["']?[^\s&"'<>]+["']?/gi,
+    "$1=[redacted]",
+  ],
+  // Authorization header shapes that reach us through an error message.
+  [/\b(Bearer|Basic)\s+[A-Za-z0-9._~+\/=:-]+/gi, "$1 [redacted]"],
+  // Control characters, including the newlines that would forge a log line.
+  [/[\u0000-\u001f\u007f]+/g, " "],
+];
+
+export function providerErrorSummary(err) {
+  const name = String(err?.name ?? "").replace(/[^A-Za-z0-9_$-]/g, "").slice(0, 32);
+  // A SyntaxError message quotes the offending input - arbitrary body text
+  // that keyed redaction cannot clean. Throw sites classify parse failures
+  // themselves (aifocus-8qky); this is the backstop for any that do not.
+  if (name === "SyntaxError") return "SyntaxError: [message redacted]";
+  const raw = typeof err?.message === "string" ? err.message : String(err ?? "");
+  let text = raw;
+  for (const [pattern, replacement] of LOG_REDACTIONS) text = text.replace(pattern, replacement);
+  text = text.replace(/\s+/g, " ").trim();
+  if (text.length > LOG_SUMMARY_MAX) text = `${text.slice(0, LOG_SUMMARY_MAX)}…`;
+  return name && name !== "Error" ? `${name}: ${text}` : text;
+}
+
 export function redirect(location, cookies = []) {
   const headers = new Headers({ Location: location, "Cache-Control": "no-store" });
   for (const c of cookies) headers.append("Set-Cookie", c);

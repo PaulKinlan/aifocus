@@ -5,6 +5,8 @@
 // secret). No scope is requested: the default grants read access to the
 // user's public profile, which is all that is used.
 
+import { classifyOAuthError } from "../auth.js";
+
 export const id = "github";
 export const label = "GitHub";
 
@@ -38,7 +40,7 @@ export async function complete({ env, params, redirectUri, verifier, fetchImpl =
     }),
   });
   const token = await tokenRes.json().catch(() => ({}));
-  if (!tokenRes.ok || !token.access_token) throw new Error(`github: token exchange failed (${token.error || tokenRes.status})`);
+  if (!tokenRes.ok || !token.access_token) throw new Error(`github: token exchange failed (${classifyOAuthError(token, tokenRes.status)})`);
 
   const userRes = await fetchImpl("https://api.github.com/user", {
     headers: {
@@ -48,7 +50,9 @@ export async function complete({ env, params, redirectUri, verifier, fetchImpl =
     },
   });
   if (!userRes.ok) throw new Error(`github: /user HTTP ${userRes.status}`);
-  const user = await userRes.json();
+  // A parse error would quote the response body (aifocus-8qky): fall through
+  // to the fixed shape check instead.
+  const user = await userRes.json().catch(() => null);
   if (!user?.id || !user?.login) throw new Error("github: unexpected /user body");
   return {
     provider: id,
