@@ -477,6 +477,43 @@ test("onRequest: a failing ASSETS fetch degrades to the HTML response, not a 500
   assert.equal(res.headers.has("x-markdown-tokens"), false);
 });
 
+test("onRequest: a 200 markdown variant whose body stream errors degrades to HTML, not a 500", async () => {
+  // aifocus-buif: ASSETS.fetch can RESOLVE 200 OK and still fail when the body
+  // stream errors mid-read. decorateMarkdown's response.text() then rejects;
+  // the read must live inside the same guard as the fetch, or the rejection
+  // escapes onRequest and the reader gets a 500 for a page whose HTML fallback
+  // was one line below.
+  const req = new Request("https://aifocus.blog/model-half-life/", {
+    headers: { Accept: "text/markdown" },
+  });
+  let nextCalled = 0;
+  const res = await onRequest({
+    request: req,
+    next: async () => {
+      nextCalled += 1;
+      return new Response("<html>Post</html>", { status: 200, headers: { "Content-Type": "text/html" } });
+    },
+    env: {
+      ASSETS: {
+        fetch: async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                controller.error(new Error("stream fail"));
+              },
+            }),
+            { status: 200 },
+          ),
+      },
+    },
+  });
+  assert.equal(nextCalled, 1);
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("Content-Type"), "text/html");
+  assert.equal(res.headers.has("x-markdown-tokens"), false);
+  assert.equal(await res.text(), "<html>Post</html>");
+});
+
 test("onRequest: does not decorate unsafe direct .md requests", async () => {
   const req = new Request("https://aifocus.blog/..%2f_headers.md");
   const context = {
