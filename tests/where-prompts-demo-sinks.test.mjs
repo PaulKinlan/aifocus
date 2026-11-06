@@ -18,15 +18,69 @@ const source = fs.readFileSync(demoPath, 'utf8');
 
 const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUnsafe', 'srcdoc', 'createContextualFragment', 'document.write'];
 
-// Sinks assembled by splitting the token across string concatenation evade a
-// literal ban: collapsing quote-concatenation pairs detects split tokens
-// anywhere in the string across any boundary (e.g. 'inn' + 'erHTML', 'src' + 'doc').
+const WS_OR_COMMENT = '(?:\\s|/\\*[\\s\\S]*?\\*/|//[^\\r\\n\\u2028\\u2029]*(?:\\r\\n|[\\r\\n\\u2028\\u2029]|$))';
+const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["'\`]`, 'g');
+
+// Strips template expression interpolations (${...}) with arbitrary brace nesting depth,
+// comments, and inner string literals.
+function stripTemplateInterpolations(src) {
+  let result = '';
+  let i = 0;
+  while (i < src.length) {
+    if (src[i] === '$' && src[i + 1] === '{') {
+      let depth = 1;
+      i += 2;
+      while (i < src.length && depth > 0) {
+        if (src[i] === '{') {
+          depth++;
+          i++;
+        } else if (src[i] === '}') {
+          depth--;
+          i++;
+        } else if (src[i] === '"' || src[i] === "'" || src[i] === '`') {
+          const quote = src[i];
+          i++;
+          while (i < src.length && src[i] !== quote) {
+            if (src[i] === '\\') i++;
+            i++;
+          }
+          if (i < src.length) i++;
+        } else if (src[i] === '/' && src[i + 1] === '*') {
+          i += 2;
+          while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) {
+            i++;
+          }
+          if (i < src.length) i += 2;
+        } else if (src[i] === '/' && src[i + 1] === '/') {
+          i += 2;
+          while (i < src.length && !/[\r\n\u2028\u2029]/.test(src[i])) {
+            i++;
+          }
+          if (i < src.length) i++;
+        } else {
+          i++;
+        }
+      }
+    } else {
+      result += src[i];
+      i++;
+    }
+  }
+  return result;
+}
+
+// Sinks assembled by splitting the token across string concatenation or template
+// interpolation evade a literal ban: collapsing quote-concatenation pairs
+// (including whitespace, block comments, or line comments terminated by any JS
+// LineTerminator: \n, \r\n, \r, \u2028, \u2029) and template expression interpolations
+// (supporting arbitrary nested braces and expressions) detects split tokens anywhere
+// in the string across any boundary.
 export function findSinkTokens(src) {
   let prev = '';
-  let joined = src;
+  let joined = stripTemplateInterpolations(src);
   while (joined !== prev) {
     prev = joined;
-    joined = joined.replace(/["'`]\s*\+\s*["'`]/g, '');
+    joined = joined.replace(CONCAT_PATTERN, '');
   }
   return SINK_TOKENS.filter((t) => src.includes(t) || joined.includes(t));
 }
@@ -44,6 +98,15 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
   const evasions = [
     'el["inner" + "HTML"] = payload;',
     'el["inn" + "erHTML"] = payload;',
+    'el["inn"/* note */+"erHTML"] = payload;',
+    'el["inn" // line comment\n + "erHTML"] = payload;',
+    'el["inn" // line comment\r + "erHTML"] = payload;',
+    'el["inn" // line comment\u2028 + "erHTML"] = payload;',
+    'el["inn" // line comment\u2029 + "erHTML"] = payload;',
+    'el[`inn${payload}erHTML`] = x;',
+    'el[`inn${""}erHTML`] = x;',
+    'el[`inn${{x:""}.x}erHTML`] = "<b>x</b>";',
+    'el[`inn${(() => { return "" })()}erHTML`] = "<b>x</b>";',
     'el["out" + "erHTML"] = payload;',
     'window["set" + "HTMLUnsafe"](payload);',
     'frame["src" + "doc"] = payload;',
