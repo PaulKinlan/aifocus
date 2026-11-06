@@ -303,16 +303,18 @@ export async function onRequest(context) {
       // and with ASSETS still absent every hop would spawn another subrequest
       // until Cloudflare's cap turned an optional enhancement into an error
       // page (aifocus-zcy). A binding that throws is the same story - the HTML
-      // fallback is one line below, so a transient failure must not 500.
+      // fallback is one line below, so a transient failure must not 500. The
+      // decorateMarkdown call stays inside the try because its response.text()
+      // read rejects when a 200 response's body stream errors mid-read - the
+      // same failure class with a narrower trigger (aifocus-buif).
       const fetcher = env && env.ASSETS ? env.ASSETS : null;
       if (fetcher) {
-        let mdResponse = null;
         try {
-          mdResponse = await fetcher.fetch(assetRequest);
+          const mdResponse = await fetcher.fetch(assetRequest);
+          if (mdResponse?.ok) return await decorateMarkdown(mdResponse);
         } catch {
-          mdResponse = null;
+          // Transient binding failure or errored body stream: serve the HTML.
         }
-        if (mdResponse?.ok) return decorateMarkdown(mdResponse);
       }
       // Fall through to the HTML response if no markdown variant exists.
     }
