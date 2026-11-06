@@ -17,23 +17,42 @@ const demoPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 const source = fs.readFileSync(demoPath, 'utf8');
 
 const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUnsafe', 'srcdoc', 'createContextualFragment', 'document.write'];
+
 // Sinks assembled by splitting the token across string concatenation evade a
-// literal ban: catch the bracket-access concat form (el["inner" + "HTML"]).
-const SINK_PATTERNS = [/\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/];
+// literal ban: collapsing quote-concatenation pairs detects split tokens
+// anywhere in the string across any boundary (e.g. 'inn' + 'erHTML', 'src' + 'doc').
+export function findSinkTokens(src) {
+  let prev = '';
+  let joined = src;
+  while (joined !== prev) {
+    prev = joined;
+    joined = joined.replace(/["'`]\s*\+\s*["'`]/g, '');
+  }
+  return SINK_TOKENS.filter((t) => src.includes(t) || joined.includes(t));
+}
 
 test('demo contains no markup-sink token of any shape', () => {
-  const hits = SINK_TOKENS.filter((t) => source.includes(t));
-  const patternHits = SINK_PATTERNS.filter((p) => p.test(source));
+  const hits = findSinkTokens(source);
   assert.deepEqual(
     hits,
     [],
-    `markup sink reintroduced (any assignment shape fails this guard): ${hits.join(', ')}`,
+    `markup sink reintroduced (any assignment or split-concatenation shape fails this guard): ${hits.join(', ')}`,
   );
-  assert.deepEqual(
-    patternHits.map((p) => String(p)),
-    [],
-    `split-token markup sink reintroduced: ${patternHits.filter((p) => p.test(source)).map(String).join(', ')}`,
-  );
+});
+
+test('split-token guard catches concatenated sink tokens across arbitrary split boundaries', () => {
+  const evasions = [
+    'el["inner" + "HTML"] = payload;',
+    'el["inn" + "erHTML"] = payload;',
+    'el["out" + "erHTML"] = payload;',
+    'window["set" + "HTMLUnsafe"](payload);',
+    'frame["src" + "doc"] = payload;',
+    'range["create" + "ContextualFragment"](payload);',
+  ];
+  for (const evasion of evasions) {
+    const hits = findSinkTokens(evasion);
+    assert.ok(hits.length > 0, `expected evasion to be detected: ${evasion}`);
+  }
 });
 
 test('demo builds untrusted strings with textContent / DOM APIs', () => {
