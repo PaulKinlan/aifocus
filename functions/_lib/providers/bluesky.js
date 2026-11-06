@@ -38,6 +38,12 @@ function publicHostnameProblem(host) {
   return null;
 }
 
+// A fixed, first-party operation label for error messages: third-party URL
+// parts (a metadata endpoint's host or pathname) can carry a bare credential
+// that keyed redaction cannot catch, so none of them ever enters a message -
+// the log names the operation and the status instead (aifocus-32dk).
+const opLabel = (op) => (typeof op === "string" && /^[A-Za-z0-9 _-]{1,40}$/.test(op) ? op : "request");
+
 // Every outbound URL in this flow is either one of the fixed discovery hosts
 // (appview, plc.directory) or a host named by third-party data (a DID
 // document). Anything fetched must be https on the default port, on a public
@@ -48,11 +54,11 @@ function publicHostnameProblem(host) {
 // stripped so the FQDN form ('service.internal.') cannot slip the rules.
 function assertPublicHttpsUrl(url) {
   const u = url instanceof URL ? url : new URL(url);
-  if (u.protocol !== "https:") throw new Error(`bluesky: ${u.host} is not https`);
+  if (u.protocol !== "https:") throw new Error("bluesky: rejected a non-https endpoint URL");
   const host = u.hostname.replace(/\.+$/, "");
   const reason = publicHostnameProblem(host);
-  if (reason) throw new Error(`bluesky: ${u.host} rejected: ${reason}`);
-  if (u.port && u.port !== "443") throw new Error(`bluesky: ${u.host} uses a non-standard port`);
+  if (reason) throw new Error(`bluesky: rejected an endpoint host (${reason})`);
+  if (u.port && u.port !== "443") throw new Error("bluesky: rejected an endpoint URL on a non-standard port");
   return u;
 }
 
@@ -113,7 +119,7 @@ async function readCappedText(res) {
   }
 }
 
-const getJson = async (url, fetchImpl) => {
+const getJson = async (url, fetchImpl, op) => {
   // Fetch the validated URL (u.href), not the raw input.
   const u = assertPublicHttpsUrl(url);
   // Redirects are never followed: each hop must re-qualify as a public https
@@ -125,7 +131,7 @@ const getJson = async (url, fetchImpl) => {
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (res.status < 200 || res.status >= 300) {
-    throw new Error(`bluesky: ${u.host}${u.pathname} HTTP ${res.status}`);
+    throw new Error(`bluesky: ${opLabel(op)} failed (HTTP ${res.status})`);
   }
   const text = await readCappedText(res);
   return JSON.parse(text);
@@ -135,6 +141,7 @@ export async function resolveHandle(handle, fetchImpl) {
   const body = await getJson(
     `${APPVIEW}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`,
     fetchImpl,
+    "handle resolution",
   );
   if (!DID_RE.test(body?.did || "")) throw new Error("bluesky: handle did not resolve to a DID");
   return body.did;
@@ -146,7 +153,7 @@ export async function pdsForDid(did, fetchImpl) {
   // host we fetch next. DID documents for did:plc come from the fixed
   // plc.directory registry instead.
   if (!did.startsWith("did:plc:")) throw new Error("bluesky: only did:plc identities are supported");
-  const doc = await getJson(`https://plc.directory/${did}`, fetchImpl);
+  const doc = await getJson(`https://plc.directory/${did}`, fetchImpl, "DID document fetch");
   if (doc?.id !== did) throw new Error("bluesky: DID document id mismatch");
   const service = (doc.service || []).find((s) => s?.id === "#atproto_pds" || s?.id === `${did}#atproto_pds`);
   const endpoint = service?.serviceEndpoint;
@@ -158,7 +165,7 @@ export async function pdsForDid(did, fetchImpl) {
 }
 
 export async function authServerForPds(pds, fetchImpl) {
-  const resource = await getJson(`${pds}/.well-known/oauth-protected-resource`, fetchImpl);
+  const resource = await getJson(`${pds}/.well-known/oauth-protected-resource`, fetchImpl, "protected-resource metadata fetch");
   const issuer = resource?.authorization_servers?.[0];
   if (typeof issuer !== "string" || !issuer.startsWith("https://")) throw new Error("bluesky: no authorization server");
   assertPublicHttpsUrl(issuer);
@@ -167,7 +174,7 @@ export async function authServerForPds(pds, fetchImpl) {
 
 export async function authServerMetadata(issuer, fetchImpl) {
   assertPublicHttpsUrl(issuer);
-  const meta = await getJson(`${issuer}/.well-known/oauth-authorization-server`, fetchImpl);
+  const meta = await getJson(`${issuer}/.well-known/oauth-authorization-server`, fetchImpl, "authorization-server metadata fetch");
   if (meta?.issuer !== issuer) throw new Error("bluesky: issuer mismatch");
   for (const key of ["authorization_endpoint", "token_endpoint", "pushed_authorization_request_endpoint"]) {
     if (typeof meta[key] !== "string" || !meta[key].startsWith("https://")) throw new Error(`bluesky: missing ${key}`);
@@ -220,7 +227,12 @@ export async function dpopProof(privateJwk, { htm, htu, nonce }) {
 
 // POST a form with a DPoP proof, retrying once with the server's nonce when
 // it answers use_dpop_nonce (servers require a nonce on the first request).
-export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
+// `op` is a fixed, first-party label for the operation ("token exchange",
+// "pushed authorization request"): the endpoint URL comes from third-party
+// authorization-server metadata, and its pathname can carry a bare credential
+// that no keyed redaction can catch, so no part of it is ever put in an error
+// message (aifocus-32dk).
+export async function dpopPost(url, form, privateJwk, nonce, fetchImpl, op) {
   // Fetch the validated URL (u.href), not the raw input.
   const u = assertPublicHttpsUrl(url);
   let currentNonce = nonce || null;
@@ -249,7 +261,7 @@ export async function dpopPost(url, form, privateJwk, nonce, fetchImpl) {
       currentNonce = nextNonce;
       continue;
     }
-    throw new Error(`bluesky: ${new URL(url).pathname} failed (${classifyOAuthError(body, res.status)})`);
+    throw new Error(`bluesky: ${opLabel(op)} failed (${classifyOAuthError(body, res.status)})`);
   }
   throw new Error("bluesky: DPoP nonce retry failed");
 }
@@ -278,7 +290,7 @@ export async function begin({ origin, handle, state, challenge, fetchImpl = fetc
     code_challenge_method: "S256",
     ...(handle ? { login_hint: handle } : {}),
   };
-  const { body, nonce } = await dpopPost(meta.pushed_authorization_request_endpoint, form, dpopKey, null, fetchImpl);
+  const { body, nonce } = await dpopPost(meta.pushed_authorization_request_endpoint, form, dpopKey, null, fetchImpl, "pushed authorization request");
   if (typeof body?.request_uri !== "string") throw new Error("bluesky: PAR returned no request_uri");
   const url = new URL(meta.authorization_endpoint);
   url.search = new URLSearchParams({ client_id: clientId(origin), request_uri: body.request_uri });
@@ -324,6 +336,7 @@ export async function complete({ origin, params, verifier, data, request, fetchI
     dpopKey,
     data.nonce,
     fetchImpl,
+    "token exchange",
   );
   const did = body?.sub;
   if (!DID_RE.test(did || "")) throw new Error("bluesky: token response has no DID");
@@ -337,7 +350,7 @@ export async function complete({ origin, params, verifier, data, request, fetchI
 
   let profile = {};
   try {
-    profile = await getJson(`${APPVIEW}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(did)}`, fetchImpl);
+    profile = await getJson(`${APPVIEW}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(did)}`, fetchImpl, "profile fetch");
   } catch {
     // The account is verified; display details are a nicety.
   }

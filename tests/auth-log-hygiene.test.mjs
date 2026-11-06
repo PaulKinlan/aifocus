@@ -18,8 +18,12 @@ import { fileURLToPath } from "node:url";
 import { createD1 } from "./helpers/d1.mjs";
 import { classifyOAuthError, providerErrorSummary, STATE_COOKIE } from "../functions/_lib/auth.js";
 import { complete as githubComplete } from "../functions/_lib/providers/github.js";
+import { authServerForPds, dpopPost, generateDpopKey } from "../functions/_lib/providers/bluesky.js";
 import { onRequestGet as start } from "../functions/api/auth/start/[provider].js";
 import { onRequestGet as callback } from "../functions/api/auth/callback/[provider].js";
+
+const json = (body) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
 
 const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0008_auth_start_log.sql"].map((f) =>
   fileURLToPath(new URL(`../migrations/${f}`, import.meta.url)),
@@ -122,6 +126,103 @@ test("github complete() classifies a hostile token-endpoint error body", async (
     () => githubComplete({ env, params, redirectUri: `${ORIGIN}/api/auth/callback/github`, verifier: "v", fetchImpl: invalidGrantFetch }),
     /token exchange failed \(invalid_grant\)/,
   );
+});
+
+// --- bluesky: no third-party URL part in a message (aifocus-32dk) -----------
+
+test("bluesky dpopPost names the operation, never the third-party endpoint pathname", async () => {
+  const key = await generateDpopKey();
+  const hostile = async () =>
+    new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400, headers: { "Content-Type": "application/json" } });
+  await assert.rejects(
+    () => dpopPost("https://auth.example.com/oauth/token/gho_UNKEYED_SECRET", {}, key, null, hostile, "token exchange"),
+    (err) => {
+      assert.equal(err.message, "bluesky: token exchange failed (invalid_grant)");
+      assert.ok(!err.message.includes("gho_UNKEYED_SECRET"));
+      assert.ok(!err.message.includes("/oauth/token"));
+      return true;
+    },
+  );
+  // A missing or hostile label falls back to the fixed word "request".
+  await assert.rejects(
+    () => dpopPost("https://auth.example.com/token", {}, key, null, hostile, "bad\nlabel gho_X"),
+    /bluesky: request failed \(invalid_grant\)/,
+  );
+});
+
+test("bluesky discovery errors carry no third-party pathname or host", async () => {
+  const notFound = async () => new Response("nope", { status: 502 });
+  await assert.rejects(
+    () => authServerForPds("https://pds.example.com/gho_PDS_PATH_SECRET", notFound),
+    (err) => {
+      assert.equal(err.message, "bluesky: protected-resource metadata fetch failed (HTTP 502)");
+      assert.ok(!err.message.includes("gho_PDS_PATH_SECRET"));
+      return true;
+    },
+  );
+  // The SSRF rejection names our own fixed reason, not the rejected host.
+  await assert.rejects(
+    () => authServerForPds("https://service.internal", notFound),
+    (err) => {
+      assert.equal(err.message, "bluesky: rejected an endpoint host (reserved name)");
+      assert.ok(!err.message.includes("service.internal"));
+      return true;
+    },
+  );
+});
+
+test("bluesky start failure logs one line with no credential or pathname fragment (aifocus-32dk)", async () => {
+  const db = createD1(MIGRATIONS);
+  const env = { READER_DB: db };
+  const DID = "did:plc:abcdefghijklmnopqrstuvwx";
+  const PDS = "https://pds.example.com";
+  const AS = "https://auth.example.com";
+
+  const logged = [];
+  const realError = console.error;
+  const realFetch = globalThis.fetch;
+  console.error = (...args) => logged.push(args.map(String).join(" "));
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === "string" ? input : input.url);
+    if (url.href.startsWith("https://public.api.bsky.app/xrpc/com.atproto.identity.resolveHandle")) return json({ did: DID });
+    if (url.href === `https://plc.directory/${DID}`) {
+      return json({ id: DID, service: [{ id: "#atproto_pds", type: "AtprotoPersonalDataServer", serviceEndpoint: PDS }] });
+    }
+    if (url.href === `${PDS}/.well-known/oauth-protected-resource`) return json({ authorization_servers: [AS] });
+    if (url.href === `${AS}/.well-known/oauth-authorization-server`) {
+      // Hostile metadata: bare credentials planted in the endpoint pathnames.
+      return json({
+        issuer: AS,
+        authorization_endpoint: `${AS}/authorize`,
+        token_endpoint: `${AS}/oauth/token/gho_UNKEYED_SECRET`,
+        pushed_authorization_request_endpoint: `${AS}/par/ghs_PAR_SECRET`,
+      });
+    }
+    if (url.href === `${AS}/par/ghs_PAR_SECRET`) {
+      return new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    }
+    return new Response("unexpected", { status: 500 });
+  };
+  try {
+    const res = await start({
+      request: new Request(`${ORIGIN}/api/auth/start/bluesky?handle=ana.example.com`),
+      env,
+      params: { provider: "bluesky" },
+    });
+    assert.equal(res.status, 302);
+    assert.ok(res.headers.get("Location").includes("signin=failed"));
+  } finally {
+    console.error = realError;
+    globalThis.fetch = realFetch;
+  }
+
+  assert.equal(logged.length, 1, `expected one log line, got: ${JSON.stringify(logged)}`);
+  const line = logged[0];
+  assert.ok(!line.includes("\n"), "log line is not single-line");
+  for (const leak of ["gho_UNKEYED_SECRET", "ghs_PAR_SECRET", "/oauth/token", "/par/"]) {
+    assert.ok(!line.includes(leak), `${leak} reached the log: ${line}`);
+  }
+  assert.ok(line.includes("auth start bluesky failed"), `unexpected log line: ${line}`);
 });
 
 // --- end to end: one clean log line from start to console --------------------
