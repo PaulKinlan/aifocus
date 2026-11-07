@@ -28,9 +28,11 @@ export const SYSTEM_PROMPT = [
 // "allowed" when it cannot run: a missing READER_DB binding or a failed
 // query THROWS, and the caller maps that to 503 before any inference runs
 // (aifocus-5ft). A local/dev run that wants the endpoint without D1 sets
-// ALLOW_UNMETERED_ASK=1 explicitly in the environment AND must not be on the
-// production origin - the flag alone is never enough (aifocus-e7e review
-// finding: a deployment guard, not an assertion).
+// ALLOW_UNMETERED_ASK=1 explicitly in the environment AND must run on a
+// loopback origin (localhost, *.localhost, 127.0.0.1, [::1]) - the flag alone
+// is never enough, and on production, previews or any other deployment it is
+// ignored (aifocus-e7e review finding: a deployment guard, not an assertion;
+// aifocus-4hu1: loopback-only, so a preview with the flag fails closed).
 async function reserveAskSlot(db, ipHash, now) {
   if (!db) throw new Error("READER_DB unavailable for ask rate limiting");
   // One atomic batch: reserve only if under the per-IP budget, and prune
@@ -75,20 +77,26 @@ export async function onRequestPost(context) {
 
   const db = env?.READER_DB;
   const now = Date.now();
+  // The hatch exists for local dev (wrangler serves localhost/127.0.0.1), not
+  // for "any origin that is not production": pages previews and staging
+  // inherit production vars by default, so "not production" made every public
+  // preview URL with a retained flag an unmetered billed endpoint
+  // (aifocus-4hu1). Gate on loopback hostnames; anywhere else fails closed.
+  const devHost = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname) || url.hostname.endsWith(".localhost");
   const devEscape =
     !db &&
     ["1", "true", "yes"].includes(String(env?.ALLOW_UNMETERED_ASK ?? "").toLowerCase()) &&
-    url.origin !== "https://aifoc.us";
+    devHost;
 
   // Fail closed before the billed call: a missing binding or a limiter error
   // is a deployment problem, answered 503 with a short cache, not an
   // unmetered inference path (aifocus-5ft; mirrors /api/search). hashIp is
   // inside the guard too: a binding that cannot serve the salt lookup cannot
   // serve the limiter either. The ALLOW_UNMETERED_ASK escape hatch needs the
-  // explicit flag AND a non-production origin; on production it is IGNORED
-  // and logged loudly (aifocus-e7e).
+  // explicit flag AND a loopback origin; on production, previews and any
+  // other deployment it is IGNORED and logged loudly (aifocus-e7e, aifocus-4hu1).
   if (devEscape) {
-    console.error("ask: running WITHOUT its rate limiter (READER_DB missing, ALLOW_UNMETERED_ASK on non-production origin) - billed inference, dev only");
+    console.error("ask: running WITHOUT its rate limiter (READER_DB missing, ALLOW_UNMETERED_ASK on loopback origin) - billed inference, dev only");
   } else {
     try {
       // A missing client IP shares one coarse bucket rather than escaping
@@ -96,7 +104,7 @@ export async function onRequestPost(context) {
       const ipHash = (db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null) ?? UNKNOWN_IP_BUCKET;
       // reserveAskSlot throws when db is missing (the deployment error is a
       // 503 below) - so the billed call is unreachable without a binding,
-      // except through the explicit non-production escape hatch above.
+      // except through the explicit loopback-only escape hatch above.
       if (!(await reserveAskSlot(db, ipHash, now))) {
         return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429, {
           "Cache-Control": "no-store",

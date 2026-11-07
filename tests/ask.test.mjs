@@ -117,6 +117,61 @@ test("ask: ALLOW_UNMETERED_ASK is ignored on the production origin", async () =>
   assert.equal(calls, 0, "the billed inference must not run on production, flag or not");
 });
 
+test("ask: ALLOW_UNMETERED_ASK is ignored on a preview origin (aifocus-4hu1)", async () => {
+  // aifocus-4hu1: "not production" was the wrong gate - pages previews and
+  // staging inherit production vars by default, so a retained flag plus an
+  // unbound READER_DB made any public preview URL an unmetered billed
+  // endpoint. The hatch is loopback-only now; every other origin fails closed
+  // with 503 and zero inference calls.
+  let calls = 0;
+  const env = makeEnv({
+    ask: async () => {
+      calls += 1;
+      return { response: "should never run", data: [] };
+    },
+  });
+  delete env.READER_DB;
+  env.ALLOW_UNMETERED_ASK = "1";
+  for (const host of ["abc123.aifocus.pages.dev", "staging.aifoc.us", "aifocus-preview.example.com"]) {
+    const res = await postAsk({
+      request: new Request(`https://${host}/api/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: `https://${host}`, "CF-Connecting-IP": "198.51.100.1" },
+        body: JSON.stringify({ question: "why set goals" }),
+      }),
+      env,
+    });
+    assert.equal(res.status, 503, `${host} must fail closed`);
+    assert.equal(calls, 0, `${host} must not reach the billed call`);
+  }
+});
+
+test("ask: ALLOW_UNMETERED_ASK still works on loopback forms of local dev", async () => {
+  // The hatch keeps working for real local dev: localhost, 127.0.0.1, [::1]
+  // and *.localhost all pass; a non-loopback lookalike does not.
+  for (const [host, ok] of [["127.0.0.1", true], ["[::1]", true], ["dashboard.localhost", true], ["evil.example", false]]) {
+    let calls = 0;
+    const env = makeEnv({
+      ask: async () => {
+        calls += 1;
+        return { response: "ok", data: [] };
+      },
+    });
+    delete env.READER_DB;
+    env.ALLOW_UNMETERED_ASK = "1";
+    const res = await postAsk({
+      request: new Request(`http://${host}/api/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: `http://${host}`, "CF-Connecting-IP": "198.51.100.1" },
+        body: JSON.stringify({ question: "why set goals" }),
+      }),
+      env,
+    });
+    assert.equal(res.status, ok ? 200 : 503, `${host} expected ${ok ? "200" : "503"}`);
+    assert.equal(calls, ok ? 1 : 0, `${host} inference calls`);
+  }
+});
+
 test("ask: concurrent distinct questions from one IP are capped at the per-IP budget", async () => {
   // Second 5ft-round defect: the limiter was check-then-act - isRateLimited
   // counted ask_log and the INSERT happened after the inference await, so a
