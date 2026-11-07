@@ -28,9 +28,11 @@ export const SYSTEM_PROMPT = [
 // "allowed" when it cannot run: a missing READER_DB binding or a failed
 // query THROWS, and the caller maps that to 503 before any inference runs
 // (aifocus-5ft). A local/dev run that wants the endpoint without D1 sets
-// ALLOW_UNMETERED_ASK=1 explicitly in the environment AND must not be on the
-// production origin - the flag alone is never enough (aifocus-e7e review
-// finding: a deployment guard, not an assertion).
+// ALLOW_UNMETERED_ASK=1 explicitly in the environment AND must run on a
+// loopback origin (localhost, *.localhost, 127.0.0.1, [::1]) - the flag alone
+// is never enough, and on production, previews or any other deployment it is
+// ignored (aifocus-e7e review finding: a deployment guard, not an assertion;
+// aifocus-4hu1: loopback-only, so a preview with the flag fails closed).
 async function reserveAskSlot(db, ipHash, now) {
   if (!db) throw new Error("READER_DB unavailable for ask rate limiting");
   // One atomic batch: reserve only if under the per-IP budget, and prune
@@ -102,7 +104,7 @@ export async function onRequestPost(context) {
       const ipHash = (db ? await hashIp(db, request.headers.get("CF-Connecting-IP")) : null) ?? UNKNOWN_IP_BUCKET;
       // reserveAskSlot throws when db is missing (the deployment error is a
       // 503 below) - so the billed call is unreachable without a binding,
-      // except through the explicit non-production escape hatch above.
+      // except through the explicit loopback-only escape hatch above.
       if (!(await reserveAskSlot(db, ipHash, now))) {
         return json({ error: "You have asked a lot of questions in the last hour. Try again later." }, 429, {
           "Cache-Control": "no-store",

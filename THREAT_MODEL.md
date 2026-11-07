@@ -125,7 +125,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 
 | Bead | Gap |
 |:---|:---|
-| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` used to fail open when `READER_DB` was unbound (inference ran unmetered), and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a preview deployment with the flag served uncapped billed inference — fixed on `fleet/impl-5` (aifocus-4hu1): the meter reserves before the billed call and fails closed, and the hatch is loopback-only |
+| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` used to fail open when `READER_DB` was unbound (inference ran unmetered) - fixed on main (aifocus-5ft): the meter reserves before the billed call and fails closed; and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a preview deployment with the flag served uncapped billed inference - fixed on `fleet/impl-5` (aifocus-4hu1): the hatch is loopback-only |
 | aifocus-80p | reader writes reserved the per-IP slot after fetching the post text (fixed on `fleet/audit-1`) |
 | aifocus-lsf | the Bluesky DPoP private key is stored in plaintext in `oauth_states.data` |
 | aifocus-e3x | OAuth start/callback logged provider error text verbatim, which could carry codes and token URLs — fixed on `fleet/impl-5` (landed e43aef6): provider error text is classified against an OAuth code whitelist, parse failures report fixed messages, and handlers log a credential-free single-line summary |
