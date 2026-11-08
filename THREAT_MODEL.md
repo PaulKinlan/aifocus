@@ -131,17 +131,24 @@ can be checked rather than re-argued.
 Security-relevant items from the 2026-11-04 project audit, each with its bead.
 This list is a pointer, not the ledger: `bd list` is authoritative.
 
+### Open
+
 | Bead | Gap |
 |:---|:---|
-| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` used to fail open when `READER_DB` was unbound (inference ran unmetered) - fixed on main (aifocus-5ft): the meter reserves before the billed call and fails closed; and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a preview deployment with the flag served uncapped billed inference - fixed on `fleet/impl-5` (aifocus-4hu1): the hatch is loopback-only |
-| aifocus-80p | reader writes reserved the per-IP slot after fetching the post text (fixed on `fleet/audit-1`) |
-| aifocus-lsf | the Bluesky DPoP private key is stored in plaintext in `oauth_states.data` |
-| aifocus-e3x | OAuth start/callback logged provider error text verbatim, which could carry codes and token URLs — fixed on `fleet/impl-5` (landed e43aef6): provider error text is classified against an OAuth code whitelist, parse failures report fixed messages, and handlers log a credential-free single-line summary |
-| aifocus-f7r | privileged trust/block changes record no actor and there is no admin audit table |
-| aifocus-0cz | `/api/reader/state` runs three D1 queries per unauthenticated request with no per-IP cap |
-| aifocus-rom | there is no account erasure path (needs a product decision: hard delete or anonymise) |
-| aifocus-710 | `ask_log` rows, and the IP hashes in them, are never pruned; the salt sits in the same database |
+| aifocus-710 | the IP-hash salt sits in the same database as the hashes (the retention half is fixed: `reserveAskSlot` prunes `ask_log` rows older than two hours on every reservation) - see section 7 |
 | aifocus-wxl | the journal demo's OPFS sandbox is shared origin-wide across provider pages, contradicting the UI copy |
+
+### Closed since the 2026-11-04 audit
+
+| Bead | Gap | Closed by |
+|:---|:---|:---|
+| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` failed open when `READER_DB` was unbound, so inference ran unmetered; and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a flagged preview deployment served uncapped billed inference | the meter reserves before the billed call and fails closed (aifocus-5ft); the hatch is loopback-only (aifocus-4hu1, merged 4514def) |
+| aifocus-80p | reader writes reserved the per-IP slot after fetching the post text | 0442587 (merged 04aa268) |
+| aifocus-lsf | the Bluesky DPoP private key was stored in plaintext in `oauth_states.data` | 7f73503: the key travels in the HttpOnly `aifocus_dpop` cookie scoped to `/api/auth/callback/bluesky`; D1 holds only the thumbprint |
+| aifocus-e3x | OAuth start/callback logged provider error text verbatim, which could carry codes and token URLs | e43aef6: provider error text is classified against an OAuth code whitelist, parse failures report fixed messages, and handlers log a credential-free single-line summary |
+| aifocus-f7r | privileged trust/block changes recorded no actor, and there was no admin audit table | d93f730 and 6e37443: `migrations/0009_admin_actions.sql`, with `adminActionStmt()` called from every admin handler |
+| aifocus-0cz | `/api/reader/state` ran three D1 queries per unauthenticated request with no per-IP cap | 245ce0d: `reserveReadEvent` (600/hour, `read_events`) reserves before the batch; extended to `/api/account` and `/api/auth/me` in aifocus-pr7b |
+| aifocus-rom | there was no account erasure path | dbf82c8: `DELETE /api/account` hard-deletes the account, its sign-ins and its activity |
 
 ## 7. Accepted residual risk
 
@@ -177,4 +184,6 @@ Re-read this file when a change:
   or the og render reservation, or moves that call relative to the work it
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
-  redirect or an `innerHTML`.
+  redirect or an `innerHTML`;
+- closes a bead that appears in section 6 - move its row to the closed table
+  in the same branch.
