@@ -9,6 +9,8 @@ export const READER_COOKIE = "aifocus_reader";
 const READER_ID_RE = /^[0-9a-f]{32}$/;
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 2;
 
+import { SECURITY_HEADERS } from "./headers.js";
+
 export const REACTION_KINDS = ["useful", "new-to-me", "not-convinced"];
 export const ANNOTATION_TYPES = ["highlight", "note", "comment"];
 export const MODERATION_STATUSES = ["pending", "approved", "rejected", "spam"];
@@ -35,6 +37,9 @@ export function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
+      // The edge never applies static/_headers to Function responses, so the
+      // baseline set rides along here (aifocus-w9gv); extraHeaders still wins.
+      ...SECURITY_HEADERS,
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",

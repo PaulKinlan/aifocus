@@ -9,6 +9,8 @@
 // in a short-lived cookie, so a callback only completes in the browser that
 // started it (this blocks login CSRF).
 
+import { applySecurityHeaders } from "./headers.js";
+
 export const SESSION_COOKIE = "aifocus_session";
 export const STATE_COOKIE = "aifocus_oauth";
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -345,5 +347,7 @@ export function providerErrorSummary(err) {
 export function redirect(location, cookies = []) {
   const headers = new Headers({ Location: location, "Cache-Control": "no-store" });
   for (const c of cookies) headers.append("Set-Cookie", c);
-  return new Response(null, { status: 302, headers });
+  // Function responses get no static/_headers treatment at the edge, so the
+  // baseline security set is applied in code (aifocus-w9gv).
+  return applySecurityHeaders(new Response(null, { status: 302, headers }));
 }

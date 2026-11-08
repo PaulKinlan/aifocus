@@ -26,10 +26,15 @@ const CHUNK_COUNT = 30;
 const SNIPPET_LENGTH = 280;
 const CACHE_SECONDS = 300;
 
+import { SECURITY_HEADERS } from "../_lib/headers.js";
+
 function json(body, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
+      // Function responses get no static/_headers treatment at the edge, so
+      // the baseline set rides along here (aifocus-w9gv).
+      ...SECURITY_HEADERS,
       "Content-Type": "application/json; charset=utf-8",
       "X-Content-Type-Options": "nosniff",
       ...extraHeaders,
