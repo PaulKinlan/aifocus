@@ -2,7 +2,7 @@
 title: Extensible web apps
 seotitle: ""
 slug: extensible-web-apps
-description: ""
+description: "I built Extensible Web Apps: web apps where everything is a plugin in its own Worker, so users (or their agents) can extend them without a fork or a deploy."
 date: 2026-11-08T19:21:51.772Z
 draft: true
 authors:
@@ -36,11 +36,11 @@ The principles that I saw in Pi were incredibly invigorating and I started to se
 
 Then I remembered the awesome post "[Malleable software: Restoring user agency in a world of locked-down apps](https://www.inkandswitch.com/essay/malleable-software/)" by the folks at Ink and Switch (and lo and behold, they also built a Markdown Editor :D) and I really had to dive a lot deeper into this space and try and answer the question: Why don’t more websites offer customization? 
 
-{{< aside >}}There was a time where I was pitching every feature in Chrome should be a Web Intent that can be replaced (my idea was instead of the "Print" opening the printer dialog, it would search for services the user had installed and offer that. It could point to the user's preferred service, maybe FedEx or ... a fax machine service){{</ aside >}}
+{{< aside >}}There was a time where I was pitching every feature in Chrome should be a Web Intent that can be replaced by the users preferred service (my idea was instead of the "Print" opening the printer dialog, it would search for services the user had installed and offer that. It could point to the user's preferred service, maybe FedEx or ... a fax machine service){{</ aside >}}
 
 So, why don't more websites offer customization? Easy. It's hard. 
 
-It's hard to be secure. It's hard to be performant. It's hard to design a product around customization without feeling like you are losing control of your product, and it's hard to not break existing customizations when you update your core.  While there is user demand  (just look at Chrome extensions) I think people want a [naked robotic core](https://hypercritical.fireside.fm/86) and then the ability to [dress and change their tools to their needs](https://youtu.be/vV85dNeGRhY?t=94).
+It's hard to be secure. It's hard to be performant. It's hard as a product owner to design a product around customization without feeling like you are losing control, and it's hard to not break existing customizations when you update your core.  While there is user demand (just look at Chrome extensions) I think people want a [naked robotic core](https://hypercritical.fireside.fm/86) and then the ability to [dress and change their tools to their needs](https://youtu.be/vV85dNeGRhY?t=94).
 
 Then I discovered the DeepSeek Harness. The harness is built around the principle that everything in the core system is a plugin. It's rather spectacular. The paper that describes the [Cordis](https://deepseek-harness.github.io/deepseek-harness/en/develop/cordis-tutorial/) system is rather incredible too. While I found the Maths and proofs of theorems overwhelming, if you can drive through it there are glimpses of magic for mere mortals like me: Self-evolving Harness systems. 
 
@@ -58,6 +58,14 @@ Before I explain anything, have a play. This is a beat pad built on the platform
 
 Before we start, I am presuming that you don't mind that I built this with my agent with heavy and constant review (you will see Claude and other tools all over this repo). This web-app harness builds off the core kernel of Cordis and then attempts to build on top of the existing primitives of the web such as `<slot>`, `<template>`, `serviceWorker`, `Worker`, `SharedWorker`, `MessageChannel`, `@layer`, `@scope` to let you build rich and complex web applications that the user can customize without you having to do anything new.
 
+I also had some core things that I wanted to make sure you could customize:
+
+* A user should be able to add their own plugins
+* The plugins should be able to save their own data
+* The plugins should be able to themselves extended so they should define hooks that other plugins can listen for
+* The plugins should be able to provide their own UI if they want
+* The developer should be able to provide places in their App UI for extension, while the user should be able to also override it and place the UI where they want
+
 While a user can write the code to customize the web app, the expectation is that people will use an LLM to create the plugins at runtime and as such LLMs are built into the harness as a core principle component (even if it's not enabled by an app developer).
 
 It's a rather complex system when you have to try and look at it all, but the way I would say it is: We have an app and it's made up of plugins that are managed by "the kernel". Plugins *are the system* and they are added by the developer who builds the app *and*, importantly, by the user.
@@ -66,7 +74,7 @@ It's a rather complex system when you have to try and look at it all, but the wa
 
 {{< figure src="/images/extensible-web-apps/dataflow.png" alt="" caption="Data flow" >}}
 
-Really, everything is a plugin. That includes the UI shell, storage, sync and the AI agents. Plugins run in their own `Worker`, can only do what their manifest asks for, and draw their UI as plain HTML. They emit events and can listen to messages that were emitted from other plugins, but they can't directly talk to any other worker. Because plugins are so isolated, this means that we can "safely" run them without stomping over each other, or over the app they're running in. <!-- TODO PAUL: this sentence was unfinished in your draft; I finished it, check it's what you meant. -->
+Really, everything is a plugin. That includes the UI shell, storage, sync and the AI agents. Plugins run in their own `Worker`, can only do what their manifest asks for, and draw their UI as plain HTML. They emit events and can listen to messages that were emitted from other plugins, but they can't directly talk to any other worker. Because plugins are so isolated, this means that we can "safely" run them without stomping over each other, or over the app they're running in.
 
 Technically, an app needs no server as it can run entirely in the client, but it can also open in a space that a group of people share, where the same kernel runs on a server too, with plugins of its own.
 
