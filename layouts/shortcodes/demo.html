@@ -1,0 +1,22 @@
+{{/*
+  A live Extensible Web Apps demo in an iframe, with a link to open it full screen.
+
+    {{< demo src="https://extensibleweb.app/demos/beats/" title="Beat pad" height="640" caption="..." >}}
+
+  Put two side by side (they stack on a phone) by wrapping them in demo-row:
+
+    {{< demo-row >}}
+    {{< demo src="..." title="..." >}}
+    {{< demo src="..." title="..." >}}
+    {{< /demo-row >}}
+
+  The first visit to a demo shows "Opening…" for a moment: the page starts the
+  platform's service worker and loads again through it. That's expected.
+*/}}
+{{- $src := .Get "src" -}}
+{{- $title := .Get "title" | default "Live demo" -}}
+{{- $height := .Get "height" | default "560" -}}
+<figure class="ewa-demo">
+  <iframe src="{{ $src }}" title="{{ $title }}" loading="lazy" allow="clipboard-write" style="display:block;width:100%;height:{{ $height }}px;border:1px solid rgba(127,127,127,.35);border-radius:10px;background:#fff"></iframe>
+  <figcaption>{{ with .Get "caption" }}{{ . | markdownify }} {{ end }}<a href="{{ $src }}" target="_blank" rel="noopener">Open {{ $title }} full screen ↗</a></figcaption>
+</figure>
