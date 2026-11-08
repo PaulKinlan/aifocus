@@ -58,8 +58,8 @@ anyone who can read a backup, a replica or a debug session".
 |:---|:---|:---|
 | Cross-origin writes | `isSameOrigin()` requires the `Origin` header to equal the request's own origin; a request with no `Origin` is rejected, not allowed | `functions/_lib/reader.js`, called by every POST handler |
 | CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `functions/_lib/reader.js`, `functions/_lib/auth.js` |
-| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `auth_start_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/ask.js`, `functions/_lib/og.js` |
-| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot` |
+| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), reads (600/hour: `/api/reader/state`, `/api/account` and `/api/auth/me` share one `read_events` budget), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search, read and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `read_events`, `auth_start_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `functions/_lib/reader.js reserveWriteEvent reserveReadEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/reader/state.js`, `functions/api/account.js`, `functions/api/auth/me.js`, `functions/api/ask.js`, `functions/_lib/og.js` |
+| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. The read meter degrades differently by design: a missing `read_events` table falls back to a per-isolate in-memory cap instead of a 503 (aifocus-s9o), which is why this list does not name it. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
 | Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard | `functions/_lib/access.js`, `functions/api/admin/*` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
@@ -103,10 +103,13 @@ can be checked rather than re-argued.
    (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
    because every interpolated value passed through `escapeHtml()`. The join is
    gone entirely: the tree and transcript are now DOM-built with
-   `textContent`, `escapeHtml` is removed, and
-   `tests/where-prompts-demo-sinks.test.mjs` fails the gate if an interpolating
-   `innerHTML` assignment or the helper returns (aifocus-qsv3). Re-opens only
-   if that guard is deleted or bypassed.
+   `textContent`, `escapeHtml` is removed, and the ban is origin-wide:
+   `tests/where-prompts-demo-sinks.test.mjs` guards the demo bundle and
+   `tests/first-party-sinks.test.mjs` applies the same raw-source token ban to
+   every first-party script (`assets/js/**/*.js`, `static/**/*.js`), with the
+   single sanctioned clearing assignment in `stats-page.js` pinned by exact
+   line (aifocus-qsv3, aifocus-mcqz). Re-opens only if those guards are
+   deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
@@ -131,17 +134,24 @@ can be checked rather than re-argued.
 Security-relevant items from the 2026-11-04 project audit, each with its bead.
 This list is a pointer, not the ledger: `bd list` is authoritative.
 
+### Open
+
 | Bead | Gap |
 |:---|:---|
-| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` used to fail open when `READER_DB` was unbound (inference ran unmetered) - fixed on main (aifocus-5ft): the meter reserves before the billed call and fails closed; and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a preview deployment with the flag served uncapped billed inference - fixed on `fleet/impl-5` (aifocus-4hu1): the hatch is loopback-only |
-| aifocus-80p | reader writes reserved the per-IP slot after fetching the post text (fixed on `fleet/audit-1`) |
-| aifocus-lsf | the Bluesky DPoP private key is stored in plaintext in `oauth_states.data` |
-| aifocus-e3x | OAuth start/callback logged provider error text verbatim, which could carry codes and token URLs — fixed on `fleet/impl-5` (landed e43aef6): provider error text is classified against an OAuth code whitelist, parse failures report fixed messages, and handlers log a credential-free single-line summary |
-| aifocus-f7r | privileged trust/block changes record no actor and there is no admin audit table |
-| aifocus-0cz | `/api/reader/state` runs three D1 queries per unauthenticated request with no per-IP cap |
-| aifocus-rom | there is no account erasure path (needs a product decision: hard delete or anonymise) |
-| aifocus-710 | `ask_log` rows, and the IP hashes in them, are never pruned; the salt sits in the same database |
+| aifocus-710 | the IP-hash salt sits in the same database as the hashes (the retention half is fixed: `reserveAskSlot` prunes `ask_log` rows older than two hours on every reservation) - see section 7 |
 | aifocus-wxl | the journal demo's OPFS sandbox is shared origin-wide across provider pages, contradicting the UI copy |
+
+### Closed since the 2026-11-04 audit
+
+| Bead | Gap | Closed by |
+|:---|:---|:---|
+| aifocus-5ft, aifocus-e7e, aifocus-4hu1 | `/api/ask` failed open when `READER_DB` was unbound, so inference ran unmetered; and the `ALLOW_UNMETERED_ASK` hatch was gated on "not production", so a flagged preview deployment served uncapped billed inference | the meter reserves before the billed call and fails closed (aifocus-5ft); the hatch is loopback-only (aifocus-4hu1, merged 4514def) |
+| aifocus-80p | reader writes reserved the per-IP slot after fetching the post text | 0442587 (merged 04aa268) |
+| aifocus-lsf | the Bluesky DPoP private key was stored in plaintext in `oauth_states.data` | 7f73503: the key travels in the HttpOnly `aifocus_dpop` cookie scoped to `/api/auth/callback/bluesky`; D1 holds only the thumbprint |
+| aifocus-e3x | OAuth start/callback logged provider error text verbatim, which could carry codes and token URLs | e43aef6: provider error text is classified against an OAuth code whitelist, parse failures report fixed messages, and handlers log a credential-free single-line summary |
+| aifocus-f7r | privileged trust/block changes recorded no actor, and there was no admin audit table | d93f730 and 6e37443: `migrations/0009_admin_actions.sql`, with `adminActionStmt()` called from every admin handler |
+| aifocus-0cz | `/api/reader/state` ran three D1 queries per unauthenticated request with no per-IP cap | 245ce0d: `reserveReadEvent` (600/hour, `read_events`) reserves before the batch; extended to `/api/account` and `/api/auth/me` in aifocus-pr7b |
+| aifocus-rom | there was no account erasure path | dbf82c8: `DELETE /api/account` hard-deletes the account, its sign-ins and its activity |
 
 ## 7. Accepted residual risk
 
@@ -177,4 +187,6 @@ Re-read this file when a change:
   or the og render reservation, or moves that call relative to the work it
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
-  redirect or an `innerHTML`.
+  redirect or an `innerHTML`;
+- closes a bead that appears in section 6 - move its row to the closed table
+  in the same branch.
