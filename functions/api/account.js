@@ -10,7 +10,7 @@
 
 import { getSessionUser, listIdentities, publicUser, clearSessionCookie } from "../_lib/auth.js";
 import { configuredProviders } from "../_lib/providers/index.js";
-import { json, isSameOrigin } from "../_lib/reader.js";
+import { json, isSameOrigin, hashIp, reserveReadEvent } from "../_lib/reader.js";
 
 // The most recent items of each kind are returned (notes, comments,
 // highlights and reactions each up to this many), so a long run of one kind
@@ -20,6 +20,25 @@ const LIMIT_PER_KIND = 200;
 export async function onRequestGet({ request, env }) {
   const db = env?.READER_DB;
   if (!db) return json({ error: "Accounts are not available" }, 503);
+
+  // getSessionUser and the batch below spend D1 on every call, so reserve the
+  // shared read budget first - the same reservation /api/reader/state makes
+  // (aifocus-0cz), extended to the authenticated read endpoints
+  // (aifocus-pr7b).
+  let ipHash = null;
+  try {
+    ipHash = await hashIp(db, request.headers.get("CF-Connecting-IP"));
+  } catch (err) {
+    console.error("account: ip hash failed, using the shared bucket", err?.message || err);
+  }
+  const budget = await reserveReadEvent(db, ipHash);
+  if (budget === "limited") {
+    return json({ error: "Too many requests. Please try again later." }, 429);
+  }
+  if (budget === "error") {
+    return json({ error: "Account is unavailable. Please try again later." }, 503);
+  }
+
   const user = await getSessionUser(request, db);
   if (!user) return json({ error: "Not signed in" }, 401);
 
