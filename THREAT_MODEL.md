@@ -103,10 +103,13 @@ can be checked rather than re-argued.
    (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
    because every interpolated value passed through `escapeHtml()`. The join is
    gone entirely: the tree and transcript are now DOM-built with
-   `textContent`, `escapeHtml` is removed, and
-   `tests/where-prompts-demo-sinks.test.mjs` fails the gate if an interpolating
-   `innerHTML` assignment or the helper returns (aifocus-qsv3). Re-opens only
-   if that guard is deleted or bypassed.
+   `textContent`, `escapeHtml` is removed, and the ban is origin-wide:
+   `tests/where-prompts-demo-sinks.test.mjs` guards the demo bundle and
+   `tests/first-party-sinks.test.mjs` applies the same raw-source token ban to
+   every first-party script (`assets/js/**/*.js`, `static/**/*.js`), with the
+   single sanctioned clearing assignment in `stats-page.js` pinned by exact
+   line (aifocus-qsv3, aifocus-mcqz). Re-opens only if those guards are
+   deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
