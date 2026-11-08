@@ -8,7 +8,7 @@ draft: true
 authors:
   - paulkinlan
 ---
-I started writing this post about how I struggle with merge issues and how it slows our ability to build software, however while I was writing that snoozefest I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
+I started writing this post about how I struggle with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software, however while I was writing that snoozefest I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
 
 I've been thinking for a long time about how the web might evolve now that we have the tools (LLMs and coding-harnesses) that can build almost anything and we also have the tools that can take almost anything the user needs.
 
@@ -362,6 +362,6 @@ Developer Guide:
 * [Agents](https://extensibleweb.app/docs/guide/agents)
 * [Styling components](https://extensibleweb.app/docs/guide/styling)
 
-It has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). I'm not sure if this will take off or be the future, but I can't not explore these concepts especially as everything around the web is evolving so quickly. I really do think the concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
+It has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). This certainly isn't complete nor production-ready yet, and I'm not sure if this will take off or be the future, but I can't not explore these concepts especially as everything around the web is evolving so quickly. I really do think the concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
 
-So, anyway, I will get around to writing about merge issues, but for now you have a new paradigm for creating web apps that 100% aren't SharePoint. I would love you to have a look and send me feedback on this experiment.
+So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint. I would love you to have a look and send me feedback on this experiment and if you are working on something similar.
