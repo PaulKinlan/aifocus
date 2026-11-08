@@ -17,6 +17,7 @@
 // gets a broken image.
 
 import { hashIp, UNKNOWN_IP_BUCKET } from "./reader.js";
+import { SECURITY_HEADERS, applySecurityHeaders } from "./headers.js";
 
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;
@@ -230,6 +231,9 @@ export async function purgeCards(bucket, pagePath) {
 }
 
 const pngHeaders = (extra = {}) => ({
+  // The edge never applies static/_headers to Function responses, so the
+  // baseline security set rides along here (aifocus-w9gv); extra still wins.
+  ...SECURITY_HEADERS,
   "Content-Type": "image/png",
   "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
   "X-Content-Type-Options": "nosniff",
@@ -257,14 +261,14 @@ function fallback(origin, reason) {
     : typeof reason === "string" && reason.startsWith("render failed: ")
       ? classifyError(reason.slice("render failed: ".length))
       : reason;
-  return new Response(null, {
+  return applySecurityHeaders(new Response(null, {
     status: 302,
     headers: {
       Location: new URL(FALLBACK_IMAGE, origin).href,
       "Cache-Control": "public, max-age=300",
       "X-Og-Card": `fallback: ${label}`,
     },
-  });
+  }));
 }
 
 const inFlightRenders = new Map();
@@ -339,7 +343,7 @@ export async function serveCard({ request, env, segments, waitUntil = () => {} }
   const url = new URL(request.url);
   const origin = url.origin;
   const pagePath = pagePathFromSegments(segments);
-  if (!pagePath) return new Response("Not found", { status: 404 });
+  if (!pagePath) return applySecurityHeaders(new Response("Not found", { status: 404 }));
 
   let html;
   try {

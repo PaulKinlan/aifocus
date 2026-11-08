@@ -65,14 +65,22 @@ anyone who can read a backup, a replica or a debug session".
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
 | OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `functions/_lib/auth.js` |
 | IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
-| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` |
+| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 
-`static/_headers` is the only place the security headers are declared: the
-Functions code adds none of its own, so the model assumes the edge applies
-those rules to function responses too. A route that needs different headers
-must say so there rather than in code.
+The edge applies `static/_headers` to static responses only, never to
+Function-generated ones - documented Pages behaviour, verified against
+production 2026-11-08 (a static 404 carried the full set while a Function 200
+from `/api/auth/me` carried only what its handler set). Function responses
+therefore carry the same baseline from code: `functions/_lib/headers.js`
+(`applySecurityHeaders`, set-if-absent so a handler's own value wins) is wired
+into `json()`, the OAuth redirect helper, the OG renderer, and the responses
+`_middleware.js` itself constructs. `tests/security-headers.test.mjs` fails
+the gate if the code-side set and the `_headers` `/*` block drift apart, or if
+a Function response path is built without the baseline. A route that needs
+different headers says so in its handler, and the set-if-absent rule keeps
+that value.
 
 ## 5. Declared non-issues
 

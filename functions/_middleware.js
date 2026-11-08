@@ -13,6 +13,8 @@ const MARKDOWN_TYPES = new Set([
   "application/markdown",
 ]);
 
+import { applySecurityHeaders } from "./_lib/headers.js";
+
 // Top-level paths that are not post or tutorial content roots and must never
 // trigger markdown negotiation.
 //
@@ -224,11 +226,14 @@ async function decorateMarkdown(response) {
   headers.delete("content-length");
   headers.set("x-markdown-tokens", String(estimateTokens(text)));
   appendVaryAccept(headers);
-  return new Response(text, {
+  // The middleware constructs this response in code, so the edge treats it as
+  // a Function response and never applies static/_headers to it; the baseline
+  // security set has to come from code (aifocus-w9gv).
+  return applySecurityHeaders(new Response(text, {
     status: response.status,
     statusText: response.statusText,
     headers,
-  });
+  }));
 }
 
 // The Hugo home.latest.txt output uses the same published posts/date order as home.json.
@@ -251,10 +256,10 @@ export async function onRequest(context) {
         if (isValidLatestPostPath(path)) {
           const destination = new URL(path, url.origin);
           destination.search = url.search;
-          return new Response(null, {
+          return applySecurityHeaders(new Response(null, {
             status: 302,
             headers: { Location: destination.href, "Cache-Control": "no-store" },
-          });
+          }));
         }
       }
     } catch {
