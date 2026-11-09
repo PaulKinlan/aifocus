@@ -14,7 +14,7 @@ import urllib.error
 from unittest.mock import patch
 
 sys.path.insert(0, 'tools/stats')
-from collector_common import CollectorDataError, non_negative_int
+from collector_common import CollectorDataError, finite_in_range, non_negative_int
 spec = importlib.util.spec_from_file_location('collect_github', 'tools/stats/collect-github.py')
 github = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(github)
@@ -41,12 +41,15 @@ for body in (b'not json{', b'[1,2,3]', b'\\xff', b'{"message":"Validation Failed
     assert len(calls) == 1, (body, len(calls))
 
 for value in (True, False):
-    try:
-        non_negative_int(value, 'github total_count')
-    except CollectorDataError:
-        pass
-    else:
-        raise AssertionError(f'boolean {value!r} accepted as a count')
+    for validate in (lambda: non_negative_int(value, 'github total_count'),
+                     lambda: finite_in_range(value, 0, None, 'httparchive adoption')):
+        try:
+            validate()
+        except CollectorDataError:
+            pass
+        else:
+            raise AssertionError(f'boolean {value!r} accepted as a count')
+assert finite_in_range('12.3', 0, 100, 'w3techs percentage') == 12.3
 for value in (0, 42):
     assert non_negative_int(value, 'github total_count') == value
 
