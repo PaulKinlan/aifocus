@@ -72,3 +72,20 @@ test("the palette close button is declarative and detects the right property", (
     /addEventListener\("click"/,
   );
 });
+
+// aifocus-fbq1: the palette's one visible control was a button whose label was
+// the key name "Esc" - meaningful on a keyboard, meaningless on the phone that
+// is showing it, where the tap that closes the palette had no visible name.
+test("the palette close button is named for what it does, not for a key", () => {
+  assert.match(palette, /"aria-label": "Close the palette"/, "the close button lost its accessible name");
+  assert.match(palette, /class: "palette-close-word", text: "Close"/, "the visible label is not a word");
+  const key = /class: "palette-close-key", text: "Esc", "aria-hidden": "true"/;
+  assert.match(palette, key, "the key cap is not marked up as a hint");
+  const css = read("themes/aifocustheme/assets/css/palette.css");
+  assert.match(blockAfter(css, ".palette-close-key"), /display:\s*none/, "the key cap shows on touch, where there is no Esc key");
+  assert.match(
+    blockAfter(css, "@media (hover: hover) and (pointer: fine)"),
+    /\.palette-close-key\s*\{\s*display:\s*inline/,
+    "the key cap never replaces the word on a keyboard device",
+  );
+});
