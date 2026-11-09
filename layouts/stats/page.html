@@ -5,7 +5,13 @@
      from the compact JSON embedded in each figure; the tables are the no-JS view. */}}
 {{ $stats := site.Data.stats }}
 <style>
-.stats-page { max-width: 46rem; margin: 0 auto; min-width: 0; overflow-wrap: anywhere;
+/* aifocus-s54m: main is capped at 700px for prose, which is right for an essay
+   and wrong for a six-column data table - at 1280 the row labels wrapped over
+   three lines while 580px of the viewport sat empty. The data views take a
+   wider measure and the prose keeps the reading one; both stay left-aligned on
+   the same edge. */
+main:has(> .stats-page) { max-width: 68rem; }
+.stats-page { max-width: 68rem; margin: 0 auto; min-width: 0; overflow-wrap: anywhere;
   --viz-1: light-dark(#2a78d6, #3987e5); --viz-2: light-dark(#eb6834, #d95926);
   --viz-3: light-dark(#1baf7a, #199e70); --viz-4: light-dark(#eda100, #c98500);
   --viz-5: light-dark(#e87ba4, #d55181); --viz-6: light-dark(#008300, #3fae3f);
@@ -56,6 +62,8 @@
 .swatch { display: inline-block; width: 1.15em; height: .55em; vertical-align: middle; overflow: visible; }
 .stat-chart figcaption { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
 .stat table { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
+.stats-page > :is(h1, .e-content, .stats-updated, .stats-toc),
+.stat > :is(h2, h3, .stat-meta, .stat-how, .stat-method) { max-width: 46rem; }
 .stat th, .stat td { padding: .35rem .5rem; border-bottom: 1px solid var(--viz-grid); text-align: right; vertical-align: top; }
 .stat th:first-child, .stat td:first-child { text-align: left; }
 .stat thead th { font-weight: 600; color: var(--muted); white-space: nowrap; }
