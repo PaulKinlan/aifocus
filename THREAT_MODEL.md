@@ -144,44 +144,28 @@ can be checked rather than re-argued.
    `game_state`, `game_jump` and `game_restart` are client-side controls for
    the canvas game: they read and mutate the game's in-memory state (score,
    best, player position, bug list) and the overlay DOM the loop owns -
-   `overlay.style.display` (`:78`, `:86`), `ovTitle.textContent` (`:83`),
-   `startBtn.textContent` (`:85`) and the `score` readout (`:138`) - and that is
-   all: no `fetch()`, no `localStorage`, no cookies, no credential, and no
-   string from the caller is written anywhere (`best` is a page variable, not
-   persisted; verified by reading the registrations and by running the inline
-   script against stubs, aifocus-hexx). The only markup write they can reach is
-   the game-over message at `layouts/404.html:84`, whose interpolations are the
-   loop's own numbers (`Math.floor(score)`, `best`), and that write is outside
-   the origin-wide sink ban because the ban does not scan `layouts/*.html`
-   inline script (aifocus-9xgd). The browser-agent actor of §3 can call them,
-   and the impact is bounded but larger than a lost high score: `start()`
-   (`:78`) queues a fresh `requestAnimationFrame` chain without cancelling the
-   previous one, so N `game_restart` calls leave N chains re-queueing for as
-   long as the game runs (measured: 1 call = 1 callback per frame, 3 calls = 3
-   callbacks per frame, stable over ticks). The chains share one `last`
-   timestamp, so the extra ones
-   step the simulation by zero and only repeat the draw - measured with 1 vs 3
-   chains, the score after 60 frames (11) and the frame the game ends (164) are
-   identical - which makes the cost redundant per-frame rendering on the
-   visitor's device (CPU, battery) while the run lasts, not faster scoring or a
-   changed outcome. The stacking ends with the run, unless a restart lands in
-   the one frame after it: `over()` sets `running = false`, so the frame that
-   ends the game re-queues only the chain that collided - the others reach the
-   `if(!running) return` guard (`:117`) first and re-queue nothing - and that
-   one callback drains on the next frame (measured: 3 chains leave 1 pending
-   callback, then 0). A `game_restart` issued before it drains - which is
-   exactly where a poll-`game_state`-then-restart loop lands, since
-   `gameOver` is true in that frame - sets `running` back to true, so the
-   queued callback runs instead of returning and re-queues itself: measured,
-   one restart in that window leaves 2 chains re-queueing for the rest of the
-   run (stable at 2, and it never decays), two restarts in the window leave 3,
-   and the cost stays redundant rendering rather than faster play (the
-   60-frame score delta is 11 with one, two or three chains live).
-   Re-opens if a game tool gains any network, storage or credential reach, if a
-   tool starts taking a string from the caller, or if registration moves out of
-   the inline script - which also re-opens the layouts inline-script question
-   above (aifocus-9xgd), since a tool defined in that script inherits the
-   unscanned sink the game-over message uses.
+   `overlay.style.display` (`layouts/404.html:79`, `:92`),
+   `ovTitle.textContent` (`:84`), `startBtn.textContent` (`:91`) and the
+   `score` readout (`:145`) - and that is all: no `fetch()`, no `localStorage`,
+   no cookies, no credential, and no string from the caller is written anywhere
+   (`best` is a page variable, not persisted; verified by reading the
+   registrations and running the inline script against stubs, aifocus-hexx).
+   The game-over message uses `replaceChildren`, `createElement` and
+   `textContent` (`:85-90`), not a markup sink; the origin-wide sink ban now
+   scans inline script in `layouts/*.html` as well (aifocus-9xgd).
+   The browser-agent actor of §3 can still start, stop and restart the game,
+   but the rendering loop has a single-chain invariant: `start()` cancels any
+   pending frame before requesting another (`:77-80`), and the loop only
+   schedules a successor while `running` (`:157`). Game-over sets `running`
+   false (`:82`), leaving no drain callback to revive on restart.
+   `tests/404-loop.test.mjs` asserts repeated restarts keep one pending frame,
+   game-over leaves zero, and restart returns to one; a real Chrome check on
+   aifocus-02n5 observed the same 1 → 0 → 1 transition. Before that fix,
+   repeated restarts stacked callbacks and a restart during the game-over
+   drain could keep two or more chains running; that is historical, not current.
+   Re-opens if a game tool gains network, storage or credential reach, accepts
+   a caller-controlled string, or the animation loop stops cancelling its
+   pending frame when restarted.
 
 ## 6. Known gaps and open work
 
