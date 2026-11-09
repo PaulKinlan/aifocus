@@ -40,3 +40,20 @@ test("the token calculator's chart fallback tables are wrapped, not clipped on t
     assert.ok(wrapper > 0 && at - wrapper < 80, `${id} is not inside a visually-hidden wrapper`);
   }
 });
+
+// aifocus-15e8: the where-prompts demo had no level-1 heading and no <main>,
+// so a screen-reader user got no page heading and landmark navigation landed
+// on two anonymous sections - the only headings were two h2s inside collapsed
+// <details>. The demo is a standalone static page, so the site layout's own
+// heading and main landmark do not reach it.
+test("the journal demo exposes one heading and a main landmark", () => {
+  for (const file of ["index.html", "google.html", "openai.html"]) {
+    const markup = readFileSync(root(`static/where-prompts-run-demo/${file}`), "utf8");
+    assert.equal((markup.match(/<h1\b/g) ?? []).length, 1, `${file} does not have exactly one h1`);
+    assert.equal((markup.match(/<main\b/g) ?? []).length, 1, `${file} does not have exactly one main landmark`);
+    const mainStart = markup.indexOf("<main>");
+    const mainEnd = markup.indexOf("</main>");
+    const h1 = markup.indexOf("<h1");
+    assert.ok(h1 > mainStart && h1 < mainEnd, `${file}: the h1 is outside the main landmark`);
+  }
+});

@@ -284,10 +284,26 @@
     .empty-transcript { color: var(--text-dim); font-style: italic; font-size: 12px; }
 
     .hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+    /* aifocus-15e8: the demo had no level-1 heading and no main landmark, so
+       landmark navigation landed on anonymous sections and the only headings
+       were two h2s inside collapsed <details>. */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
     .hint code { background: var(--bg-deep); padding: 1px 4px; border-radius: 2px; }
   </style>
 </head>
 <body>
+  <main>
+    <h1 class="visually-hidden">self-adapting journal: Anthropic, where prompts run demo</h1>
   <div class="banner">
     <span class="dot"></span>
     <span>SANDBOX DEMO</span>
@@ -366,6 +382,7 @@
     </section>
   </div>
 
+  </main>
   <script type="module" src="./demo.js"></script>
 </body>
 </html>
