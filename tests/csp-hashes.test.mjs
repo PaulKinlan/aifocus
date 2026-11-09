@@ -225,6 +225,16 @@ test("refresh parsing handles attribute order, case, spacing, quotes and encoded
     '<meta http-equiv="refresh" content="0;ur&#108;=javascript:alert(1)">',
     '<meta http-equiv="refresh" content="0;url=javascript:alert(1)" content="0;url=/safe">',
     '<meta http-equiv="refresh"content="0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content=".5;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0.;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content=".0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content=".5 ,url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0..5;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0.5.5;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content=".5.;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content=".5.0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0..;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0.5.0.5;url=javascript:alert(1)">',
   ];
   for (const html of flagged) {
     assert.equal(inlineExecSurfaces(html).urls.length, 1, `must be flagged: ${html}`);
@@ -235,6 +245,12 @@ test("refresh parsing handles attribute order, case, spacing, quotes and encoded
     '<meta http-equiv="content-type" content="0;url=javascript:alert(1)">',
     '<meta title="ignored http-equiv=refresh" content="0;url=javascript:alert(1)">',
     '<meta http-equiv="refresh" title="content=0;url=javascript:alert(1)" content="0;url=/safe">',
+    '<meta http-equiv="refresh" content="..5;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="+0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0e1;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0x10;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="-1;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;;url=javascript:alert(1)">',
   ];
   for (const html of clean) {
     assert.deepEqual(inlineExecSurfaces(html).urls, [], `must stay clean: ${html}`);
