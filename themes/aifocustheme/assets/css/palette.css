@@ -108,8 +108,17 @@
   cursor: pointer;
 }
 
+/* aifocus-mqgm: the fill alone was 1.27:1 light and 1.51:1 dark against the
+   dialog, far under the 3:1 a state indicator needs, and an option is not
+   focusable (the input owns focus through aria-activedescendant), so there was
+   no ring to fall back on - you could not see which row Enter would activate.
+   The inset bar is the marker that does not depend on hue; it measures 6.53:1
+   against the dialog fill in light and 8.24:1 in dark (4.43:1 / 4.50:1 on the
+   selected fill). The fill stays as reinforcement, one step up from
+   --control-bg so it separates a little more than before. */
 .palette-option[aria-selected="true"] {
-  background: var(--control-bg);
+  background: var(--control-bg-hover);
+  box-shadow: inset 2px 0 0 var(--link);
 }
 
 .palette-option[aria-disabled="true"] {

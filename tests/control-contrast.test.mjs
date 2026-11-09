@@ -154,3 +154,14 @@ test("the demo's field boundary clears 3:1 against every surface it sits on", ()
     }
   }
 });
+
+// aifocus-mqgm: the palette's keyboard selection was signalled by fill alone -
+// 1.27:1 light / 1.51:1 dark against the dialog, far under the 3:1 a state
+// indicator needs - and an option is not focusable (the input owns focus via
+// aria-activedescendant), so there was no ring to fall back on. State must not
+// rest on colour alone, so the rule needs a marker as well as the fill.
+test("a selected palette row is marked by more than its fill", () => {
+  const rule = blockAfter(palette, '.palette-option[aria-selected="true"]');
+  assert.match(rule, /background:/, "the fill is still reinforcement; keep it");
+  assert.match(rule, /box-shadow:|outline:|border-left:|border-inline-start:/, "the selected row has no marker besides its fill");
+});
