@@ -24,6 +24,32 @@ const makeEnv = () => ({ READER_DB: createD1(MIGRATIONS) });
 
 const get = (path) => new Request(`https://aifoc.us${path}`);
 
+// A well-formed but unknown session token. getSessionUser only reaches the
+// sessions join when the cookie passes its shape check, so sending this is
+// what makes the join a real, observable statement - without it the
+// cookie-less request does no session work in EITHER ordering, which is why
+// status-only assertions could not see a meter-after-session-lookup
+// regression (aifocus-ajvr).
+const UNKNOWN_SESSION = `aifocus_session=${"a".repeat(43)}`;
+
+// A recording wrapper around the real in-memory D1: identical behaviour,
+// but every SQL string handed to prepare() is kept in `sqls` so a test can
+// assert WHICH statements ran, not just what came back.
+function recordingD1(db) {
+  const sqls = [];
+  return {
+    db,
+    sqls,
+    prepare(sql) {
+      sqls.push(sql);
+      return db.prepare(sql);
+    },
+    async batch(statements) {
+      return db.batch(statements);
+    },
+  };
+}
+
 // Fill the shared unknown-IP read bucket to the cap, so the next reservation
 // comes back "limited". No CF-Connecting-IP header means every test request
 // lands in UNKNOWN_IP_BUCKET.
@@ -51,8 +77,28 @@ test("GET /api/account: 429 once the shared read budget is spent, before any acc
 test("GET /api/auth/me: 429 once the shared read budget is spent, before any session work", async () => {
   const env = makeEnv();
   await exhaustReadBudget(env.READER_DB);
-  const res = await me({ request: get("/api/auth/me"), env });
+  // Status alone cannot pin the ordering: a cookie-less request answers 429
+  // whether or not the session join already ran. Send a valid-shaped token
+  // and watch the statements instead - a mutant that meters after
+  // getSessionUser records the sessions join here and fails the last assert.
+  const request = new Request("https://aifoc.us/api/auth/me", {
+    headers: { Cookie: UNKNOWN_SESSION },
+  });
+  const recorded = recordingD1(env.READER_DB);
+  env.READER_DB = recorded;
+  const res = await me({ request, env });
   assert.equal(res.status, 429);
+  // The recorder is not deaf: the reservation itself must be among the
+  // statements, otherwise the assertion below would pass on an empty log.
+  assert.ok(
+    recorded.sqls.some((sql) => /read_events/i.test(sql)),
+    `the read reservation must appear in the executed statements: ${recorded.sqls.join(" | ")}`,
+  );
+  assert.deepEqual(
+    recorded.sqls.filter((sql) => /\bsessions\b|\bidentities\b/i.test(sql)),
+    [],
+    `session or identity D1 work ran despite the spent budget: ${recorded.sqls.join(" | ")}`,
+  );
 });
 
 test("GET /api/account: a reservation error fails closed with 503, not an unmetered read", async () => {
@@ -83,7 +129,14 @@ test("GET /api/auth/me: a reservation error fails closed with 503", async () => 
       },
     },
   };
-  const res = await me({ request: get("/api/auth/me"), env });
+  // The valid-shaped token keeps this test meter-order-sensitive too: with a
+  // cookie, a mutant that runs getSessionUser before the reservation makes
+  // the sessions join hit the throwing db and rejects - not a 503 - so the
+  // test fails instead of silently passing on the wrong order.
+  const request = new Request("https://aifoc.us/api/auth/me", {
+    headers: { Cookie: UNKNOWN_SESSION },
+  });
+  const res = await me({ request, env });
   assert.equal(res.status, 503);
 });
 
