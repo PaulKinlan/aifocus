@@ -27,6 +27,8 @@ import urllib.parse
 import urllib.request
 from datetime import date, datetime
 
+from collector_common import UA, fetch_json_capped, finite_in_range
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
 DATA_DIR = os.path.join(ROOT, "static", "data")
@@ -35,9 +37,7 @@ API = "https://cdn.httparchive.org/v1/adoption"
 
 def fetch(technology, rank):
     q = urllib.parse.urlencode({"technology": technology, "geo": "ALL", "rank": rank})
-    req = urllib.request.Request(f"{API}?{q}", headers={"User-Agent": "aifoc.us-stats/1 (+https://aifoc.us/stats/)"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.load(resp)
+    return fetch_json_capped(f"{API}?{q}", headers={"User-Agent": UA})
 
 
 def main():
@@ -73,6 +73,9 @@ def main():
                 v = (p.get("adoption") or {}).get(tool.get("client", "mobile"))
                 if v is None:
                     continue
+                # httparchive adoption is a percentage; a value outside [0, 100]
+                # means the feed changed shape and the row would be wrong.
+                v = finite_in_range(v, 0, 100, f"httparchive {technology} {tool['name']} {d.isoformat()}")
                 end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
                 w.writerow([tool["name"], d.isoformat(), end.isoformat(), "monthly", int(v), report, 1])
                 rows += 1

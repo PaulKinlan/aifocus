@@ -31,8 +31,9 @@ import csv
 import json
 import os
 import sys
-import urllib.request
 from datetime import date, datetime, timedelta
+
+from collector_common import UA, fetch_json_capped, finite_in_range, non_negative_int
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
@@ -43,16 +44,17 @@ UA = "aifoc.us-stats/1 (+https://aifoc.us/stats/)"
 
 
 def get(path):
-    req = urllib.request.Request(BASE + path, headers={"User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.load(resp)
+    return fetch_json_capped(BASE + path, headers={"User-Agent": UA, "Accept": "application/json"})
 
 
 def code_share(task_spend, which):
     cats = task_spend["data"][which]["macroCategories"]
     row = next(c for c in cats if c["key"] == "code")
-    # the field is called spendShare under both "tokens" and "spend"
-    return float(row.get("spendShare", row.get("share", 0))), int(task_spend["data"][which].get("windowDays", 30))
+    # the field is called spendShare under both "tokens" and "spend"; a share
+    # is a fraction, so anything outside [0, 1] (or NaN, which json.loads
+    # accepts) means a broken feed, not a real share
+    share = finite_in_range(row.get("spendShare", row.get("share", 0)), 0, 1, f"openrouter code spendShare ({which})")
+    return share, non_negative_int(task_spend["data"][which].get("windowDays", 30), "openrouter windowDays")
 
 
 def chart_rows(series, run_date, task_spend):
@@ -68,7 +70,7 @@ def chart_rows(series, run_date, task_spend):
         if start < epoch:
             continue
         end = start + timedelta(days=6)
-        total = int(round(sum(float(v) for v in p["ys"].values())))
+        total = int(round(sum(finite_in_range(v, 0, None, f"openrouter token count {start.isoformat()}") for v in p["ys"].values())))
         rows.append(["All tokens per week", start.isoformat(), end.isoformat(), "weekly", total, PAGE,
                      json.dumps({"models": len(p["ys"]) - (1 if "Others" in p["ys"] else 0), "others": int(round(float(p["ys"].get("Others", 0))))})])
         if start >= window_start and end < rd:
