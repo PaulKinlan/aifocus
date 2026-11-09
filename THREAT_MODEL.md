@@ -149,13 +149,19 @@ can be checked rather than re-argued.
    inline script (aifocus-9xgd). The browser-agent actor of §3 can call them,
    and the impact is bounded but larger than a lost high score: `start()`
    (`:78`) queues a fresh `requestAnimationFrame` chain without cancelling the
-   previous one, so N `game_restart` calls leave N chains re-queueing forever
-   (measured: 1 call = 1 callback per frame, 3 calls = 3 callbacks per frame,
-   stable over ticks). The chains share one `last` timestamp, so the extra ones
+   previous one, so N `game_restart` calls leave N chains re-queueing for as
+   long as the game runs (measured: 1 call = 1 callback per frame, 3 calls = 3
+   callbacks per frame, stable over ticks). The chains share one `last`
+   timestamp, so the extra ones
    step the simulation by zero and only repeat the draw - measured with 1 vs 3
    chains, the score after 60 frames (11) and the frame the game ends (164) are
    identical - which makes the cost redundant per-frame rendering on the
-   visitor's device (CPU, battery), not faster scoring or a changed outcome.
+   visitor's device (CPU, battery) while the run lasts, not faster scoring or a
+   changed outcome. The stacking ends with the run, it is not permanent:
+   `over()` sets `running = false`, so any callback still queued returns at the
+   `if(!running) return` guard (`:117`) without re-queueing (measured: 3 chains
+   leave 1 callback on the frame after the game-over write and 0 on every frame
+   after that), and a later `game_restart` starts exactly one chain.
    Re-opens if a game tool gains any network, storage or credential reach, if a
    tool starts taking a string from the caller, or if registration moves out of
    the inline script - which also re-opens the layouts inline-script question
@@ -264,8 +270,10 @@ Re-read this file when a change:
   inside a tool body, or a tool that starts writing a caller-supplied string
   into the page - because a tool's reach is not fixed by its registration: the
   WebMCP surface is an actor with no site credential
-  (§3) whose entire reach is the two-part guard in §4 and the zero-reach game
-  controls in §5, so a new tool, a wider target or a wider tool body re-opens
+  (§3) whose entire reach is the two-part guard in §4 and the game controls in
+  §5 - whose only reach is the in-memory state and the overlay DOM the loop
+  writes, with no network, storage or credential path - so a new tool, a wider
+  target or a wider tool body re-opens
   the question of what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
