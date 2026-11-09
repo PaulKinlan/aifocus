@@ -54,11 +54,13 @@
   box-shadow: inset 0 -2px 0 var(--link);
 }
 
+/* aifocus-47ax: the close button's boundary is what identifies it, so it takes
+   --control-line (3:1 on both schemes) rather than the decorative --line. */
 .palette-close {
   flex: none;
   min-height: 32px;
   padding: .125rem .5rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--muted);
