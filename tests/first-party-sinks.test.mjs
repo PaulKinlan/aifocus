@@ -12,6 +12,17 @@
 // Raw source, comments included - same fail-safe rule as the demo guard: a
 // comment naming a sink token turns the gate red. Keep the token list in sync
 // with tests/where-prompts-demo-sinks.test.mjs.
+//
+// Matching runs on the canonicalized line, not the raw bytes: JS decodes
+// \uXXXX and \u{...} escapes inside identifiers and string literals, so
+// el.inner\u0048TML = ... binds and executes as a real innerHTML assignment
+// while the raw line never spells the token (aifocus-552f, demonstrated on
+// f64d40f). Canonicalizing before the token and pattern match makes the
+// ban see the identifier the engine actually binds. As with comments, an
+// escaped mention that is not an executable assignment also turns the gate
+// red - that is the fail-safe posture, and ALLOWLIST pins are the escape
+// hatch. \xXX escapes are deliberately not canonicalized: they are illegal
+// in identifiers, so they cannot produce an executable sink assignment.
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -32,6 +43,34 @@ const SINK_TOKENS = [
 // Sinks assembled by splitting the token across string concatenation evade a
 // literal ban: catch the bracket-access concat form (el["inner" + "HTML"]).
 const SINK_PATTERNS = [/\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/];
+
+// Decode \uXXXX and \u{...} escapes so an escaped spelling of a token is
+// matched as the token. Malformed or out-of-range sequences stay as-is; the
+// source tree currently contains no unicode escapes at all, so this can
+// only ever widen the ban, never flag clean code.
+function canonicalize(line) {
+  return line.replace(/\\u\{([0-9a-fA-F]+)\}|\\u([0-9a-fA-F]{4})/g, (match, braced, hex4) => {
+    const code = parseInt(braced ?? hex4, 16);
+    return code > 0x10ffff ? match : String.fromCodePoint(code);
+  });
+}
+
+function sinkViolations(file, source) {
+  const failures = [];
+  source.split("\n").forEach((raw, i) => {
+    const line = canonicalize(raw);
+    for (const token of SINK_TOKENS) {
+      if (!line.includes(token)) continue;
+      const allow = ALLOWLIST[file]?.[token];
+      if (allow && allow.test(raw)) continue;
+      failures.push(`${file}:${i + 1}: ${token}: ${raw.trim()}`);
+    }
+    for (const pattern of SINK_PATTERNS) {
+      if (pattern.test(line)) failures.push(`${file}:${i + 1}: split-token sink: ${raw.trim()}`);
+    }
+  });
+  return failures;
+}
 
 // The one sanctioned sink-shaped statement on the origin: stats-page.js
 // clears its tooltip with a zero-interpolation constant. The allowlist pins
@@ -62,20 +101,8 @@ test("first-party script inventory is non-trivial (an empty scan must not pass g
 test("no first-party script contains a markup-sink token outside the pinned allowlist", () => {
   const failures = [];
   for (const file of FILES) {
-    const lines = fs.readFileSync(path.join(repoRoot, file), "utf8").split("\n");
-    for (const token of SINK_TOKENS) {
-      lines.forEach((line, i) => {
-        if (!line.includes(token)) return;
-        const allow = ALLOWLIST[file]?.[token];
-        if (allow && allow.test(line)) return;
-        failures.push(`${file}:${i + 1}: ${token}: ${line.trim()}`);
-      });
-    }
-    for (const pattern of SINK_PATTERNS) {
-      lines.forEach((line, i) => {
-        if (pattern.test(line)) failures.push(`${file}:${i + 1}: split-token sink: ${line.trim()}`);
-      });
-    }
+    const source = fs.readFileSync(path.join(repoRoot, file), "utf8");
+    for (const failure of sinkViolations(file, source)) failures.push(failure);
   }
   assert.deepEqual(
     failures,
@@ -84,6 +111,42 @@ test("no first-party script contains a markup-sink token outside the pinned allo
       "or DOM-build it; if a clearing assignment is genuinely needed, pin its exact line in ALLOWLIST):\n" +
       failures.join("\n"),
   );
+});
+
+// Negative controls for the non-literal spellings a raw-substring ban cannot
+// see (aifocus-552f): every caught sample parses to a live sink assignment
+// at runtime - verified for the first one with new Function("el", ...).
+test("the sink guard catches executable sink assignments written with unicode-escaped identifiers", () => {
+  const caught = [
+    [String.raw`el.inner\u0048TML = "<img src=x onerror=alert(1)>";`, "innerHTML"],
+    [String.raw`el.\u{69}nnerHTML = markup;`, "innerHTML"],
+    [String.raw`box.insertAdjacent\u0048TML("beforeend", data);`, "insertAdjacentHTML"],
+    [String.raw`el["inner" + "HT\u004DL"] = markup;`, "split-token sink"],
+  ];
+  for (const [sample, label] of caught) {
+    const violations = sinkViolations("sample.js", sample);
+    assert.equal(violations.length, 1, `the guard must catch: ${sample}`);
+    assert.ok(violations[0].includes(label), `${sample} must be reported as ${label}: ${violations[0]}`);
+  }
+});
+
+test("canonicalization neither flags clean lines nor unmasks the raw ban", () => {
+  // Benign lines - including the double-backslash spelling whose escape is
+  // NOT decoded by the engine, and a decoy escape that unescapes elsewhere -
+  // must stay green.
+  const clean = [
+    String.raw`const guide = "cost \\u0048TML is high";`,
+    String.raw`el.textContent = user.\u006Eame;`,
+    String.raw`tip.innerHTML = "";`,
+  ];
+  for (const sample of clean) {
+    assert.deepEqual(sinkViolations("assets/js/stats-page.js", sample), [], `must not flag: ${sample}`);
+  }
+  // The raw literal token is still caught exactly as before canonicalization.
+  assert.equal(sinkViolations("sample.js", "el.innerHTML = markup;").length, 1);
+  // The pinned clearing line still passes through the same helper that the
+  // origin-wide scan uses, so allowlist drift cannot hide behind the refactor.
+  assert.deepEqual(sinkViolations("assets/js/stats-page.js", '  tip.innerHTML = "";'), []);
 });
 
 test("the stats-page.js allowlist entry still matches a live line (a stale allowlist is a finding, not silence)", () => {
