@@ -45,6 +45,7 @@ file in the same branch.
 | Anonymous internet | none | every static page, `GET /api/search`, `POST /api/ask`, `GET /api/reader/state`, `POST /api/reader/reactions`, `POST /api/reader/annotations` (highlights only), `GET /api/auth/start/<provider>`, `/api/auth/callback/<provider>`, `/og/*.png` |
 | Reader | `aifocus_reader` cookie (client-held 32-hex id) | the above, plus deleting its own highlights and reactions; it sees its own pending notes |
 | Signed-in reader | session token; only its SHA-256 is stored | notes and comments, `/api/account`, `/api/auth/logout` |
+| Browser agent (MCP client) | none of its own - it runs inside a visitor's browser and calls the tools `assets/js/webmcp.js` registers on `document.modelContext`/`navigator.modelContext` | `list_articles`, `search_articles`, `read_article` and `contact_paul` (§4). It reaches no `/admin/*` or D1 path. The only server endpoint a tool calls is the public `GET /api/search` (`search_articles`, the same endpoint any anonymous visitor can reach), and the only fetch is `read_article`'s, which is same-origin published essays fetched with `credentials: "omit"` |
 | Moderator | Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`) | everything under `/api/admin/*` |
 | Identity provider | none (we call out to it) | its error text reaches our logs; its redirects reach our redirect targets |
 | Holder of a D1 copy | none | every stored row, including salted IP hashes and any key we ever put in the database |
@@ -69,6 +70,7 @@ anyone who can read a backup, a replica or a debug session".
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
+| WebMCP agent tools | `read_article` treats its `url` argument as untrusted agent input: it must parse same-origin **and** resolve to an essay in the built `/index.json` (`findArticle()`) before anything is fetched - a matching origin alone is not enough, because a same-origin fetch from this page would carry the reader session and the moderator's Access cookie. The fetch itself sends `credentials: "omit"` so it rides no credential even if a path ever got past that check. Invariant: **`read_article` may fetch only paths the built `/index.json` lists**. `list_articles` reads that same `/index.json`; the only server endpoint any tool calls is the public metered `GET /api/search` (via `search_articles`); no tool touches `/admin/*` or D1. `contact_paul` navigates its `mailto:` draft only after `agent.requestUserInteraction()` + `window.confirm()`, so no mail is composed without a human click. The file is also inside the origin-wide markup-sink ban (aifocus-mcqz) | `assets/js/webmcp.js`, `tests/first-party-sinks.test.mjs` |
 
 The edge applies `static/_headers` to static responses only, never to
 Function-generated ones - documented Pages behaviour, verified against
@@ -226,5 +228,10 @@ Re-read this file when a change:
   `static/_headers`: the demo's provider-key persistence is classified as
   accepted risk (section 7) only while the origin's script trust holds, and the
   disclosure is part of that classification;
+- adds a `registerTool` call to `assets/js/webmcp.js`, widens `read_article`'s
+  target set beyond the `/index.json` essay list, or changes that fetch's
+  `credentials` mode - the WebMCP surface is an actor with no site credential
+  (§3) whose entire reach is the two-part guard in §4, so a new tool or a
+  wider target re-opens the question of what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
