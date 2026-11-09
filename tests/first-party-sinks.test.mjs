@@ -242,27 +242,36 @@ const FILES = [...collectJs(path.join(repoRoot, "assets/js")), ...collectJs(path
 // and the same fail-safe rule - the WebMCP game tools and the 404 game-over
 // message live in inline script (aifocus-9xgd). Script tags with a src are
 // external files, already covered by the JS collectors above.
+function inlineScriptsInHtml(html, rel) {
+  const out = [];
+  const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let m;
+  let n = 0;
+  while ((m = re.exec(html))) {
+    // Only a genuine src attribute makes the body external. A naive
+    // \bsrc\s*= matches data-src (the word boundary sits after the
+    // hyphen), and a data-src script's body still executes inline -
+    // skipping it would hide real sinks (aifocus-hjlq).
+    if (/(?<![-\w])src\s*=/i.test(m[1]) || !m[2].trim()) continue;
+    n += 1;
+    const bodyStart = html.slice(0, m.index + m[0].indexOf(m[2]));
+    out.push({
+      file: rel,
+      label: `${rel} (inline script ${n}, starts at line ${bodyStart.split("\n").length})`,
+      source: m[2],
+    });
+  }
+  return out;
+}
+
 function collectInlineScripts(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) collectInlineScripts(full, out);
     else if (entry.name.endsWith(".html")) {
-      const html = fs.readFileSync(full, "utf8");
       const rel = path.relative(repoRoot, full);
-      const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
-      let m;
-      let n = 0;
-      while ((m = re.exec(html))) {
-        if (/\bsrc\s*=/i.test(m[1]) || !m[2].trim()) continue;
-        n += 1;
-        const bodyStart = html.slice(0, m.index + m[0].indexOf(m[2]));
-        out.push({
-          file: rel,
-          label: `${rel} (inline script ${n}, starts at line ${bodyStart.split("\n").length})`,
-          source: m[2],
-        });
-      }
+      out.push(...inlineScriptsInHtml(fs.readFileSync(full, "utf8"), rel));
     }
   }
   return out;
@@ -286,6 +295,20 @@ test("the layouts inline-script scan sees the templates it exists for (an empty 
     INLINE_SCRIPTS.some((s) => s.file.endsWith("404.html")),
     "the 404 page's inline script must be among the scanned bodies",
   );
+  // A data-src attribute is not a src: the body executes inline, so it must
+  // be scanned, not skipped (aifocus-hjlq).
+  const probe = inlineScriptsInHtml(
+    '<div><script data-src="loader">document.body.innerHTML = location.hash;</script><script>seen();</script></div>',
+    "probe.html",
+  );
+  assert.equal(probe.length, 2, `both bodies must be collected, got ${JSON.stringify(probe.map((p) => p.source))}`);
+  assert.ok(
+    probe.some((s) => s.source.includes("innerHTML")),
+    "the data-src script body must be among the collected bodies",
+  );
+  const external = inlineScriptsInHtml('<script src="/js/x.js">ignored</script><script>seen();</script>', "probe.html");
+  assert.equal(external.length, 1, "a genuine src script must still be skipped");
+  assert.ok(external[0].source.includes("seen()"));
 });
 
 test("no first-party script contains a markup-sink token outside the pinned allowlist", () => {
