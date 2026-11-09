@@ -284,6 +284,12 @@ test("the sink guard catches executable sink assignments written with non-litera
     ['el["inner" + "HTM" + "L"] = markup;', "split-token sink", 1],
     ['el["inner" + "HT" + "M" + "L"] = markup;', "split-token sink", 1],
     ['el["inn"/*a*/+/*b*/"er"// tail\n+"HTML"] = markup;', "split-token sink", 1],
+    // aifocus-47qn: a comment containing a bracket is still a comment. A guard
+    // that regexes the bracket contents stops at the ] inside /* ] */ and goes
+    // green on an expression that binds innerHTML.
+    ['el["inner" + /* ] */ "HTML"] = markup;', "split-token sink", 1],
+    ['el["inner" + /*] */"HTML"] = markup;', "split-token sink", 1],
+    ['el["inn"/* ] */+"erHTML"] = markup;', "split-token sink", 1],
   ];
   for (const [sample, label, line] of caught) {
     const violations = sinkViolations("sample.js", sample);
@@ -316,6 +322,9 @@ test("the caught escaped spellings really bind the sink at runtime", () => {
   const three = {};
   new Function("el", 'el["inner" + "HTM" + "L"] = "PAYLOAD";')(three);
   assert.deepEqual(Object.keys(three), ["innerHTML"]);
+  const bracketed = {};
+  new Function("el", 'el["inner" + /* ] */ "HTML"] = "PAYLOAD";')(bracketed);
+  assert.deepEqual(Object.keys(bracketed), ["innerHTML"]);
 });
 
 test("the concat-key pass flags only joins that spell a sink token", () => {
@@ -329,6 +338,8 @@ test("the concat-key pass flags only joins that spell a sink token", () => {
     // joined word anywhere, comments included, so this is the clean neighbour
     'const note = "inner and HTML are separate words";',
     'el["inner" - "HTML"] = 1;',
+    // a bracket inside a comment does not make an innocent join a sink
+    'arr["a" + /* ] */ "b"] = 1;',
   ];
   for (const sample of clean) {
     assert.deepEqual(sinkViolations("sample.js", sample), [], `must stay green: ${JSON.stringify(sample)}`);
