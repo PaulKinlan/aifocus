@@ -242,17 +242,35 @@ const FILES = [...collectJs(path.join(repoRoot, "assets/js")), ...collectJs(path
 // and the same fail-safe rule - the WebMCP game tools and the 404 game-over
 // message live in inline script (aifocus-9xgd). Script tags with a src are
 // external files, already covered by the JS collectors above.
+// A script tag's body belongs to an external file only when the tag carries a
+// real src attribute. Quoted attribute values are consumed whole by this
+// tokeniser, so `data-note=" src=x "` cannot masquerade as one (aifocus-6hwt),
+// and `data-src="loader"` names an attribute that is not src (aifocus-hjlq).
+function hasSrcAttribute(attributes) {
+  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/g;
+  let match;
+  while ((match = attr.exec(attributes))) {
+    if (match[1].toLowerCase() === "src") return true;
+  }
+  return false;
+}
+
 function inlineScriptsInHtml(html, rel) {
   const out = [];
   const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
   let m;
   let n = 0;
   while ((m = re.exec(html))) {
-    // Only a genuine src attribute makes the body external. A naive
-    // \bsrc\s*= matches data-src (the word boundary sits after the
-    // hyphen), and a data-src script's body still executes inline -
-    // skipping it would hide real sinks (aifocus-hjlq).
-    if (/(?<![-\w])src\s*=/i.test(m[1]) || !m[2].trim()) continue;
+    // Only a genuine src attribute makes the body external. Two ways that
+    // differs from "the text src= appears in the tag", both of which hid real
+    // sinks in review:
+    //   - data-src keeps its body inline, and the naive \bsrc\s*= matched it
+    //     because the word boundary sits after the hyphen (aifocus-hjlq);
+    //   - a quoted VALUE can contain the text src= without being an attribute
+    //     at all, e.g. data-note=" src=not-a-real-source " (aifocus-6hwt).
+    // So tokenise the attribute list and compare attribute NAMES, consuming
+    // quoted values whole so a match can never start inside one.
+    if (hasSrcAttribute(m[1]) || !m[2].trim()) continue;
     n += 1;
     const bodyStart = html.slice(0, m.index + m[0].indexOf(m[2]));
     out.push({
@@ -309,6 +327,34 @@ test("the layouts inline-script scan sees the templates it exists for (an empty 
   const external = inlineScriptsInHtml('<script src="/js/x.js">ignored</script><script>seen();</script>', "probe.html");
   assert.equal(external.length, 1, "a genuine src script must still be skipped");
   assert.ok(external[0].source.includes("seen()"));
+});
+
+// The exclusion is about attributes, not about the text of the tag: a quoted
+// value can contain "src=" without being a src attribute, and skipping that
+// body hid an executable sink in review (aifocus-6hwt). Each case is one line
+// of HTML and the number of bodies that must be collected from it.
+test("an inline script is skipped only for a real src attribute, never for text that looks like one", () => {
+  const cases = [
+    ['<script src="/js/x.js">a()</script>', 0, "a genuine src is external"],
+    ['<script type="module" src="/js/x.js">a()</script>', 0, "src after another attribute"],
+    ['<script SRC="/js/x.js">a()</script>', 0, "attribute names are case-insensitive"],
+    ["<script src='/js/x.js'>a()</script>", 0, "single-quoted src"],
+    ['<script src="/js/x.js" defer>a()</script>', 0, "a boolean attribute after src"],
+    ['<script data-src="loader">document.body.innerHTML = x;</script>', 1, "data-src keeps its body inline (aifocus-hjlq)"],
+    ['<script data-note=" src=not-a-real-source ">document.body.innerHTML = x;</script>', 1, "a quoted value containing src= is not an attribute (aifocus-6hwt)"],
+    ["<script data-note=' src=x '>document.body.innerHTML = x;</script>", 1, "the same in single quotes"],
+    ['<script data-src=" src=x ">a()</script>', 1, "a value naming both data-src and src="],
+    ['<script data-src="loader">   </script>', 0, "an empty body is not scanned"],
+    ['<script type="module">import x from "./x.js";</script>', 1, "an inline module still executes inline"],
+  ];
+  for (const [html, expected, why] of cases) {
+    const got = inlineScriptsInHtml(html, "probe.html");
+    assert.equal(
+      got.length,
+      expected,
+      `${why}: expected ${expected} collected body/bodies, got ${JSON.stringify(got.map((g) => g.source))}`,
+    );
+  }
 });
 
 test("no first-party script contains a markup-sink token outside the pinned allowlist", () => {
