@@ -23,6 +23,12 @@ file in the same branch.
   `GITHUB_CLIENT_ID` and the `GITHUB_CLIENT_SECRET` Pages secret.
 - Schema: `migrations/0001`-`0010`. Anything that stores reader data, an IP
   hash or a rate-limit ledger lives there.
+- `tools/stats/` and the CSVs it writes into `static/data/` are developer-run
+  build-tooling input to `/stats/`, not runtime surface: collectors cap
+  third-party responses at 1 MiB and fail loudly on values outside plausible
+  ranges (`tools/stats/collector_common.py`, aifocus-waix), and the gate
+  checks the published document against the CSVs (`tools/stats/build.py
+  --check`).
 - Out of scope: the agent fleet and the software factory (`~/agents`,
   `~/fleet`), the journal, and anything that only exists on a build machine.
 

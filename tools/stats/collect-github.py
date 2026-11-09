@@ -31,6 +31,8 @@ import urllib.parse
 import urllib.request
 from datetime import date, datetime, timedelta
 
+from collector_common import MAX_RESPONSE_BYTES, CollectorDataError, non_negative_int
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
 DATA_DIR = os.path.join(ROOT, "static", "data")
@@ -111,15 +113,25 @@ class Searcher:
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     remaining = resp.headers.get("X-RateLimit-Remaining")
                     reset = resp.headers.get("X-RateLimit-Reset")
-                    data = json.loads(resp.read().decode("utf-8"))
+                    # A search response is a few hundred bytes (per_page=1); a
+                    # body over the cap is not a bigger answer, refuse it.
+                    raw = resp.read(MAX_RESPONSE_BYTES + 1)
+                    if len(raw) > MAX_RESPONSE_BYTES:
+                        raise CollectorDataError("github search response exceeds the 1 MiB cap")
+                    data = json.loads(raw.decode("utf-8"))
                     if remaining is not None and int(remaining) <= 2 and reset:
                         wait = int(reset) - int(time.time()) + 2
                         if wait > 0:
                             log(f"  [rate limit] sleeping {wait}s")
                             time.sleep(wait)
-                    return int(data.get("total_count", 0))
+                    return non_negative_int(data.get("total_count", 0), "github total_count")
             except urllib.error.HTTPError as err:
-                body = err.read().decode("utf-8", errors="replace")
+                # an error response is still a third-party response: cap it like
+                # the success path (aifocus-dv21)
+                raw_err = err.read(MAX_RESPONSE_BYTES + 1)
+                if len(raw_err) > MAX_RESPONSE_BYTES:
+                    raise CollectorDataError("github error response exceeds the 1 MiB cap")
+                body = raw_err.decode("utf-8", errors="replace")
                 retry_after = err.headers.get("Retry-After")
                 if err.code == 403 and "secondary rate limit" in body.lower():
                     # Measured 2026-11-01: commit search allows ~3-4 requests per
@@ -139,6 +151,11 @@ class Searcher:
                     continue
                 log(f"  [{err.code}] {body[:200]}")
                 return None
+            except CollectorDataError:
+                # a data error is not retryable: re-raise instead of falling
+                # into the generic network retry below, or the fail-loud
+                # contract becomes 12 retries and a swallowed error (aifocus-fi9t)
+                raise
             except Exception as exc:  # noqa: BLE001
                 log(f"  [network] {exc}; retrying in 10s")
                 time.sleep(10)
