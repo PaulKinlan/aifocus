@@ -118,7 +118,12 @@ class Searcher:
                     raw = resp.read(MAX_RESPONSE_BYTES + 1)
                     if len(raw) > MAX_RESPONSE_BYTES:
                         raise CollectorDataError("github search response exceeds the 1 MiB cap")
-                    data = json.loads(raw.decode("utf-8"))
+                    try:
+                        data = json.loads(raw.decode("utf-8"))
+                    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                        raise CollectorDataError("github search response is not valid JSON") from exc
+                    if not isinstance(data, dict):
+                        raise CollectorDataError("github search response is not an object")
                     if remaining is not None and int(remaining) <= 2 and reset:
                         wait = int(reset) - int(time.time()) + 2
                         if wait > 0:
