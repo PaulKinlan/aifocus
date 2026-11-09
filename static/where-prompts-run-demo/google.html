@@ -63,9 +63,14 @@
       border-radius: 50%;
       background: var(--ok);
       box-shadow: 0 0 6px rgba(63, 185, 80, 0.8);
-      animation: pulse 2s infinite;
     }
-    @keyframes pulse { 50% { opacity: 0.35; } }
+    /* aifocus-2ato: the only motion on the page, and the only thing that could
+       not be turned off. Under reduce the dot stays a static circle - it still
+       reads as "live" from its colour and the SANDBOX DEMO text beside it. */
+    @media (prefers-reduced-motion: no-preference) {
+      .dot { animation: pulse 2s infinite; }
+      @keyframes pulse { 50% { opacity: 0.35; } }
+    }
 
     .top-bar {
       padding: 12px 16px;

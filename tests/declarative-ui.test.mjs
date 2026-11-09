@@ -89,3 +89,46 @@ test("the palette close button is named for what it does, not for a key", () => 
     "the key cap never replaces the word on a keyboard device",
   );
 });
+
+// aifocus-2ato: the where-prompts demo's status dot pulsed forever, whatever
+// the OS motion preference said - the page's only animation and the only thing
+// that could not be turned off (the site's own palette motion is already gated
+// on no-preference, so this was an inconsistency with the standard the rest of
+// the site keeps). Removing every no-preference block and finding no animation
+// left is the check: motion may only exist inside one.
+function withoutBlocks(source, marker) {
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const start = source.indexOf(marker, i);
+    if (start < 0) return out + source.slice(i);
+    out += source.slice(i, start);
+    let depth = 0;
+    let j = source.indexOf("{", start);
+    for (; j < source.length; j += 1) {
+      if (source[j] === "{") depth += 1;
+      if (source[j] === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    i = j + 1;
+  }
+}
+
+test("the journal demo's only animation can be reduced", () => {
+  for (const file of ["index.html", "google.html", "openai.html"]) {
+    const markup = read(`static/where-prompts-run-demo/${file}`);
+    const style = /<style>([\s\S]*?)<\/style>/.exec(markup)[1];
+    assert.match(
+      style,
+      /@media \(prefers-reduced-motion: no-preference\)/,
+      `${file} has no no-preference block`,
+    );
+    assert.doesNotMatch(
+      withoutBlocks(style, "@media (prefers-reduced-motion: no-preference)"),
+      /animation\s*:|@keyframes/,
+      `${file} animates outside a no-preference block, so it runs under reduce`,
+    );
+  }
+});
