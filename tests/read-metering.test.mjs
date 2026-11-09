@@ -70,8 +70,30 @@ async function exhaustReadBudget(db) {
 test("GET /api/account: 429 once the shared read budget is spent, before any account work", async () => {
   const env = makeEnv();
   await exhaustReadBudget(env.READER_DB);
-  const res = await getAccount({ request: get("/api/account"), env });
+  // Status alone cannot pin the ordering for a cookie-less request: with no
+  // session cookie getSessionUser never reaches D1, so a mutant that moves
+  // the reservation below the session join (keeping the 401 after the meter)
+  // answers 429 identically (aifocus-b98i). Send a valid-shaped token and
+  // watch the statements instead - the mutant records the sessions join here
+  // and fails the last assert.
+  const request = new Request("https://aifoc.us/api/account", {
+    headers: { Cookie: UNKNOWN_SESSION },
+  });
+  const recorded = recordingD1(env.READER_DB);
+  env.READER_DB = recorded;
+  const res = await getAccount({ request, env });
   assert.equal(res.status, 429);
+  // The recorder is not deaf: the reservation itself must be among the
+  // statements, otherwise the assertion below would pass on an empty log.
+  assert.ok(
+    recorded.sqls.some((sql) => /read_events/i.test(sql)),
+    `the read reservation must appear in the executed statements: ${recorded.sqls.join(" | ")}`,
+  );
+  assert.deepEqual(
+    recorded.sqls.filter((sql) => /\bsessions\b|\bidentities\b/i.test(sql)),
+    [],
+    `session or identity D1 work ran despite the spent budget: ${recorded.sqls.join(" | ")}`,
+  );
 });
 
 test("GET /api/auth/me: 429 once the shared read budget is spent, before any session work", async () => {
