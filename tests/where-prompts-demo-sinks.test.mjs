@@ -28,6 +28,29 @@ const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["
 const REGEX_PRECEDERS = new Set(['(', '[', '{', ',', ';', ':', '=', '!', '&', '|', '?', '+', '-', '*', '%', '^', '~', '<', '>', '/']);
 const REGEX_KEYWORDS = new Set(['return', 'typeof', 'case', 'in', 'of', 'new', 'delete', 'void', 'do', 'else', 'instanceof', 'yield', 'await']);
 
+// Walks back over the whitespace and comments that may sit between a '.' and
+// the member name it qualifies: the engine accepts x./*c*/return and x.// c
+// <newline> return, so a whitespace-only lookbehind called both of them
+// keyword-then-regex and swallowed the interpolation (aifocus-8bji).
+function skipBackTrivia(src, index) {
+  let i = index;
+  for (;;) {
+    while (i >= 0 && /\s/.test(src[i])) i -= 1;
+    if (i >= 1 && src[i] === "/" && src[i - 1] === "*") {
+      const open = src.lastIndexOf("/*", i - 2);
+      if (open < 0) return i;
+      i = open - 1;
+      continue;
+    }
+    // Deliberately block comments only. A backwards search for '//' cannot
+    // tell a line comment from the '//' inside a string literal earlier on the
+    // same line (a URL, say), and guessing wrong there would break the
+    // member-name rule this function exists for - so the line-comment spelling
+    // is left to a real tokenizer rather than approximated here.
+    return i;
+  }
+}
+
 function startsRegex(src, index) {
   let j = index - 1;
   while (j >= 0 && /\s/.test(src[j])) j -= 1;
@@ -39,8 +62,7 @@ function startsRegex(src, index) {
     // keyword; after a '.' the word is a member name, never an operator, so
     // treating it as a regex start swallowed the rest of the interpolation and
     // left the split token unseen (aifocus-a63j).
-    let before = k;
-    while (before >= 0 && /\s/.test(src[before])) before -= 1;
+    const before = skipBackTrivia(src, k);
     if (before >= 0 && src[before] === ".") return false;
     return REGEX_KEYWORDS.has(src.slice(k + 1, j + 1));
   }
@@ -173,6 +195,12 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     'el[`inn${x.of / 2}erHTML`] = "<b>x</b>";',
     'el[`inn${obj?.return / 2}erHTML`] = "<b>x</b>";',
     'el[`inn${(x).return / 2}erHTML`] = "<b>x</b>";',
+    // ...and a comment between the dot and the member name does not change that
+    // (aifocus-8bji)
+    'el[`inn${x./* c */return / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${x./* c */in / 2}erHTML`] = "<b>x</b>";',
+    // a '//' inside a string earlier on the line must not disturb the check
+    'const u = "https://example.test"; el[`inn${x.return / 2}erHTML`] = "<b>x</b>";',
     // ...while a real keyword in front of a regex still works, including a
     // member call that contains one
     'el[`inn${(() => { return /}/.source })()}erHTML`] = x;',
