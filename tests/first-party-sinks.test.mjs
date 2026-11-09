@@ -55,7 +55,6 @@ const SINK_TOKENS = [
 // and the template-key form (el[inner${''}HTML]) once interpolations are
 // collapsed to the empty string - both evaluate to the same property name.
 const SINK_PATTERNS = [
-  /\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/g,
   // quotes are optional: a collapsed template key keeps its backticks
   /\[\s*["'`]?innerHTML["'`]?\s*\]/g,
 ];
@@ -107,6 +106,64 @@ function logicalLines(source) {
   return out;
 }
 
+const CONCAT_LITERAL = /^(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/;
+
+// Whitespace and comments are not operands: the engine treats `+ /*x*/ "HTML"`
+// exactly like `+ "HTML"`, so both have to be skipped between operands.
+function skipTrivia(text, i) {
+  for (;;) {
+    while (i < text.length && /\s/.test(text[i])) i += 1;
+    if (text.startsWith("/*", i)) {
+      const end = text.indexOf("*/", i + 2);
+      if (end < 0) return i;
+      i = end + 2;
+      continue;
+    }
+    if (text.startsWith("//", i)) {
+      const end = text.indexOf("\n", i + 2);
+      if (end < 0) return text.length;
+      i = end + 1;
+      continue;
+    }
+    return i;
+  }
+}
+
+// A bracket key assembled from literals: the engine joins the operands, so the
+// operands are read (skipping whitespace and comments) and their values
+// concatenated. Two operands with a comment between them, or three or more
+// operands, therefore land in the same ban as el["inner" + "HTML"], which a
+// fixed two-operand pattern could not see (aifocus-i1l5). Keys with a
+// non-literal operand are not decidable here and stay out; the single-literal
+// key is already covered by SINK_PATTERNS, so only '+' joins are reported and
+// nothing is flagged twice.
+function concatKeyMatches(text) {
+  const hits = [];
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] !== "[") continue;
+    let j = skipTrivia(text, i + 1);
+    const parts = [];
+    for (;;) {
+      const literal = CONCAT_LITERAL.exec(text.slice(j));
+      if (!literal) break;
+      parts.push(literal[0].slice(1, -1));
+      j = skipTrivia(text, j + literal[0].length);
+      if (text[j] === "+") {
+        j = skipTrivia(text, j + 1);
+        continue;
+      }
+      if (text[j] === "]" && parts.length >= 2) {
+        const value = parts.join("");
+        if (SINK_TOKENS.some((token) => value.includes(token))) {
+          hits.push({ index: i, text: text.slice(i, j + 1) });
+        }
+      }
+      break;
+    }
+  }
+  return hits;
+}
+
 function sinkViolations(file, source) {
   const failures = [];
   const prepared = logicalLines(source).map(({ text, number }) => ({
@@ -144,15 +201,17 @@ function sinkViolations(file, source) {
     for (const s of starts) if (s.offset <= index) n = s.number;
     return n;
   };
+  const report = (index, text) => {
+    const n = lineNumberOf(index);
+    // a line the token ban already flagged is already red; a second
+    // violation for the same line would only be noise
+    if (flagged.has(`${file}:${n}`)) return;
+    failures.push(`${file}:${n}: split-token sink: ${text.trim()}`);
+  };
   for (const pattern of SINK_PATTERNS) {
-    for (const match of joined.matchAll(pattern)) {
-      const n = lineNumberOf(match.index);
-      // a line the token ban already flagged is already red; a second
-      // violation for the same line would only be noise
-      if (flagged.has(`${file}:${n}`)) continue;
-      failures.push(`${file}:${n}: split-token sink: ${match[0].trim()}`);
-    }
+    for (const match of joined.matchAll(pattern)) report(match.index, match[0]);
   }
+  for (const hit of concatKeyMatches(joined)) report(hit.index, hit.text);
   return failures;
 }
 
@@ -218,6 +277,19 @@ test("the sink guard catches executable sink assignments written with non-litera
     // A key assembled through a template interpolation, which collapses to
     // the empty string: the runtime key is "innerHTML" (aifocus-0p2e).
     ['el[`inner${\'\'}HTML`] = markup;', "split-token sink", 1],
+    // Operands the fixed two-operand pattern could not see: a comment between
+    // them is not an operand, and three or more operands still join to the
+    // same key (aifocus-i1l5).
+    ['el["inner" + /*x*/ "HTML"] = markup;', "split-token sink", 1],
+    ['el["inner" + "HTM" + "L"] = markup;', "split-token sink", 1],
+    ['el["inner" + "HT" + "M" + "L"] = markup;', "split-token sink", 1],
+    ['el["inn"/*a*/+/*b*/"er"// tail\n+"HTML"] = markup;', "split-token sink", 1],
+    // aifocus-47qn: a comment containing a bracket is still a comment. A guard
+    // that regexes the bracket contents stops at the ] inside /* ] */ and goes
+    // green on an expression that binds innerHTML.
+    ['el["inner" + /* ] */ "HTML"] = markup;', "split-token sink", 1],
+    ['el["inner" + /*] */"HTML"] = markup;', "split-token sink", 1],
+    ['el["inn"/* ] */+"erHTML"] = markup;', "split-token sink", 1],
   ];
   for (const [sample, label, line] of caught) {
     const violations = sinkViolations("sample.js", sample);
@@ -244,6 +316,39 @@ test("the caught escaped spellings really bind the sink at runtime", () => {
   const templated = {};
   new Function("el", "el[\`inner${''}HTML\`] = \"PAYLOAD\";")(templated);
   assert.deepEqual(Object.keys(templated), ["innerHTML"]);
+  const commented = {};
+  new Function("el", 'el["inner" + /*x*/ "HTML"] = "PAYLOAD";')(commented);
+  assert.deepEqual(Object.keys(commented), ["innerHTML"]);
+  const three = {};
+  new Function("el", 'el["inner" + "HTM" + "L"] = "PAYLOAD";')(three);
+  assert.deepEqual(Object.keys(three), ["innerHTML"]);
+  const bracketed = {};
+  new Function("el", 'el["inner" + /* ] */ "HTML"] = "PAYLOAD";')(bracketed);
+  assert.deepEqual(Object.keys(bracketed), ["innerHTML"]);
+});
+
+test("the concat-key pass flags only joins that spell a sink token", () => {
+  // Clean: operands that join to something harmless, and keys with a
+  // non-literal operand (not decidable here, and not a spelling of the token).
+  const clean = [
+    'arr["a" + "b"] = 1;',
+    'el["inner" + suffix] = 1;',
+    'el[prefix + "HTML"] = 1;',
+    // the halves spelled apart is prose, not a key: the token ban flags the
+    // joined word anywhere, comments included, so this is the clean neighbour
+    'const note = "inner and HTML are separate words";',
+    'el["inner" - "HTML"] = 1;',
+    // a bracket inside a comment does not make an innocent join a sink
+    'arr["a" + /* ] */ "b"] = 1;',
+  ];
+  for (const sample of clean) {
+    assert.deepEqual(sinkViolations("sample.js", sample), [], `must stay green: ${JSON.stringify(sample)}`);
+  }
+  // Exactly one violation per shape, cited once: the token ban and the concat
+  // pass must not double-report the same line.
+  assert.equal(sinkViolations("sample.js", 'el["inner" + "HTM" + "L"] = markup;').length, 1);
+  // A literal key with no join still goes through the bracket pattern, not here.
+  assert.equal(sinkViolations("sample.js", 'el["innerHTML"] = x;').length, 1);
 });
 
 test("canonicalization neither flags clean lines nor unmasks the raw ban", () => {
