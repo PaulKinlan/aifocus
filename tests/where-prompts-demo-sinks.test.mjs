@@ -37,8 +37,14 @@ function skipBackTrivia(src, index) {
   for (;;) {
     while (i >= 0 && /\s/.test(src[i])) i -= 1;
     if (i >= 1 && src[i] === "/" && src[i - 1] === "*") {
-      const open = src.lastIndexOf("/*", i - 2);
-      if (open < 0) return i;
+      // Block comments do not nest: this closer belongs to the first opener
+      // after the previous closer, not to the nearest '/*' to the left - a
+      // comment body may itself contain '/*' (aifocus-7ske), and taking the
+      // nearest one left the real opener in front of the member name and lost
+      // the dot.
+      const previousClose = src.lastIndexOf("*/", i - 2);
+      const open = src.indexOf("/*", previousClose + 2);
+      if (open < 0 || open > i) return i;
       i = open - 1;
       continue;
     }
@@ -199,6 +205,11 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     // (aifocus-8bji)
     'el[`inn${x./* c */return / 2}erHTML`] = "<b>x</b>";',
     'el[`inn${x./* c */in / 2}erHTML`] = "<b>x</b>";',
+    // a comment body may contain the opener itself (aifocus-7ske)
+    'el[`inn${x./* /* */return / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${x./* */ */return / 2}erHTML`] = "<b>x</b>";',
+    // two comments in a row must both be skipped
+    'el[`inn${x./* a */ /* b */return / 2}erHTML`] = "<b>x</b>";',
     // a '//' inside a string earlier on the line must not disturb the check
     'const u = "https://example.test"; el[`inn${x.return / 2}erHTML`] = "<b>x</b>";',
     // ...while a real keyword in front of a regex still works, including a
