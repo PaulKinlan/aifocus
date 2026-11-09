@@ -61,7 +61,7 @@
 
   // world
   const GROUND = () => H*0.82;
-  let player, bugs, speed, score, best=0, running=false, dead=false, spawnIn, t, sky, last=0, inputHeld=false;
+  let player, bugs, speed, score, best=0, running=false, dead=false, spawnIn, t, sky, last=0, inputHeld=false, frameId=0;
   function reset(){
     player = { x: W*0.12, y: 0, w: 30, h: 34, vy: 0, onGround:true, blink:0, step:0 };
     player.y = GROUND()-player.h;
@@ -75,7 +75,8 @@
   }
 
   function start(){
-    reset(); running=true; overlay.style.display='none'; last=0; requestAnimationFrame(loop);
+    if(frameId) cancelAnimationFrame(frameId);
+    reset(); running=true; overlay.style.display='none'; last=0; frameId=requestAnimationFrame(loop);
   }
   function over(){
     dead=true; running=false;
@@ -119,6 +120,7 @@
   }
 
   function loop(now){
+    frameId=0;
     if(!running) return;
     if(!last) last = now;
     let dt = (now - last)/1000; last = now;
@@ -152,7 +154,7 @@
          player.y < b.y+b.h-4 && player.y+player.h-4 > b.y){ over(); break; }
     }
     draw();
-    requestAnimationFrame(loop);
+    if(running) frameId=requestAnimationFrame(loop);
   }
 
   function draw(){
