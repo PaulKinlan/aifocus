@@ -84,6 +84,25 @@ const URL_ATTR = "href|src|action|formaction|xlink:href|poster|cite|background|d
 // parser, so a scan that only reads quoted values is blind to
 // <a href=javascript:alert(1)> (aifocus-rlng review, round 2).
 const URL_ATTR_VALUE = new RegExp(`\\s(${URL_ATTR})\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "gi");
+// A refresh URL lives inside content rather than a URL attribute. Consume
+// complete attribute values so quoted lookalike names do not match.
+const ATTRIBUTE = /\s*([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+function metaRefreshUrl(attrs) {
+  const values = new Map();
+  for (const attr of attrs.matchAll(ATTRIBUTE)) {
+    const name = attr[1].toLowerCase();
+    // HTML keeps the first duplicate attribute; later values are discarded.
+    if (!values.has(name)) values.set(name, decodeCharRefs(attr[2] ?? attr[3] ?? attr[4] ?? ""));
+  }
+  if (values.get("http-equiv")?.trim().toLowerCase() !== "refresh") return null;
+  const content = values.get("content") ?? "";
+  // Both separators and the url= prefix are optional for a refresh target.
+  // Preserve newlines: isJavascriptUrl strips the URL parser's ASCII noise.
+  const target = /^\s*(?:(?:\d+(?:\.\d+)?)\s*[;,]\s*)?(?:url\s*=\s*)?([\s\S]*)$/i.exec(content)?.[1];
+  if (target == null) return null;
+  // The refresh parser accepts a URL wrapped in quotes within content.
+  return target.replace(/^(['"])([\s\S]*)\1\s*$/, "$2");
+}
 
 // Character references are decoded before the scheme is read: a parser turns
 // javascript&#58;alert(1) and javascript&colon;alert(1) into the same URL the
@@ -120,6 +139,10 @@ export function inlineExecSurfaces(html) {
     for (const value of attrs.matchAll(URL_ATTR_VALUE)) {
       const raw = value[2] ?? value[3] ?? value[4] ?? "";
       if (isJavascriptUrl(raw)) urls.push({ tag, attr: value[1].toLowerCase(), value: raw.slice(0, 80) });
+    }
+    if (tag === "meta") {
+      const raw = metaRefreshUrl(attrs);
+      if (raw != null && isJavascriptUrl(raw)) urls.push({ tag, attr: "content", value: raw.slice(0, 80) });
     }
   }
   return { handlers, urls };
@@ -219,12 +242,12 @@ export function auditProblems({ built, declared, others, inline = [] }) {
     );
   }
   if (javascriptUrls.length) {
-    const named = javascriptUrls.map((hit) => `${hit.file}: <${hit.tag}> href/value "${hit.value}"`).join("\n  ");
+    const named = javascriptUrls.map((hit) => `${hit.file}: <${hit.tag} ${hit.attr}="${hit.value}">`).join("\n  ");
     problems.push(
       `${javascriptUrls.length} javascript: URL(s) the CSP blocks: script-src without 'unsafe-inline' refuses them ` +
         "(aifocus-rlng)\n  " +
         named +
-        "\n  fix: use a real URL and a click handler bound from a module",
+        "\n  fix: use a real URL rather than a javascript: navigation target",
     );
   }
   return { missing, stale, unsafeInline, handlers, javascriptUrls, problems };

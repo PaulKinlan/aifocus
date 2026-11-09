@@ -198,6 +198,49 @@ test("every spelling of a javascript: URL is flagged, and only in URL attributes
   }
 });
 
+test("meta refresh javascript: targets fail the CSP audit with file and attribute", () => {
+  const dir = site({
+    "nested/page.html": page('<meta http-equiv="refresh" content="0;url=javascript:alert(1)">'),
+  });
+  const inline = collectInlineExecSurfaces(dir);
+  assert.deepEqual(inline, [{
+    file: "nested/page.html", tag: "meta", attr: "content", value: "javascript:alert(1)", kind: "javascript-url",
+  }]);
+  const built = collectHashes(dir);
+  const { problems, javascriptUrls } = auditProblems({ built, declared: built, others: ["'self'"], inline });
+  assert.equal(javascriptUrls.length, 1);
+  assert.match(problems[0], /nested\/page\.html: <meta content="javascript:alert\(1\)">/);
+});
+
+test("refresh parsing handles attribute order, case, spacing, quotes and encoded schemes", () => {
+  const flagged = [
+    '<meta content="0; URL=JAVASCRIPT:alert(1)" HTTP-EQUIV="REFRESH">',
+    "<meta http-equiv=refresh content='1; url=javascript&#58;alert(1)'>",
+    '<meta http-equiv="refresh" content="0; url=\'java&#9;script:alert(1)\'">',
+    '<meta http-equiv="refresh" content="url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0; javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0, javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;url=java\nscript:alert(1)">',
+    '<meta http-equiv="refr&#101;sh" content="0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;ur&#108;=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;url=javascript:alert(1)" content="0;url=/safe">',
+    '<meta http-equiv="refresh"content="0;url=javascript:alert(1)">',
+  ];
+  for (const html of flagged) {
+    assert.equal(inlineExecSurfaces(html).urls.length, 1, `must be flagged: ${html}`);
+  }
+  const clean = [
+    '<meta http-equiv="refresh" content="0;url=/safe?next=javascript:alert(1)">',
+    '<meta name="description" content="0;url=javascript:alert(1)">',
+    '<meta http-equiv="content-type" content="0;url=javascript:alert(1)">',
+    '<meta title="ignored http-equiv=refresh" content="0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" title="content=0;url=javascript:alert(1)" content="0;url=/safe">',
+  ];
+  for (const html of clean) {
+    assert.deepEqual(inlineExecSurfaces(html).urls, [], `must stay clean: ${html}`);
+  }
+});
+
 test("attribute names are matched with their values blanked, so a quoted mention is not a hit", () => {
   const { handlers, urls } = inlineExecSurfaces('<a href="/x" title="onclick=onload=" aria-label="javascript: no">x</a>');
   assert.deepEqual(handlers, []);
