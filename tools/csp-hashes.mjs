@@ -8,8 +8,10 @@
 // WHY (aifocus-5wrp): the CSP in static/_headers is one of the controls
 // THREAT_MODEL.md cites, and it allowed 'unsafe-inline' for scripts, so an
 // injected inline <script> executed freely and the control gave no injection
-// backstop at all. The built site has 11 distinct executable inline scripts
-// (gtag loader, the OG-card font measure, and nine page scripts), all static,
+// backstop at all. The built site has 12 distinct inline script bodies that a
+// browser enforces script-src on - 11 that execute (the gtag loader, the OG-card
+// font measure and nine page scripts) plus the inline speculation-rules block,
+// which does not run as script but is still gated by script-src - all static,
 // which is few enough to pin by hash. 'unsafe-inline' is gone from script-src;
 // style-src keeps it, because 71 style="" attributes cannot be hash-pinned
 // without 'unsafe-hashes' (that is said in THREAT_MODEL.md, not silently).
@@ -67,6 +69,45 @@ function scriptBodies(html) {
   return bodies;
 }
 
+// script-src without 'unsafe-inline' (and without 'unsafe-hashes') blocks more
+// than inline <script> bodies: every on*= event handler attribute and every
+// javascript: URL is refused too. The hash list cannot pin those, so they are
+// rejected by name instead of being hashed - a handler added without noticing
+// would fail silently in the browser while this tool reported the site clean
+// (aifocus-rlng). Scanning is limited to start tags, with attribute values
+// blanked before names are matched, so text that merely mentions onclick= is
+// not a hit.
+const START_TAG = /<([a-zA-Z][a-zA-Z0-9:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+
+export function inlineExecSurfaces(html) {
+  const handlers = [];
+  const urls = [];
+  for (const match of html.matchAll(START_TAG)) {
+    const tag = match[1].toLowerCase();
+    const attrs = match[2] ?? "";
+    const blanked = attrs.replace(/"[^"]*"|'[^']*'?/g, '""');
+    for (const handler of blanked.matchAll(/\s(on[a-z]+)\s*=/gi)) {
+      handlers.push({ tag, attr: handler[1].toLowerCase() });
+    }
+    for (const value of attrs.matchAll(/\s(href|src|action|formaction|xlink:href|poster|cite|background|data)\s*=\s*("[^"]*"|'[^']*')/gi)) {
+      const unquoted = value[2].slice(1, -1);
+      if (/^\s*javascript:/i.test(unquoted)) urls.push({ tag, attr: value[1].toLowerCase(), value: unquoted.slice(0, 80) });
+    }
+  }
+  return { handlers, urls };
+}
+
+export function collectInlineExecSurfaces(dir = PUBLIC) {
+  const files = globSync("**/*.html", { cwd: dir }).sort();
+  const found = [];
+  for (const file of files) {
+    const { handlers, urls } = inlineExecSurfaces(readFileSync(path.join(dir, file), "utf8"));
+    for (const hit of handlers) found.push({ file, ...hit, kind: "handler" });
+    for (const hit of urls) found.push({ file, ...hit, kind: "javascript-url" });
+  }
+  return found;
+}
+
 export function collectHashes(dir = PUBLIC) {
   const files = globSync("**/*.html", { cwd: dir }).sort();
   const hashes = new Set();
@@ -115,10 +156,12 @@ export function renderPolicy(policy, hashes) {
 
 // The comparison itself, separated from the filesystem so a test can assert
 // what a new inline script (or a removed one) reports without editing the repo.
-export function auditProblems({ built, declared, others }) {
+export function auditProblems({ built, declared, others, inline = [] }) {
   const missing = built.filter((hash) => !declared.includes(hash));
   const stale = declared.filter((hash) => !built.includes(hash));
   const unsafeInline = others.includes("'unsafe-inline'");
+  const handlers = inline.filter((hit) => hit.kind === "handler");
+  const javascriptUrls = inline.filter((hit) => hit.kind === "javascript-url");
   const problems = [];
   if (missing.length) {
     problems.push(
@@ -138,7 +181,25 @@ export function auditProblems({ built, declared, others }) {
         "  fix: node tools/csp-hashes.mjs",
     );
   }
-  return { missing, stale, unsafeInline, problems };
+  if (handlers.length) {
+    const named = handlers.map((hit) => `${hit.file}: <${hit.tag} ${hit.attr}=>`).join("\n  ");
+    problems.push(
+      `${handlers.length} inline event handler attribute(s) the CSP blocks: a hashed script cannot cover them, ` +
+        "and the browser refuses them silently (aifocus-rlng)\n  " +
+        named +
+        "\n  fix: bind the handler from a module (addEventListener) or move it into its own script and regenerate",
+    );
+  }
+  if (javascriptUrls.length) {
+    const named = javascriptUrls.map((hit) => `${hit.file}: <${hit.tag}> href/value "${hit.value}"`).join("\n  ");
+    problems.push(
+      `${javascriptUrls.length} javascript: URL(s) the CSP blocks: script-src without 'unsafe-inline' refuses them ` +
+        "(aifocus-rlng)\n  " +
+        named +
+        "\n  fix: use a real URL and a click handler bound from a module",
+    );
+  }
+  return { missing, stale, unsafeInline, handlers, javascriptUrls, problems };
 }
 
 function readHeaders() {
@@ -160,10 +221,18 @@ function main(argv) {
   const { lines, index, indent, value } = cspLine(headers);
   const policy = parsePolicy(value);
   const hashes = collectHashes();
+  const inline = collectInlineExecSurfaces();
   const directive = policy.find((part) => part.startsWith("script-src "));
   const { hashes: declared, others } = scriptSrcParts(directive);
 
-  const { missing, stale, unsafeInline, problems } = auditProblems({ built: hashes, declared, others });
+  const { missing, stale, unsafeInline, handlers, javascriptUrls, problems } = auditProblems({
+    built: hashes,
+    declared,
+    others,
+    inline,
+  });
+  const handlersCount = handlers.length;
+  const urlCount = javascriptUrls.length;
 
   if (check) {
     if (problems.length) {
@@ -171,9 +240,20 @@ function main(argv) {
       process.exit(1);
     }
     console.log(
-      `csp: OK - script-src pins ${hashes.length} inline script(s) by sha256, no 'unsafe-inline', style-src unchanged`,
+      `csp: OK - script-src pins ${hashes.length} inline script(s) by sha256, no 'unsafe-inline', ` +
+        `no inline handler attributes or javascript: URLs in the build, style-src unchanged`,
     );
     return;
+  }
+
+  // A handler attribute or a javascript: URL cannot be fixed by writing hashes,
+  // so the write path refuses as loudly as --check does (aifocus-rlng).
+  if (handlersCount || urlCount) {
+    console.error(
+      `csp: FAIL - the built site contains inline execution surfaces this policy blocks and no hash can cover\n\n` +
+        problems.join("\n\n"),
+    );
+    process.exit(1);
   }
 
   if (!missing.length && !stale.length && !unsafeInline) {

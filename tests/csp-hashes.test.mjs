@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 import {
   auditProblems,
   collectHashes,
+  collectInlineExecSurfaces,
+  inlineExecSurfaces,
   parsePolicy,
   renderPolicy,
   scriptSrcParts,
@@ -118,4 +120,60 @@ test("the committed static/_headers is in step with the committed build", () => 
   const built = collectHashes(path.join(ROOT, "public"));
   assert.ok(built.length > 0, "public/ must be built before this test runs (the gate builds first)");
   assert.deepEqual(auditProblems({ built, declared, others }).problems, []);
+});
+
+// aifocus-rlng: script-src without 'unsafe-inline' (and without
+// 'unsafe-hashes') blocks more than inline <script> bodies - every on*= event
+// handler attribute and every javascript: URL is refused too, and no hash can
+// cover either. The gate reported the site clean while adding an onclick went
+// unnoticed, so the review reproduced it with exactly that shape.
+test("an inline event handler attribute the CSP blocks is a failure that names it", () => {
+  const dir = site({
+    "index.html": page('<button onclick="window.unsafe=1">Click</button>'),
+  });
+  const inline = collectInlineExecSurfaces(dir);
+  assert.deepEqual(inline, [{ file: "index.html", tag: "button", attr: "onclick", kind: "handler" }]);
+
+  const built = collectHashes(dir);
+  const { problems, handlers } = auditProblems({ built, declared: built, others: ["'self'"], inline });
+  assert.equal(handlers.length, 1);
+  assert.match(problems[0], /1 inline event handler attribute\(s\) the CSP blocks/);
+  assert.match(problems[0], /index\.html: <button onclick=>/);
+  assert.match(problems[0], /fix: bind the handler from a module \(addEventListener\)/);
+});
+
+test("a javascript: URL in a URL-bearing attribute is a failure, and only there", () => {
+  const dir = site({
+    "index.html": page(
+      '<a href="javascript:window.unsafe=1">go</a>',
+      // not a URL-bearing attribute, so not an execution surface this policy gates
+      '<span title="javascript: is blocked here">note</span>',
+      // inert by name: data-* is not an event handler attribute
+      '<span data-onclick="x">note</span>',
+      // text that merely mentions a handler is not an attribute
+      "<p>do not write onclick= in templates</p>",
+    ),
+  });
+  const inline = collectInlineExecSurfaces(dir);
+  assert.deepEqual(inline, [
+    { file: "index.html", tag: "a", attr: "href", value: "javascript:window.unsafe=1", kind: "javascript-url" },
+  ]);
+  const built = collectHashes(dir);
+  const { problems, javascriptUrls } = auditProblems({ built, declared: built, others: ["'self'"], inline });
+  assert.equal(javascriptUrls.length, 1);
+  assert.match(problems[0], /1 javascript: URL\(s\) the CSP blocks/);
+});
+
+test("attribute names are matched with their values blanked, so a quoted mention is not a hit", () => {
+  const { handlers, urls } = inlineExecSurfaces('<a href="/x" title="onclick=onload=" aria-label="javascript: no">x</a>');
+  assert.deepEqual(handlers, []);
+  assert.deepEqual(urls, []);
+  // and a real one is still found next to quoted lookalikes
+  const real = inlineExecSurfaces('<a title="onclick=x" href="/y" onmouseover="steal()">x</a>');
+  assert.deepEqual(real.handlers, [{ tag: "a", attr: "onmouseover" }]);
+});
+
+test("the committed build carries no inline execution surface the policy blocks", () => {
+  const inline = collectInlineExecSurfaces(path.join(ROOT, "public"));
+  assert.deepEqual(inline, [], "public/ must be built before this test runs (the gate builds first)");
 });

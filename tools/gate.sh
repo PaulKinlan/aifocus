@@ -15,7 +15,9 @@
 #   6. the CSP's script-src hash list matches the inline scripts the build produced
 #      (node tools/csp-hashes.mjs --check, aifocus-5wrp). script-src no longer allows
 #      'unsafe-inline', so an inline script without a hash is BLOCKED by the browser:
-#      this signal turns that silent breakage into a gate failure naming the fix.
+#      this signal turns that silent breakage into a gate failure naming the fix. The
+#      same pass rejects what no hash can cover - on*= handler attributes and
+#      javascript: URLs (aifocus-rlng) - by file, tag and attribute.
 #
 # The whole gate is a few seconds on this VM and there is no deeper tier to reach for:
 # the fast tier runs exactly this. That deviation from docs/speed.md R2 is deliberate,
