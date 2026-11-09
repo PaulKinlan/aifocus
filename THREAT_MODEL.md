@@ -67,6 +67,7 @@ anyone who can read a backup, a replica or a debug session".
 | IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
 | Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), a narrowed `/admin/*` CSP (`script-src 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
+| Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 
 The edge applies `static/_headers` to static responses only, never to
@@ -199,6 +200,6 @@ Re-read this file when a change:
   or the og render reservation, or moves that call relative to the work it
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
-  redirect or an `innerHTML`;
+  redirect, an `innerHTML` or an `href`;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.

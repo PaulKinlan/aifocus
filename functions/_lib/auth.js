@@ -91,8 +91,25 @@ export function publicUser(row) {
     id: row.id,
     displayName: row.display_name,
     avatarUrl: row.avatar_url || null,
-    profileUrl: row.profile_url || null,
+    profileUrl: safeProfileUrl(row.profile_url),
   };
+}
+
+// Only an absolute https URL may be stored as a profile URL, and only such a URL
+// may be returned to a page that renders it as a link (aifocus-d7jb). The client
+// half is assets/js/safe-href.js - the same rule at the sink - because the admin
+// API reads these columns directly; this half keeps a bad value out of D1 and
+// out of the reader-facing payloads in the first place.
+export function safeProfileUrl(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "https:" && url.hostname ? url.href : null;
+  } catch {
+    return null;
+  }
 }
 
 // Returns the signed-in user row, or null. Blocked and expired sessions count
@@ -136,6 +153,7 @@ export async function upsertIdentity(db, profile, now = Date.now()) {
     .bind(profile.provider, profile.providerId)
     .first();
   const display = profile.name || profile.handle;
+  const profileUrl = safeProfileUrl(profile.profileUrl);
   let userId = existing?.user_id;
   if (userId) {
     await db
@@ -143,7 +161,7 @@ export async function upsertIdentity(db, profile, now = Date.now()) {
         `UPDATE identities SET handle = ?, name = ?, avatar_url = ?, profile_url = ?, updated_at = ?
          WHERE provider = ? AND provider_id = ?`,
       )
-      .bind(profile.handle, profile.name || null, profile.avatarUrl || null, profile.profileUrl || null, now,
+      .bind(profile.handle, profile.name || null, profile.avatarUrl || null, profileUrl, now,
         profile.provider, profile.providerId)
       .run();
     // Keep the account's display fields in step with its identity while the
@@ -154,7 +172,7 @@ export async function upsertIdentity(db, profile, now = Date.now()) {
         `UPDATE users SET display_name = ?, avatar_url = ?, profile_url = ?, updated_at = ?
          WHERE id = ? AND (SELECT COUNT(*) FROM identities WHERE user_id = ?) = 1`,
       )
-      .bind(display, profile.avatarUrl || null, profile.profileUrl || null, now, userId, userId)
+      .bind(display, profile.avatarUrl || null, profileUrl, now, userId, userId)
       .run();
   } else {
     userId = randomToken(16);
@@ -164,14 +182,14 @@ export async function upsertIdentity(db, profile, now = Date.now()) {
           `INSERT INTO users (id, display_name, avatar_url, profile_url, trusted, status, created_at, updated_at)
            VALUES (?, ?, ?, ?, 0, 'active', ?, ?)`,
         )
-        .bind(userId, display, profile.avatarUrl || null, profile.profileUrl || null, now, now),
+        .bind(userId, display, profile.avatarUrl || null, profileUrl, now, now),
       db
         .prepare(
           `INSERT INTO identities (provider, provider_id, user_id, handle, name, avatar_url, profile_url, created_at, updated_at)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .bind(profile.provider, profile.providerId, userId, profile.handle, profile.name || null,
-          profile.avatarUrl || null, profile.profileUrl || null, now, now),
+          profile.avatarUrl || null, profileUrl, now, now),
     ]);
   }
   return db.prepare("SELECT * FROM users WHERE id = ?").bind(userId).first();
@@ -186,13 +204,14 @@ export async function linkIdentity(db, userId, profile, now = Date.now()) {
     .bind(profile.provider, profile.providerId)
     .first();
   if (existing && existing.user_id !== userId) return { conflict: true };
+  const profileUrl = safeProfileUrl(profile.profileUrl);
   if (existing) {
     await db
       .prepare(
         `UPDATE identities SET handle = ?, name = ?, avatar_url = ?, profile_url = ?, updated_at = ?
          WHERE provider = ? AND provider_id = ?`,
       )
-      .bind(profile.handle, profile.name || null, profile.avatarUrl || null, profile.profileUrl || null, now,
+      .bind(profile.handle, profile.name || null, profile.avatarUrl || null, profileUrl, now,
         profile.provider, profile.providerId)
       .run();
   } else {
@@ -202,7 +221,7 @@ export async function linkIdentity(db, userId, profile, now = Date.now()) {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(profile.provider, profile.providerId, userId, profile.handle, profile.name || null,
-        profile.avatarUrl || null, profile.profileUrl || null, now, now)
+        profile.avatarUrl || null, profileUrl, now, now)
       .run();
     // An account without an avatar takes the first one a linked identity has.
     await db
@@ -218,7 +237,7 @@ export async function listIdentities(db, userId) {
     .prepare("SELECT provider, handle, profile_url FROM identities WHERE user_id = ? ORDER BY created_at")
     .bind(userId)
     .all();
-  return results.map((r) => ({ provider: r.provider, handle: r.handle, profileUrl: r.profile_url || null }));
+  return results.map((r) => ({ provider: r.provider, handle: r.handle, profileUrl: safeProfileUrl(r.profile_url) }));
 }
 
 // `state` may be chosen by the caller when it must be sent to the provider

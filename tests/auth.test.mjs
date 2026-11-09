@@ -8,6 +8,9 @@ import {
   safeReturnTo,
   withParam,
   base64url,
+  upsertIdentity,
+  listIdentities,
+  publicUser,
 } from "../functions/_lib/auth.js";
 import { onRequestGet as start } from "../functions/api/auth/start/[provider].js";
 import { onRequestGet as callback } from "../functions/api/auth/callback/[provider].js";
@@ -667,4 +670,37 @@ test("client metadata describes the origin it is served from", async () => {
   assert.equal(body.token_endpoint_auth_method, "none");
   assert.equal(body.dpop_bound_access_tokens, true);
   assert.equal(body.scope, "atproto");
+});
+
+test("a profile URL that is not absolute https is neither stored nor returned (aifocus-d7jb)", async () => {
+  const env = makeEnv();
+  const bad = await upsertIdentity(env.READER_DB, {
+    provider: "github",
+    providerId: "d7jb-bad",
+    handle: "bad",
+    name: "BAD",
+    profileUrl: "javascript:alert(document.domain)",
+  });
+  assert.equal(bad.profile_url, null, "a javascript: profile URL must not reach users.profile_url");
+  assert.equal(publicUser(bad).profileUrl, null);
+  assert.equal(Number(env.READER_DB.raw.prepare(
+    "SELECT COUNT(*) AS n FROM identities WHERE provider_id = 'd7jb-bad' AND profile_url IS NOT NULL",
+  ).get().n), 0, "it must not reach identities.profile_url either");
+
+  const good = await upsertIdentity(env.READER_DB, {
+    provider: "github",
+    providerId: "d7jb-good",
+    handle: "good",
+    name: "GOOD",
+    profileUrl: "  https://github.com/paulkinlan  ",
+  });
+  assert.equal(good.profile_url, "https://github.com/paulkinlan", "a normal https URL is kept, trimmed");
+
+  // A legacy row written before the guard existed is sanitised on the way out.
+  await env.READER_DB.raw.prepare(
+    "UPDATE identities SET profile_url = 'data:text/html,<script>alert(1)</script>' WHERE provider_id = 'd7jb-good'",
+  ).run();
+  const legacy = await listIdentities(env.READER_DB, good.id);
+  assert.equal(legacy.length, 1);
+  assert.equal(legacy[0].profileUrl, null, "a stored non-https value must not reach a page");
 });

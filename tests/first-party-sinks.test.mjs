@@ -92,3 +92,49 @@ test("the stats-page.js allowlist entry still matches a live line (a stale allow
   const matches = lines.filter((l) => ALLOWLIST[file].innerHTML.test(l));
   assert.equal(matches.length, 1, `${file} must contain exactly one allowlisted clearing line`);
 });
+
+// Profile URLs arrive from provider APIs (GitHub's html_url, an X handle, a
+// Bluesky DID) and are rendered as links in reader.js, account-page.js and
+// admin-page.js. They may only become an href through safeHref() (aifocus-d7jb):
+// a javascript: or data: URI in an href executes when clicked, and the
+// moderation page's links carry the moderator's Cloudflare Access session.
+const PROFILE_URL = /profile_?url/i;
+const HREF_ASSIGNMENT = /\.href\s*=\s*/;
+const GUARDED = /safeHref\(/;
+
+function unguardedHrefAssignments(source) {
+  const failures = [];
+  source.split("\n").forEach((line, i) => {
+    if (!PROFILE_URL.test(line) || !HREF_ASSIGNMENT.test(line) || GUARDED.test(line)) return;
+    failures.push(`${i + 1}: ${line.trim()}`);
+  });
+  return failures;
+}
+
+test("a profile URL reaches .href only through safeHref()", () => {
+  const failures = [];
+  for (const file of FILES) {
+    const source = fs.readFileSync(path.join(repoRoot, file), "utf8");
+    for (const failure of unguardedHrefAssignments(source)) failures.push(`${file}:${failure}`);
+  }
+  assert.deepEqual(
+    failures,
+    [],
+    "a provider-supplied profile URL was assigned to an href without safeHref() - import it from " +
+      "./safe-href.js and render a span when it returns null:\n" + failures.join("\n"),
+  );
+});
+
+test("the profile-href guard catches the shapes it exists for", () => {
+  const caught = [
+    "wrap.href = person.profileUrl;",
+    "who.href = item.author_profile_url;",
+    "name.href = user.profile_url;",
+  ];
+  for (const sample of caught) {
+    assert.equal(unguardedHrefAssignments(sample).length, 1, `the guard must catch: ${sample}`);
+  }
+  // The guarded shape, and a line that merely reads the field, must pass.
+  assert.deepEqual(unguardedHrefAssignments("const href = safeHref(user.profile_url);"), []);
+  assert.deepEqual(unguardedHrefAssignments("name.textContent = user.profile_url;"), []);
+});
