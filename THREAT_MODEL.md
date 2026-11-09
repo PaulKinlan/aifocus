@@ -136,16 +136,31 @@ can be checked rather than re-argued.
 8. **The WebMCP game tools on the 404 page** (`layouts/404.html`).
    `game_state`, `game_jump` and `game_restart` are client-side controls for
    the canvas game: they read and mutate the game's in-memory state (score,
-   best, player position, bug list) and nothing else - no `fetch()`, no
-   `localStorage`, no cookies, no credential, no markup sink (verified by
-   reading the registrations; `best` is a page variable, not persisted). The
-   browser-agent actor of §3 can call them, and the worst outcome is a lost
-   high score. Re-opens if a game tool gains any network, storage or
-   credential reach, or if registration moves out of the inline script - which
-   also re-opens the layouts inline-script question (aifocus-9xgd: the
-   origin-wide sink ban does not scan `layouts/*.html` inline script today,
-   and `layouts/404.html:84` builds the game-over message with `innerHTML`
-   from numeric state).
+   best, player position, bug list) and the overlay DOM the loop owns -
+   `overlay.style.display` (`:78`, `:86`), `ovTitle.textContent` (`:83`),
+   `startBtn.textContent` (`:85`) and the `score` readout (`:138`) - and that is
+   all: no `fetch()`, no `localStorage`, no cookies, no credential, and no
+   string from the caller is written anywhere (`best` is a page variable, not
+   persisted; verified by reading the registrations and by running the inline
+   script against stubs, aifocus-hexx). The only markup write they can reach is
+   the game-over message at `layouts/404.html:84`, whose interpolations are the
+   loop's own numbers (`Math.floor(score)`, `best`), and that write is outside
+   the origin-wide sink ban because the ban does not scan `layouts/*.html`
+   inline script (aifocus-9xgd). The browser-agent actor of §3 can call them,
+   and the impact is bounded but larger than a lost high score: `start()`
+   (`:78`) queues a fresh `requestAnimationFrame` chain without cancelling the
+   previous one, so N `game_restart` calls leave N chains re-queueing forever
+   (measured: 1 call = 1 callback per frame, 3 calls = 3 callbacks per frame,
+   stable over ticks). The chains share one `last` timestamp, so the extra ones
+   step the simulation by zero and only repeat the draw - measured with 1 vs 3
+   chains, the score after 60 frames (11) and the frame the game ends (164) are
+   identical - which makes the cost redundant per-frame rendering on the
+   visitor's device (CPU, battery), not faster scoring or a changed outcome.
+   Re-opens if a game tool gains any network, storage or credential reach, if a
+   tool starts taking a string from the caller, or if registration moves out of
+   the inline script - which also re-opens the layouts inline-script question
+   above (aifocus-9xgd), since a tool defined in that script inherits the
+   unscanned sink the game-over message uses.
 
 ## 6. Known gaps and open work
 
@@ -243,10 +258,14 @@ Re-read this file when a change:
   disclosure is part of that classification;
 - adds a `registerTool` call to `assets/js/webmcp.js` or to `layouts/404.html`,
   widens `read_article`'s
-  target set beyond the `/index.json` essay list, or changes that fetch's
-  `credentials` mode - the WebMCP surface is an actor with no site credential
+  target set beyond the `/index.json` essay list, changes that fetch's
+  `credentials` mode, or changes what an existing tool does with its arguments
+  or its result - a new `fetch`/`localStorage`/`cookie`/`document.cookie` reach
+  inside a tool body, or a tool that starts writing a caller-supplied string
+  into the page - because a tool's reach is not fixed by its registration: the
+  WebMCP surface is an actor with no site credential
   (§3) whose entire reach is the two-part guard in §4 and the zero-reach game
-  controls in §5, so a new tool or a wider target re-opens the question of
-  what an agent can reach;
+  controls in §5, so a new tool, a wider target or a wider tool body re-opens
+  the question of what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
