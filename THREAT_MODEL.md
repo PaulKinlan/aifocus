@@ -45,7 +45,7 @@ file in the same branch.
 | Anonymous internet | none | every static page, `GET /api/search`, `POST /api/ask`, `GET /api/reader/state`, `POST /api/reader/reactions`, `POST /api/reader/annotations` (highlights only), `GET /api/auth/start/<provider>`, `/api/auth/callback/<provider>`, `/og/*.png` |
 | Reader | `aifocus_reader` cookie (client-held 32-hex id) | the above, plus deleting its own highlights and reactions; it sees its own pending notes |
 | Signed-in reader | session token; only its SHA-256 is stored | notes and comments, `/api/account`, `/api/auth/logout` |
-| Browser agent (MCP client) | none of its own - it runs inside a visitor's browser and calls the tools `assets/js/webmcp.js` registers on `document.modelContext`/`navigator.modelContext` | `list_articles`, `search_articles`, `read_article` and `contact_paul` (§4). It reaches no `/admin/*` or D1 path. The only server endpoint a tool calls is the public `GET /api/search` (`search_articles`, the same endpoint any anonymous visitor can reach), and the only fetch is `read_article`'s, which is same-origin published essays fetched with `credentials: "omit"` |
+| Browser agent (MCP client) | none of its own - it runs inside a visitor's browser and calls the tools registered on `document.modelContext`/`navigator.modelContext`: the four in `assets/js/webmcp.js` plus the three 404-game controls (`game_state`, `game_jump`, `game_restart`) registered by inline script in `layouts/404.html` | `list_articles`, `search_articles`, `read_article` and `contact_paul` (§4); the 404 game controls (§5, zero network/storage/credential reach). No tool reaches `/admin/*` or D1. The only server endpoint a tool calls is the public `GET /api/search` (`search_articles`, the same endpoint any anonymous visitor can reach), and the only fetch is `read_article`'s, which is same-origin published essays fetched with `credentials: "omit"` |
 | Moderator | Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`) | everything under `/api/admin/*` |
 | Identity provider | none (we call out to it) | its error text reaches our logs; its redirects reach our redirect targets |
 | Holder of a D1 copy | none | every stored row, including salted IP hashes and any key we ever put in the database |
@@ -133,6 +133,19 @@ can be checked rather than re-argued.
    full `functions/…` prefix, so the doc-missing-file candidates that read the
    bare form as a repo-root path have nothing left to match. Re-opens when a
    new row or sentence names a module without the prefix.
+8. **The WebMCP game tools on the 404 page** (`layouts/404.html`).
+   `game_state`, `game_jump` and `game_restart` are client-side controls for
+   the canvas game: they read and mutate the game's in-memory state (score,
+   best, player position, bug list) and nothing else - no `fetch()`, no
+   `localStorage`, no cookies, no credential, no markup sink (verified by
+   reading the registrations; `best` is a page variable, not persisted). The
+   browser-agent actor of §3 can call them, and the worst outcome is a lost
+   high score. Re-opens if a game tool gains any network, storage or
+   credential reach, or if registration moves out of the inline script - which
+   also re-opens the layouts inline-script question (aifocus-9xgd: the
+   origin-wide sink ban does not scan `layouts/*.html` inline script today,
+   and `layouts/404.html:84` builds the game-over message with `innerHTML`
+   from numeric state).
 
 ## 6. Known gaps and open work
 
@@ -228,10 +241,12 @@ Re-read this file when a change:
   `static/_headers`: the demo's provider-key persistence is classified as
   accepted risk (section 7) only while the origin's script trust holds, and the
   disclosure is part of that classification;
-- adds a `registerTool` call to `assets/js/webmcp.js`, widens `read_article`'s
+- adds a `registerTool` call to `assets/js/webmcp.js` or to `layouts/404.html`,
+  widens `read_article`'s
   target set beyond the `/index.json` essay list, or changes that fetch's
   `credentials` mode - the WebMCP surface is an actor with no site credential
-  (§3) whose entire reach is the two-part guard in §4, so a new tool or a
-  wider target re-opens the question of what an agent can reach;
+  (§3) whose entire reach is the two-part guard in §4 and the zero-reach game
+  controls in §5, so a new tool or a wider target re-opens the question of
+  what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
