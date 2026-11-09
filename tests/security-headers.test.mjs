@@ -114,20 +114,7 @@ test("middleware: passthrough (static) responses are left for the edge's _header
 });
 
 test("drift guard: the code-side baseline matches the /* block of static/_headers", () => {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const source = fs.readFileSync(path.resolve(here, "../static/_headers"), "utf8");
-  const lines = source.split("\n");
-  const start = lines.findIndex((l) => l.trim() === "/*");
-  assert.notEqual(start, -1, "static/_headers has a /* block");
-  const block = {};
-  for (let i = start + 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.trim()) break; // blank line ends the /* rule block
-    assert.ok(/^\s/.test(line), `line ${i + 1} of the /* block must be an indented header line: ${line}`);
-    const idx = line.indexOf(":");
-    block[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
-  }
-  for (const [name, value] of Object.entries(block)) {
+  for (const [name, value] of Object.entries(headerBlock("/*"))) {
     assert.equal(
       SECURITY_HEADERS[name],
       value,
@@ -135,6 +122,85 @@ test("drift guard: the code-side baseline matches the /* block of static/_header
     );
   }
   for (const name of BASELINE_NAMES) {
-    assert.ok(block[name], `functions/_lib/headers.js sets ${name} but static/_headers /* does not`);
+    assert.ok(headerBlock("/*")[name], `functions/_lib/headers.js sets ${name} but static/_headers /* does not`);
   }
+});
+
+// Headers of one rule block in static/_headers. A rule starts at an unindented
+// (non-comment) line and runs until a blank line; everything inside it must be
+// an indented `Name: value` header.
+function headerBlock(rulePath) {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const lines = fs.readFileSync(path.resolve(here, "../static/_headers"), "utf8").split("\n");
+  const start = lines.findIndex((l) => l.trim() === rulePath);
+  assert.notEqual(start, -1, `static/_headers has a ${rulePath} block`);
+  const block = {};
+  for (let i = start + 1; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line.trim()) break; // blank line ends the rule block
+    if (/^\s*#/.test(line)) continue; // comment inside the block
+    assert.ok(/^\s/.test(line), `line ${i + 1} of the ${rulePath} block must be an indented header line: ${line}`);
+    const idx = line.indexOf(":");
+    assert.ok(idx > 0, `line ${i + 1} of the ${rulePath} block is not a Name: value header: ${line}`);
+    block[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
+  }
+  return block;
+}
+
+// The CSP directive list as a comparable string, with script-src replaced by a
+// placeholder so the two policies can be compared for every OTHER directive.
+function directives(policy, scriptSrc) {
+  return policy
+    .split(";")
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .map((d) => (d === "script-src" || d.startsWith("script-src ") ? `script-src ${scriptSrc}` : d))
+    .join("; ");
+}
+
+test("drift guard: the /admin/* policy is the baseline policy with script-src narrowed to 'self'", () => {
+  const policy = headerBlock("/admin/*")["Content-Security-Policy"];
+  assert.ok(policy, "/admin/* declares its own Content-Security-Policy");
+  const scriptSrc = policy
+    .split(";")
+    .map((d) => d.trim())
+    .find((d) => d.startsWith("script-src "))
+    .slice("script-src ".length)
+    .trim();
+  // 'self' only: no 'unsafe-inline' (which would let an injected inline script
+  // ride the moderator's Access cookie into /api/admin/*) and no third-party
+  // host (which would let a compromised analytics/widget dependency do it).
+  assert.equal(scriptSrc, "'self'", "/admin/* script-src must be exactly 'self'");
+  assert.equal(
+    directives(policy, "'self'"),
+    directives(SECURITY_HEADERS["Content-Security-Policy"], "'self'"),
+    "/admin/* CSP must be the /* CSP with script-src narrowed - change both together",
+  );
+});
+
+test("built /admin/ page satisfies its own script-src 'self': no inline script, no on* handler, no third-party script", (t) => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const file = path.resolve(here, "../public/admin/index.html");
+  if (!fs.existsSync(file)) {
+    t.skip("public/admin/index.html does not exist (run npm run build first)");
+    return;
+  }
+  const html = fs.readFileSync(file, "utf8");
+  const NON_EXECUTABLE = /^application\/(ld\+json|json)$/i;
+  // Attribute values may be unquoted: hugo --minify emits src=/js/main.<hash>.js.
+  const attr = (attrs, name) => {
+    const m = new RegExp(`\\b${name}=(?:"([^"]*)"|([^\\s>]+))`, "i").exec(attrs);
+    return m ? (m[1] ?? m[2]) : null;
+  };
+  const scripts = [...html.matchAll(/<script\b([^>]*)>/gi)].map((m) => m[1]);
+  assert.ok(scripts.length > 0, "the admin page still loads its own bundled script");
+  for (const attrs of scripts) {
+    const type = attr(attrs, "type");
+    if (type && NON_EXECUTABLE.test(type)) continue; // data blocks are not executed
+    const src = attr(attrs, "src");
+    assert.ok(src, `inline <script${attrs}> is blocked by the /admin/* policy`);
+    assert.ok(src.startsWith("/"), `script from ${src} is blocked by the /admin/* policy`);
+  }
+  assert.doesNotMatch(html, /\son[a-z]+=/i, "an on* handler (gtag bootstrap, font onload) is blocked by the /admin/* policy");
+  assert.doesNotMatch(html, /googletagmanager|speculationrules/i, "the admin page loads no analytics and no inline speculation rules");
 });
