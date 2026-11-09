@@ -153,8 +153,9 @@ can be checked rather than re-argued.
    The game-over message uses `replaceChildren`, `createElement` and
    `textContent` (`:85-90`), not a markup sink; the origin-wide sink ban now
    scans inline script in `layouts/*.html` as well (aifocus-9xgd).
-   The browser-agent actor of §3 can still start, stop and restart the game,
-   but the rendering loop has a single-chain invariant: `start()` cancels any
+   The browser-agent actor of §3 can read state, jump, and start or restart
+   the game; only a collision ends a run. The rendering loop has a single-chain
+   invariant: `start()` cancels any
    pending frame before requesting another (`:77-80`), and the loop only
    schedules a successor while `running` (`:157`). Game-over sets `running`
    false (`:82`), leaving no drain callback to revive on restart.
