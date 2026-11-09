@@ -45,6 +45,7 @@ file in the same branch.
 | Anonymous internet | none | every static page, `GET /api/search`, `POST /api/ask`, `GET /api/reader/state`, `POST /api/reader/reactions`, `POST /api/reader/annotations` (highlights only), `GET /api/auth/start/<provider>`, `/api/auth/callback/<provider>`, `/og/*.png` |
 | Reader | `aifocus_reader` cookie (client-held 32-hex id) | the above, plus deleting its own highlights and reactions; it sees its own pending notes |
 | Signed-in reader | session token; only its SHA-256 is stored | notes and comments, `/api/account`, `/api/auth/logout` |
+| Browser agent (MCP client) | none of its own - it runs inside a visitor's browser and calls the tools registered on `document.modelContext`/`navigator.modelContext`: the four in `assets/js/webmcp.js` plus the three 404-game controls (`game_state`, `game_jump`, `game_restart`) registered by inline script in `layouts/404.html` | `list_articles`, `search_articles`, `read_article` and `contact_paul` (§4); the 404 game controls (§5, zero network/storage/credential reach). No tool reaches `/admin/*` or D1. The only server endpoint a tool calls is the public `GET /api/search` (`search_articles`, the same endpoint any anonymous visitor can reach), and the only fetch is `read_article`'s, which is same-origin published essays fetched with `credentials: "omit"` |
 | Moderator | Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`) | everything under `/api/admin/*` |
 | Identity provider | none (we call out to it) | its error text reaches our logs; its redirects reach our redirect targets |
 | Holder of a D1 copy | none | every stored row, including salted IP hashes and any key we ever put in the database |
@@ -69,6 +70,7 @@ anyone who can read a backup, a replica or a debug session".
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
+| WebMCP agent tools | `read_article` treats its `url` argument as untrusted agent input: it must parse same-origin **and** resolve to an essay in the built `/index.json` (`findArticle()`) before anything is fetched - a matching origin alone is not enough, because a same-origin fetch from this page would carry the reader session and the moderator's Access cookie. The fetch itself sends `credentials: "omit"` so it rides no credential even if a path ever got past that check. Invariant: **`read_article` may fetch only paths the built `/index.json` lists**. `list_articles` reads that same `/index.json`; the only server endpoint any tool calls is the public metered `GET /api/search` (via `search_articles`); no tool touches `/admin/*` or D1. `contact_paul` navigates its `mailto:` draft only after `agent.requestUserInteraction()` + `window.confirm()`, so no mail is composed without a human click. The file is also inside the origin-wide markup-sink ban (aifocus-mcqz) | `assets/js/webmcp.js`, `tests/first-party-sinks.test.mjs` |
 
 The edge applies `static/_headers` to static responses only, never to
 Function-generated ones - documented Pages behaviour, verified against
@@ -131,6 +133,48 @@ can be checked rather than re-argued.
    full `functions/…` prefix, so the doc-missing-file candidates that read the
    bare form as a repo-root path have nothing left to match. Re-opens when a
    new row or sentence names a module without the prefix.
+8. **The WebMCP game tools on the 404 page** (`layouts/404.html`).
+   `game_state`, `game_jump` and `game_restart` are client-side controls for
+   the canvas game: they read and mutate the game's in-memory state (score,
+   best, player position, bug list) and the overlay DOM the loop owns -
+   `overlay.style.display` (`:78`, `:86`), `ovTitle.textContent` (`:83`),
+   `startBtn.textContent` (`:85`) and the `score` readout (`:138`) - and that is
+   all: no `fetch()`, no `localStorage`, no cookies, no credential, and no
+   string from the caller is written anywhere (`best` is a page variable, not
+   persisted; verified by reading the registrations and by running the inline
+   script against stubs, aifocus-hexx). The only markup write they can reach is
+   the game-over message at `layouts/404.html:84`, whose interpolations are the
+   loop's own numbers (`Math.floor(score)`, `best`), and that write is outside
+   the origin-wide sink ban because the ban does not scan `layouts/*.html`
+   inline script (aifocus-9xgd). The browser-agent actor of §3 can call them,
+   and the impact is bounded but larger than a lost high score: `start()`
+   (`:78`) queues a fresh `requestAnimationFrame` chain without cancelling the
+   previous one, so N `game_restart` calls leave N chains re-queueing for as
+   long as the game runs (measured: 1 call = 1 callback per frame, 3 calls = 3
+   callbacks per frame, stable over ticks). The chains share one `last`
+   timestamp, so the extra ones
+   step the simulation by zero and only repeat the draw - measured with 1 vs 3
+   chains, the score after 60 frames (11) and the frame the game ends (164) are
+   identical - which makes the cost redundant per-frame rendering on the
+   visitor's device (CPU, battery) while the run lasts, not faster scoring or a
+   changed outcome. The stacking ends with the run, unless a restart lands in
+   the one frame after it: `over()` sets `running = false`, so the frame that
+   ends the game re-queues only the chain that collided - the others reach the
+   `if(!running) return` guard (`:117`) first and re-queue nothing - and that
+   one callback drains on the next frame (measured: 3 chains leave 1 pending
+   callback, then 0). A `game_restart` issued before it drains - which is
+   exactly where a poll-`game_state`-then-restart loop lands, since
+   `gameOver` is true in that frame - sets `running` back to true, so the
+   queued callback runs instead of returning and re-queues itself: measured,
+   one restart in that window leaves 2 chains re-queueing for the rest of the
+   run (stable at 2, and it never decays), two restarts in the window leave 3,
+   and the cost stays redundant rendering rather than faster play (the
+   60-frame score delta is 11 with one, two or three chains live).
+   Re-opens if a game tool gains any network, storage or credential reach, if a
+   tool starts taking a string from the caller, or if registration moves out of
+   the inline script - which also re-opens the layouts inline-script question
+   above (aifocus-9xgd), since a tool defined in that script inherits the
+   unscanned sink the game-over message uses.
 
 ## 6. Known gaps and open work
 
@@ -226,5 +270,18 @@ Re-read this file when a change:
   `static/_headers`: the demo's provider-key persistence is classified as
   accepted risk (section 7) only while the origin's script trust holds, and the
   disclosure is part of that classification;
+- adds a `registerTool` call to `assets/js/webmcp.js` or to `layouts/404.html`,
+  widens `read_article`'s
+  target set beyond the `/index.json` essay list, changes that fetch's
+  `credentials` mode, or changes what an existing tool does with its arguments
+  or its result - a new `fetch`/`localStorage`/`cookie`/`document.cookie` reach
+  inside a tool body, or a tool that starts writing a caller-supplied string
+  into the page - because a tool's reach is not fixed by its registration: the
+  WebMCP surface is an actor with no site credential
+  (§3) whose entire reach is the two-part guard in §4 and the game controls in
+  §5 - whose only reach is the in-memory state and the overlay DOM the loop
+  writes, with no network, storage or credential path - so a new tool, a wider
+  target or a wider tool body re-opens
+  the question of what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
