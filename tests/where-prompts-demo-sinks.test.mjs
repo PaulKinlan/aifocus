@@ -21,8 +21,48 @@ const SINK_TOKENS = ['innerHTML', 'outerHTML', 'insertAdjacentHTML', 'setHTMLUns
 const WS_OR_COMMENT = '(?:\\s|/\\*[\\s\\S]*?\\*/|//[^\\r\\n\\u2028\\u2029]*(?:\\r\\n|[\\r\\n\\u2028\\u2029]|$))';
 const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["'\`]`, 'g');
 
+// A `/` inside an interpolation is a regex only where an expression can start;
+// anywhere else it is division. Without this, the `}` of a regex literal such as
+// /}/ terminated the interpolation early and the split sink token survived the
+// collapse (aifocus-y9w6: el[`inn${/}/.source.slice(1)}erHTML`] read clean).
+const REGEX_PRECEDERS = new Set(['(', '[', '{', ',', ';', ':', '=', '!', '&', '|', '?', '+', '-', '*', '%', '^', '~', '<', '>', '/']);
+const REGEX_KEYWORDS = new Set(['return', 'typeof', 'case', 'in', 'of', 'new', 'delete', 'void', 'do', 'else', 'instanceof', 'yield', 'await']);
+
+function startsRegex(src, index) {
+  let j = index - 1;
+  while (j >= 0 && /\s/.test(src[j])) j -= 1;
+  if (j < 0) return true;
+  if (/[A-Za-z0-9_$]/.test(src[j])) {
+    let k = j;
+    while (k >= 0 && /[A-Za-z0-9_$]/.test(src[k])) k -= 1;
+    return REGEX_KEYWORDS.has(src.slice(k + 1, j + 1));
+  }
+  return REGEX_PRECEDERS.has(src[j]);
+}
+
+// Skips a regex literal, honouring escapes and character classes, and returns
+// the index just past it (or the newline that leaves it unterminated).
+function skipRegex(src, index) {
+  let i = index + 1;
+  let inClass = false;
+  while (i < src.length) {
+    const ch = src[i];
+    if (ch === '\\') { i += 2; continue; }
+    if (ch === '\n' || ch === '\r' || ch === '\u2028' || ch === '\u2029') return i;
+    if (ch === '[') inClass = true;
+    else if (ch === ']') inClass = false;
+    else if (ch === '/' && !inClass) {
+      i += 1;
+      while (i < src.length && /[a-z]/i.test(src[i])) i += 1; // flags
+      return i;
+    }
+    i += 1;
+  }
+  return i;
+}
+
 // Strips template expression interpolations (${...}) with arbitrary brace nesting depth,
-// comments, and inner string literals.
+// comments, inner string literals and regex literals.
 function stripTemplateInterpolations(src) {
   let result = '';
   let i = 0;
@@ -57,6 +97,8 @@ function stripTemplateInterpolations(src) {
             i++;
           }
           if (i < src.length) i++;
+        } else if (src[i] === '/' && startsRegex(src, i)) {
+          i = skipRegex(src, i);
         } else {
           i++;
         }
@@ -107,6 +149,15 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     'el[`inn${""}erHTML`] = x;',
     'el[`inn${{x:""}.x}erHTML`] = "<b>x</b>";',
     'el[`inn${(() => { return "" })()}erHTML`] = "<b>x</b>";',
+    // aifocus-y9w6: the } inside these regex literals used to terminate the
+    // interpolation, leaving /.source.slice(...) between "inn" and "erHTML".
+    'el[`inn${/}/.source.slice(1)}erHTML`] = "<b>x</b>";',
+    'el[`inn${/[}"]/.source.slice(4)}erHTML`] = "<b>x</b>";',
+    'el[`inn${"x".replace(/}/, "")}erHTML`] = "<b>x</b>";',
+    'el[`inn${typeof /}/.source}erHTML`] = "<b>x</b>";',
+    // and the other direction: a division is not a regex, so a following } must
+    // still terminate the interpolation.
+    'el[`inn${total / 2}erHTML`] = "<b>x</b>";',
     'el["out" + "erHTML"] = payload;',
     'window["set" + "HTMLUnsafe"](payload);',
     'frame["src" + "doc"] = payload;',
