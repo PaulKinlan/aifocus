@@ -7,6 +7,11 @@
   --background: #fdfcf8;
   --bg-secondary: #f0eee6;
   --line: #8a8577;
+  /* The boundary of a form control is the visual information that identifies
+     it (an empty text input has no label inside), so WCAG 1.4.11's 3:1 applies
+     to it and not to --line, which is right as a decorative hairline. Measured
+     in tests/control-contrast.test.mjs. See aifocus-47ax. */
+  --control-line: #837e6d;
   --control-bg: #e6e1d2;
   --control-bg-hover: #d8d2bf;
   --muted: #6b6b6b;
@@ -19,6 +24,7 @@
     --background: light-dark(#fdfcf8, #1c1a17);
     --bg-secondary: light-dark(#f0eee6, #2a2723);
     --line: light-dark(#8a8577, #4d4841);
+    --control-line: light-dark(#837e6d, #9c9788);
     --control-bg: light-dark(#e6e1d2, #3d3933);
     --control-bg-hover: light-dark(#d8d2bf, #4a453f);
     --muted: light-dark(#6b6b6b, #aaaaaa);
@@ -87,7 +93,12 @@ a:not(.share-button):focus-visible {
    back to browser defaults - a 19px-tall control with 13.3px text and an inset
    ridge border - while dark mode looked intentional. Sizes and structure are
    shared here; the palette comes from tokens, so each scheme keeps its own
-   colours. See aifocus-698. */
+   colours. See aifocus-698.
+
+   The border is --control-line, not --line (aifocus-47ax): in dark mode the
+   hairline was 1.64:1 against the input fill and 1.27:1 against the button
+   fill, so an empty email field was a barely-there rectangle. The control
+   boundary has to carry 3:1 on its own. */
 input,
 button,
 select,
@@ -95,7 +106,7 @@ textarea {
   font: inherit; /* UA default is 13.3px; inherit the body's size and family */
   min-height: 2.5rem; /* tap target: WCAG 2.2 SC 2.5.8 asks for 24px minimum */
   padding: 0.5em 0.75em;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--radius);
   background-color: var(--bg-secondary);
   color: var(--color);
@@ -811,6 +822,7 @@ footer {
     --background: #1c1a17;
     --bg-secondary: #2a2723;
     --line: #4d4841;
+    --control-line: #9c9788;
     --control-bg: #3d3933;
     --control-bg-hover: #4a453f;
     --muted: #aaaaaa;
@@ -823,6 +835,7 @@ footer {
       --background: light-dark(#fdfcf8, #1c1a17);
       --bg-secondary: light-dark(#f0eee6, #2a2723);
       --line: light-dark(#8a8577, #4d4841);
+      --control-line: light-dark(#837e6d, #9c9788);
       --control-bg: light-dark(#e6e1d2, #3d3933);
       --control-bg-hover: light-dark(#d8d2bf, #4a453f);
       --muted: light-dark(#6b6b6b, #aaaaaa);
