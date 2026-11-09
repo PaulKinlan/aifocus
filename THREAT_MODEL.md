@@ -143,6 +143,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 |:---|:---|
 | aifocus-710 | the IP-hash salt sits in the same database as the hashes (the retention half is fixed: `reserveAskSlot` prunes `ask_log` rows older than two hours on every reservation) - see section 7 |
 | aifocus-wxl | the journal demo's OPFS sandbox is shared origin-wide across provider pages, contradicting the UI copy |
+| aifocus-4go1 | the demo's provider-key persistence (section 7) is accepted, not fixed: drop the "remember on this device" opt-in or serve the demo from its own origin - a product decision, not a lane change |
 
 ### Closed since the 2026-11-04 audit
 
@@ -178,6 +179,24 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
   built", not "no code"; treating a first-party dependency as trusted is the
   residual risk, and the reason the admin page loads no analytics at all rather
   than allowlisting it.
+- **A reader's provider API key can sit in origin-wide `localStorage`** when the
+  journal demo's "remember on this device" box is ticked:
+  `persistKeyForThisDevice()` (`static/where-prompts-run-demo/demo.js`) stores
+  the live bearer key under `wpr_demo_apikey_<provider>` after an explicit
+  opt-in that is disclosed next to the field. The key is a billable credential
+  on an external account the site cannot revoke. The demo pages themselves run
+  a `script-src 'self'` meta CSP, but `localStorage` is origin-wide and every
+  content page runs the baseline policy, whose `script-src` allows inline
+  script and five third-party origins (gtag, Cloudflare Insights, and three
+  X/Twitter embed hosts) - so any script a content page loads, or an XSS there, can read the
+  stored key. This is **accepted while the origin's script trust holds** (the
+  same dependency the inline-script question in aifocus-5wrp turns on): the
+  baseline `script-src` stays this narrow, and first-party script stays
+  sink-clean (section 4). It re-opens - moves to section 6 - if a content-page
+  script source is widened, if the demo stops disclosing the opt-in, or if a
+  sink reaches a content page. The fix options are open work, not accepted
+  silently: drop persistence in favour of page memory, or serve the demo from
+  its own origin/hostname (aifocus-4go1).
 - **IP hashes are brute-forceable by a database reader** while the salt lives
   in the same database (aifocus-710): the IPv4 space is small enough to
   enumerate against a known salt.
@@ -201,5 +220,11 @@ Re-read this file when a change:
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
   redirect, an `innerHTML` or an `href`;
+- changes `static/where-prompts-run-demo/**` - the demo pages' meta CSP, the
+  demo's `localStorage` use (`wpr_demo_apikey_*`, `persistKeyForThisDevice()`)
+  or its opt-in disclosure - or widens any content page's `script-src` in
+  `static/_headers`: the demo's provider-key persistence is classified as
+  accepted risk (section 7) only while the origin's script trust holds, and the
+  disclosure is part of that classification;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
