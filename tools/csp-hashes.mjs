@@ -78,6 +78,34 @@ function scriptBodies(html) {
 // blanked before names are matched, so text that merely mentions onclick= is
 // not a hit.
 const START_TAG = /<([a-zA-Z][a-zA-Z0-9:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
+const URL_ATTR = "href|src|action|formaction|xlink:href|poster|cite|background|data";
+// An attribute value is double-quoted, single-quoted or unquoted, and the HTML
+// tokenizer allows space around the '='. All three are the same URL to the
+// parser, so a scan that only reads quoted values is blind to
+// <a href=javascript:alert(1)> (aifocus-rlng review, round 2).
+const URL_ATTR_VALUE = new RegExp(`\\s(${URL_ATTR})\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "gi");
+
+// Character references are decoded before the scheme is read: a parser turns
+// javascript&#58;alert(1) and javascript&colon;alert(1) into the same URL the
+// browser refuses to run, and so must this scan.
+const NAMED_REFS = { colon: ":", tab: "\t", newline: "\n", sol: "/", amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: "\u00a0" };
+function decodeCharRefs(value) {
+  return value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z][a-zA-Z0-9]*));?/g, (match, dec, hex, name) => {
+    if (dec) return String.fromCodePoint(Math.min(Number(dec), 0x10ffff));
+    if (hex) return String.fromCodePoint(Math.min(parseInt(hex, 16), 0x10ffff));
+    const ref = NAMED_REFS[name?.toLowerCase()];
+    return ref ?? match;
+  });
+}
+
+// The URL parser strips ASCII tab, LF and CR anywhere in the input and trims
+// C0 controls and spaces at the ends, so java<TAB>script:alert(1) is a
+// javascript: URL. Undo that before deciding what the scheme is.
+const stripUrlNoise = (value) => value.replace(/[\t\n\r]/g, "").replace(/^[\u0000-\u0020]+/, "");
+
+function isJavascriptUrl(value) {
+  return /^javascript:/i.test(stripUrlNoise(decodeCharRefs(value)));
+}
 
 export function inlineExecSurfaces(html) {
   const handlers = [];
@@ -89,9 +117,9 @@ export function inlineExecSurfaces(html) {
     for (const handler of blanked.matchAll(/\s(on[a-z]+)\s*=/gi)) {
       handlers.push({ tag, attr: handler[1].toLowerCase() });
     }
-    for (const value of attrs.matchAll(/\s(href|src|action|formaction|xlink:href|poster|cite|background|data)\s*=\s*("[^"]*"|'[^']*')/gi)) {
-      const unquoted = value[2].slice(1, -1);
-      if (/^\s*javascript:/i.test(unquoted)) urls.push({ tag, attr: value[1].toLowerCase(), value: unquoted.slice(0, 80) });
+    for (const value of attrs.matchAll(URL_ATTR_VALUE)) {
+      const raw = value[2] ?? value[3] ?? value[4] ?? "";
+      if (isJavascriptUrl(raw)) urls.push({ tag, attr: value[1].toLowerCase(), value: raw.slice(0, 80) });
     }
   }
   return { handlers, urls };

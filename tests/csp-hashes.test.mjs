@@ -164,6 +164,40 @@ test("a javascript: URL in a URL-bearing attribute is a failure, and only there"
   assert.match(problems[0], /1 javascript: URL\(s\) the CSP blocks/);
 });
 
+// The review of the first version of this scan found two valid javascript: URLs
+// it read as clean: an unquoted attribute value, and a character-reference
+// encoding of the colon. Both are the URL a browser refuses to run, so both are
+// now pinned, along with the whitespace the URL parser strips.
+test("every spelling of a javascript: URL is flagged, and only in URL attributes", () => {
+  const flagged = [
+    '<a href="javascript:alert(1)">x</a>',
+    "<a href=javascript:alert(1)>x</a>",
+    "<a href='javascript:alert(1)'>x</a>",
+    '<a href = "javascript:alert(1)">x</a>',
+    '<a href="javascript&#58;alert(1)">x</a>',
+    '<a href="javascript&#x3a;alert(1)">x</a>',
+    '<a href="javascript&colon;alert(1)">x</a>',
+    '<a href="&#106;avascript:alert(1)">x</a>',
+    '<a href="java&#9;script:alert(1)">x</a>',
+    '<a href="java\tscript:alert(1)">x</a>',
+    '<form action=JAVASCRIPT:alert(1)>',
+  ];
+  for (const html of flagged) {
+    const { urls } = inlineExecSurfaces(html);
+    assert.equal(urls.length, 1, `must be flagged: ${html}`);
+  }
+  const clean = [
+    '<a href="/notes?q=javascript:">ok</a>',
+    '<a href="https://example.com/javascript:">ok</a>',
+    '<a href="javascript.js">ok</a>',
+    '<img src="data:image/png;base64,AA">ok</img>',
+    '<a title="javascript:alert(1)">ok</a>',
+  ];
+  for (const html of clean) {
+    assert.deepEqual(inlineExecSurfaces(html).urls, [], `must stay clean: ${html}`);
+  }
+});
+
 test("attribute names are matched with their values blanked, so a quoted mention is not a hit", () => {
   const { handlers, urls } = inlineExecSurfaces('<a href="/x" title="onclick=onload=" aria-label="javascript: no">x</a>');
   assert.deepEqual(handlers, []);
