@@ -86,18 +86,22 @@ const URL_ATTR = "href|src|action|formaction|xlink:href|poster|cite|background|d
 const URL_ATTR_VALUE = new RegExp(`\\s(${URL_ATTR})\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "gi");
 // A refresh URL lives inside content rather than a URL attribute. Consume
 // complete attribute values so quoted lookalike names do not match.
-const ATTRIBUTE = /\s([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+const ATTRIBUTE = /\s*([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
 function metaRefreshUrl(attrs) {
   const values = new Map();
   for (const attr of attrs.matchAll(ATTRIBUTE)) {
-    values.set(attr[1].toLowerCase(), attr[2] ?? attr[3] ?? attr[4] ?? "");
+    const name = attr[1].toLowerCase();
+    // HTML keeps the first duplicate attribute; later values are discarded.
+    if (!values.has(name)) values.set(name, decodeCharRefs(attr[2] ?? attr[3] ?? attr[4] ?? ""));
   }
   if (values.get("http-equiv")?.trim().toLowerCase() !== "refresh") return null;
   const content = values.get("content") ?? "";
-  const target = /(?:^|;)\s*url\s*=\s*(.*)$/i.exec(content)?.[1];
+  // Both separators and the url= prefix are optional for a refresh target.
+  // Preserve newlines: isJavascriptUrl strips the URL parser's ASCII noise.
+  const target = /^\s*(?:(?:\d+(?:\.\d+)?)\s*[;,]\s*)?(?:url\s*=\s*)?([\s\S]*)$/i.exec(content)?.[1];
   if (target == null) return null;
   // The refresh parser accepts a URL wrapped in quotes within content.
-  return target.replace(/^(['"])(.*)\1\s*$/, "$2");
+  return target.replace(/^(['"])([\s\S]*)\1\s*$/, "$2");
 }
 
 // Character references are decoded before the scheme is read: a parser turns

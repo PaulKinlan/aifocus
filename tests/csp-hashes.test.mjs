@@ -218,6 +218,13 @@ test("refresh parsing handles attribute order, case, spacing, quotes and encoded
     "<meta http-equiv=refresh content='1; url=javascript&#58;alert(1)'>",
     '<meta http-equiv="refresh" content="0; url=\'java&#9;script:alert(1)\'">',
     '<meta http-equiv="refresh" content="url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0; javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0, javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;url=java\nscript:alert(1)">',
+    '<meta http-equiv="refr&#101;sh" content="0;url=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;ur&#108;=javascript:alert(1)">',
+    '<meta http-equiv="refresh" content="0;url=javascript:alert(1)" content="0;url=/safe">',
+    '<meta http-equiv="refresh"content="0;url=javascript:alert(1)">',
   ];
   for (const html of flagged) {
     assert.equal(inlineExecSurfaces(html).urls.length, 1, `must be flagged: ${html}`);
