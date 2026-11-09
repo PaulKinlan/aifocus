@@ -52,6 +52,16 @@ const INERT_TYPES = new Set([
   "importmap",
 ]);
 
+// Consume each complete value before checking attribute names: text like
+// data-note=" src=x " is not an external script source (aifocus-mdk3).
+function hasSrcAttribute(attrs) {
+  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/g;
+  for (const match of attrs.matchAll(attr)) {
+    if (match[1].toLowerCase() === "src") return true;
+  }
+  return false;
+}
+
 // Attribute parsing is deliberately narrow: the build output is Hugo's own,
 // and this needs to answer exactly one question per script - does a browser run
 // this body inline? A missing or non-JS type means yes.
@@ -61,7 +71,7 @@ function scriptBodies(html) {
   let match;
   while ((match = re.exec(html)) !== null) {
     const attrs = match[1] ?? "";
-    if (/(^|\s)src\s*=/i.test(attrs)) continue;
+    if (hasSrcAttribute(attrs)) continue;
     const type = /(^|\s)type\s*=\s*["']?([^"'\s>]+)/i.exec(attrs)?.[2]?.toLowerCase();
     if (type && INERT_TYPES.has(type)) continue;
     bodies.push(match[2]);

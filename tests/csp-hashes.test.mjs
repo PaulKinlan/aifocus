@@ -54,6 +54,22 @@ test("script bodies the browser enforces are hashed; inert data blocks are not",
   for (const hash of hashes) assert.match(hash, /^'sha256-[A-Za-z0-9+/=]+'$/);
 });
 
+test("quoted src= text and data-src do not hide inline script hashes", () => {
+  const dir = site({
+    "index.html": page(
+      '<script data-note=" src=x ">console.log(1)</script>',
+      '<script data-src="/loader.js">console.log(2)</script>',
+      '<script data-note=" src=x " SRC = "/loader.js">ignored()</script>',
+      '<script src=/loader.js>ignoredToo()</script>',
+    ),
+  });
+  const hashes = collectHashes(dir);
+  assert.equal(hashes.length, 2, "both inline bodies are hash-pinned, but external src bodies are not");
+  const changed = collectHashes(site({ "index.html": page('<script data-note=" src=x ">console.log(3)</script>') }));
+  const { missing } = auditProblems({ built: changed, declared: hashes, others: ["'self'"] });
+  assert.equal(missing.length, 1, "editing the formerly hidden inline script must fail the hash gate");
+});
+
 test("data blocks that are not enforced are left out of the hash list", () => {
   const dir = site({
     "index.html": page(
