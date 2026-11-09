@@ -81,7 +81,12 @@
     dead=true; running=false;
     best = Math.max(best, Math.floor(score));
     ovTitle.textContent = 'Game over';
-    ovMsg.innerHTML = 'You banked <span class="score">'+Math.floor(score)+' tokens</span>'+(best? ' · best '+best:'');
+    ovMsg.replaceChildren();
+    const banked = document.createElement('span');
+    banked.className = 'score';
+    banked.textContent = Math.floor(score);
+    ovMsg.append('You banked ', banked, ' tokens');
+    if (best) ovMsg.append(' · best ' + best);
     startBtn.textContent = '↻ Again';
     overlay.style.display='flex';
   }
