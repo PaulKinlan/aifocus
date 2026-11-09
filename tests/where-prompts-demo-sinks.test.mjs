@@ -35,6 +35,13 @@ function startsRegex(src, index) {
   if (/[A-Za-z0-9_$]/.test(src[j])) {
     let k = j;
     while (k >= 0 && /[A-Za-z0-9_$]/.test(src[k])) k -= 1;
+    // `x.return / 2` divides by a property that happens to be spelled like a
+    // keyword; after a '.' the word is a member name, never an operator, so
+    // treating it as a regex start swallowed the rest of the interpolation and
+    // left the split token unseen (aifocus-a63j).
+    let before = k;
+    while (before >= 0 && /\s/.test(src[before])) before -= 1;
+    if (before >= 0 && src[before] === ".") return false;
     return REGEX_KEYWORDS.has(src.slice(k + 1, j + 1));
   }
   return REGEX_PRECEDERS.has(src[j]);
@@ -158,6 +165,17 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     // and the other direction: a division is not a regex, so a following } must
     // still terminate the interpolation.
     'el[`inn${total / 2}erHTML`] = "<b>x</b>";',
+    // a property that happens to be spelled like a keyword is still a division
+    // (aifocus-a63j): reading `x.return` as the keyword made the scanner skip
+    // forward looking for a closing slash and lose the rest of the expression.
+    'el[`inn${x.return / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${x.in / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${x.of / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${obj?.return / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${(x).return / 2}erHTML`] = "<b>x</b>";',
+    // ...while a real keyword in front of a regex still works, including a
+    // member call that contains one
+    'el[`inn${(() => { return /}/.source })()}erHTML`] = x;',
     'el["out" + "erHTML"] = payload;',
     'window["set" + "HTMLUnsafe"](payload);',
     'frame["src" + "doc"] = payload;',
