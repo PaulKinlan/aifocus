@@ -157,11 +157,19 @@ can be checked rather than re-argued.
    chains, the score after 60 frames (11) and the frame the game ends (164) are
    identical - which makes the cost redundant per-frame rendering on the
    visitor's device (CPU, battery) while the run lasts, not faster scoring or a
-   changed outcome. The stacking ends with the run, it is not permanent:
-   `over()` sets `running = false`, so any callback still queued returns at the
-   `if(!running) return` guard (`:117`) without re-queueing (measured: 3 chains
-   leave 1 callback on the frame after the game-over write and 0 on every frame
-   after that), and a later `game_restart` starts exactly one chain.
+   changed outcome. The stacking ends with the run, unless a restart lands in
+   the one frame after it: `over()` sets `running = false`, so the frame that
+   ends the game re-queues only the chain that collided - the others reach the
+   `if(!running) return` guard (`:117`) first and re-queue nothing - and that
+   one callback drains on the next frame (measured: 3 chains leave 1 pending
+   callback, then 0). A `game_restart` issued before it drains - which is
+   exactly where a poll-`game_state`-then-restart loop lands, since
+   `gameOver` is true in that frame - sets `running` back to true, so the
+   queued callback runs instead of returning and re-queues itself: measured,
+   one restart in that window leaves 2 chains re-queueing for the rest of the
+   run (stable at 2, and it never decays), two restarts in the window leave 3,
+   and the cost stays redundant rendering rather than faster play (the
+   60-frame score delta is 11 with one, two or three chains live).
    Re-opens if a game tool gains any network, storage or credential reach, if a
    tool starts taking a string from the caller, or if registration moves out of
    the inline script - which also re-opens the layouts inline-script question
