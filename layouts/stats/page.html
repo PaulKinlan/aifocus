@@ -10,6 +10,11 @@
   --viz-3: light-dark(#1baf7a, #199e70); --viz-4: light-dark(#eda100, #c98500);
   --viz-5: light-dark(#e87ba4, #d55181); --viz-6: light-dark(#008300, #3fae3f);
   --viz-7: light-dark(#6250d6, #9085e9); --viz-8: light-dark(#e34948, #e66767);
+  /* aifocus-0zk6: a second channel per series, so the legend-to-line mapping
+     does not depend on colour perception (WCAG 1.4.1). Slot 1 is solid; the
+     rest are dash patterns that stay separable at the 2px stroke width. */
+  --viz-dash-1: none; --viz-dash-2: 7 3; --viz-dash-3: 2 3; --viz-dash-4: 9 3 2 3;
+  --viz-dash-5: 4 2; --viz-dash-6: 1 3; --viz-dash-7: 12 3 2 3 2 3; --viz-dash-8: 3 2 9 2;
   --viz-grid: light-dark(#e4e0d4, #332f2a); --viz-axis: light-dark(#8a8577, #7a756c); }
 .stats-updated { color: var(--muted); font-size: .9rem; }
 .stats-toc ul { list-style: none; padding: 0; margin: 0 0 1.5rem; display: flex; flex-wrap: wrap; gap: .4rem .6rem; }
@@ -45,7 +50,10 @@
 .chart-legend { list-style: none; padding: 0; margin: .4rem 0 0; display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .8rem; }
 .chart-legend button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
 .chart-legend button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
-.swatch { display: inline-block; width: .9em; height: .9em; border-radius: 50%; }
+/* The swatch draws the series' own stroke (colour and dash pattern) rather than
+   a filled dot, so the legend and the tooltip carry the same second channel as
+   the line in the plot. */
+.swatch { display: inline-block; width: 1.15em; height: .55em; vertical-align: middle; overflow: visible; }
 .stat-chart figcaption { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
 .stat table { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
 .stat th, .stat td { padding: .35rem .5rem; border-bottom: 1px solid var(--viz-grid); text-align: right; vertical-align: top; }

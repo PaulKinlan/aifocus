@@ -66,6 +66,27 @@ function logTicks(min, max) {
 }
 
 const svgNS = "http://www.w3.org/2000/svg";
+
+// aifocus-0zk6: colour is one channel; the dash pattern is the second, so a
+// reader who cannot separate the hues can still say which line is which
+// (WCAG 1.4.1). Both come from the same per-slot custom properties, so the
+// legend swatch and the plotted line cannot disagree.
+function dashStyle(slot) {
+  return `stroke-dasharray: var(--viz-dash-${slot})`;
+}
+
+// A legend/tooltip swatch drawn as a miniature of the series' own stroke.
+function swatchFor(slot) {
+  const svg = el("svg", { class: "swatch", viewBox: "0 0 18 8", width: "18", height: "8", "aria-hidden": "true", focusable: "false" });
+  svg.append(el("line", {
+    x1: 0, y1: 4, x2: 18, y2: 4,
+    stroke: `var(--viz-${slot})`,
+    "stroke-width": 2,
+    "stroke-linecap": "round",
+    style: dashStyle(slot),
+  }));
+  return svg;
+}
 function el(name, attrs = {}, text) {
   const n = document.createElementNS(svgNS, name);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
@@ -106,8 +127,7 @@ function setupChart(figure) {
       const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button"; btn.setAttribute("aria-pressed", "true");
-      const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = `var(--viz-${s.slot || i + 1})`;
-      btn.append(sw, s.label);
+      btn.append(swatchFor(s.slot || i + 1), s.label);
       btn.addEventListener("click", () => {
         if (hidden.has(i)) hidden.delete(i); else hidden.add(i);
         btn.setAttribute("aria-pressed", hidden.has(i) ? "false" : "true");
@@ -175,7 +195,7 @@ function setupChart(figure) {
         if (v == null || (useLog && v <= 0)) { pen = false; return; }
         d += `${pen ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; pen = true;
       });
-      svg.append(el("path", { class: "line", d, stroke: color }));
+      svg.append(el("path", { class: "line", d, stroke: color, style: dashStyle(s.slot || s.i + 1) }));
       s.values.forEach((v, i) => {
         if (v == null || (useLog && v <= 0)) return;
         const last = i === s.values.length - 1;
@@ -206,8 +226,7 @@ function setupChart(figure) {
           if (v == null) continue;
           const row = document.createElement("div"); row.className = "row";
           const name = document.createElement("span");
-          const sw = document.createElement("span"); sw.className = "swatch"; sw.style.background = `var(--viz-${s.slot || s.i + 1})`;
-          name.append(sw, " ", s.label);
+          name.append(swatchFor(s.slot || s.i + 1), " ", s.label);
           const val = document.createElement("span"); val.textContent = full(v, data.value_format);
           row.append(name, val); tip.append(row);
         }
