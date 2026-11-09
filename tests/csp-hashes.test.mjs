@@ -70,6 +70,22 @@ test("quoted src= text and data-src do not hide inline script hashes", () => {
   assert.equal(missing.length, 1, "editing the formerly hidden inline script must fail the hash gate");
 });
 
+test("quoted type= text cannot classify an executable inline script as inert", () => {
+  const dir = site({ "index.html": page(
+    '<script data-note=" type=application/json ">realInlineScript()</script>',
+    '<script data-note=" > type=application/ld+json ">anotherInlineScript()</script>',
+    '<script data-type="application/json">thirdInlineScript()</script>',
+    '<script type="application/json">{"inert":true}</script>',
+    '<script type="application/ld+json">{"inert":true}</script>',
+    '<script type=importmap>{"imports":{}}</script>',
+    '<script data-note=" type=application/json " type="module">moduleInline()</script>',
+  ) });
+  const hashes = collectHashes(dir);
+  assert.equal(hashes.length, 4, "quoted lookalikes and data-type are inline code; real inert types are not hashed");
+  const altered = collectHashes(site({ "index.html": page('<script data-note=" type=application/json ">changedInlineScript()</script>') }));
+  assert.equal(auditProblems({ built: altered, declared: hashes, others: ["'self'"] }).missing.length, 1);
+});
+
 test("data blocks that are not enforced are left out of the hash list", () => {
   const dir = site({
     "index.html": page(
