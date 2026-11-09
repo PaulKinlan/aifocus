@@ -14,7 +14,7 @@ import urllib.error
 from unittest.mock import patch
 
 sys.path.insert(0, 'tools/stats')
-from collector_common import CollectorDataError
+from collector_common import CollectorDataError, finite_in_range, non_negative_int
 spec = importlib.util.spec_from_file_location('collect_github', 'tools/stats/collect-github.py')
 github = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(github)
@@ -38,6 +38,33 @@ for body in (b'not json{', b'[1,2,3]', b'\\xff', b'{"message":"Validation Failed
             pass
         else:
             raise AssertionError(f'{body!r} did not fail loud')
+    assert len(calls) == 1, (body, len(calls))
+
+for value in (True, False):
+    for validate in (lambda: non_negative_int(value, 'github total_count'),
+                     lambda: finite_in_range(value, 0, None, 'httparchive adoption')):
+        try:
+            validate()
+        except CollectorDataError:
+            pass
+        else:
+            raise AssertionError(f'boolean {value!r} accepted as a count')
+assert finite_in_range('12.3', 0, 100, 'w3techs percentage') == 12.3
+for value in (0, 42):
+    assert non_negative_int(value, 'github total_count') == value
+
+for body in (b'{"total_count":true}', b'{"total_count":false}'):
+    calls = []
+    def boolean_urlopen(request, timeout):
+        calls.append(request)
+        return Response(body)
+    with patch.object(github.urllib.request, 'urlopen', boolean_urlopen), patch.object(github.time, 'sleep', side_effect=AssertionError('unexpected retry')):
+        try:
+            github.Searcher('dummy', 'commits').count('query')
+        except CollectorDataError:
+            pass
+        else:
+            raise AssertionError(f'{body!r} published a boolean count')
     assert len(calls) == 1, (body, len(calls))
 
 for status in (401, 403, 404, 422):
@@ -88,7 +115,7 @@ with patch.object(github.urllib.request, 'urlopen', exhausted_urlopen), patch.ob
 assert len(calls) == 12, len(calls)
 `;
 
-test("GitHub Search fails loud for invalid responses and exhausted retries, but accepts transient recovery", () => {
+test("GitHub Search rejects invalid bodies, boolean or absent counts and non-retryable failures, and fails loud on exhausted retries while accepting transient recovery", () => {
   const result = spawnSync("python3", ["-B", "-c", probe], { cwd: root, encoding: "utf8", timeout: 10_000 });
   assert.equal(result.status, 0, `${result.error ?? ""}\n${result.stderr}\n${result.stdout}`);
 });

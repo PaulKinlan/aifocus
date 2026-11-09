@@ -54,6 +54,8 @@ def finite_in_range(value, low, high, label):
     None for an unbounded upper limit); raise CollectorDataError otherwise.
     Every data error - non-numeric text included - comes back as
     CollectorDataError, so callers only ever catch one exception type."""
+    if isinstance(value, bool):
+        raise CollectorDataError(f"{label}: not a number: {value!r}")
     try:
         v = float(value)
     except (TypeError, ValueError) as err:
