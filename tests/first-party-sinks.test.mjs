@@ -180,7 +180,7 @@ function sinkViolations(file, source, label = file) {
     for (const token of SINK_TOKENS) {
       if (!tokenText.includes(token)) continue;
       const allow = ALLOWLIST[file]?.[token];
-      if (allow && (Array.isArray(allow) ? allow.includes(raw.trim()) : allow.test(raw))) continue;
+      if (allow && (Array.isArray(allow) ? allow.includes(raw) : allow.test(raw))) continue;
       failures.push(`${label}:${number}: ${token}: ${raw.trim()}`);
     }
   }
@@ -222,19 +222,19 @@ function sinkViolations(file, source, label = file) {
 // THREAT_MODEL.md §5(3) names the review trigger for changing their inputs.
 const STATIC_INLINE_PINS = {
   "static/model-drops.html": [
-    "$('timeline-chart').innerHTML = svg;",
-    "$('timeline-chart').innerHTML = `<div class=\"error\">Failed to load data: ${esc(err.message)}</div>`;",
+    "  $('timeline-chart').innerHTML = svg;",
+    "    $('timeline-chart').innerHTML = `<div class=\"error\">Failed to load data: ${esc(err.message)}</div>`;",
   ],
   "static/model-gap.html": [
-    "chart.innerHTML = s + '<div class=\"chart-tip\" id=\"chart-tip\" role=\"tooltip\" hidden></div>';",
-    "panel.innerHTML = html;",
-    'document.getElementById("note").innerHTML =',
+    "        chart.innerHTML = s + '<div class=\"chart-tip\" id=\"chart-tip\" role=\"tooltip\" hidden></div>';",
+    "        panel.innerHTML = html;",
+    '      document.getElementById("note").innerHTML =',
   ],
-  "static/pwa-cooked-baseline.html": ["row.innerHTML = `", "summary.innerHTML ="],
-  "static/pwa-cooked-comparator.html": ["detail.innerHTML = `"],
+  "static/pwa-cooked-baseline.html": ["  row.innerHTML = `", "summary.innerHTML ="],
+  "static/pwa-cooked-comparator.html": ["  detail.innerHTML = `"],
   "static/pwa-cooked-timeline.html": ["document.getElementById('chart').innerHTML = svg;"],
-  "static/token-calculator-regional.html": ["container.innerHTML = REGIONS.map(r => `", "table.innerHTML = html;"],
-  "static/token-calculator.html": ["tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');"],
+  "static/token-calculator-regional.html": ["    container.innerHTML = REGIONS.map(r => `", "    table.innerHTML = html;"],
+  "static/token-calculator.html": ["    tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');"],
 };
 const ALLOWLIST = {
   "assets/js/stats-page.js": {
@@ -331,9 +331,11 @@ test("static inline scripts are scanned and each pre-existing sink pin stays liv
   let pins = 0;
   for (const [file, lines] of Object.entries(STATIC_INLINE_PINS)) {
     const scripts = staticScripts.filter((script) => script.file === file);
-    const actual = scripts.flatMap((script) => logicalLines(script.source).map(({ text }) => text.trim()));
+    const actual = scripts.flatMap((script) => logicalLines(script.source).map(({ text }) => text));
     for (const line of lines) {
       assert.equal(actual.filter((text) => text === line).length, 1, `${file}: stale or duplicate sink pin: ${line}`);
+      const editedWhitespace = line.startsWith(" ") ? line.slice(1) : ` ${line}`;
+      assert.match(sinkViolations(file, editedWhitespace)[0], /innerHTML/, `${file}: even a whitespace edit must invalidate the pin`);
       pins++;
     }
   }

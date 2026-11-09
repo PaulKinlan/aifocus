@@ -122,16 +122,42 @@ can be checked rather than re-argued.
    demo bundle; `tests/first-party-sinks.test.mjs` rejects new markup sinks
    across those sources. The sole application-JS exception is the exact
    tooltip-clearing assignment in `stats-page.js` (aifocus-qsv3, aifocus-mcqz).
-   Seven standalone static HTML tools already have 12 `innerHTML` assignments:
-   exact-statement pins keep those known sites visible and reject a thirteenth,
-   but cannot verify the values assembled on earlier lines. Their current
-   inputs are authored in-page constants, numeric form values, or same-origin
-   authored `/model-gap.json` and `/model-drops.tsv` values escaped with `esc()`;
-   none currently reads URL/search/hash, storage, remote or model output into
-   a sink (aifocus-5rvq). **Review trigger:** if any such source changes, a new
-   external/user-controlled input reaches a static page, or a pin must widen,
-   replace the sink with DOM construction rather than extending the exception.
-   Re-opens if the guards are deleted or bypassed.
+   Seven standalone static HTML tools already have the following 12
+   `innerHTML` assignments. The scan pins each **full source line**, including
+   whitespace, and checks exactly 12 pins in exactly seven files; it rejects
+   any edit to a pinned line or any new sink. A pin does **not** prove that
+   strings assembled on preceding lines remain escaped (aifocus-5rvq):
+
+   - `static/model-drops.html:310` — SVG assembled from the authored same-origin
+     `/model-drops.tsv`; displayed text is escaped, coordinates are numeric.
+   - `static/model-drops.html:398` — failed-fetch message, with `err.message`
+     passed through `esc()` before entering the error markup.
+   - `static/model-gap.html:294` — SVG from authored `/model-gap.json`; labels
+     and link attributes use `esc()`, drawing coordinates are numeric.
+   - `static/model-gap.html:319` — details from that authored JSON; model names
+     and feature labels use `esc()` before insertion.
+   - `static/model-gap.html:332` — fixed explanatory HTML and escaped
+     `data.updated` from the authored JSON.
+   - `static/pwa-cooked-baseline.html:214` — authored `FEATURES` list and local
+     browser feature-detection results, not caller-supplied strings.
+   - `static/pwa-cooked-baseline.html:229` — fixed summary markup with counts
+     derived from that authored list and feature detection.
+   - `static/pwa-cooked-comparator.html:258` — authored in-page `CAPABILITIES`
+     list selected by index, not a URL or external feed.
+   - `static/pwa-cooked-timeline.html:215` — SVG from the authored in-page
+     `APIS` list, with calculated numeric positions.
+   - `static/token-calculator-regional.html:351` — authored `REGIONS` list
+     used to build cards; salaries are formatted numbers.
+   - `static/token-calculator-regional.html:443` — calculator table from
+     numeric input controls and formatted model/region constants.
+   - `static/token-calculator.html:908` — calculator rows derived from numeric
+     input controls and formatted values.
+
+   None currently reads URL/search/hash, storage, remote or model output into
+   a sink. **Review trigger:** if any of those input boundaries change, a new
+   external/user-controlled value reaches a static page, or a pin needs
+   widening, replace the sink with DOM construction rather than extending the
+   exception. Re-opens if the guards are deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
