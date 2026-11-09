@@ -126,7 +126,12 @@ class Searcher:
                             time.sleep(wait)
                     return non_negative_int(data.get("total_count", 0), "github total_count")
             except urllib.error.HTTPError as err:
-                body = err.read().decode("utf-8", errors="replace")
+                # an error response is still a third-party response: cap it like
+                # the success path (aifocus-dv21)
+                raw_err = err.read(MAX_RESPONSE_BYTES + 1)
+                if len(raw_err) > MAX_RESPONSE_BYTES:
+                    raise CollectorDataError("github error response exceeds the 1 MiB cap")
+                body = raw_err.decode("utf-8", errors="replace")
                 retry_after = err.headers.get("Retry-After")
                 if err.code == 403 and "secondary rate limit" in body.lower():
                     # Measured 2026-11-01: commit search allows ~3-4 requests per
@@ -146,6 +151,11 @@ class Searcher:
                     continue
                 log(f"  [{err.code}] {body[:200]}")
                 return None
+            except CollectorDataError:
+                # a data error is not retryable: re-raise instead of falling
+                # into the generic network retry below, or the fail-loud
+                # contract becomes 12 retries and a swallowed error (aifocus-fi9t)
+                raise
             except Exception as exc:  # noqa: BLE001
                 log(f"  [network] {exc}; retrying in 10s")
                 time.sleep(10)

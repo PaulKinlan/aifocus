@@ -73,9 +73,10 @@ def main():
                 v = (p.get("adoption") or {}).get(tool.get("client", "mobile"))
                 if v is None:
                     continue
-                # httparchive adoption is a percentage; a value outside [0, 100]
-                # means the feed changed shape and the row would be wrong.
-                v = finite_in_range(v, 0, 100, f"httparchive {technology} {tool['name']} {d.isoformat()}")
+                # httparchive adoption is an ORIGIN COUNT (the module docstring
+                # says so; the committed CSV runs 72k..1.3M), not a percentage:
+                # validate finite and non-negative, with no upper bound.
+                v = finite_in_range(v, 0, None, f"httparchive {technology} {tool['name']} {d.isoformat()}")
                 end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
                 w.writerow([tool["name"], d.isoformat(), end.isoformat(), "monthly", int(v), report, 1])
                 rows += 1

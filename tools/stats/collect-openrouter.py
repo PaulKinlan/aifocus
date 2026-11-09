@@ -85,11 +85,16 @@ def share_rows(series, run_date, task_spend):
     rows = []
     for which, label in (("tokens", "tokens"), ("spend", "spend")):
         block = task_spend["data"][which]
-        window = int(block.get("windowDays", 30))
+        window = non_negative_int(block.get("windowDays", 30), f"openrouter windowDays ({which})")
         end = rd - timedelta(days=1)  # one snapshot per run, dated the last day of the window
         for cat in block["macroCategories"]:
+            # every macro category's share is validated like code_share()'s:
+            # a share is a fraction in [0, 1], and json.loads happily hands us
+            # NaN/Infinity for a broken feed (aifocus-09r5)
+            share = finite_in_range(cat.get("spendShare", cat.get("share", 0)), 0, 1,
+                                    f"openrouter {cat['label']} share of {label}")
             rows.append([f"{cat['label']} share of {label} (30 days)", end.isoformat(), end.isoformat(), "snapshot",
-                         round(float(cat.get("spendShare", cat.get("share", 0))) * 100, 2),
+                         round(share * 100, 2),
                          "https://openrouter.ai/rankings#task-spend", json.dumps({"window_days": window})])
     return rows
 
