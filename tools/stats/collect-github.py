@@ -124,12 +124,14 @@ class Searcher:
                         raise CollectorDataError("github search response is not valid JSON") from exc
                     if not isinstance(data, dict):
                         raise CollectorDataError("github search response is not an object")
+                    if "total_count" not in data:
+                        raise CollectorDataError("github search response has no total_count")
                     if remaining is not None and int(remaining) <= 2 and reset:
                         wait = int(reset) - int(time.time()) + 2
                         if wait > 0:
                             log(f"  [rate limit] sleeping {wait}s")
                             time.sleep(wait)
-                    return non_negative_int(data.get("total_count", 0), "github total_count")
+                    return non_negative_int(data["total_count"], "github total_count")
             except urllib.error.HTTPError as err:
                 # an error response is still a third-party response: cap it like
                 # the success path (aifocus-dv21)
@@ -154,8 +156,7 @@ class Searcher:
                     log(f"  [{err.code}] retrying in 10s")
                     time.sleep(10)
                     continue
-                log(f"  [{err.code}] {body[:200]}")
-                return None
+                raise CollectorDataError(f"github search HTTP {err.code} is not retryable")
             except CollectorDataError:
                 # a data error is not retryable: re-raise instead of falling
                 # into the generic network retry below, or the fail-loud
