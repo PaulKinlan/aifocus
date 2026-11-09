@@ -100,7 +100,10 @@
       margin: 0;
       cursor: pointer;
     }
-    .top-bar label.label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    /* aifocus-ut70: the label is the tap target, not the 15px checkbox inside it
+       (WCAG 2.2 SC 2.5.8 asks for 24x24 CSS px minimum). The checkbox stays
+       small; the label around it grows to 24px with a little padding. */
+    .top-bar label.label { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 2px 4px; cursor: pointer; }
     @media (max-width: 700px) {
       input[type="password"], input[type="text"], select {
         width: 100%;
