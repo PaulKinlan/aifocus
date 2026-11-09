@@ -165,8 +165,7 @@ class Searcher:
             except Exception as exc:  # noqa: BLE001
                 log(f"  [network] {exc}; retrying in 10s")
                 time.sleep(10)
-        log("  [failed] gave up after 12 attempts")
-        return None
+        raise CollectorDataError("github search failed after 12 attempts")
 
 
 def main():

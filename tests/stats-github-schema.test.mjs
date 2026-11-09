@@ -72,9 +72,23 @@ with patch.object(github.urllib.request, 'urlopen', retry_urlopen), patch.object
     assert github.Searcher('dummy', 'commits').count('query') == 42
     sleep.assert_called_once_with(10)
 assert len(calls) == 2
+
+calls = []
+def exhausted_urlopen(request, timeout):
+    calls.append(request)
+    raise urllib.error.HTTPError(request.full_url, 503, 'transient', {}, io.BytesIO(b'try later'))
+with patch.object(github.urllib.request, 'urlopen', exhausted_urlopen), patch.object(github.time, 'sleep') as sleep:
+    try:
+        github.Searcher('dummy', 'commits').count('query')
+    except CollectorDataError as exc:
+        assert '12 attempts' in str(exc), str(exc)
+    else:
+        raise AssertionError('exhausted retries returned None, silently dropping the period')
+    assert sleep.call_count == 12
+assert len(calls) == 12, len(calls)
 `;
 
-test("GitHub Search rejects invalid bodies, absent counts and non-retryable HTTP failures without retry", () => {
+test("GitHub Search fails loud for invalid responses and exhausted retries, but accepts transient recovery", () => {
   const result = spawnSync("python3", ["-B", "-c", probe], { cwd: root, encoding: "utf8", timeout: 10_000 });
   assert.equal(result.status, 0, `${result.error ?? ""}\n${result.stderr}\n${result.stdout}`);
 });
