@@ -21,6 +21,11 @@
       --bg-raised: #161b22;
       --bg-deep: #010409;
       --border: #30363d;
+      /* A field's border is the visual information that identifies it - an
+         empty input has nothing inside - so it carries WCAG 1.4.11's 3:1.
+         #6e7681 is 4.12:1 on --bg, 3.77:1 on --bg-raised, 4.47:1 on --bg-deep.
+         Panels and dividers keep the decorative --border. See aifocus-dz13. */
+      --border-strong: #6e7681;
       --text: #c9d1d9;
       --text-dim: #8b949e;
       --accent: #58a6ff;
@@ -80,7 +85,7 @@
     input[type="password"], input[type="text"], select {
       background: var(--bg-deep);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       padding: 6px 8px;
       font: inherit;
       border-radius: 3px;
@@ -200,7 +205,7 @@
       width: 100%;
       background: var(--bg-deep);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       padding: 10px 12px;
       font: inherit;
       border-radius: 3px;

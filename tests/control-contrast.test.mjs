@@ -112,3 +112,45 @@ test("the controls that carry their own border use the boundary token", () => {
   const close = blockAfter(palette, ".palette-close");
   assert.match(close, /border:\s*1px solid var\(--control-line\)/);
 });
+
+// aifocus-dz13: the where-prompts demo is its own static page with an inline
+// stylesheet, repeated in its three provider variants. It is dark-only, so
+// there is no second scheme where a bad boundary could pass, and the fields it
+// draws are the ones the page exists to get filled in.
+const DEMO = "static/where-prompts-run-demo/";
+const DEMO_FILES = ["index.html", "google.html", "openai.html"];
+const demoSource = (file) => read(DEMO + file);
+const styleOf = (source) => {
+  const open = source.indexOf("<style>");
+  const close = source.indexOf("</style>");
+  assert.ok(open >= 0 && close > open, "no inline stylesheet");
+  return source.slice(open + "<style>".length, close);
+};
+
+test("the demo variants share one stylesheet, so a field cannot be fixed in one copy only", () => {
+  const [first, ...rest] = DEMO_FILES.map((file) => styleOf(demoSource(file)));
+  for (const [i, style] of rest.entries()) {
+    assert.equal(style, first, `${DEMO_FILES[i + 1]} has drifted from ${DEMO_FILES[0]}`);
+  }
+});
+
+test("the demo's field boundary clears 3:1 against every surface it sits on", () => {
+  for (const file of DEMO_FILES) {
+    const tokens = declarations(blockAfter(styleOf(demoSource(file)), ":root"));
+    const line = tokens.get("border-strong");
+    assert.match(line ?? "", /^#[0-9a-f]{6}$/i, `${file}: no --border-strong`);
+    for (const surface of ["bg", "bg-raised", "bg-deep"]) {
+      const fill = tokens.get(surface);
+      assert.match(fill ?? "", /^#[0-9a-f]{6}$/i, `${file}: no --${surface}`);
+      const ratio = contrast(line, fill);
+      assert.ok(
+        ratio >= MIN,
+        `${file}: --border-strong ${line} on --${surface} ${fill} is ${ratio.toFixed(2)}:1, below ${MIN}:1`,
+      );
+    }
+    const style = styleOf(demoSource(file));
+    for (const rule of ['input[type="password"], input[type="text"], select', "\n    textarea "]) {
+      assert.match(blockAfter(style, rule), /border:\s*1px solid var\(--border-strong\)/, `${file}: ${rule.trim()}`);
+    }
+  }
+});
