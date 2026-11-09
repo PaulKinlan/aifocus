@@ -13,18 +13,22 @@
 // comment naming a sink token turns the gate red. Keep the token list in sync
 // with tests/where-prompts-demo-sinks.test.mjs.
 //
-// Matching runs on the canonicalized logical line, not the raw bytes: JS
-// decodes \uXXXX, \u{...} and \xXX escapes inside string and template
-// literals, and \uXXXX/\u{...} also inside identifiers, so el.inner\u0048TML
-// and el["inner\x48TML"] bind and execute as a real innerHTML assignment
-// while the raw source never spells the token (aifocus-552f, aifocus-nem2;
-// both demonstrated with new Function). Canonicalizing before the token and
+// Matching runs on the canonicalized logical line (tokens) and the whole
+// canonicalized source (split-token patterns), not the raw bytes: JS decodes
+// \uXXXX, \u{...} and \xXX escapes inside string and template literals, and
+// \uXXXX/\u{...} also inside identifiers, so el.inner\u0048TML and
+// el["inner\x48TML"] bind and execute as a real innerHTML assignment while
+// the raw source never spells the token (aifocus-552f, aifocus-nem2; both
+// demonstrated with new Function). Canonicalizing before the token and
 // pattern match makes the ban see the property the engine actually binds.
-// As with comments, an escaped mention that is not an executable assignment
-// also turns the gate red - that is the fail-safe posture, and ALLOWLIST
-// pins are the escape hatch. A backslash at end of line continues the
-// literal on the next physical line, so the scan joins continuations into
-// logical lines first (keeping each logical line's first physical number
+// Patterns run source-wide because the engine also allows an operand break
+// inside the bracket concat (el["inner" +<newline>"HTML"], aifocus-0p2e).
+// As with comments, an escaped or assembled mention that is not an
+// executable assignment also turns the gate red - that is the fail-safe
+// posture, and ALLOWLIST pins are the escape hatch. A backslash at end of
+// line continues the literal on the next physical line, so the scan joins
+// continuations into logical lines first (keeping each logical line's first
+// physical number
 // for the failure cite); without that, el["inner<newline>HTML"] is invisible
 // to any per-line scan.
 import test from "node:test";
@@ -46,7 +50,21 @@ const SINK_TOKENS = [
 ];
 // Sinks assembled by splitting the token across string concatenation evade a
 // literal ban: catch the bracket-access concat form (el["inner" + "HTML"]).
-const SINK_PATTERNS = [/\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/];
+// Sinks assembled by splitting the token across string concatenation evade a
+// literal ban: catch the bracket-access concat form (el["inner" + "HTML"]),
+// and the template-key form (el[inner${''}HTML]) once interpolations are
+// collapsed to the empty string - both evaluate to the same property name.
+const SINK_PATTERNS = [
+  /\[\s*["'`]inner["'`]\s*\+\s*["'`]HTML["'`]\s*\]/g,
+  // quotes are optional: a collapsed template key keeps its backticks
+  /\[\s*["'`]?innerHTML["'`]?\s*\]/g,
+];
+// Template interpolations collapse to nothing so a key assembled through one
+// (el[inner${''}HTML], aifocus-0p2e) normalises to what it evaluates to.
+// Fail-safe by construction: a dynamic key spelling the sink halves is
+// exactly the family this guard exists for, and ALLOWLIST pins are the
+// escape hatch for a genuine false positive.
+const TEMPLATE_INTERP = /\$\{[^}]*\}/g;
 
 // Decode \uXXXX, \u{...} and \xXX escapes so an escaped spelling of a token
 // is matched as the token. \u and \u{...} are decoded in identifiers too;
@@ -91,16 +109,48 @@ function logicalLines(source) {
 
 function sinkViolations(file, source) {
   const failures = [];
-  for (const { text, number } of logicalLines(source)) {
-    const line = canonicalize(text);
+  const prepared = logicalLines(source).map(({ text, number }) => ({
+    // Token ban: the escaped spelling, no interpolation collapse - a token
+    // must be spelled. Pattern ban: interpolations collapse, so a key
+    // assembled through one normalises to what it evaluates to.
+    tokenText: canonicalize(text),
+    patternText: canonicalize(text).replace(TEMPLATE_INTERP, ""),
+    raw: text,
+    number,
+  }));
+  for (const { tokenText, raw, number } of prepared) {
     for (const token of SINK_TOKENS) {
-      if (!line.includes(token)) continue;
+      if (!tokenText.includes(token)) continue;
       const allow = ALLOWLIST[file]?.[token];
-      if (allow && allow.test(text)) continue;
-      failures.push(`${file}:${number}: ${token}: ${text.trim()}`);
+      if (allow && allow.test(raw)) continue;
+      failures.push(`${file}:${number}: ${token}: ${raw.trim()}`);
     }
-    for (const pattern of SINK_PATTERNS) {
-      if (pattern.test(line)) failures.push(`${file}:${number}: split-token sink: ${text.trim()}`);
+  }
+  const flagged = new Set(failures.map((f) => f.split(":").slice(0, 2).join(":")));
+  // The split-token patterns run on the WHOLE canonicalized source, not per
+  // line: the engine allows an operand break inside the bracket concat, so
+  // el["inner" +\n"HTML"] binds "innerHTML" while no single line spells the
+  // shape (aifocus-0p2e). Their \\s* spans the newlines between the prepared
+  // lines; a failure cites the line the match starts on.
+  const joined = prepared.map((p) => p.patternText).join("\n");
+  const starts = [];
+  let offset = 0;
+  for (const p of prepared) {
+    starts.push({ offset, number: p.number });
+    offset += p.patternText.length + 1;
+  }
+  const lineNumberOf = (index) => {
+    let n = prepared[0]?.number ?? 1;
+    for (const s of starts) if (s.offset <= index) n = s.number;
+    return n;
+  };
+  for (const pattern of SINK_PATTERNS) {
+    for (const match of joined.matchAll(pattern)) {
+      const n = lineNumberOf(match.index);
+      // a line the token ban already flagged is already red; a second
+      // violation for the same line would only be noise
+      if (flagged.has(`${file}:${n}`)) continue;
+      failures.push(`${file}:${n}: split-token sink: ${match[0].trim()}`);
     }
   }
   return failures;
@@ -162,6 +212,12 @@ test("the sink guard catches executable sink assignments written with non-litera
     // Two physical lines joined by a backslash continuation: the runtime key
     // is "innerHTML" and the failure must cite the FIRST physical line.
     ['el["inner\\\nHTML"] = markup;', "innerHTML", 1],
+    // A plain operand break (no backslash): the engine folds the whitespace,
+    // so this binds "innerHTML" while each physical line is innocent-looking.
+    ['el["inner" +\n  "HTML"] = markup;', "split-token sink", 1],
+    // A key assembled through a template interpolation, which collapses to
+    // the empty string: the runtime key is "innerHTML" (aifocus-0p2e).
+    ['el[`inner${\'\'}HTML`] = markup;', "split-token sink", 1],
   ];
   for (const [sample, label, line] of caught) {
     const violations = sinkViolations("sample.js", sample);
@@ -182,6 +238,12 @@ test("the caught escaped spellings really bind the sink at runtime", () => {
   const joined = {};
   new Function("el", 'el["inner\\\nHTML"] = "PAYLOAD";')(joined);
   assert.deepEqual(Object.keys(joined), ["innerHTML"]);
+  const wrapped = {};
+  new Function("el", 'el["inner" +\n  "HTML"] = "PAYLOAD";')(wrapped);
+  assert.deepEqual(Object.keys(wrapped), ["innerHTML"]);
+  const templated = {};
+  new Function("el", "el[\`inner${''}HTML\`] = \"PAYLOAD\";")(templated);
+  assert.deepEqual(Object.keys(templated), ["innerHTML"]);
 });
 
 test("canonicalization neither flags clean lines nor unmasks the raw ban", () => {
@@ -194,6 +256,9 @@ test("canonicalization neither flags clean lines nor unmasks the raw ban", () =>
     String.raw`tip.innerHTML = "";`,
     String.raw`const hex = "\x41\x42";`,
     'const escaped = "line one\\\nline two";',
+    // A template key that does NOT spell the sink halves stays clean even
+    // though the collapse erases the interpolation.
+    'el[`name${i}`] = markup;',
   ];
   for (const sample of clean) {
     assert.deepEqual(sinkViolations("assets/js/stats-page.js", sample), [], `must not flag: ${JSON.stringify(sample)}`);
