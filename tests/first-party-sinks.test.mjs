@@ -237,8 +237,55 @@ function collectJs(dir) {
 
 const FILES = [...collectJs(path.join(repoRoot, "assets/js")), ...collectJs(path.join(repoRoot, "static"))];
 
+// Inline <script> bodies from the page templates (layouts/** and
+// themes/**/layouts/**). First-party script in a template is the same origin
+// and the same fail-safe rule - the WebMCP game tools and the 404 game-over
+// message live in inline script (aifocus-9xgd). Script tags with a src are
+// external files, already covered by the JS collectors above.
+function collectInlineScripts(dir, out = []) {
+  if (!fs.existsSync(dir)) return out;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) collectInlineScripts(full, out);
+    else if (entry.name.endsWith(".html")) {
+      const html = fs.readFileSync(full, "utf8");
+      const rel = path.relative(repoRoot, full);
+      const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+      let m;
+      let n = 0;
+      while ((m = re.exec(html))) {
+        if (/\bsrc\s*=/i.test(m[1]) || !m[2].trim()) continue;
+        n += 1;
+        const bodyStart = html.slice(0, m.index + m[0].indexOf(m[2]));
+        out.push({
+          file: rel,
+          label: `${rel} (inline script ${n}, starts at line ${bodyStart.split("\n").length})`,
+          source: m[2],
+        });
+      }
+    }
+  }
+  return out;
+}
+
+const INLINE_SCRIPTS = [
+  ...collectInlineScripts(path.join(repoRoot, "layouts")),
+  ...collectInlineScripts(path.join(repoRoot, "themes")),
+];
+
 test("first-party script inventory is non-trivial (an empty scan must not pass green)", () => {
   assert.ok(FILES.length >= 8, `expected at least 8 first-party scripts, found ${FILES.length}`);
+});
+
+test("the layouts inline-script scan sees the templates it exists for (an empty scan must not pass green)", () => {
+  assert.ok(
+    INLINE_SCRIPTS.length >= 4,
+    `expected at least 4 inline script bodies under layouts/ and themes/, found ${INLINE_SCRIPTS.length}`,
+  );
+  assert.ok(
+    INLINE_SCRIPTS.some((s) => s.file.endsWith("404.html")),
+    "the 404 page's inline script must be among the scanned bodies",
+  );
 });
 
 test("no first-party script contains a markup-sink token outside the pinned allowlist", () => {
@@ -246,6 +293,9 @@ test("no first-party script contains a markup-sink token outside the pinned allo
   for (const file of FILES) {
     const source = fs.readFileSync(path.join(repoRoot, file), "utf8");
     for (const failure of sinkViolations(file, source)) failures.push(failure);
+  }
+  for (const script of INLINE_SCRIPTS) {
+    for (const failure of sinkViolations(script.label, script.source)) failures.push(failure);
   }
   assert.deepEqual(
     failures,
