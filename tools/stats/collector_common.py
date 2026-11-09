@@ -67,4 +67,6 @@ def finite_in_range(value, low, high, label):
 
 def non_negative_int(value, label):
     """Return int(value) if it is a finite number >= 0; raise otherwise."""
+    if isinstance(value, bool):
+        raise CollectorDataError(f"{label}: not a number: {value!r}")
     return int(finite_in_range(value, 0, None, label))
