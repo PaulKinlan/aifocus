@@ -34,6 +34,7 @@
 // to any per-line scan.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -236,6 +237,41 @@ const STATIC_INLINE_PINS = {
   "static/token-calculator-regional.html": ["    container.innerHTML = REGIONS.map(r => `", "    table.innerHTML = html;"],
   "static/token-calculator.html": ["    tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');"],
 };
+// The five assignments whose right-hand side spans several lines also pin
+// every byte from the opening line through the closing line. A source change
+// inside an interpolation is not an edit to the opening line (aifocus-m1bw).
+const MULTILINE_STATIC_PINS = {
+  "static/model-gap.html": [
+    { start: '      document.getElementById("note").innerHTML =', end: '        \'. Source data: <a href="/model-gap.json">/model-gap.json</a>.\';', sha256: "8fa91ec9a78608c23f83b4cacabaac92413ec5ca0a86723f21474906227811f3" },
+  ],
+  "static/pwa-cooked-baseline.html": [
+    { start: "  row.innerHTML = `", end: "  `;", sha256: "c73a284c267dd8bbddca638d5b09b9ecbb7d24a7144731d5d05caede1fea6f33" },
+    { start: "summary.innerHTML =", end: "  `The difference is the post.`;", sha256: "615e0885ae833621aac46d81c7c6c318a061fb33e1b6298342472f9c573331ce" },
+  ],
+  "static/pwa-cooked-comparator.html": [
+    { start: "  detail.innerHTML = `", end: "  `;", sha256: "5803cdbf35dc7e25c3e7b3d3f0dd607eb45cfe654b3ba565f47d7f9fdf6ed143" },
+  ],
+  "static/token-calculator-regional.html": [
+    { start: "    container.innerHTML = REGIONS.map(r => `", end: "    `).join('');", sha256: "00d7c68c415f4b673de181d0cf910e56b8aafa48262142893516f4c271902f13" },
+  ],
+};
+function multilinePinProblems(script) {
+  const problems = [];
+  const lines = logicalLines(script.source).map(({ text }) => text);
+  for (const { start, end, sha256 } of MULTILINE_STATIC_PINS[script.file] ?? []) {
+    const starts = lines.flatMap((line, i) => line === start ? [i] : []);
+    const ends = lines.flatMap((line, i) => line === end && i > starts[0] ? [i] : []);
+    if (starts.length !== 1 || ends.length !== 1) {
+      problems.push(`${script.file}: missing or ambiguous multi-line sink boundary: ${start}`);
+      continue;
+    }
+    const span = lines.slice(starts[0], ends[0] + 1).join("\n");
+    if (createHash("sha256").update(span).digest("hex") !== sha256) {
+      problems.push(`${script.file}: multi-line sink body changed: ${start}`);
+    }
+  }
+  return problems;
+}
 const ALLOWLIST = {
   "assets/js/stats-page.js": {
     innerHTML: /^\s*tip\.innerHTML = "";\s*$/,
@@ -340,6 +376,16 @@ test("static inline scripts are scanned and each pre-existing sink pin stays liv
     }
   }
   assert.equal(pins, 12, "all twelve existing static assignments need exact-statement pins");
+  const spanPins = Object.values(MULTILINE_STATIC_PINS).flat();
+  assert.equal(spanPins.length, 5, "all five multi-line statements need full-span pins");
+  for (const [file, spans] of Object.entries(MULTILINE_STATIC_PINS)) {
+    for (const { start } of spans) assert.ok(STATIC_INLINE_PINS[file]?.includes(start), `${file}: span without a statement pin`);
+  }
+  for (const script of staticScripts) assert.deepEqual(multilinePinProblems(script), []);
+  const baseline = staticScripts.find((script) => script.file === "static/pwa-cooked-baseline.html");
+  const changed = baseline.source.replace('rel="noopener">${f.name}</a></div>', 'rel="noopener">${location.hash}</a></div>');
+  assert.notEqual(changed, baseline.source, "the regression must change a template interpolation");
+  assert.match(multilinePinProblems({ ...baseline, source: changed })[0], /multi-line sink body changed/);
   const probe = inlineScriptsInHtml('<script>document.body.innerHTML = location.hash;</script>', "static/rev-probe.html");
   assert.equal(probe.length, 1);
   assert.match(sinkViolations(probe[0].file, probe[0].source, probe[0].label)[0], /innerHTML/);
