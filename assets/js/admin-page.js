@@ -1,5 +1,7 @@
 // /admin/: moderation queue for reader notes and comments.
 
+import { safeHref } from "./safe-href.js";
+
 const statusEl = document.querySelector("#mod-status");
 const list = document.querySelector("#mod-list");
 const tabs = [...document.querySelectorAll(".mod-tabs button")];
@@ -40,9 +42,10 @@ const renderItem = (item) => {
   const type = document.createElement("span");
   type.textContent = item.type;
   // Signed-in writers link to the profile they signed in with.
-  const who = document.createElement(item.author_profile_url ? "a" : "span");
-  if (item.author_profile_url) {
-    who.href = item.author_profile_url;
+  const authorHref = safeHref(item.author_profile_url);
+  const who = document.createElement(authorHref ? "a" : "span");
+  if (authorHref) {
+    who.href = authorHref;
     who.rel = "noopener noreferrer";
     who.target = "_blank";
   }
@@ -94,9 +97,10 @@ const renderTrusted = (user) => {
   li.className = "mod-item";
   const meta = document.createElement("p");
   meta.className = "mod-meta";
-  const name = document.createElement(user.profile_url ? "a" : "span");
-  if (user.profile_url) {
-    name.href = user.profile_url;
+  const userHref = safeHref(user.profile_url);
+  const name = document.createElement(userHref ? "a" : "span");
+  if (userHref) {
+    name.href = userHref;
     name.rel = "noopener noreferrer";
     name.target = "_blank";
   }
@@ -124,9 +128,10 @@ const loadTrusted = async () => {
 };
 
 const profileLink = (user) => {
-  const name = document.createElement(user.profile_url ? "a" : "span");
-  if (user.profile_url) {
-    name.href = user.profile_url;
+  const href = safeHref(user.profile_url);
+  const name = document.createElement(href ? "a" : "span");
+  if (href) {
+    name.href = href;
     name.rel = "noopener noreferrer";
     name.target = "_blank";
   }

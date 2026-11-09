@@ -61,12 +61,13 @@ anyone who can read a backup, a replica or a debug session".
 | Metering | a per-IP budget for reader writes (30/hour), search (30/hour), reads (600/hour: `/api/reader/state`, `/api/account` and `/api/auth/me` share one `read_events` budget), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search, read and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `read_events`, `auth_start_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `functions/_lib/reader.js reserveWriteEvent reserveReadEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/reader/state.js`, `functions/api/account.js`, `functions/api/auth/me.js`, `functions/api/ask.js`, `functions/_lib/og.js` |
 | Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. The read meter degrades differently by design: a missing `read_events` table falls back to a per-isolate in-memory cap instead of a 503 (aifocus-s9o), which is why this list does not name it. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
-| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard | `functions/_lib/access.js`, `functions/api/admin/*` |
+| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard. The browser attaches that JWT to any same-origin request, so the `/admin/` **page** runs under its own CSP with `script-src 'self'` - no `'unsafe-inline'`, no third-party hosts - and `head.html` skips the gtag block, the inline speculation rules and the `onload` font promotion for `type: admin`, so content-page script trust is not shared with the moderator's authority (aifocus-wwfp). `/api/admin/*` itself is unaffected: it is JSON behind the per-handler guard | `functions/_lib/access.js`, `functions/api/admin/*`, `static/_headers` `/admin/*`, `themes/aifocustheme/layouts/_partials/head.html` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
 | OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `functions/_lib/auth.js` |
 | IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
-| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
+| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), a narrowed `/admin/*` CSP (`script-src 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
+| Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 
 The edge applies `static/_headers` to static responses only, never to
@@ -78,9 +79,11 @@ therefore carry the same baseline from code: `functions/_lib/headers.js`
 into `json()`, the OAuth redirect helper, the OG renderer, and the responses
 `_middleware.js` itself constructs. `tests/security-headers.test.mjs` fails
 the gate if the code-side set and the `_headers` `/*` block drift apart, or if
-a Function response path is built without the baseline. A route that needs
-different headers says so in its handler, and the set-if-absent rule keeps
-that value.
+a Function response path is built without the baseline, and if the `/admin/*`
+policy stops being the `/*` policy with `script-src` narrowed to `'self'` (the
+one duplicated block, deliberately: the two must change together). A route that
+needs different headers says so in its handler, and the set-if-absent rule
+keeps that value.
 
 ## 5. Declared non-issues
 
@@ -168,6 +171,13 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 - **The Access guard is per route.** A new module under `functions/api/admin/`
   that forgets `verifyAccess()` is unguarded. Reviewing that directory for the
   call is the control until a prefix-level guard exists.
+- **The narrowed `/admin/*` CSP trusts first-party script.** `script-src 'self'`
+  removes inline script and third-party origins from the moderation page and its
+  `on*` handlers, but a bundled module - or anything vendored into `js/` - still
+  runs with the moderator's Access cookie attached. The boundary is "our code as
+  built", not "no code"; treating a first-party dependency as trusted is the
+  residual risk, and the reason the admin page loads no analytics at all rather
+  than allowlisting it.
 - **IP hashes are brute-forceable by a database reader** while the salt lives
   in the same database (aifocus-710): the IPv4 space is small enough to
   enumerate against a known salt.
@@ -182,11 +192,14 @@ Re-read this file when a change:
 - adds or moves a route under `functions/`, especially under `functions/api/admin/`;
 - adds a binding, a `[vars]` entry, or a secret;
 - adds a migration, or changes what an existing table stores about a person;
-- changes `static/_headers` allowlists, or adds an inline script;
+- changes `static/_headers` allowlists, or adds an inline script, an `on*`
+  handler or a third-party `<script>` to a template - `head.html` guards those
+  surfaces for `type: admin`, and a new one needs the same guard or it silently
+  stops working on `/admin/` (the `/admin/*` policy is narrower than `/*`);
 - makes a new caller of `reserveWriteEvent()`, `reserveSearchSlot()`, `askLog`
   or the og render reservation, or moves that call relative to the work it
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
-  redirect or an `innerHTML`;
+  redirect, an `innerHTML` or an `href`;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.
