@@ -52,14 +52,17 @@ const INERT_TYPES = new Set([
   "importmap",
 ]);
 
-// Consume each complete value before checking attribute names: text like
-// data-note=" src=x " is not an external script source (aifocus-mdk3).
-function hasSrcAttribute(attrs) {
-  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?/g;
+// Consume each complete value before reading names: quoted src= and type=
+// lookalikes are not attributes (aifocus-mdk3, aifocus-ebir). HTML keeps the
+// first occurrence when an attribute is repeated.
+function scriptAttributes(attrs) {
+  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  const values = new Map();
   for (const match of attrs.matchAll(attr)) {
-    if (match[1].toLowerCase() === "src") return true;
+    const name = match[1].toLowerCase();
+    if (!values.has(name)) values.set(name, match[2] ?? match[3] ?? match[4] ?? "");
   }
-  return false;
+  return values;
 }
 
 // Attribute parsing is deliberately narrow: the build output is Hugo's own,
@@ -67,12 +70,12 @@ function hasSrcAttribute(attrs) {
 // this body inline? A missing or non-JS type means yes.
 function scriptBodies(html) {
   const bodies = [];
-  const re = /<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi;
+  const re = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
   let match;
   while ((match = re.exec(html)) !== null) {
-    const attrs = match[1] ?? "";
-    if (hasSrcAttribute(attrs)) continue;
-    const type = /(^|\s)type\s*=\s*["']?([^"'\s>]+)/i.exec(attrs)?.[2]?.toLowerCase();
+    const attrs = scriptAttributes(match[1] ?? "");
+    if (attrs.has("src")) continue;
+    const type = attrs.get("type")?.trim().toLowerCase();
     if (type && INERT_TYPES.has(type)) continue;
     bodies.push(match[2]);
   }
