@@ -637,13 +637,15 @@ const SRC_GUARDED = /safeImgSrc\(/;
 // sneak an unguarded avatar past this guard while it stayed green
 // (aifocus-bnnl). So a name declared from an expression mentioning the field
 // counts as the field's presence from then on, transitively (an alias of an
-// alias is the same value). Two deliberate limits keep this a guard on how
-// our code binds provider values, not a general dataflow analysis: a binding
-// that already runs the guard (const avatarSrc = safeImgSrc(user.avatarUrl))
-// is sanitized and never registers - reader.js and account-page.js do exactly
-// this; and a name only registers through a direct declaration, so
-// destructuring and multi-declarator lines are outside the claim, as they
-// already were for multi-line expressions.
+// alias is the same value). "Sanitized" means the guarded call SWALLOWS the
+// value as its whole expression; a fallback chain keeps the raw path reachable
+// (safeImgSrc(x) || user.avatarUrl hands out the raw field when the sanitizer
+// returns falsey), so guarded call spans are stripped and only the remainder
+// is tested (aifocus-wcpi). Two deliberate limits keep this a guard on how
+// our code binds provider values, not a general dataflow analysis: only a
+// direct declaration registers (destructuring and multi-declarator lines
+// stay outside the claim), and what is testable is line-scoped - the same
+// limits the multi-line-expression case always had.
 function aliasMentionRe(source, field, guard) {
   const names = new Set();
   const declaration = /(?:const|let|var)\s+(\w+)\s*=\s*([^;\n]*)/g;
@@ -651,9 +653,9 @@ function aliasMentionRe(source, field, guard) {
     let grew = false;
     for (const match of source.matchAll(declaration)) {
       const name = match[1];
-      const rhs = match[2];
-      if (names.has(name) || guard.test(rhs)) continue;
-      const carrier = new RegExp(field.source + (names.size ? "|" + [...names].map((n) => `\\b${n}\\b`).join("|") : ""), field.flags).test(rhs);
+      if (names.has(name)) continue;
+      const remainder = stripGuardedSpans(match[2], guard);
+      const carrier = new RegExp(field.source + (names.size ? "|" + [...names].map((n) => `\\b${n}\\b`).join("|") : ""), field.flags).test(remainder);
       if (carrier) {
         names.add(name);
         grew = true;
@@ -662,6 +664,30 @@ function aliasMentionRe(source, field, guard) {
     if (!grew) break;
   }
   return names.size ? new RegExp(`\\b(?:${[...names].join("|")})\\b`) : null;
+}
+
+// Remove every balanced guard(...) call span from an expression, so a field
+// mentioned only INSIDE a sanitizer call counts as sanitized and a field left
+// in the remainder does not. An unclosed span strips to the end of the line:
+// text a paren scan cannot resolve is not executable JS, so how it reads does
+// not matter.
+function stripGuardedSpans(rhs, guard) {
+  const call = new RegExp(guard.source, "g");
+  let result = "";
+  let copied = 0;
+  for (let match; (match = call.exec(rhs)) !== null; ) {
+    let depth = 1;
+    let i = match.index + match[0].length;
+    while (i < rhs.length && depth > 0) {
+      if (rhs[i] === "(") depth += 1;
+      else if (rhs[i] === ")") depth -= 1;
+      i += 1;
+    }
+    result += rhs.slice(copied, match.index);
+    copied = i;
+    call.lastIndex = i;
+  }
+  return result + rhs.slice(copied);
 }
 
 function unguardedAvatarSrcs(source) {
@@ -712,6 +738,21 @@ test("the avatar-src guard catches the shapes it exists for", () => {
   // that is exactly the guarded shape (aifocus-bnnl follow-up).
   assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);\nimg.src = avatarSrc;"), []);
   assert.deepEqual(unguardedAvatarSrcs("const img = el(\"img\", { src: avatarSrc, alt: \"\" });\nconst avatarSrc = safeImgSrc(person?.avatarUrl);"), []);
+  // But a sanitizer MENTION is not a sanitizer WRAP: in a fallback chain the
+  // raw field is reachable whenever the sanitizer returns falsey, so the
+  // alias must still fail the guard (aifocus-wcpi).
+  assert.equal(
+    unguardedAvatarSrcs('const avatar = safeImgSrc("https://example.com") || user.avatarUrl;\nimg.src = avatar;').length,
+    1,
+  );
+  // The field only INSIDE the guarded call stays sanitized.
+  assert.deepEqual(unguardedAvatarSrcs("const avatar = safeImgSrc(user.avatarUrl) || LOCAL_FALLBACK;\nimg.src = avatar;"), []);
+  // ...and the fallback rule is transitive like any alias: the raw field
+  // survives the guarded call in the middle of the chain.
+  assert.equal(
+    unguardedAvatarSrcs("const a = user.avatarUrl;\nconst b = safeImgSrc(a) || a;\nimg.src = b;").length,
+    1,
+  );
 });
 
 test("the profile-href guard catches the shapes it exists for", () => {
@@ -728,6 +769,11 @@ test("the profile-href guard catches the shapes it exists for", () => {
   // The guarded shape, and a line that merely reads the field, must pass.
   assert.deepEqual(unguardedHrefAssignments("const href = safeHref(user.profile_url);"), []);
   assert.deepEqual(unguardedHrefAssignments("name.textContent = user.profile_url;"), []);
-  // Same sanitized-alias rule as the avatar guard.
+  // Same sanitized-alias rule as the avatar guard - and a sanitizer mention
+  // with a raw fallback still fails it (aifocus-wcpi).
   assert.deepEqual(unguardedHrefAssignments("const link = safeHref(user.profile_url);\nwrap.href = link;"), []);
+  assert.equal(
+    unguardedHrefAssignments('const link = safeHref("https://example.com") || user.profileUrl;\nwrap.href = link;').length,
+    1,
+  );
 });
