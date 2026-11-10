@@ -56,7 +56,9 @@ const INERT_TYPES = new Set([
 // lookalikes are not attributes (aifocus-mdk3, aifocus-ebir). HTML keeps the
 // first occurrence when an attribute is repeated.
 function scriptAttributes(attrs) {
-  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+  // HTML keeps quote characters inside an unquoted value (a parse error, but
+  // still part of that value), so consume through whitespace or >.
+  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
   const values = new Map();
   for (const match of attrs.matchAll(attr)) {
     const name = match[1].toLowerCase();
@@ -65,19 +67,54 @@ function scriptAttributes(attrs) {
   return values;
 }
 
+// Find the closing > of a script start tag. A quote after = opens a quoted
+// value, but a quote already inside an unquoted value is an ordinary character
+// to the HTML tokenizer; treating it as an opener can hide the whole tag.
+function scriptTagEnd(html, start) {
+  let quote = "";
+  let unquoted = false;
+  let afterEqual = false;
+  for (let i = start; i < html.length; i++) {
+    const ch = html[i];
+    if (quote) {
+      if (ch === quote) quote = "";
+    } else if (unquoted) {
+      if (ch === ">") return i;
+      if (/\s/.test(ch)) unquoted = false;
+    } else if (ch === ">") {
+      return i;
+    } else if (afterEqual) {
+      if (/\s/.test(ch)) continue;
+      afterEqual = false;
+      if (ch === '"' || ch === "'") quote = ch;
+      else unquoted = true;
+    } else if (ch === "=") {
+      afterEqual = true;
+    }
+  }
+  return -1;
+}
+
 // Attribute parsing is deliberately narrow: the build output is Hugo's own,
 // and this needs to answer exactly one question per script - does a browser run
 // this body inline? A missing or non-JS type means yes.
 function scriptBodies(html) {
   const bodies = [];
-  const re = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
+  const open = /<script(?=[\s/>])/gi;
+  const close = /<\/script\s*>/gi;
   let match;
-  while ((match = re.exec(html)) !== null) {
-    const attrs = scriptAttributes(match[1] ?? "");
-    if (attrs.has("src")) continue;
-    const type = attrs.get("type")?.trim().toLowerCase();
-    if (type && INERT_TYPES.has(type)) continue;
-    bodies.push(match[2]);
+  while ((match = open.exec(html)) !== null) {
+    const end = scriptTagEnd(html, open.lastIndex);
+    if (end < 0) break;
+    close.lastIndex = end + 1;
+    const closing = close.exec(html);
+    if (!closing) break;
+    const attrs = scriptAttributes(html.slice(open.lastIndex, end));
+    if (!attrs.has("src")) {
+      const type = attrs.get("type")?.trim().toLowerCase();
+      if (!type || !INERT_TYPES.has(type)) bodies.push(html.slice(end + 1, closing.index));
+    }
+    open.lastIndex = close.lastIndex;
   }
   return bodies;
 }

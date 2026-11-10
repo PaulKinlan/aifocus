@@ -86,6 +86,22 @@ test("quoted type= text cannot classify an executable inline script as inert", (
   assert.equal(auditProblems({ built: altered, declared: hashes, others: ["'self'"] }).missing.length, 1);
 });
 
+test("quotes inside unquoted attribute values cannot hide the script start tag", () => {
+  const bodies = [
+    "<script data-x=it's>one()</script>",
+    '<script data-x=a"b>two()</script>',
+    '<script data-x=it\'s/type=application/json>three()</script>',
+    '<script data-x=it\'s type="application/json">{"inert":true}</script>',
+    '<script data-x=" > " type="module">four()</script>',
+  ];
+  const dir = site({ "index.html": page(...bodies) });
+  assert.equal(collectHashes(dir).length, 4, "unquoted quotes are part of values; only the real JSON type is inert");
+  const one = collectHashes(site({ "index.html": page(bodies[0]) }));
+  assert.equal(one.length, 1, "an unmatched apostrophe in an unquoted value still leaves executable inline code");
+  const changed = collectHashes(site({ "index.html": page("<script data-x=it's>changed()</script>") }));
+  assert.equal(auditProblems({ built: changed, declared: one, others: ["'self'"] }).missing.length, 1);
+});
+
 test("data blocks that are not enforced are left out of the hash list", () => {
   const dir = site({
     "index.html": page(
