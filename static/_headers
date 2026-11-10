@@ -68,8 +68,10 @@
 # running in the admin page's context (a third-party analytics/widget dependency,
 # or one inline-script injection anywhere on the origin) can call
 # /api/admin/queue, /api/admin/moderate, /api/admin/trust, /api/admin/accounts or
-# /api/admin/og with full moderator authority. Under the /* policy that script is
-# allowed: script-src carries 'unsafe-inline' and five third-party hosts. This
+# /api/admin/og with full moderator authority. Under the /* policy a third-party
+# script is allowed: script-src carries the twelve pinned hashes plus five
+# third-party hosts - an injected inline <script> does not run there, but any
+# pinned body does, and a compromised third-party dependency loads freely. This
 # block repeats the baseline policy with script-src 'self' only, so a browser
 # enforcing both policies allows neither inline script nor a third-party origin
 # on the admin page, while every other directive keeps the baseline value. The
