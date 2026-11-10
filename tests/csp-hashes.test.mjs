@@ -6,6 +6,7 @@
 // style-src keeps its own, and the rewrite preserves every other token.
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -33,6 +34,10 @@ const site = (pages) => {
 };
 
 const page = (...scripts) => `<html><body>${scripts.join("")}</body></html>`;
+
+// The hash the tool computes for one script body, for tests that need to
+// assert a specific body is (or is not) pinned.
+const hashOf = (body) => `'sha256-${createHash("sha256").update(body, "utf8").digest("base64")}'`;
 
 test("script bodies the browser enforces are hashed; inert data blocks are not", () => {
   const dir = site({
@@ -341,4 +346,82 @@ test("attribute names are matched with their values blanked, so a quoted mention
 test("the committed build carries no inline execution surface the policy blocks", () => {
   const inline = collectInlineExecSurfaces(path.join(ROOT, "public"));
   assert.deepEqual(inline, [], "public/ must be built before this test runs (the gate builds first)");
+});
+
+// aifocus-o561: </script foo> and </script/> close a script in a browser, but
+// the old close regex accepted only whitespace before '>', so the bodies on
+// both sides merged into one hash and NEITHER real body was pinned - the
+// browser blocked both while the gate reported the site clean.
+test("an end tag with attributes or a trailing solidus closes the script, so bodies hash separately (aifocus-o561)", () => {
+  const dir = site({
+    "index.html": page(
+      "<script>alpha()</script foo>plainText()<script>beta()</script>",
+      "<script>gamma()</script/><script>delta()</script>",
+    ),
+  });
+  const hashes = collectHashes(dir);
+  const expected = [hashOf("alpha()"), hashOf("beta()"), hashOf("delta()"), hashOf("gamma()")].sort();
+  assert.deepEqual(hashes, expected);
+  assert.ok(!hashes.includes(hashOf("plainText()")), "text between the two scripts is not script");
+});
+
+// Same class, rarer shape: inside <!-- -->, an inner </script> only pops the
+// double-escaped state and must not close the element.
+test("a script body containing <!-- and <script> does not split at the inner </script>", () => {
+  const body = "<!--<script>inner()</script>-->";
+  const dir = site({ "index.html": page(`<script>${body}</script>`) });
+  assert.deepEqual(collectHashes(dir), [hashOf(body)]);
+});
+
+// aifocus-ji4m: the tokenizer spec keeps a quote or '<' INSIDE an attribute
+// name (parse error, but consumed), so <script src"=x> gives the browser one
+// attribute named `src"` and no src at all. Reading the name as `src` invents
+// an external script and drops an executing body from the hash list.
+test("a quote or '<' in an attribute name is part of the name, so no src or href is invented (aifocus-ji4m)", () => {
+  const dir = site({
+    "index.html": page(
+      '<script src"=x>bodyOne()</script>',
+      "<script a<b=1>bodyTwo()</script>",
+      '<script src="/loader.js">external()</script>',
+    ),
+  });
+  const hashes = collectHashes(dir);
+  assert.ok(hashes.includes(hashOf("bodyOne()")), "the src\" tag is inline: its body must be hashed");
+  assert.ok(hashes.includes(hashOf("bodyTwo()")), "the a<b tag is inline: its body must be hashed");
+  assert.ok(!hashes.includes(hashOf("external()")), "a real src still makes the body external");
+  // And on the scan side: onclick" is not an event handler attribute, and
+  // href" is not a URL attribute, exactly as the browser sees them.
+  const surfaces = inlineExecSurfaces('<a href"=javascript:alert(1)><span onclick"=x>y</span></a>');
+  assert.deepEqual(surfaces.handlers, []);
+  assert.deepEqual(surfaces.urls, []);
+});
+
+// aifocus-pimy: one tokenizer for both scans. Custom tag names carry '_' and
+// '.' like any other character; markup inside comments and inside script text
+// parses as comment and text nodes, so scanning it as start tags reported
+// handlers and javascript: URLs the browser never sees.
+test("both scans read the parsed tree: custom tag names are real, comments and script text are not markup (aifocus-pimy)", () => {
+  assert.deepEqual(
+    inlineExecSurfaces('<my_element onclick="x()">y</my_element>').handlers,
+    [{ tag: "my_element", attr: "onclick" }],
+  );
+  assert.deepEqual(
+    inlineExecSurfaces("<font.face onload=x>y</font.face>").handlers,
+    [{ tag: "font.face", attr: "onload" }],
+  );
+  // tag-open needs an ASCII letter: <2foo is text, not an element, so there is
+  // no handler for the browser to refuse either.
+  assert.deepEqual(inlineExecSurfaces("<2foo onclick=x>").handlers, []);
+  const commented = inlineExecSurfaces('<!-- <span onclick=x> <a href="javascript:alert(1)"> -->');
+  assert.deepEqual(commented.handlers, []);
+  assert.deepEqual(commented.urls, []);
+  const inString = inlineExecSurfaces(
+    '<script>var s = "<a href=\\"javascript:alert(1)\\" onclick=\\"x\\">";</script>',
+  );
+  assert.deepEqual(inString.handlers, []);
+  assert.deepEqual(inString.urls, []);
+  // Namespace-prefixed URL attributes keep working (parse5 splits xlink off as
+  // a prefix; the scan must match it).
+  const svg = inlineExecSurfaces('<svg><a xlink:href="javascript:alert(1)">x</a></svg>');
+  assert.deepEqual(svg.urls.map((u) => `${u.tag}/${u.attr}`), ["a/xlink:href"]);
 });
