@@ -343,14 +343,17 @@ npm run deploy:app -- demos/packing-list
 
 It prints your app's address, `https://packing-list.<your-subdomain>.workers.dev/`. Add `--dev` to try it locally first. There's also a "Deploy one app" GitHub Actions workflow if you'd rather not deploy from your machine; [Deploying one app](https://extensibleweb.app/docs/guide/deploying-an-app) has the details.
 
-I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). This certainly isn't complete nor production-ready yet, and I'm not sure if this will take off or be the future, but I can't not explore these concepts especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
+I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). 
+
+Is this the future of web apps? I don't know. I think it's compelling and I think it offers a practical vision for how the web can continue to evolve. But it's not without it's downsides. It's hard enough for developers to think about how to componentize your projects, imagine a normal person using your software? To that extent, I really think this will be "agent-led", i.e, you use the Agent system built into help you mold and craft the tools you use. Also, this certainly isn't complete nor production-ready yet, I built it over 4 days with an LLM after all.  
+
+For me though, I can't not explore these concepts especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
 
 I even recreated the Markdown Editor mentioned at the start of this post as an extensible set of components using this very platform.
 
 {{< figure src="/images/extensible-web-apps/screenshot-2026-11-10-at-19.19.53.png" alt="" caption="Markdown Editor written as an Extensible Web App" >}}
 
 So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint (I promise). I would love you to have a look and send me feedback on this experiment and if you are working on something similar.
-
 
 If you want to learn more, here are some good links to get started: 
 
