@@ -18,6 +18,7 @@ import {
   stripMarkdown,
   indexByPath,
   rankArticles,
+  loadArticles,
 } from "../functions/api/search.js";
 
 const MIGRATIONS = ["0001_reader.sql", "0007_search_log.sql"].map((f) =>
@@ -430,3 +431,45 @@ test("48h of reservations for one IP stays strictly bounded by the window (at mo
   assert.equal(count.n, SEARCHES_PER_HOUR, "table contains only active window rows (30), not 48h history (1,440)");
 });
 
+test("loadArticles has exactly one read path: a missing ASSETS binding fails loud instead of fetching the public URL", async () => {
+  // aifocus-z92p: the old code fell back to fetch() of the same origin when the
+  // binding was absent, so /index.json had a second, undocumented read path that
+  // went back out through the edge. On Pages ASSETS always exists, so the only
+  // thing that fallback could ever do is change how a broken deployment fails.
+  const realFetch = globalThis.fetch;
+  let fetched = 0;
+  globalThis.fetch = async () => {
+    fetched += 1;
+    throw new Error("loadArticles must not reach the network");
+  };
+  try {
+    await assert.rejects(
+      () => loadArticles({}, "https://aifoc.us"),
+      /index\.json: ASSETS binding missing/,
+      "a missing binding must throw, not fall back to fetch()",
+    );
+    await assert.rejects(
+      () => loadArticles(undefined, "https://aifoc.us"),
+      /index\.json: ASSETS binding missing/,
+      "an undefined env must throw too",
+    );
+    assert.equal(fetched, 0, "no second read path: fetch() must not be called");
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  // ...and the single path it does have returns the articles it reads from it
+  const calls = [];
+  const env = {
+    ASSETS: {
+      fetch: async (request) => {
+        calls.push(new URL(request.url).pathname);
+        return new Response(JSON.stringify({ articles: [{ url: "/posts/one/", title: "One" }] }), { status: 200 });
+      },
+    },
+  };
+  const articles = await loadArticles(env, "https://aifoc.us");
+  assert.deepEqual(calls, ["/index.json"], "reads the one documented path");
+  assert.deepEqual(articles.map((a) => a.url), ["/posts/one/"]);
+  assert.equal(fetched, 0, "still no network fetch on the success path");
+});

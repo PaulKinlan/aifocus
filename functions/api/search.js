@@ -179,8 +179,19 @@ export function rankArticles(chunks, articlesByPath, limit) {
 }
 
 export async function loadArticles(env, origin) {
-  const request = new Request(new URL("/index.json", origin));
-  const response = env?.ASSETS ? await env.ASSETS.fetch(request) : await fetch(request);
+  // One read path only: the ASSETS binding. This used to fall back to a plain
+  // fetch() of the public URL when the binding was absent, which opened a
+  // second, undocumented path to /index.json (aifocus-z92p): a real network hop
+  // back through the edge from inside the Function, outside the meter and
+  // outside anything this repo documents. On Pages the binding always exists,
+  // so the fallback was dead in production and reachable everywhere else.
+  // Fail loud instead - an unreadable index is a broken deployment, not a
+  // reason to invent a route to the file.
+  const assets = env?.ASSETS;
+  if (!assets || typeof assets.fetch !== "function") {
+    throw new Error("index.json: ASSETS binding missing");
+  }
+  const response = await assets.fetch(new Request(new URL("/index.json", origin)));
   if (!response.ok) throw new Error(`index.json: HTTP ${response.status}`);
   const index = await response.json();
   return Array.isArray(index?.articles) ? index.articles : [];
