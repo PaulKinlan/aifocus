@@ -475,7 +475,71 @@ def case_github_network_error_still_retries():
         assert len(stub.sleeps) == 1, stub.sleeps
 
 
+# --- collector_common: the shared numeric guards, on their own ----------------
+# Every collector validates through finite_in_range()/non_negative_int(), but the
+# cases above only reach them through a collector's happy shape. A guard that
+# accepted the wrong TYPE (aifocus-6c7d: JSON `true` became the count 1) or let
+# non-numeric text through as NaN could therefore stay green, because the shape
+# the collector happens to produce never exercises it. These cases drive the
+# helpers directly, with the inputs a broken feed actually produces: a missing
+# field (None), text that is not a number, and a JSON boolean.
+
+def case_common_rejects_non_numeric():
+    for bad in ("n/a", "1,312,185", "NaN%", "", " ", None, [], {}, object()):
+        expect_data_error(lambda b=bad: common.non_negative_int(b, "origin count"),
+                          f"non_negative_int {bad!r}")
+        expect_data_error(lambda b=bad: common.finite_in_range(b, 0, None, "origin count"),
+                          f"finite_in_range {bad!r}")
+    # ...while the value types the collectors do hand over still pass, including
+    # the numeric text a scraped table yields
+    assert common.non_negative_int(1312185, "origin count") == 1312185
+    assert common.non_negative_int("42", "origin count") == 42
+    assert common.non_negative_int(0.0, "origin count") == 0
+    assert common.finite_in_range("0.42", 0, 1, "share") == 0.42
+
+
+def case_common_rejects_non_finite():
+    for bad in (float("nan"), float("inf"), float("-inf")):
+        expect_data_error(lambda b=bad: common.non_negative_int(b, "origin count"),
+                          f"non_negative_int {bad!r}")
+        expect_data_error(lambda b=bad: common.finite_in_range(b, 0, None, "count"),
+                          f"finite_in_range {bad!r}")
+
+
+def case_common_rejects_boolean():
+    # json.loads parses `true` into a bool, which is an int subclass: without the
+    # isinstance check in finite_in_range(), {"total_count": true} published 1
+    # (aifocus-6c7d). Both spellings must raise, at both entry points.
+    for bad in (True, False):
+        expect_data_error(lambda b=bad: common.non_negative_int(b, "origin count"),
+                          f"non_negative_int {bad!r}")
+        expect_data_error(lambda b=bad: common.finite_in_range(b, 0, 1, "share"),
+                          f"finite_in_range {bad!r}")
+
+
+def case_common_range_bounds():
+    # a share is a fraction, so [0, 1] is inclusive at both ends; a count is
+    # non-negative with no upper bound. Off-by-one in either direction publishes
+    # a wrong statistic instead of failing the run.
+    assert common.finite_in_range(0, 0, 1, "share") == 0
+    assert common.finite_in_range(1, 0, 1, "share") == 1
+    assert common.finite_in_range(0.42, 0, 1, "share") == 0.42
+    assert common.finite_in_range(1312185, 0, None, "count") == 1312185
+    for bad in (-0.0001, 1.0001, 1e9):
+        expect_data_error(lambda b=bad: common.finite_in_range(b, 0, 1, "share"),
+                          f"finite_in_range share {bad!r}")
+    # an unbounded count only rejects the negative side; large values are real
+    # (1312185 origins) and must not be capped
+    for bad in (-1, -0.5):
+        expect_data_error(lambda b=bad: common.finite_in_range(b, 0, None, "count"),
+                          f"finite_in_range count {bad!r}")
+
+
 CASES = {
+    "common-rejects-non-numeric": case_common_rejects_non_numeric,
+    "common-rejects-non-finite": case_common_rejects_non_finite,
+    "common-rejects-boolean": case_common_rejects_boolean,
+    "common-range-bounds": case_common_range_bounds,
     "common-over-cap-body-refused": case_common_over_cap_body_refused,
     "common-read-is-bounded": case_common_read_is_bounded,
     "common-accepts-body-at-cap": case_common_accepts_body_at_cap,
