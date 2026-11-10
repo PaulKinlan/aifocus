@@ -5,9 +5,10 @@
 // its 'unsafe-inline' CSP: assets/js/reader.js, account-page.js,
 // admin-page.js, site-search.js, webmcp.js, ask-client.js and stats-page.js
 // all render server- or model-supplied strings. This guard applies the same
-// raw-source token ban to every first-party script (assets/js/**/*.js and
-// static/**/*.js), so the THREAT_MODEL.md section 5 sink invariant is true
-// for the whole origin rather than one file.
+// raw-source token ban to first-party JS and inline script in layouts/,
+// themes/ and static/**/*.html. Twelve existing authored-data sinks in seven
+// static tools are exact-statement pins, not a claim that their RHS is safe;
+// THREAT_MODEL.md §5(3) records the remaining review boundary.
 //
 // Raw source, comments included - same fail-safe rule as the demo guard: a
 // comment naming a sink token turns the gate red. Keep the token list in sync
@@ -164,7 +165,7 @@ function concatKeyMatches(text) {
   return hits;
 }
 
-function sinkViolations(file, source) {
+function sinkViolations(file, source, label = file) {
   const failures = [];
   const prepared = logicalLines(source).map(({ text, number }) => ({
     // Token ban: the escaped spelling, no interpolation collapse - a token
@@ -179,8 +180,8 @@ function sinkViolations(file, source) {
     for (const token of SINK_TOKENS) {
       if (!tokenText.includes(token)) continue;
       const allow = ALLOWLIST[file]?.[token];
-      if (allow && allow.test(raw)) continue;
-      failures.push(`${file}:${number}: ${token}: ${raw.trim()}`);
+      if (allow && (Array.isArray(allow) ? allow.includes(raw) : allow.test(raw))) continue;
+      failures.push(`${label}:${number}: ${token}: ${raw.trim()}`);
     }
   }
   const flagged = new Set(failures.map((f) => f.split(":").slice(0, 2).join(":")));
@@ -205,8 +206,8 @@ function sinkViolations(file, source) {
     const n = lineNumberOf(index);
     // a line the token ban already flagged is already red; a second
     // violation for the same line would only be noise
-    if (flagged.has(`${file}:${n}`)) return;
-    failures.push(`${file}:${n}: split-token sink: ${text.trim()}`);
+    if (flagged.has(`${label}:${n}`)) return;
+    failures.push(`${label}:${n}: split-token sink: ${text.trim()}`);
   };
   for (const pattern of SINK_PATTERNS) {
     for (const match of joined.matchAll(pattern)) report(match.index, match[0]);
@@ -215,14 +216,31 @@ function sinkViolations(file, source) {
   return failures;
 }
 
-// The one sanctioned sink-shaped statement on the origin: stats-page.js
-// clears its tooltip with a zero-interpolation constant. The allowlist pins
-// the exact line, so editing it into an interpolating assignment - or adding
-// a second occurrence - fails the gate.
+// Existing authored-data markup sinks in standalone static tools are pinned
+// by exact statement, not by file: a new assignment still fails the scan.
+// These pins do NOT prove the strings built on earlier lines remain escaped;
+// THREAT_MODEL.md §5(3) names the review trigger for changing their inputs.
+const STATIC_INLINE_PINS = {
+  "static/model-drops.html": [
+    "  $('timeline-chart').innerHTML = svg;",
+    "    $('timeline-chart').innerHTML = `<div class=\"error\">Failed to load data: ${esc(err.message)}</div>`;",
+  ],
+  "static/model-gap.html": [
+    "        chart.innerHTML = s + '<div class=\"chart-tip\" id=\"chart-tip\" role=\"tooltip\" hidden></div>';",
+    "        panel.innerHTML = html;",
+    '      document.getElementById("note").innerHTML =',
+  ],
+  "static/pwa-cooked-baseline.html": ["  row.innerHTML = `", "summary.innerHTML ="],
+  "static/pwa-cooked-comparator.html": ["  detail.innerHTML = `"],
+  "static/pwa-cooked-timeline.html": ["document.getElementById('chart').innerHTML = svg;"],
+  "static/token-calculator-regional.html": ["    container.innerHTML = REGIONS.map(r => `", "    table.innerHTML = html;"],
+  "static/token-calculator.html": ["    tbody.innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');"],
+};
 const ALLOWLIST = {
   "assets/js/stats-page.js": {
     innerHTML: /^\s*tip\.innerHTML = "";\s*$/,
   },
+  ...Object.fromEntries(Object.entries(STATIC_INLINE_PINS).map(([file, lines]) => [file, { innerHTML: lines }])),
 };
 
 function collectJs(dir) {
@@ -237,11 +255,9 @@ function collectJs(dir) {
 
 const FILES = [...collectJs(path.join(repoRoot, "assets/js")), ...collectJs(path.join(repoRoot, "static"))];
 
-// Inline <script> bodies from the page templates (layouts/** and
-// themes/**/layouts/**). First-party script in a template is the same origin
-// and the same fail-safe rule - the WebMCP game tools and the 404 game-over
-// message live in inline script (aifocus-9xgd). Script tags with a src are
-// external files, already covered by the JS collectors above.
+// Inline <script> bodies from page templates and standalone static HTML.
+// These execute on this origin too; scan their bodies with the same rule.
+// Script tags with a src are external files, covered by the JS inventory.
 // A script tag's body belongs to an external file only when the tag carries a
 // real src attribute. Quoted attribute values are consumed whole by this
 // tokeniser, so `data-note=" src=x "` cannot masquerade as one (aifocus-6hwt),
@@ -298,10 +314,35 @@ function collectInlineScripts(dir, out = []) {
 const INLINE_SCRIPTS = [
   ...collectInlineScripts(path.join(repoRoot, "layouts")),
   ...collectInlineScripts(path.join(repoRoot, "themes")),
+  ...collectInlineScripts(path.join(repoRoot, "static")),
 ];
 
 test("first-party script inventory is non-trivial (an empty scan must not pass green)", () => {
   assert.ok(FILES.length >= 8, `expected at least 8 first-party scripts, found ${FILES.length}`);
+});
+
+test("static inline scripts are scanned and each pre-existing sink pin stays live", () => {
+  const staticScripts = INLINE_SCRIPTS.filter((script) => script.file.startsWith("static/"));
+  assert.deepEqual(
+    [...new Set(staticScripts.map((script) => script.file))].sort(),
+    Object.keys(STATIC_INLINE_PINS).sort(),
+    "an unreviewed static inline script must not evade the inventory",
+  );
+  let pins = 0;
+  for (const [file, lines] of Object.entries(STATIC_INLINE_PINS)) {
+    const scripts = staticScripts.filter((script) => script.file === file);
+    const actual = scripts.flatMap((script) => logicalLines(script.source).map(({ text }) => text));
+    for (const line of lines) {
+      assert.equal(actual.filter((text) => text === line).length, 1, `${file}: stale or duplicate sink pin: ${line}`);
+      const editedWhitespace = line.startsWith(" ") ? line.slice(1) : ` ${line}`;
+      assert.match(sinkViolations(file, editedWhitespace)[0], /innerHTML/, `${file}: even a whitespace edit must invalidate the pin`);
+      pins++;
+    }
+  }
+  assert.equal(pins, 12, "all twelve existing static assignments need exact-statement pins");
+  const probe = inlineScriptsInHtml('<script>document.body.innerHTML = location.hash;</script>', "static/rev-probe.html");
+  assert.equal(probe.length, 1);
+  assert.match(sinkViolations(probe[0].file, probe[0].source, probe[0].label)[0], /innerHTML/);
 });
 
 test("the layouts inline-script scan sees the templates it exists for (an empty scan must not pass green)", () => {
@@ -364,7 +405,7 @@ test("no first-party script contains a markup-sink token outside the pinned allo
     for (const failure of sinkViolations(file, source)) failures.push(failure);
   }
   for (const script of INLINE_SCRIPTS) {
-    for (const failure of sinkViolations(script.label, script.source)) failures.push(failure);
+    for (const failure of sinkViolations(script.file, script.source, script.label)) failures.push(failure);
   }
   assert.deepEqual(
     failures,

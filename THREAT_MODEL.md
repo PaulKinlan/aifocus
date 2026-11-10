@@ -76,6 +76,7 @@ anyone who can read a backup, a replica or a debug session".
 | Inline script execution | the site CSP's `script-src` allows no `'unsafe-inline'`: the 12 distinct inline script bodies the build produces are pinned by `sha256` hash - 11 that execute (the gtag loader, the OG-card font measure and nine page scripts) plus the inline speculation-rules block, which does not run as script but is still gated by `script-src` - so an injected inline `<script>` does not run. The hash list is generated from the built HTML (`node tools/csp-hashes.mjs`) and the gate fails when it drifts (`--check`), because a script without a hash is silently blocked rather than silently allowed. The same gate rejects the other inline execution surfaces this policy disables and no hash can cover - inline `on*=` event handler attributes and `javascript:` URLs - by name, so a handler added to a template fails the gate instead of failing silently in the browser (aifocus-rlng). `style-src` **does** still allow `'unsafe-inline'`: 71 `style=` attributes cannot be pinned without `'unsafe-hashes'`, so style injection remains possible where an injection sink exists - script execution, the part that leads to credential and session theft, does not | `static/_headers`, `tools/csp-hashes.mjs`, `tools/gate.sh` (signal 6) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
+| First-party markup sinks | The source guard scans JS in `assets/js/` and `static/`, plus inline scripts in `layouts/`, `themes/` and `static/**/*.html`. A new sink fails the gate. Seven existing standalone static tool pages retain 12 exact-statement `innerHTML` pins (§5(3)); the pins inventory assignments but do not prove the strings assembled upstream are escaped. Their data flow is a review boundary, not a blanket sink-clean guarantee | `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 | WebMCP agent tools | `read_article` treats its `url` argument as untrusted agent input: it must parse same-origin **and** resolve to an essay in the built `/index.json` (`findArticle()`) before anything is fetched - a matching origin alone is not enough, because a same-origin fetch from this page would carry the reader session and the moderator's Access cookie. The fetch itself sends `credentials: "omit"` so it rides no credential even if a path ever got past that check. Invariant: **`read_article` may fetch only paths the built `/index.json` lists**. `list_articles` reads that same `/index.json`; the only server endpoint any tool calls is the public metered `GET /api/search` (via `search_articles`); no tool touches `/admin/*` or D1. `contact_paul` navigates its `mailto:` draft only after `agent.requestUserInteraction()` + `window.confirm()`, so no mail is composed without a human click. The file is also inside the origin-wide markup-sink ban (aifocus-mcqz) | `assets/js/webmcp.js`, `tests/first-party-sinks.test.mjs` |
 
@@ -115,13 +116,48 @@ can be checked rather than re-argued.
    (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
    because every interpolated value passed through `escapeHtml()`. The join is
    gone entirely: the tree and transcript are now DOM-built with
-   `textContent`, `escapeHtml` is removed, and the ban is origin-wide:
-   `tests/where-prompts-demo-sinks.test.mjs` guards the demo bundle and
-   `tests/first-party-sinks.test.mjs` applies the same raw-source token ban to
-   every first-party script (`assets/js/**/*.js`, `static/**/*.js`), with the
-   single sanctioned clearing assignment in `stats-page.js` pinned by exact
-   line (aifocus-qsv3, aifocus-mcqz). Re-opens only if those guards are
-   deleted or bypassed.
+   `textContent`, `escapeHtml` is removed, and the guard covers first-party
+   JS in `assets/js/` and `static/` plus inline script in `layouts/`, `themes/`
+   and `static/**/*.html`. `tests/where-prompts-demo-sinks.test.mjs` guards the
+   demo bundle; `tests/first-party-sinks.test.mjs` rejects new markup sinks
+   across those sources. The sole application-JS exception is the exact
+   tooltip-clearing assignment in `stats-page.js` (aifocus-qsv3, aifocus-mcqz).
+   Seven standalone static HTML tools already have the following 12
+   `innerHTML` assignments. The scan pins each **full source line**, including
+   whitespace, and checks exactly 12 pins in exactly seven files; it rejects
+   any edit to a pinned line or any new sink. A pin does **not** prove that
+   strings assembled on preceding lines remain escaped (aifocus-5rvq):
+
+   - `static/model-drops.html:310` — SVG assembled from the authored same-origin
+     `/model-drops.tsv`; displayed text is escaped, coordinates are numeric.
+   - `static/model-drops.html:398` — failed-fetch message, with `err.message`
+     passed through `esc()` before entering the error markup.
+   - `static/model-gap.html:294` — SVG from authored `/model-gap.json`; labels
+     and link attributes use `esc()`, drawing coordinates are numeric.
+   - `static/model-gap.html:319` — details from that authored JSON; model names
+     and feature labels use `esc()` before insertion.
+   - `static/model-gap.html:332` — fixed explanatory HTML and escaped
+     `data.updated` from the authored JSON.
+   - `static/pwa-cooked-baseline.html:214` — authored `FEATURES` list and local
+     browser feature-detection results, not caller-supplied strings.
+   - `static/pwa-cooked-baseline.html:229` — fixed summary markup with counts
+     derived from that authored list and feature detection.
+   - `static/pwa-cooked-comparator.html:258` — authored in-page `CAPABILITIES`
+     list selected by index, not a URL or external feed.
+   - `static/pwa-cooked-timeline.html:215` — SVG from the authored in-page
+     `APIS` list, with calculated numeric positions.
+   - `static/token-calculator-regional.html:351` — authored `REGIONS` list
+     used to build cards; salaries are formatted numbers.
+   - `static/token-calculator-regional.html:443` — calculator table from
+     numeric input controls and formatted model/region constants.
+   - `static/token-calculator.html:908` — calculator rows derived from numeric
+     input controls and formatted values.
+
+   None currently reads URL/search/hash, storage, remote or model output into
+   a sink. **Review trigger:** if any of those input boundaries change, a new
+   external/user-controlled value reaches a static page, or a pin needs
+   widening, replace the sink with DOM construction rather than extending the
+   exception. Re-opens if the guards are deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
@@ -227,10 +263,11 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
   X/Twitter embed hosts) - so any script a content page loads, or an XSS there, can read the
   stored key. This is **accepted while the origin's script trust holds** (the
   same dependency the inline-script question in aifocus-5wrp turns on): the
-  baseline `script-src` stays this narrow, and first-party script stays
-  sink-clean (section 4). It re-opens - moves to section 6 - if a content-page
-  script source is widened, if the demo stops disclosing the opt-in, or if a
-  sink reaches a content page. The fix options are open work, not accepted
+  baseline `script-src` stays this narrow, and the first-party markup-sink
+  guard continues rejecting new sinks (section 4; §5(3) records 12 pinned
+  legacy sinks on static tool pages). It re-opens - moves to section 6 - if a
+  content-page script source is widened, if the demo stops disclosing the
+  opt-in, or if untrusted data reaches any pinned sink. The fix options are open work, not accepted
   silently: drop persistence in favour of page memory, or serve the demo from
   its own origin/hostname (aifocus-4go1).
 - **IP hashes are brute-forceable by a database reader** while the salt lives
