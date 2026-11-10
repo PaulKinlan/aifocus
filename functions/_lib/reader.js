@@ -10,6 +10,7 @@ const READER_ID_RE = /^[0-9a-f]{32}$/;
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 2;
 
 import { SECURITY_HEADERS } from "./headers.js";
+import { safeAvatarUrl } from "./auth.js";
 
 export const REACTION_KINDS = ["useful", "new-to-me", "not-convinced"];
 export const ANNOTATION_TYPES = ["highlight", "note", "comment"];
@@ -356,7 +357,7 @@ export function publicAnnotation(row, { mine = false } = {}) {
       : null,
     body: row.body || null,
     name: row.user_display_name || row.author_name || null,
-    avatarUrl: row.user_avatar_url || null,
+    avatarUrl: safeAvatarUrl(row.user_avatar_url),
     profileUrl: row.user_profile_url || null,
     createdAt: row.created_at,
   };

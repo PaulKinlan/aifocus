@@ -4,7 +4,7 @@
 // a sign-in while signed in adds that method to the current account.
 
 import { loadArticleIndex } from "./site-search.js";
-import { safeHref } from "./safe-href.js";
+import { safeHref, safeImgSrc } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const RETURN = "/account/";
@@ -63,8 +63,9 @@ const when = (ms) => el("time", { datetime: new Date(ms).toISOString(), text: ne
 const renderProfile = (user) => {
   const profile = document.querySelector("#account-profile");
   const nodes = [];
-  if (user.avatarUrl) {
-    const img = el("img", { src: user.avatarUrl, alt: "", width: "48", height: "48", referrerpolicy: "no-referrer" });
+  const avatarSrc = safeImgSrc(user.avatarUrl);
+  if (avatarSrc) {
+    const img = el("img", { src: avatarSrc, alt: "", width: "48", height: "48", referrerpolicy: "no-referrer" });
     nodes.push(img);
   }
   nodes.push(el("strong", { text: user.displayName }));

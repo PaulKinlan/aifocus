@@ -10,7 +10,7 @@
 // data-reader-ui and skipped by the text index.
 
 import { quotePatternFor } from "./quote-pattern.js";
-import { safeHref } from "./safe-href.js";
+import { safeHref, safeImgSrc } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const section = document.querySelector("#reader");
@@ -173,10 +173,11 @@ const renderWho = (person, fallback) => {
     wrap.href = href;
     wrap.rel = "noopener noreferrer ugc";
   }
-  if (person?.avatarUrl) {
+  const avatarSrc = safeImgSrc(person?.avatarUrl);
+  if (avatarSrc) {
     const img = document.createElement("img");
     img.className = "reader-avatar";
-    img.src = person.avatarUrl;
+    img.src = avatarSrc;
     img.alt = "";
     img.width = 24;
     img.height = 24;

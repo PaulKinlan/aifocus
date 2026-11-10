@@ -67,6 +67,8 @@ anyone who can read a backup, a replica or a debug session".
 | CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `functions/_lib/reader.js`, `functions/_lib/auth.js` |
 | Metering | a per-IP budget for reader writes (30/hour), search (30/hour), reads (600/hour: `/api/reader/state`, `/api/account` and `/api/auth/me` share one `read_events` budget), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search, read and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `read_events`, `auth_start_log`). The ask meter is the same reservation shape (`ask_log`, 20/hour): `reserveAskSlot` runs one conditional INSERT that consumes a slot only while the per-IP count is under the cap, and the handler awaits it before the billed inference, so the slot precedes the charge and a concurrent burst of distinct questions cannot all read the same pre-insert count. The share-card renderer holds an in-flight reservation per card | `functions/_lib/reader.js reserveWriteEvent reserveReadEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/reader/state.js`, `functions/api/account.js`, `functions/api/auth/me.js`, `functions/api/ask.js reserveAskSlot`, `tests/ask.test.mjs`, `functions/_lib/og.js` |
 | Metering failure mode | the reader-write, search, auth-start and ask limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. The read meter degrades differently by design: a missing `read_events` table falls back to a per-isolate in-memory cap instead of a 503 (aifocus-s9o), which is why this list does not name it. The only way to reach `/api/ask`'s billed inference without a meter is its local-dev hatch, which needs `ALLOW_UNMETERED_ASK` in the environment **and** a loopback request origin, so production, staging and preview deployments answer 503 before any inference runs (aifocus-5ft, aifocus-e7e; loopback-only in aifocus-4hu1, merged 4514def) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/ask.js reserveAskSlot` |
+| OG card metering order | the per-IP slot is reserved (`reserveOgSlot`) **before** every billed operation of a card render - the Workers AI hook, the Browser Rendering screenshot and the R2 put - so a hammering client cannot make the site pay for a card it will be charged for. What runs before the meter is deliberately unmetered: one `ASSETS` read of `og-card.html`, one `og_hooks` row read, and one R2 `get` on the stored-PNG path, which is why a card that is already in R2 costs no quota | `functions/_lib/og.js serveCard` |
+| AI-written share-card text | a generated hook is stored in `og_hooks` with its `source` and `model`, is limited to 96 tokens and passed through `cleanHook()` (one line, no markup), and reaches the card only through `fillHook()`/`escapeHtml()`. The whole table is listable, editable and deletable by a moderator at `/api/admin/og/*` behind the Access guard, so AI-written text that ships is reviewable after the fact and its provenance is recorded | `functions/_lib/og.js`, `functions/api/admin/og.js` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
 | Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard. The browser attaches that JWT to any same-origin request, so the `/admin/` **page** runs under its own CSP with `script-src 'self'` - no `'unsafe-inline'`, no third-party hosts - and `head.html` skips the gtag block, the inline speculation rules and the `onload` font promotion for `type: admin`, so content-page script trust is not shared with the moderator's authority (aifocus-wwfp). `/api/admin/*` itself is unaffected: it is JSON behind the per-handler guard | `functions/_lib/access.js`, `functions/api/admin/*`, `static/_headers` `/admin/*`, `themes/aifocustheme/layouts/_partials/head.html` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
@@ -76,6 +78,7 @@ anyone who can read a backup, a replica or a debug session".
 | Inline script execution | the site CSP's `script-src` allows no `'unsafe-inline'`: the 12 distinct inline script bodies the build produces are pinned by `sha256` hash - 11 that execute (the gtag loader, the OG-card font measure and nine page scripts) plus the inline speculation-rules block, which does not run as script but is still gated by `script-src` - so an injected inline `<script>` does not run. The hash list is generated from the built HTML (`node tools/csp-hashes.mjs`) and the gate fails when it drifts (`--check`), because a script without a hash is silently blocked rather than silently allowed. The same gate rejects the other inline execution surfaces this policy disables and no hash can cover - inline `on*=` event handler attributes and `javascript:` URLs - by name, so a handler added to a template fails the gate instead of failing silently in the browser (aifocus-rlng). `style-src` **does** still allow `'unsafe-inline'`: 71 `style=` attributes cannot be pinned without `'unsafe-hashes'`, so style injection remains possible where an injection sink exists - script execution, the part that leads to credential and session theft, does not | `static/_headers`, `tools/csp-hashes.mjs`, `tools/gate.sh` (signal 6) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
+| Avatar images | a provider-supplied `avatarUrl`/`avatar_url` becomes an `<img src>` only through `safeImgSrc()`, which requires an absolute `https:` URL on one of the hosts the providers actually mint avatars on (`avatars.githubusercontent.com`, `pbs.twimg.com`, `cdn.bsky.app`). Anything else renders a name with no avatar. `img-src` is deliberately wide so post images work (section 7), so this sink check is the bound on which host a reader's browser can be made to request; the write half (`safeAvatarUrl()`) keeps a hostile value out of D1 and out of the reader payload | `assets/js/safe-href.js`, `assets/js/reader.js`, `assets/js/account-page.js`, `functions/_lib/auth.js`, `functions/_lib/reader.js` |
 | First-party markup sinks | The source guard scans JS in `assets/js/` and `static/`, plus inline scripts in `layouts/`, `themes/` and `static/**/*.html`. A new sink fails the gate. Seven existing standalone static tool pages retain 12 exact-statement `innerHTML` pins (§5(3)); the pins inventory assignments but do not prove the strings assembled upstream are escaped. Their data flow is a review boundary, not a blanket sink-clean guarantee | `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
 | WebMCP agent tools | `read_article` treats its `url` argument as untrusted agent input: it must parse same-origin **and** resolve to an essay in the built `/index.json` (`findArticle()`) before anything is fetched - a matching origin alone is not enough, because a same-origin fetch from this page would carry the reader session and the moderator's Access cookie. The fetch itself sends `credentials: "omit"` so it rides no credential even if a path ever got past that check. Invariant: **`read_article` may fetch only paths the built `/index.json` lists**. `list_articles` reads that same `/index.json`; the only server endpoint any tool calls is the public metered `GET /api/search` (via `search_articles`); no tool touches `/admin/*` or D1. `contact_paul` navigates its `mailto:` draft only after `agent.requestUserInteraction()` + `window.confirm()`, so no mail is composed without a human click. The file is also inside the origin-wide markup-sink ban (aifocus-mcqz) | `assets/js/webmcp.js`, `tests/first-party-sinks.test.mjs` |
@@ -208,6 +211,23 @@ can be checked rather than re-argued.
    a caller-controlled string, or the animation loop stops cancelling its
    pending frame when restarted.
 
+9. **"The share-card renderer reserves its per-IP slot after the asset fetch and
+   the D1 hook read"** (reported at `og.js:414`, aifocus-04ao). The ordering is
+   the other way round for everything that is billed: `serveCard()` reaches
+   `reserveOgSlot()` before `renderCard()` is published, and `renderCard()` is
+   where the Workers AI hook, the Browser Rendering screenshot and the R2 put
+   happen. A denied request returns the fallback without generating, rendering
+   or storing anything. The three things that do precede the reservation are
+   deliberately free to callers so that a cached card costs no quota: an
+   `ASSETS` read of the card shell (static, unbilled), one `og_hooks` row read,
+   and an R2 `get` that returns the stored PNG before any render is considered.
+   `tests/og.test.mjs` asserts the consequence rather than the reading: with the
+   budget spent, a request makes zero Workers AI calls, zero browser renders and
+   zero R2 writes, and the test fails as soon as the deny branch stops
+   returning early. Re-opens if a billed call (AI, BROWSER, R2 put, or any new
+   metered write) moves ahead of `reserveOgSlot()` in `serveCard()`, or if the
+   pre-meter read path starts consuming a per-IP budget.
+
 ## 6. Known gaps and open work
 
 Security-relevant items from the 2026-11-04 project audit, each with its bead.
@@ -234,6 +254,22 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 | aifocus-rom | there was no account erasure path | dbf82c8: `DELETE /api/account` hard-deletes the account, its sign-ins and its activity |
 
 ## 7. Accepted residual risk
+- **Image egress is allowed to any `https:` origin** (`img-src 'self' data:
+  https:` in `static/_headers`, reported as aifocus-8f3j). Post markdown
+  embeds images from arbitrary hosts, so narrowing the policy to the three
+  avatar CDNs (`cdn.bsky.app`, `avatars.githubusercontent.com`,
+  `pbs.twimg.com`) would break published articles to constrain nothing.
+  The consequence is that a URL that reaches an `<img src>` can beacon to any
+  https host, which matters only combined with a URL the attacker controls:
+  provider-supplied avatars are the known route (`avatarUrl`), and the
+  control for that is the scheme/host allowlist at the sink (`safeImgSrc()` /
+  `safeAvatarUrl()`, aifocus-r044, section 4) rather than the CSP. The
+  residual risk is any image URL that does not come from a provider - post
+  markdown, an admin-written card hook - which stays a request to whatever
+  host the author named, by design. Accepted because the exfiltration channel
+  needs both a stored attacker URL and a request the reader makes, and the
+  alternative costs every embedded image in every post.
+
 
 - **The per-IP budget bounds one source, not a flood.** Rotating IPs defeats it
   by design; a distributed flood is a Cloudflare-level control, not an

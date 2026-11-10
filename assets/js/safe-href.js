@@ -27,3 +27,37 @@ export function safeHref(value) {
   if (url.protocol !== "https:" || !url.hostname) return null;
   return url.href;
 }
+
+// The one place that decides whether a provider-supplied avatar URL may become an
+// <img src> (aifocus-r044).
+//
+// identities.avatar_url and users.avatar_url are written from provider modules
+// (GitHub's avatar_url, X's profile_image_url, Bluesky's profile.avatar). Unlike
+// a profile link, a bad avatar URL is not a click away from executing: the danger
+// is that an <img src> issues a request the reader never asked for, which with a
+// wide `img-src 'self' data: https:` (static/_headers, and deliberately wide so
+// post images work - aifocus-8f3j) means any https host can be made to see the
+// reader's request, their IP and their User-Agent. So the rule is tighter than
+// safeHref's: absolute https AND a host one of the providers actually serves
+// avatars from. Anything else renders no image at all, which degrades to a name
+// with no avatar rather than to a request to an unknown host.
+const AVATAR_HOSTS = new Set([
+  "avatars.githubusercontent.com", // GitHub
+  "pbs.twimg.com", // X
+  "cdn.bsky.app", // Bluesky
+]);
+
+export function safeImgSrc(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  let url;
+  try {
+    url = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || !url.hostname) return null;
+  if (!AVATAR_HOSTS.has(url.hostname.toLowerCase())) return null;
+  return url.href;
+}
