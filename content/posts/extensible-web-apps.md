@@ -1,5 +1,5 @@
 ---
-title: Extensible web apps
+title: extensible web apps
 seotitle: ""
 slug: extensible-web-apps
 description: "I built Extensible Web Apps: web apps where everything is a plugin in its own Worker, so users (or their agents) can extend them without a fork or a deploy."
@@ -134,7 +134,7 @@ So the platform has an agent that is always there. In every app, Customize has a
 
 The agent looks at the page first (which plugins are on it, what data they own, where there's room to draw), writes a plugin, checks it against the same rules the kernel will hold it to, and then stops and shows you a review card: here's the code, and here's what it will be able to do. Nothing it writes runs until you accept. Don't like it? Tell it. "Make it a card", "put it under the birthdays list", "actually, only count this week". It knows which plugin you mean and saves it again.
 
-{{< figure src="/images/extensible-web-apps/plugin-maker.gif" alt="Asking the Plugin maker for a birthday count in the Contacts app, accepting the review card, and the count appearing on the page" caption="Asking for a plugin instead of writing one" >}}
+{{< figure src="/images/extensible-web-apps/plugin-maker.png" alt="Asking the Plugin maker for a birthday count in the Contacts app, accepting the review card, and the count appearing on the page" caption="Asking for a plugin instead of writing one" >}}
 <!-- TODO PAUL: record this gif. Contacts demo: Customize, Make a plugin, Write it for me, ask for something, accept the card. Until then images/plugin-maker.png (the Make tab with the Plugin maker open) will do as a still; change .gif to .png above. -->
 
 No key to hand? Chapter 11 of [the homepage](https://extensibleweb.app/), "Let an agent change it", replays a real recorded run of the builder agent, tool call by tool call, and the last step is real: you get the review card, and if you accept it the plugin it wrote is yours.
