@@ -4,7 +4,14 @@
 # Six mechanical signals, in order, so a failure names which one broke:
 #   1. the site still compiles (`hugo --minify`): broken frontmatter, template errors, bad shortcodes;
 #   2. no oversized asset was added - `static/` is published byte-for-byte (tools/asset-size-check.sh);
-#   3. automated tests pass (`node --test tests/*.test.mjs`);
+#   3. automated tests pass (`node --test tests/*.test.mjs`). This glob is what runs
+#      tests/stats-collectors.test.mjs, which drives every collector guard through
+#      tests/helpers/stats-collectors-probe.py (stubbed fetch, no network, ~0.2 s):
+#      the shared response cap and the finite/range checks that turn a broken feed
+#      into a failed run rather than a published wrong statistic. Before that file
+#      existed no signal touched tools/stats/ at all, and four collector defects
+#      (aifocus-ty1k, aifocus-09r5, aifocus-fi9t, aifocus-dv21) shipped through a
+#      green gate (aifocus-mco0, aifocus-waix). A guard nothing runs is not a guard.
 #   4. every internal link in the built site resolves to a generated path (tools/link-check.mjs).
 #      This one reads the OUTPUT, not the change: a link can be wrong in a way no diff shows,
 #      which is how aifocus-8mx shipped a live 404 through a green gate.
