@@ -52,8 +52,12 @@ test("an anonymous response is briefly cacheable and identical across visitors",
   assert.equal(first.status, 200);
   assert.equal(second.status, 200);
   const cache = first.headers.get("Cache-Control");
-  assert.match(cache, /public/);
+  // Browser-side reuse only: `private` forbids shared-cache storage by
+  // contract (the edge keys on the URL and ignores Vary, so s-maxage would
+  // hand a stored anonymous body to signed-in readers - aifocus-6p52).
+  assert.match(cache, /private/);
   assert.match(cache, /max-age=60/);
+  assert.doesNotMatch(cache, /s-maxage|public/);
   assert.equal(first.headers.get("Vary"), "Cookie");
   assert.deepEqual(await first.json(), await second.json());
 });
