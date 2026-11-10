@@ -599,8 +599,10 @@ const GUARDED = /safeHref\(/;
 
 function unguardedHrefAssignments(source) {
   const failures = [];
+  const aliasMention = aliasMentionRe(source, PROFILE_URL, GUARDED);
   source.split("\n").forEach((line, i) => {
-    if (!PROFILE_URL.test(line) || !HREF_ASSIGNMENT.test(line) || GUARDED.test(line)) return;
+    const carriesField = PROFILE_URL.test(line) || (aliasMention !== null && aliasMention.test(line));
+    if (!carriesField || !HREF_ASSIGNMENT.test(line) || GUARDED.test(line)) return;
     failures.push(`${i + 1}: ${line.trim()}`);
   });
   return failures;
@@ -629,10 +631,45 @@ const AVATAR_FIELD = /avatar_?url/i;
 const SRC_ASSIGNMENT = /\.src\s*=|\bsrc\s*:|setAttribute\(\s*["']src["']/;
 const SRC_GUARDED = /safeImgSrc\(/;
 
+// A provider field aliased to a local on an EARLIER line (const avatar =
+// user.avatarUrl; ...; img.src = avatar;) splits the field and the sink onto
+// two lines, so a line-based pairing passes both - the aliasing was enough to
+// sneak an unguarded avatar past this guard while it stayed green
+// (aifocus-bnnl). So a name declared from an expression mentioning the field
+// counts as the field's presence from then on, transitively (an alias of an
+// alias is the same value). Two deliberate limits keep this a guard on how
+// our code binds provider values, not a general dataflow analysis: a binding
+// that already runs the guard (const avatarSrc = safeImgSrc(user.avatarUrl))
+// is sanitized and never registers - reader.js and account-page.js do exactly
+// this; and a name only registers through a direct declaration, so
+// destructuring and multi-declarator lines are outside the claim, as they
+// already were for multi-line expressions.
+function aliasMentionRe(source, field, guard) {
+  const names = new Set();
+  const declaration = /(?:const|let|var)\s+(\w+)\s*=\s*([^;\n]*)/g;
+  for (;;) {
+    let grew = false;
+    for (const match of source.matchAll(declaration)) {
+      const name = match[1];
+      const rhs = match[2];
+      if (names.has(name) || guard.test(rhs)) continue;
+      const carrier = new RegExp(field.source + (names.size ? "|" + [...names].map((n) => `\\b${n}\\b`).join("|") : ""), field.flags).test(rhs);
+      if (carrier) {
+        names.add(name);
+        grew = true;
+      }
+    }
+    if (!grew) break;
+  }
+  return names.size ? new RegExp(`\\b(?:${[...names].join("|")})\\b`) : null;
+}
+
 function unguardedAvatarSrcs(source) {
   const failures = [];
+  const aliasMention = aliasMentionRe(source, AVATAR_FIELD, SRC_GUARDED);
   source.split("\n").forEach((line, i) => {
-    if (!AVATAR_FIELD.test(line) || !SRC_ASSIGNMENT.test(line) || SRC_GUARDED.test(line)) return;
+    const carriesField = AVATAR_FIELD.test(line) || (aliasMention !== null && aliasMention.test(line));
+    if (!carriesField || !SRC_ASSIGNMENT.test(line) || SRC_GUARDED.test(line)) return;
     failures.push(`${i + 1}: ${line.trim()}`);
   });
   return failures;
@@ -657,6 +694,12 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = person.avatarUrl;",
     'nodes.push(el("img", { src: user.avatarUrl, alt: "" }));',
     "node.setAttribute(\"src\", user.avatar_url);",
+    // The field aliased to a local first: both lines alone pass the line
+    // pairing, the pair must not (aifocus-bnnl).
+    "const avatar = user.avatarUrl;\nimg.src = avatar;",
+    "const pic = person.avatar_url;\nel.setAttribute(\"src\", pic);",
+    // An alias of an alias is the same provider value.
+    "const a = user.avatarUrl;\nconst b = a;\nimg.src = b;",
   ];
   for (const sample of caught) {
     assert.equal(unguardedAvatarSrcs(sample).length, 1, `the guard must catch: ${sample}`);
@@ -664,6 +707,11 @@ test("the avatar-src guard catches the shapes it exists for", () => {
   // The guarded shape, and a line that merely reads the field, must pass.
   assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("if (person?.avatarUrl) {}"), []);
+  // A SANITIZED alias is not a raw-field alias: reader.js and account-page.js
+  // bind safeImgSrc()'s result once and assign it to .src afterwards, and
+  // that is exactly the guarded shape (aifocus-bnnl follow-up).
+  assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);\nimg.src = avatarSrc;"), []);
+  assert.deepEqual(unguardedAvatarSrcs("const img = el(\"img\", { src: avatarSrc, alt: \"\" });\nconst avatarSrc = safeImgSrc(person?.avatarUrl);"), []);
 });
 
 test("the profile-href guard catches the shapes it exists for", () => {
@@ -671,6 +719,8 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "wrap.href = person.profileUrl;",
     "who.href = item.author_profile_url;",
     "name.href = user.profile_url;",
+    // Same aliasing split as the avatar guard (aifocus-bnnl).
+    "const link = user.profileUrl;\nwrap.href = link;",
   ];
   for (const sample of caught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the guard must catch: ${sample}`);
@@ -678,4 +728,6 @@ test("the profile-href guard catches the shapes it exists for", () => {
   // The guarded shape, and a line that merely reads the field, must pass.
   assert.deepEqual(unguardedHrefAssignments("const href = safeHref(user.profile_url);"), []);
   assert.deepEqual(unguardedHrefAssignments("name.textContent = user.profile_url;"), []);
+  // Same sanitized-alias rule as the avatar guard.
+  assert.deepEqual(unguardedHrefAssignments("const link = safeHref(user.profile_url);\nwrap.href = link;"), []);
 });

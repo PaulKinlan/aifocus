@@ -286,7 +286,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
   call is the control until a prefix-level guard exists.
 - **The narrowed `/admin/*` CSP trusts first-party script.** `script-src 'self'`
   removes inline script and third-party origins from the moderation page and its
-  `on*` handlers, but a bundled module - or anything vendored into `js/` - still
+  `on*` handlers, but a bundled module - or anything vendored into `assets/js/` - still
   runs with the moderator's Access cookie attached. The boundary is "our code as
   built", not "no code"; treating a first-party dependency as trusted is the
   residual risk, and the reason the admin page loads no analytics at all rather
@@ -298,8 +298,9 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
   opt-in that is disclosed next to the field. The key is a billable credential
   on an external account the site cannot revoke. The demo pages themselves run
   a `script-src 'self'` meta CSP, but `localStorage` is origin-wide and every
-  content page runs the baseline policy, whose `script-src` allows inline
-  script and five third-party origins (gtag, Cloudflare Insights, and three
+  content page runs the baseline policy, whose `script-src` allows the 12
+  hash-pinned inline bodies and five third-party origins (gtag, Cloudflare
+  Insights, and three
   X/Twitter embed hosts) - so any script a content page loads, or an XSS there, can read the
   stored key. This is **accepted while the origin's script trust holds** (the
   same dependency the inline-script question in aifocus-5wrp turns on): the
