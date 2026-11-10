@@ -539,6 +539,38 @@ test("uncached OG renders are rate limited across isolates via D1", async () => 
   assert.equal(rowCount.n, 30, "denied OG render did not insert a row into og_render_log");
 });
 
+test("metering precedes every billed operation: a rate-limited request makes no AI call, no screenshot and no R2 write", async () => {
+  // aifocus-04ao claimed the per-IP slot is reserved after the asset fetch and
+  // the D1 hook read, so a hammering client still costs billed work. The order
+  // is the reverse for everything that costs money - reserveOgSlot() runs before
+  // renderCard() exists - and this asserts the consequence rather than the
+  // reading: with the budget gone, a request must reach none of AI, BROWSER or
+  // R2 put. It re-opens if any billed call moves ahead of the reservation.
+  const { env, calls } = makeEnv();
+  const ip = "198.51.100.77";
+  const now = Date.now();
+  let allowed = 0;
+  for (let i = 0; i < OG_RENDERS_PER_HOUR + 5; i += 1) {
+    if (await reserveOgSlot(env.READER_DB, await hashIp(env.READER_DB, ip), now)) allowed += 1;
+  }
+  assert.equal(allowed, OG_RENDERS_PER_HOUR, "budget exhausted exactly once");
+
+  _recentRenders.clear();
+  const before = { ai: calls.ai, screenshots: calls.screenshots.length, stored: env.OG_CARDS.store.size };
+  const res = await serveCard({
+    request: new Request(`${ORIGIN}/og/agent-do-my-agent-loop.png?denied=1`, {
+      headers: { "CF-Connecting-IP": ip },
+    }),
+    env,
+    segments: ["agent-do-my-agent-loop.png"],
+  });
+  assert.equal(res.status, 302, "denied request gets the fallback");
+  assert.equal(res.headers.get("X-Og-Card"), "fallback: rate limited");
+  assert.equal(calls.ai, before.ai, "no Workers AI call was billed for a denied request");
+  assert.equal(calls.screenshots.length, before.screenshots, "no browser render was billed for a denied request");
+  assert.equal(env.OG_CARDS.store.size, before.stored, "nothing was written to R2 for a denied request");
+});
+
 test("OG with READER_DB absent renders nothing and serves fallback without error", async () => {
   const original = console.error;
   console.error = () => {};

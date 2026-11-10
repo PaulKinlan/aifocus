@@ -10,6 +10,7 @@
 // data-reader-ui and skipped by the text index.
 
 import { quotePatternFor } from "./quote-pattern.js";
+import { safeHref, safeImgSrc } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const section = document.querySelector("#reader");
@@ -165,16 +166,18 @@ const STATUS_LABELS = {
 const signInOptions = (providers) => signInControls(providers, post);
 
 const renderWho = (person, fallback) => {
-  const wrap = document.createElement(person?.profileUrl ? "a" : "span");
+  const href = safeHref(person?.profileUrl);
+  const wrap = document.createElement(href ? "a" : "span");
   wrap.className = "reader-who";
-  if (person?.profileUrl) {
-    wrap.href = person.profileUrl;
+  if (href) {
+    wrap.href = href;
     wrap.rel = "noopener noreferrer ugc";
   }
-  if (person?.avatarUrl) {
+  const avatarSrc = safeImgSrc(person?.avatarUrl);
+  if (avatarSrc) {
     const img = document.createElement("img");
     img.className = "reader-avatar";
-    img.src = person.avatarUrl;
+    img.src = avatarSrc;
     img.alt = "";
     img.width = 24;
     img.height = 24;

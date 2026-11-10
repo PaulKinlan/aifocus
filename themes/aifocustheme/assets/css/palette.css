@@ -54,17 +54,30 @@
   box-shadow: inset 0 -2px 0 var(--link);
 }
 
+/* aifocus-47ax: the close button's boundary is what identifies it, so it takes
+   --control-line (3:1 on both schemes) rather than the decorative --line.
+   aifocus-fbq1: it reads "Close" on coarse pointers and shows the "Esc" key cap
+   only where there is a keyboard to press - the reverse of .nav-shortcut below.
+   min-height 36px (was 32) sits better next to the input without crowding the
+   field row. */
 .palette-close {
   flex: none;
-  min-height: 32px;
+  min-height: 36px;
   padding: .125rem .5rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: var(--radius);
   background: var(--bg-secondary);
   color: var(--muted);
   font: inherit;
   font-size: .8rem;
   cursor: pointer;
+}
+
+.palette-close-key { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+  .palette-close-word { display: none; }
+  .palette-close-key { display: inline; }
 }
 
 .palette-list,
@@ -106,8 +119,17 @@
   cursor: pointer;
 }
 
+/* aifocus-mqgm: the fill alone was 1.27:1 light and 1.51:1 dark against the
+   dialog, far under the 3:1 a state indicator needs, and an option is not
+   focusable (the input owns focus through aria-activedescendant), so there was
+   no ring to fall back on - you could not see which row Enter would activate.
+   The inset bar is the marker that does not depend on hue; it measures 6.53:1
+   against the dialog fill in light and 8.24:1 in dark (4.43:1 / 4.50:1 on the
+   selected fill). The fill stays as reinforcement, one step up from
+   --control-bg so it separates a little more than before. */
 .palette-option[aria-selected="true"] {
-  background: var(--control-bg);
+  background: var(--control-bg-hover);
+  box-shadow: inset 2px 0 0 var(--link);
 }
 
 .palette-option[aria-disabled="true"] {

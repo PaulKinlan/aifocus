@@ -15,6 +15,15 @@
   <footer>
     {{ partial "footer.html" . }}
   </footer>
+  {{/* Behaviour that used to sit in inline handler attributes (aifocus-5wrp:
+       script-src allows no 'unsafe-inline', so an attribute handler is blocked).
+       Built through js.Build and fingerprinted like every other asset here. */}}
+  {{- with resources.Get "js/site.js" }}
+    {{- $opts := dict "minify" (not hugo.IsDevelopment) "targetPath" "js/site.js" }}
+    {{- with . | js.Build $opts | fingerprint }}
+  <script type="module" src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" crossorigin="anonymous"></script>
+    {{- end }}
+  {{- end }}
 </body>
 
 </html>

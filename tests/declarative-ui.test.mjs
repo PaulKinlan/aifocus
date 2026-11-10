@@ -72,3 +72,63 @@ test("the palette close button is declarative and detects the right property", (
     /addEventListener\("click"/,
   );
 });
+
+// aifocus-fbq1: the palette's one visible control was a button whose label was
+// the key name "Esc" - meaningful on a keyboard, meaningless on the phone that
+// is showing it, where the tap that closes the palette had no visible name.
+test("the palette close button is named for what it does, not for a key", () => {
+  assert.match(palette, /"aria-label": "Close the palette"/, "the close button lost its accessible name");
+  assert.match(palette, /class: "palette-close-word", text: "Close"/, "the visible label is not a word");
+  const key = /class: "palette-close-key", text: "Esc", "aria-hidden": "true"/;
+  assert.match(palette, key, "the key cap is not marked up as a hint");
+  const css = read("themes/aifocustheme/assets/css/palette.css");
+  assert.match(blockAfter(css, ".palette-close-key"), /display:\s*none/, "the key cap shows on touch, where there is no Esc key");
+  assert.match(
+    blockAfter(css, "@media (hover: hover) and (pointer: fine)"),
+    /\.palette-close-key\s*\{\s*display:\s*inline/,
+    "the key cap never replaces the word on a keyboard device",
+  );
+});
+
+// aifocus-2ato: the where-prompts demo's status dot pulsed forever, whatever
+// the OS motion preference said - the page's only animation and the only thing
+// that could not be turned off (the site's own palette motion is already gated
+// on no-preference, so this was an inconsistency with the standard the rest of
+// the site keeps). Removing every no-preference block and finding no animation
+// left is the check: motion may only exist inside one.
+function withoutBlocks(source, marker) {
+  let out = "";
+  let i = 0;
+  for (;;) {
+    const start = source.indexOf(marker, i);
+    if (start < 0) return out + source.slice(i);
+    out += source.slice(i, start);
+    let depth = 0;
+    let j = source.indexOf("{", start);
+    for (; j < source.length; j += 1) {
+      if (source[j] === "{") depth += 1;
+      if (source[j] === "}") {
+        depth -= 1;
+        if (depth === 0) break;
+      }
+    }
+    i = j + 1;
+  }
+}
+
+test("the journal demo's only animation can be reduced", () => {
+  for (const file of ["index.html", "google.html", "openai.html"]) {
+    const markup = read(`static/where-prompts-run-demo/${file}`);
+    const style = /<style>([\s\S]*?)<\/style>/.exec(markup)[1];
+    assert.match(
+      style,
+      /@media \(prefers-reduced-motion: no-preference\)/,
+      `${file} has no no-preference block`,
+    );
+    assert.doesNotMatch(
+      withoutBlocks(style, "@media (prefers-reduced-motion: no-preference)"),
+      /animation\s*:|@keyframes/,
+      `${file} animates outside a no-preference block, so it runs under reduce`,
+    );
+  }
+});

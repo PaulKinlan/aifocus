@@ -23,6 +23,12 @@ file in the same branch.
   `GITHUB_CLIENT_ID` and the `GITHUB_CLIENT_SECRET` Pages secret.
 - Schema: `migrations/0001`-`0010`. Anything that stores reader data, an IP
   hash or a rate-limit ledger lives there.
+- `tools/stats/` and the CSVs it writes into `static/data/` are developer-run
+  build-tooling input to `/stats/`, not runtime surface: collectors cap
+  third-party responses at 1 MiB and fail loudly on values outside plausible
+  ranges (`tools/stats/collector_common.py`, aifocus-waix), and the gate
+  checks the published document against the CSVs (`tools/stats/build.py
+  --check`).
 - Out of scope: the agent fleet and the software factory (`~/agents`,
   `~/fleet`), the journal, and anything that only exists on a build machine.
 
@@ -45,6 +51,7 @@ file in the same branch.
 | Anonymous internet | none | every static page, `GET /api/search`, `POST /api/ask`, `GET /api/reader/state`, `POST /api/reader/reactions`, `POST /api/reader/annotations` (highlights only), `GET /api/auth/start/<provider>`, `/api/auth/callback/<provider>`, `/og/*.png` |
 | Reader | `aifocus_reader` cookie (client-held 32-hex id) | the above, plus deleting its own highlights and reactions; it sees its own pending notes |
 | Signed-in reader | session token; only its SHA-256 is stored | notes and comments, `/api/account`, `/api/auth/logout` |
+| Browser agent (MCP client) | none of its own - it runs inside a visitor's browser and calls the tools registered on `document.modelContext`/`navigator.modelContext`: the four in `assets/js/webmcp.js` plus the three 404-game controls (`game_state`, `game_jump`, `game_restart`) registered by inline script in `layouts/404.html` | `list_articles`, `search_articles`, `read_article` and `contact_paul` (§4); the 404 game controls (§5, zero network/storage/credential reach). No tool reaches `/admin/*` or D1. The only server endpoint a tool calls is the public `GET /api/search` (`search_articles`, the same endpoint any anonymous visitor can reach), and the only fetch is `read_article`'s, which is same-origin published essays fetched with `credentials: "omit"` |
 | Moderator | Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`) | everything under `/api/admin/*` |
 | Identity provider | none (we call out to it) | its error text reaches our logs; its redirects reach our redirect targets |
 | Holder of a D1 copy | none | every stored row, including salted IP hashes and any key we ever put in the database |
@@ -58,16 +65,23 @@ anyone who can read a backup, a replica or a debug session".
 |:---|:---|:---|
 | Cross-origin writes | `isSameOrigin()` requires the `Origin` header to equal the request's own origin; a request with no `Origin` is rejected, not allowed | `functions/_lib/reader.js`, called by every POST handler |
 | CSRF | the same-origin check plus `SameSite=Lax` on both cookies | `functions/_lib/reader.js`, `functions/_lib/auth.js` |
-| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), reads (600/hour: `/api/reader/state`, `/api/account` and `/api/auth/me` share one `read_events` budget), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search, read and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `read_events`, `auth_start_log`). The share-card renderer holds an in-flight reservation per card. `/api/ask` is the exception twice over: it reads a count and INSERTs `ask_log` only after the answer is generated, so the slot does not precede the billing | `functions/_lib/reader.js reserveWriteEvent reserveReadEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/reader/state.js`, `functions/api/account.js`, `functions/api/auth/me.js`, `functions/api/ask.js`, `functions/_lib/og.js` |
-| Metering failure mode | the reader-write, search and auth-start limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. The read meter degrades differently by design: a missing `read_events` table falls back to a per-isolate in-memory cap instead of a 503 (aifocus-s9o), which is why this list does not name it. **`/api/ask` is the exception** - it answers "not limited" when `READER_DB` is unbound and its count-then-insert is not atomic, so an unbound deployment bills uncapped inference (open: aifocus-5ft, aifocus-e7e; see section 6) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot` |
+| Metering | a per-IP budget for reader writes (30/hour), search (30/hour), reads (600/hour: `/api/reader/state`, `/api/account` and `/api/auth/me` share one `read_events` budget), ask (20/hour), auth starts (30/hour) and share-card renders. The write, search, read and auth-start meters are **reservations**: one conditional INSERT that consumes the slot before the work it pays for (`write_events`, `search_log`, `read_events`, `auth_start_log`). The ask meter is the same reservation shape (`ask_log`, 20/hour): `reserveAskSlot` runs one conditional INSERT that consumes a slot only while the per-IP count is under the cap, and the handler awaits it before the billed inference, so the slot precedes the charge and a concurrent burst of distinct questions cannot all read the same pre-insert count. The share-card renderer holds an in-flight reservation per card | `functions/_lib/reader.js reserveWriteEvent reserveReadEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/reader/state.js`, `functions/api/account.js`, `functions/api/auth/me.js`, `functions/api/ask.js reserveAskSlot`, `tests/ask.test.mjs`, `functions/_lib/og.js` |
+| Metering failure mode | the reader-write, search, auth-start and ask limiters **fail closed**: a missing binding, a missing table or a database error denies (429/503) rather than allowing unmetered work. The read meter degrades differently by design: a missing `read_events` table falls back to a per-isolate in-memory cap instead of a 503 (aifocus-s9o), which is why this list does not name it. The only way to reach `/api/ask`'s billed inference without a meter is its local-dev hatch, which needs `ALLOW_UNMETERED_ASK` in the environment **and** a loopback request origin, so production, staging and preview deployments answer 503 before any inference runs (aifocus-5ft, aifocus-e7e; loopback-only in aifocus-4hu1, merged 4514def) | `functions/_lib/reader.js reserveWriteEvent`, `functions/api/search.js reserveSearchSlot`, `functions/api/auth/start/[provider].js reserveAuthStartSlot`, `functions/api/ask.js reserveAskSlot` |
+| OG card metering order | the per-IP slot is reserved (`reserveOgSlot`) **before** every billed operation of a card render - the Workers AI hook, the Browser Rendering screenshot and the R2 put - so a hammering client cannot make the site pay for a card it will be charged for. What runs before the meter is deliberately unmetered: one `ASSETS` read of `og-card.html`, one `og_hooks` row read, and one R2 `get` on the stored-PNG path, which is why a card that is already in R2 costs no quota | `functions/_lib/og.js serveCard` |
+| AI-written share-card text | a generated hook is stored in `og_hooks` with its `source` and `model`, is limited to 96 tokens and passed through `cleanHook()` (one line, no markup), and reaches the card only through `fillHook()`/`escapeHtml()`. The whole table is listable, editable and deletable by a moderator at `/api/admin/og/*` behind the Access guard, so AI-written text that ships is reviewable after the fact and its provenance is recorded | `functions/_lib/og.js`, `functions/api/admin/og.js` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
-| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard | `functions/_lib/access.js`, `functions/api/admin/*` |
+| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard. The browser attaches that JWT to any same-origin request, so the `/admin/` **page** runs under its own CSP with `script-src 'self'` - no `'unsafe-inline'`, no third-party hosts - and `head.html` skips the gtag block, the inline speculation rules and the `onload` font promotion for `type: admin`, so content-page script trust is not shared with the moderator's authority (aifocus-wwfp). `/api/admin/*` itself is unaffected: it is JSON behind the per-handler guard | `functions/_lib/access.js`, `functions/api/admin/*`, `static/_headers` `/admin/*`, `themes/aifocustheme/layouts/_partials/head.html` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
 | OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `functions/_lib/auth.js` |
 | IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
-| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
+| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), a narrowed `/admin/*` CSP (`script-src 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
+| Inline script execution | the site CSP's `script-src` allows no `'unsafe-inline'`: the 12 distinct inline script bodies the build produces are pinned by `sha256` hash - 11 that execute (the gtag loader, the OG-card font measure and nine page scripts) plus the inline speculation-rules block, which does not run as script but is still gated by `script-src` - so an injected inline `<script>` does not run. The hash list is generated from the built HTML (`node tools/csp-hashes.mjs`) and the gate fails when it drifts (`--check`), because a script without a hash is silently blocked rather than silently allowed. The same gate rejects the other inline execution surfaces this policy disables and no hash can cover - inline `on*=` event handler attributes and `javascript:` URLs - by name, so a handler added to a template fails the gate instead of failing silently in the browser (aifocus-rlng). `style-src` **does** still allow `'unsafe-inline'`: 71 `style=` attributes cannot be pinned without `'unsafe-hashes'`, so style injection remains possible where an injection sink exists - script execution, the part that leads to credential and session theft, does not | `static/_headers`, `tools/csp-hashes.mjs`, `tools/gate.sh` (signal 6) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
+| Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
+| Avatar images | a provider-supplied `avatarUrl`/`avatar_url` becomes an `<img src>` only through `safeImgSrc()`, which requires an absolute `https:` URL on one of the hosts the providers actually mint avatars on (`avatars.githubusercontent.com`, `pbs.twimg.com`, `cdn.bsky.app`). Anything else renders a name with no avatar. `img-src` is deliberately wide so post images work (section 7), so this sink check is the bound on which host a reader's browser can be made to request; the write half (`safeAvatarUrl()`) keeps a hostile value out of D1 and out of the reader payload | `assets/js/safe-href.js`, `assets/js/reader.js`, `assets/js/account-page.js`, `functions/_lib/auth.js`, `functions/_lib/reader.js` |
+| First-party markup sinks | The source guard scans JS in `assets/js/` and `static/`, plus inline scripts in `layouts/`, `themes/` and `static/**/*.html`. A new sink fails the gate. Seven existing standalone static tool pages retain 12 exact-statement `innerHTML` pins (§5(3)); the pins inventory assignments but do not prove the strings assembled upstream are escaped. Their data flow is a review boundary, not a blanket sink-clean guarantee | `tests/first-party-sinks.test.mjs` |
 | Markdown negotiation | `_middleware.js` only rewrites to the `.md` sibling for paths that pass `isValidContentPath` and `isUnsafePath`; the root redirect only accepts a same-origin single-segment permalink path (§5.1 quotes the exact expression, so it is written once) | `functions/_middleware.js` |
+| WebMCP agent tools | `read_article` treats its `url` argument as untrusted agent input: it must parse same-origin **and** resolve to an essay in the built `/index.json` (`findArticle()`) before anything is fetched - a matching origin alone is not enough, because a same-origin fetch from this page would carry the reader session and the moderator's Access cookie. The fetch itself sends `credentials: "omit"` so it rides no credential even if a path ever got past that check. Invariant: **`read_article` may fetch only paths the built `/index.json` lists**. `list_articles` reads that same `/index.json`; the only server endpoint any tool calls is the public metered `GET /api/search` (via `search_articles`); no tool touches `/admin/*` or D1. `contact_paul` navigates its `mailto:` draft only after `agent.requestUserInteraction()` + `window.confirm()`, so no mail is composed without a human click. The file is also inside the origin-wide markup-sink ban (aifocus-mcqz) | `assets/js/webmcp.js`, `tests/first-party-sinks.test.mjs` |
 
 The edge applies `static/_headers` to static responses only, never to
 Function-generated ones - documented Pages behaviour, verified against
@@ -78,9 +92,11 @@ therefore carry the same baseline from code: `functions/_lib/headers.js`
 into `json()`, the OAuth redirect helper, the OG renderer, and the responses
 `_middleware.js` itself constructs. `tests/security-headers.test.mjs` fails
 the gate if the code-side set and the `_headers` `/*` block drift apart, or if
-a Function response path is built without the baseline. A route that needs
-different headers says so in its handler, and the set-if-absent rule keeps
-that value.
+a Function response path is built without the baseline, and if the `/admin/*`
+policy stops being the `/*` policy with `script-src` narrowed to `'self'` (the
+one duplicated block, deliberately: the two must change together). A route that
+needs different headers says so in its handler, and the set-if-absent rule
+keeps that value.
 
 ## 5. Declared non-issues
 
@@ -103,13 +119,52 @@ can be checked rather than re-argued.
    (`static/where-prompts-run-demo/demo.js`). Originally declared a non-issue
    because every interpolated value passed through `escapeHtml()`. The join is
    gone entirely: the tree and transcript are now DOM-built with
-   `textContent`, `escapeHtml` is removed, and the ban is origin-wide:
-   `tests/where-prompts-demo-sinks.test.mjs` guards the demo bundle and
-   `tests/first-party-sinks.test.mjs` applies the same raw-source token ban to
-   every first-party script (`assets/js/**/*.js`, `static/**/*.js`), with the
-   single sanctioned clearing assignment in `stats-page.js` pinned by exact
-   line (aifocus-qsv3, aifocus-mcqz). Re-opens only if those guards are
-   deleted or bypassed.
+   `textContent`, `escapeHtml` is removed, and the guard covers first-party
+   JS in `assets/js/` and `static/` plus inline script in `layouts/`, `themes/`
+   and `static/**/*.html`. `tests/where-prompts-demo-sinks.test.mjs` guards the
+   demo bundle; `tests/first-party-sinks.test.mjs` rejects new markup sinks
+   across those sources. The sole application-JS exception is the exact
+   tooltip-clearing assignment in `stats-page.js` (aifocus-qsv3, aifocus-mcqz).
+   Seven standalone static HTML tools already have the following 12
+   `innerHTML` assignments. The scan pins each **full source line**, including
+   whitespace, and checks exactly 12 pins in exactly seven files. The five
+   assignments spanning multiple lines also pin the full source span through
+   its closing line (aifocus-m1bw), so changing an interpolation within the
+   statement fails the gate. These pins have a maintenance cost: an intentional
+   edit to a pinned statement requires reviewing its data flow and updating
+   its test pin. They still do **not** prove that variables assembled outside
+   the statement remain escaped (aifocus-5rvq):
+
+   - `static/model-drops.html:310` — SVG assembled from the authored same-origin
+     `/model-drops.tsv`; displayed text is escaped, coordinates are numeric.
+   - `static/model-drops.html:398` — failed-fetch message, with `err.message`
+     passed through `esc()` before entering the error markup.
+   - `static/model-gap.html:294` — SVG from authored `/model-gap.json`; labels
+     and link attributes use `esc()`, drawing coordinates are numeric.
+   - `static/model-gap.html:319` — details from that authored JSON; model names
+     and feature labels use `esc()` before insertion.
+   - `static/model-gap.html:332` — fixed explanatory HTML and escaped
+     `data.updated` from the authored JSON.
+   - `static/pwa-cooked-baseline.html:214` — authored `FEATURES` list and local
+     browser feature-detection results, not caller-supplied strings.
+   - `static/pwa-cooked-baseline.html:229` — fixed summary markup with counts
+     derived from that authored list and feature detection.
+   - `static/pwa-cooked-comparator.html:258` — authored in-page `CAPABILITIES`
+     list selected by index, not a URL or external feed.
+   - `static/pwa-cooked-timeline.html:215` — SVG from the authored in-page
+     `APIS` list, with calculated numeric positions.
+   - `static/token-calculator-regional.html:351` — authored `REGIONS` list
+     used to build cards; salaries are formatted numbers.
+   - `static/token-calculator-regional.html:443` — calculator table from
+     numeric input controls and formatted model/region constants.
+   - `static/token-calculator.html:908` — calculator rows derived from numeric
+     input controls and formatted values.
+
+   None currently reads URL/search/hash, storage, remote or model output into
+   a sink. **Review trigger:** if any of those input boundaries change, a new
+   external/user-controlled value reaches a static page, or a pin needs
+   widening, replace the sink with DOM construction rather than extending the
+   exception. Re-opens if the guards are deleted or bypassed.
 4. **`design-token-drift-colors` in `public/*`.** `public/` is Hugo build
    output, not source; the source instances are tracked as aifocus-c1a.
 5. **`missing-responsive-viewport-meta` on share-card pages.** The og-card
@@ -128,6 +183,50 @@ can be checked rather than re-argued.
    full `functions/…` prefix, so the doc-missing-file candidates that read the
    bare form as a repo-root path have nothing left to match. Re-opens when a
    new row or sentence names a module without the prefix.
+8. **The WebMCP game tools on the 404 page** (`layouts/404.html`).
+   `game_state`, `game_jump` and `game_restart` are client-side controls for
+   the canvas game: they read and mutate the game's in-memory state (score,
+   best, player position, bug list) and the overlay DOM the loop owns -
+   `overlay.style.display` (`layouts/404.html:79`, `:92`),
+   `ovTitle.textContent` (`:84`), `startBtn.textContent` (`:91`) and the
+   `score` readout (`:145`) - and that is all: no `fetch()`, no `localStorage`,
+   no cookies, no credential, and no string from the caller is written anywhere
+   (`best` is a page variable, not persisted; verified by reading the
+   registrations and running the inline script against stubs, aifocus-hexx).
+   The game-over message uses `replaceChildren`, `createElement` and
+   `textContent` (`:85-90`), not a markup sink; the origin-wide sink ban now
+   scans inline script in `layouts/*.html` as well (aifocus-9xgd).
+   The browser-agent actor of §3 can read state, jump, and start or restart
+   the game; only a collision ends a run. The rendering loop has a single-chain
+   invariant: `start()` cancels any
+   pending frame before requesting another (`:77-80`), and the loop only
+   schedules a successor while `running` (`:157`). Game-over sets `running`
+   false (`:82`), leaving no drain callback to revive on restart.
+   `tests/404-loop.test.mjs` asserts repeated restarts keep one pending frame,
+   game-over leaves zero, and restart returns to one; a real Chrome check on
+   aifocus-02n5 observed the same 1 → 0 → 1 transition. Before that fix,
+   repeated restarts stacked callbacks and a restart during the game-over
+   drain could keep two or more chains running; that is historical, not current.
+   Re-opens if a game tool gains network, storage or credential reach, accepts
+   a caller-controlled string, or the animation loop stops cancelling its
+   pending frame when restarted.
+
+9. **"The share-card renderer reserves its per-IP slot after the asset fetch and
+   the D1 hook read"** (reported at `og.js:414`, aifocus-04ao). The ordering is
+   the other way round for everything that is billed: `serveCard()` reaches
+   `reserveOgSlot()` before `renderCard()` is published, and `renderCard()` is
+   where the Workers AI hook, the Browser Rendering screenshot and the R2 put
+   happen. A denied request returns the fallback without generating, rendering
+   or storing anything. The three things that do precede the reservation are
+   deliberately free to callers so that a cached card costs no quota: an
+   `ASSETS` read of the card shell (static, unbilled), one `og_hooks` row read,
+   and an R2 `get` that returns the stored PNG before any render is considered.
+   `tests/og.test.mjs` asserts the consequence rather than the reading: with the
+   budget spent, a request makes zero Workers AI calls, zero browser renders and
+   zero R2 writes, and the test fails as soon as the deny branch stops
+   returning early. Re-opens if a billed call (AI, BROWSER, R2 put, or any new
+   metered write) moves ahead of `reserveOgSlot()` in `serveCard()`, or if the
+   pre-meter read path starts consuming a per-IP budget.
 
 ## 6. Known gaps and open work
 
@@ -140,6 +239,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 |:---|:---|
 | aifocus-710 | the IP-hash salt sits in the same database as the hashes (the retention half is fixed: `reserveAskSlot` prunes `ask_log` rows older than two hours on every reservation) - see section 7 |
 | aifocus-wxl | the journal demo's OPFS sandbox is shared origin-wide across provider pages, contradicting the UI copy |
+| aifocus-4go1 | the demo's provider-key persistence (section 7) is accepted, not fixed: drop the "remember on this device" opt-in or serve the demo from its own origin - a product decision, not a lane change |
 
 ### Closed since the 2026-11-04 audit
 
@@ -154,6 +254,22 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 | aifocus-rom | there was no account erasure path | dbf82c8: `DELETE /api/account` hard-deletes the account, its sign-ins and its activity |
 
 ## 7. Accepted residual risk
+- **Image egress is allowed to any `https:` origin** (`img-src 'self' data:
+  https:` in `static/_headers`, reported as aifocus-8f3j). Post markdown
+  embeds images from arbitrary hosts, so narrowing the policy to the three
+  avatar CDNs (`cdn.bsky.app`, `avatars.githubusercontent.com`,
+  `pbs.twimg.com`) would break published articles to constrain nothing.
+  The consequence is that a URL that reaches an `<img src>` can beacon to any
+  https host, which matters only combined with a URL the attacker controls:
+  provider-supplied avatars are the known route (`avatarUrl`), and the
+  control for that is the scheme/host allowlist at the sink (`safeImgSrc()` /
+  `safeAvatarUrl()`, aifocus-r044, section 4) rather than the CSP. The
+  residual risk is any image URL that does not come from a provider - post
+  markdown, an admin-written card hook - which stays a request to whatever
+  host the author named, by design. Accepted because the exfiltration channel
+  needs both a stored attacker URL and a request the reader makes, and the
+  alternative costs every embedded image in every post.
+
 
 - **The per-IP budget bounds one source, not a flood.** Rotating IPs defeats it
   by design; a distributed flood is a Cloudflare-level control, not an
@@ -168,6 +284,33 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 - **The Access guard is per route.** A new module under `functions/api/admin/`
   that forgets `verifyAccess()` is unguarded. Reviewing that directory for the
   call is the control until a prefix-level guard exists.
+- **The narrowed `/admin/*` CSP trusts first-party script.** `script-src 'self'`
+  removes inline script and third-party origins from the moderation page and its
+  `on*` handlers, but a bundled module - or anything vendored into `assets/js/` - still
+  runs with the moderator's Access cookie attached. The boundary is "our code as
+  built", not "no code"; treating a first-party dependency as trusted is the
+  residual risk, and the reason the admin page loads no analytics at all rather
+  than allowlisting it.
+- **A reader's provider API key can sit in origin-wide `localStorage`** when the
+  journal demo's "remember on this device" box is ticked:
+  `persistKeyForThisDevice()` (`static/where-prompts-run-demo/demo.js`) stores
+  the live bearer key under `wpr_demo_apikey_<provider>` after an explicit
+  opt-in that is disclosed next to the field. The key is a billable credential
+  on an external account the site cannot revoke. The demo pages themselves run
+  a `script-src 'self'` meta CSP, but `localStorage` is origin-wide and every
+  content page runs the baseline policy, whose `script-src` allows the 12
+  hash-pinned inline bodies and five third-party origins (gtag, Cloudflare
+  Insights, and three
+  X/Twitter embed hosts) - so any script a content page loads, or an XSS there, can read the
+  stored key. This is **accepted while the origin's script trust holds** (the
+  same dependency the inline-script question in aifocus-5wrp turns on): the
+  baseline `script-src` stays this narrow, and the first-party markup-sink
+  guard continues rejecting new sinks (section 4; §5(3) records 12 pinned
+  legacy sinks on static tool pages). It re-opens - moves to section 6 - if a
+  content-page script source is widened, if the demo stops disclosing the
+  opt-in, or if untrusted data reaches any pinned sink. The fix options are open work, not accepted
+  silently: drop persistence in favour of page memory, or serve the demo from
+  its own origin/hostname (aifocus-4go1).
 - **IP hashes are brute-forceable by a database reader** while the salt lives
   in the same database (aifocus-710): the IPv4 space is small enough to
   enumerate against a known salt.
@@ -182,11 +325,33 @@ Re-read this file when a change:
 - adds or moves a route under `functions/`, especially under `functions/api/admin/`;
 - adds a binding, a `[vars]` entry, or a secret;
 - adds a migration, or changes what an existing table stores about a person;
-- changes `static/_headers` allowlists, or adds an inline script;
+- changes `static/_headers` allowlists, or adds an inline script, an `on*`
+  handler or a third-party `<script>` to a template - `head.html` guards those
+  surfaces for `type: admin`, and a new one needs the same guard or it silently
+  stops working on `/admin/` (the `/admin/*` policy is narrower than `/*`);
 - makes a new caller of `reserveWriteEvent()`, `reserveSearchSlot()`, `askLog`
   or the og render reservation, or moves that call relative to the work it
   pays for;
 - introduces a new place where provider-supplied text reaches a log, a
-  redirect or an `innerHTML`;
+  redirect, an `innerHTML` or an `href`;
+- changes `static/where-prompts-run-demo/**` - the demo pages' meta CSP, the
+  demo's `localStorage` use (`wpr_demo_apikey_*`, `persistKeyForThisDevice()`)
+  or its opt-in disclosure - or widens any content page's `script-src` in
+  `static/_headers`: the demo's provider-key persistence is classified as
+  accepted risk (section 7) only while the origin's script trust holds, and the
+  disclosure is part of that classification;
+- adds a `registerTool` call to `assets/js/webmcp.js` or to `layouts/404.html`,
+  widens `read_article`'s
+  target set beyond the `/index.json` essay list, changes that fetch's
+  `credentials` mode, or changes what an existing tool does with its arguments
+  or its result - a new `fetch`/`localStorage`/`cookie`/`document.cookie` reach
+  inside a tool body, or a tool that starts writing a caller-supplied string
+  into the page - because a tool's reach is not fixed by its registration: the
+  WebMCP surface is an actor with no site credential
+  (§3) whose entire reach is the two-part guard in §4 and the game controls in
+  §5 - whose only reach is the in-memory state and the overlay DOM the loop
+  writes, with no network, storage or credential path - so a new tool, a wider
+  target or a wider tool body re-opens
+  the question of what an agent can reach;
 - closes a bead that appears in section 6 - move its row to the closed table
   in the same branch.

@@ -1,5 +1,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{{/* The moderation page (/admin/) is served under a narrower CSP than the rest of
+     the site: static/_headers gives the /admin/* block script-src 'self' with no
+     'unsafe-inline' and no third-party hosts, so that a script running in the
+     admin page cannot ride the moderator's Cloudflare Access cookie into
+     /api/admin/* (aifocus-wwfp). Every inline or third-party script surface
+     below is therefore skipped for it; anything added here that needs an
+     inline body, an on* handler or a third-party origin needs the same guard. */}}
+{{- $isAdmin := eq .Type "admin" }}
+{{- if not $isAdmin }}
 {{/* Google tag (gtag.js) — placed at the top of <head> per Google's guidance so the
      site-tag assistant detects it. Single tag, loaded once on every page. */}}
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-DJSEFL3CXG"></script>
@@ -9,6 +18,7 @@
   gtag('js', new Date());
   gtag('config', 'G-DJSEFL3CXG');
 </script>
+{{- end }}
 {{/* Declare both schemes so native UI (scrollbars, form controls, canvas) is
      themed and the initial canvas paints correctly; the palette itself is chosen
      by prefers-color-scheme in main.css, so the user's light preference is honoured. */}}
@@ -35,12 +45,20 @@
 {{/* Load the Joan web font non-render-blocking: preload as a stylesheet then
      promote to a real stylesheet once it has fetched, so first paint is not
      blocked. <noscript> keeps it working with JavaScript disabled. (The Font
-     Awesome icon font was removed in favour of inline SVG — see icon.html.) */}}
+     Awesome icon font was removed in favour of inline SVG — see icon.html.)
+     The promotion is an onload handler, which the admin page's script-src
+     'self' policy blocks, so that page links the stylesheet directly: it is
+     one render-blocking request on a page nobody loads casually, where a
+     blocked handler would silently leave the font unapplied. */}}
+{{- if $isAdmin }}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Joan&display=swap">
+{{- else }}
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Joan&display=swap"
-  onload="this.onload=null;this.rel='stylesheet'">
+  data-promote-stylesheet>
 <noscript>
   <link href="https://fonts.googleapis.com/css2?family=Joan&display=swap" rel="stylesheet">
 </noscript>
+{{- end }}
 {{ partial "social.html" (dict "page" . "desc" $desc) }}
 {{/* JSON-LD structured data. Replaces Hugo's _internal/schema.html, which
      emitted <meta itemprop> tags with no enclosing itemscope/itemtype — inert
@@ -66,9 +84,11 @@
      the whole essay, and blocking there would stall the transition. Browsers
      without rel=expect ignore the link. */}}
 <link rel="expect" href="#site-branding" blocking="render">
+{{- if not $isAdmin }}
 <script type="speculationrules">
   {
     "prerender": [{ "where": { "href_matches": "/*" }, "eagerness": "moderate" }],
     "prefetch": [{ "where": { "href_matches": "/*" }, "eagerness": "moderate" }]
   }
 </script>
+{{- end }}

@@ -71,11 +71,16 @@ const build = () => {
   const closeButton = el("button", {
     type: "button",
     class: "palette-close",
-    "aria-label": "Close",
-    text: "Esc",
+    "aria-label": "Close the palette",
     commandfor: "command-palette-dialog",
     command: "close",
-  });
+  },
+    // aifocus-fbq1: the control is named for what it does, and the key cap is
+    // only shown where that key exists. A phone reader saw "Esc" on a button
+    // whose function was invisible to them.
+    el("span", { class: "palette-close-word", text: "Close" }),
+    el("span", { class: "palette-close-key", text: "Esc", "aria-hidden": "true" }),
+  );
   // Invoker Commands close the dialog from the button's attributes. Feature
   // detect on commandForElement: `command` exists on the prototype in engines
   // where the invoker path is not wired up, so checking it hands those browsers

@@ -22,8 +22,9 @@ import json
 import os
 import re
 import sys
-import urllib.request
 from datetime import date, datetime
+
+from collector_common import UA, fetch_capped, finite_in_range
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
@@ -33,9 +34,7 @@ MONTHS = {m: i for i, m in enumerate(calendar.month_abbr) if m}
 
 
 def fetch():
-    req = urllib.request.Request(URL, headers={"User-Agent": "aifoc.us-stats/1 (+https://aifoc.us/stats/)"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        return resp.read().decode("utf-8", "replace")
+    return fetch_capped(URL, headers={"User-Agent": UA})
 
 
 def parse(page):
@@ -60,7 +59,10 @@ def parse(page):
                 header = cols
             continue
         if len(cells) >= len(header) + 1 and all(c.endswith("%") for c in cells[1:len(header) + 1]):
-            yield cells[0], [(d, float(v.rstrip("%"))) for d, v in zip(header, cells[1:len(header) + 1])]
+            yield cells[0], [
+                (d, finite_in_range(v.rstrip("%"), 0, 100, f"w3techs {cells[0]} {d.isoformat()}"))
+                for d, v in zip(header, cells[1:len(header) + 1])
+            ]
 
 
 def main():

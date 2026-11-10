@@ -16,8 +16,9 @@ import csv
 import json
 import os
 import sys
-import urllib.request
 from datetime import date, datetime, timedelta
+
+from collector_common import UA, fetch_capped, finite_in_range
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
@@ -38,9 +39,7 @@ def main():
 
     run_date = args.run_date or date.today().isoformat()
     url = f"https://chromestatus.com/data/timeline/featurepopularity?bucket_id={series['bucket_id']}"
-    req = urllib.request.Request(url, headers={"User-Agent": "aifoc.us-stats/1 (+https://aifoc.us/stats/)"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = resp.read().decode("utf-8")
+    body = fetch_capped(url, headers={"User-Agent": UA})
     # chromestatus prefixes some JSON responses with )]}' to defeat JSON hijacking.
     if body.startswith(")]}'"):
         body = body.split("\n", 1)[1]
@@ -48,7 +47,12 @@ def main():
     if not points:
         sys.exit("empty timeline")
     name = points[0].get("property_name", series["primary"])
-    by_day = {datetime.strptime(p["date"], "%Y-%m-%d").date(): float(p["day_percentage"]) for p in points}
+    by_day = {
+        datetime.strptime(p["date"], "%Y-%m-%d").date(): finite_in_range(
+            p["day_percentage"], 0, 100, f"chromestatus {series['bucket_id']} {p.get('date')}"
+        )
+        for p in points
+    }
 
     epoch = datetime.strptime(series["epoch"], "%Y-%m-%d").date()
     today = date.today()

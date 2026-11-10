@@ -4,6 +4,7 @@
 // a sign-in while signed in adds that method to the current account.
 
 import { loadArticleIndex } from "./site-search.js";
+import { safeHref, safeImgSrc } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const RETURN = "/account/";
@@ -62,8 +63,9 @@ const when = (ms) => el("time", { datetime: new Date(ms).toISOString(), text: ne
 const renderProfile = (user) => {
   const profile = document.querySelector("#account-profile");
   const nodes = [];
-  if (user.avatarUrl) {
-    const img = el("img", { src: user.avatarUrl, alt: "", width: "48", height: "48", referrerpolicy: "no-referrer" });
+  const avatarSrc = safeImgSrc(user.avatarUrl);
+  if (avatarSrc) {
+    const img = el("img", { src: avatarSrc, alt: "", width: "48", height: "48", referrerpolicy: "no-referrer" });
     nodes.push(img);
   }
   nodes.push(el("strong", { text: user.displayName }));
@@ -77,8 +79,9 @@ const renderIdentities = (identities, providers) => {
   const labels = new Map(providers.map((p) => [p.id, p.label]));
   document.querySelector("#account-identities").replaceChildren(
     ...identities.map((identity) => {
-      const name = identity.profileUrl
-        ? el("a", { href: identity.profileUrl, rel: "noopener noreferrer", text: identity.handle })
+      const href = safeHref(identity.profileUrl);
+      const name = href
+        ? el("a", { href, rel: "noopener noreferrer", text: identity.handle })
         : el("span", { text: identity.handle });
       return el("li", {}, el("p", {}, `${labels.get(identity.provider) || identity.provider}: `, name));
     }),

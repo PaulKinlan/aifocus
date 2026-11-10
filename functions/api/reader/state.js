@@ -100,14 +100,19 @@ export async function onRequestGet({ request, env }) {
   }
 
   // A signed-out request with no reader cookie gets the same payload for every
-  // visitor of a post, so it may be reused briefly (aifocus-0cz: one page view
-  // should not be one D1 batch on every reload). Vary: Cookie stops a cached
-  // anonymous body from being served to a visitor whose own reactions, notes
-  // or comments would be in theirs. Anything tied to a reader session is
-  // personal and is never stored.
+  // visitor of a post, so it may be reused briefly in the reader's own browser
+  // (aifocus-0cz: one page view should not be one D1 batch on every reload).
+  // It must not be instruction-to-store at a SHARED cache: Cloudflare's edge
+  // keys this path on the URL and ignores Vary (aifocus-6p52), so s-maxage
+  // would serve a stored anonymous body - viewer: null, reactions and notes
+  // absent - to signed-in readers for its whole TTL the moment any Cache Rule
+  // covers /api/*. `private` forbids shared storage by contract instead of
+  // relying on the edge's default behaviour, and keeps the browser-side
+  // reuse. Anything tied to a reader session is personal and is never stored
+  // anywhere.
   const anonymous = reader === null && user === null;
   const cacheHeaders = anonymous
-    ? { "Cache-Control": "public, max-age=60, s-maxage=300", Vary: "Cookie" }
+    ? { "Cache-Control": "private, max-age=60", Vary: "Cookie" }
     : { "Cache-Control": "no-store", Vary: "Cookie" };
 
   return json({

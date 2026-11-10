@@ -71,6 +71,13 @@ h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: .2rem; }
   margin-bottom: 1.25rem;
 }
 .chart svg { display: block; }
+/* aifocus-lctf: a wide chart or table is a legitimate fixed width, but it
+   belongs in its own scroll container rather than scrolling the whole page
+   (WCAG 1.4.10 reflow). Both containers are keyboard-scrollable, so they need
+   tabindex/role="region" in the markup and a visible ring (WCAG 2.1.1). */
+.table-scroll { overflow-x: auto; }
+.chart:focus-visible,
+.table-scroll:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 h3 { font-size: .95rem; font-weight: 700; margin: 1.5rem 0 .5rem; }
 table { width: 100%; border-collapse: collapse; font-size: .78rem; background: var(--bg-card); border: 1px solid var(--border-card); border-radius: .375rem; overflow: hidden; }
 th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid var(--border-subtle); }
@@ -94,9 +101,10 @@ th { background: var(--th-bg); font-weight: 700; font-size: .75rem; text-transfo
   <span><span class="swatch open"></span>predicted next (median recent gap)</span>
 </div>
 
-<div class="chart" id="timeline-chart"><div class="loading">Loading model data...</div></div>
+<div class="chart" id="timeline-chart" tabindex="0" role="region" aria-label="Model drops timeline, scrolls horizontally"><div class="loading">Loading model data...</div></div>
 
 <h3>Predicted next drop per series</h3>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Predicted next drop per series, scrolls horizontally">
 <table id="stats-table">
   <thead>
     <tr>
@@ -110,6 +118,7 @@ th { background: var(--th-bg); font-weight: 700; font-size: .75rem; text-transfo
   </thead>
   <tbody id="stats-body"></tbody>
 </table>
+</div>
 
 <!-- Cloned once per row by renderStats() so rows are built with DOM nodes
      rather than re-parsed HTML strings. -->
