@@ -102,6 +102,17 @@ test("quotes inside unquoted attribute values cannot hide the script start tag",
   assert.equal(auditProblems({ built: changed, declared: one, others: ["'self'"] }).missing.length, 1);
 });
 
+test("HTML attribute boundaries use ASCII whitespace, not NBSP or FEFF", () => {
+  for (const separator of ["\u00a0", "\ufeff"]) {
+    const inline = `<script data-x=a${separator}type="application/json">probe()</script>`;
+    assert.equal(collectHashes(site({ "index.html": page(inline) })).length, 1, "type= remains in the unquoted data-x value");
+    const external = `<script data-x=a${separator}src="/loader.js">probe()</script>`;
+    assert.equal(collectHashes(site({ "index.html": page(external) })).length, 1, "src= remains in the unquoted data-x value");
+    assert.equal(collectHashes(site({ "index.html": page(`<script${separator}type="module">probe()</script>`) })).length, 0,
+      "NBSP/FEFF after script forms a different tag name, not a script");
+  }
+});
+
 test("data blocks that are not enforced are left out of the hash list", () => {
   const dir = site({
     "index.html": page(
@@ -303,6 +314,19 @@ test("refresh parsing handles attribute order, case, spacing, quotes and encoded
   for (const html of clean) {
     assert.deepEqual(inlineExecSurfaces(html).urls, [], `must stay clean: ${html}`);
   }
+});
+
+test("inline-handler and javascript: scans retain start tags with unquoted quotes", () => {
+  const quoted = inlineExecSurfaces('<div data-x=it\'s onclick="alert(1)"></div><a data-x=a"b href="javascript:alert(1)"></a>');
+  assert.deepEqual(quoted.handlers, [{ tag: "div", attr: "onclick" }]);
+  assert.equal(quoted.urls.length, 1);
+  assert.equal(quoted.urls[0].attr, "href");
+  for (const separator of ["\u00a0", "\ufeff"]) {
+    const fake = inlineExecSurfaces(`<div data-x=foo${separator}onclick="alert(1)"></div><a data-x=foo${separator}href="javascript:alert(1)"></a>`);
+    assert.deepEqual(fake, { handlers: [], urls: [] }, "Unicode whitespace stays inside an unquoted value");
+  }
+  const real = inlineExecSurfaces('<a data-note=" > fake" href="javascript:alert(1)"></a>');
+  assert.equal(real.urls.length, 1, "a quoted > does not terminate the tag");
 });
 
 test("attribute names are matched with their values blanked, so a quoted mention is not a hit", () => {
