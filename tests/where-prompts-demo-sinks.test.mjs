@@ -28,51 +28,23 @@ const CONCAT_PATTERN = new RegExp(`["'\`]${WS_OR_COMMENT}*\\+${WS_OR_COMMENT}*["
 const REGEX_PRECEDERS = new Set(['(', '[', '{', ',', ';', ':', '=', '!', '&', '|', '?', '+', '-', '*', '%', '^', '~', '<', '>', '/']);
 const REGEX_KEYWORDS = new Set(['return', 'typeof', 'case', 'in', 'of', 'new', 'delete', 'void', 'do', 'else', 'instanceof', 'yield', 'await']);
 
-// Walks back over the whitespace and comments that may sit between a '.' and
-// the member name it qualifies: the engine accepts x./*c*/return and x.// c
-// <newline> return, so a whitespace-only lookbehind called both of them
-// keyword-then-regex and swallowed the interpolation (aifocus-8bji).
-function skipBackTrivia(src, index) {
-  let i = index;
-  for (;;) {
-    while (i >= 0 && /\s/.test(src[i])) i -= 1;
-    if (i >= 1 && src[i] === "/" && src[i - 1] === "*") {
-      // Block comments do not nest: this closer belongs to the first opener
-      // after the previous closer, not to the nearest '/*' to the left - a
-      // comment body may itself contain '/*' (aifocus-7ske), and taking the
-      // nearest one left the real opener in front of the member name and lost
-      // the dot.
-      const previousClose = src.lastIndexOf("*/", i - 2);
-      const open = src.indexOf("/*", previousClose + 2);
-      if (open < 0 || open > i) return i;
-      i = open - 1;
-      continue;
-    }
-    // Deliberately block comments only. A backwards search for '//' cannot
-    // tell a line comment from the '//' inside a string literal earlier on the
-    // same line (a URL, say), and guessing wrong there would break the
-    // member-name rule this function exists for - so the line-comment spelling
-    // is left to a real tokenizer rather than approximated here.
-    return i;
-  }
-}
-
-function startsRegex(src, index) {
-  let j = index - 1;
-  while (j >= 0 && /\s/.test(src[j])) j -= 1;
-  if (j < 0) return true;
-  if (/[A-Za-z0-9_$]/.test(src[j])) {
-    let k = j;
-    while (k >= 0 && /[A-Za-z0-9_$]/.test(src[k])) k -= 1;
-    // `x.return / 2` divides by a property that happens to be spelled like a
-    // keyword; after a '.' the word is a member name, never an operator, so
-    // treating it as a regex start swallowed the rest of the interpolation and
-    // left the split token unseen (aifocus-a63j).
-    const before = skipBackTrivia(src, k);
-    if (before >= 0 && src[before] === ".") return false;
-    return REGEX_KEYWORDS.has(src.slice(k + 1, j + 1));
-  }
-  return REGEX_PRECEDERS.has(src[j]);
+// A `/` is a regex only where an expression can start; that depends on the
+// code token before it, and comments and whitespace may sit between the two
+// (x./*c*/return, x.// c <newline> return). Both questions used to be answered
+// by walking BACKWARDS over that trivia, which cannot tell a real comment from
+// the same characters inside an earlier string literal: with `const m = "/*";`
+// in the file, the backwards search took the string's `/*` as the comment
+// opener, lost the member dot, read `return / 2` as a regex and swallowed the
+// rest of the interpolation - silently green (aifocus-8bji, aifocus-7ske,
+// aifocus-a63j, aifocus-ugwd). The scanner therefore carries the last code
+// token it actually consumed, forwards, and judges each `/` against that.
+function startsRegexAfter(last) {
+  if (last.kind === 'none') return true; // no code yet: an expression starts here
+  // `x.return / 2` divides by a property spelled like a keyword; a member
+  // name is never an operator, and the dot that made it one is tracked below.
+  if (last.kind === 'word') return !last.member && REGEX_KEYWORDS.has(last.text);
+  if (last.kind === 'punct') return REGEX_PRECEDERS.has(last.text);
+  return false; // a value, a closer or a '.' - this '/' divides
 }
 
 // Skips a regex literal, honouring escapes and character classes, and returns
@@ -97,44 +69,72 @@ function skipRegex(src, index) {
 }
 
 // Strips template expression interpolations (${...}) with arbitrary brace nesting depth,
-// comments, inner string literals and regex literals.
+// comments, inner string literals and regex literals. Everything it consumes
+// is real code: it never infers a comment opener by searching backwards, so a
+// '/*' inside a string literal cannot be mistaken for one (aifocus-ugwd).
 function stripTemplateInterpolations(src) {
   let result = '';
   let i = 0;
   while (i < src.length) {
     if (src[i] === '$' && src[i + 1] === '{') {
       let depth = 1;
+      // The last code token inside the interpolation. Trivia (whitespace and
+      // comments) deliberately does not update it, so a '/' is judged against
+      // real code rather than against a backwards guess.
+      let last = { kind: 'none', text: '', member: false };
       i += 2;
       while (i < src.length && depth > 0) {
-        if (src[i] === '{') {
+        const ch = src[i];
+        if (ch === '{') {
           depth++;
+          last = { kind: 'punct', text: ch, member: false };
           i++;
-        } else if (src[i] === '}') {
+        } else if (ch === '}') {
           depth--;
           i++;
-        } else if (src[i] === '"' || src[i] === "'" || src[i] === '`') {
-          const quote = src[i];
+          if (depth === 0) break;
+          last = { kind: 'value', text: ch, member: false };
+        } else if (ch === '"' || ch === "'" || ch === '`') {
+          const quote = ch;
           i++;
           while (i < src.length && src[i] !== quote) {
             if (src[i] === '\\') i++;
             i++;
           }
           if (i < src.length) i++;
-        } else if (src[i] === '/' && src[i + 1] === '*') {
+          last = { kind: 'value', text: quote, member: false };
+        } else if (ch === '/' && src[i + 1] === '*') {
           i += 2;
           while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) {
             i++;
           }
           if (i < src.length) i += 2;
-        } else if (src[i] === '/' && src[i + 1] === '/') {
+        } else if (ch === '/' && src[i + 1] === '/') {
           i += 2;
           while (i < src.length && !/[\r\n\u2028\u2029]/.test(src[i])) {
             i++;
           }
           if (i < src.length) i++;
-        } else if (src[i] === '/' && startsRegex(src, i)) {
+        } else if (ch === '/' && startsRegexAfter(last)) {
           i = skipRegex(src, i);
+          last = { kind: 'value', text: '/', member: false };
+        } else if (/\s/.test(ch)) {
+          i++;
+        } else if (/[A-Za-z_$]/.test(ch)) {
+          let j = i;
+          while (j < src.length && /[A-Za-z0-9_$]/.test(src[j])) j++;
+          last = { kind: 'word', text: src.slice(i, j), member: last.kind === 'dot' };
+          i = j;
+        } else if (/[0-9]/.test(ch)) {
+          let j = i;
+          while (j < src.length && /[0-9A-Za-z_$.]/.test(src[j])) j++;
+          last = { kind: 'value', text: src.slice(i, j), member: false };
+          i = j;
+        } else if (ch === '.') {
+          last = { kind: 'dot', text: ch, member: false };
+          i++;
         } else {
+          last = { kind: /[)\]]/.test(ch) ? 'value' : 'punct', text: ch, member: false };
           i++;
         }
       }
@@ -210,6 +210,13 @@ test('split-token guard catches concatenated sink tokens across arbitrary split 
     'el[`inn${x./* */ */return / 2}erHTML`] = "<b>x</b>";',
     // two comments in a row must both be skipped
     'el[`inn${x./* a */ /* b */return / 2}erHTML`] = "<b>x</b>";',
+    // an unrelated string literal earlier in the file cannot be mistaken for
+    // the comment between the dot and the member name, which is what a
+    // backwards walk over the trivia used to do (aifocus-ugwd)
+    'const marker = "/*"; el[`inn${x./* c */return / 2}erHTML`] = "<b>x</b>";',
+    'const marker = "*/"; el[`inn${x./* c */return / 2}erHTML`] = "<b>x</b>";',
+    'const marker = "/* */"; el[`inn${x./* c */return / 2}erHTML`] = "<b>x</b>";',
+    'el[`inn${(() => { const marker = "/*"; return x./* c */return / 2 })()}erHTML`] = "<b>x</b>";',
     // a '//' inside a string earlier on the line must not disturb the check
     'const u = "https://example.test"; el[`inn${x.return / 2}erHTML`] = "<b>x</b>";',
     // ...while a real keyword in front of a regex still works, including a
