@@ -124,9 +124,13 @@ can be checked rather than re-argued.
    tooltip-clearing assignment in `stats-page.js` (aifocus-qsv3, aifocus-mcqz).
    Seven standalone static HTML tools already have the following 12
    `innerHTML` assignments. The scan pins each **full source line**, including
-   whitespace, and checks exactly 12 pins in exactly seven files; it rejects
-   any edit to a pinned line or any new sink. A pin does **not** prove that
-   strings assembled on preceding lines remain escaped (aifocus-5rvq):
+   whitespace, and checks exactly 12 pins in exactly seven files. The five
+   assignments spanning multiple lines also pin the full source span through
+   its closing line (aifocus-m1bw), so changing an interpolation within the
+   statement fails the gate. These pins have a maintenance cost: an intentional
+   edit to a pinned statement requires reviewing its data flow and updating
+   its test pin. They still do **not** prove that variables assembled outside
+   the statement remain escaped (aifocus-5rvq):
 
    - `static/model-drops.html:310` — SVG assembled from the authored same-origin
      `/model-drops.tsv`; displayed text is escaped, coordinates are numeric.
