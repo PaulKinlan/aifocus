@@ -65,11 +65,11 @@
 #
 # The page is also the one place a narrower policy is worth the duplicate: the
 # browser attaches the Access JWT to any same-origin request, so any script
-# running in the admin page's context (a third-party analytics/widget dependency,
-# or one inline-script injection anywhere on the origin) can call
+# running in the admin page's context (a pinned body that turned hostile, or a
+# compromised third-party analytics/widget dependency) can call
 # /api/admin/queue, /api/admin/moderate, /api/admin/trust, /api/admin/accounts or
-# /api/admin/og with full moderator authority. Under the /* policy a third-party
-# script is allowed: script-src carries the twelve pinned hashes plus five
+# /api/admin/og with full moderator authority. Under the /* policy both are
+# allowed: script-src carries the twelve pinned hashes plus five
 # third-party hosts - an injected inline <script> does not run there, but any
 # pinned body does, and a compromised third-party dependency loads freely. This
 # block repeats the baseline policy with script-src 'self' only, so a browser
