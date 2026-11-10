@@ -8,13 +8,13 @@ draft: true
 authors:
   - paulkinlan
 ---
-I started writing this post about how I struggle with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software, however while I was writing that snoozefest I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
+When I started to write this post it was about how much I am struggling with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software. I was finding that my agents would happily build my tools and products all in just a couple of files, or in ways that would just cause merge conflicts for even the smallest set of changes, however while I was writing that snoozefest it, I was trying to put what I was typing into practice and I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
 
-I've been thinking for a long time about how the web might evolve now that we have the tools (LLMs and coding-harnesses) that can build almost anything and we also have the tools that can take almost anything the user needs.
+Stepping back a bit, I've been thinking for a long time about how the web might evolve now that we have the tools (LLMs and coding-harnesses) that can build almost anything and we also have the tools that can take almost anything the user needs.
 
-I've been noodling with lots of different types of harnesses that wrangle agents: [A voice-based one](https://github.com/PaulKinlan/voicebox) (more soon - but it's very cool), [a TweetDeck style Chrome harness](https://github.com/paulkinlan/chaos), [another Chrome harness](https://github.com/paulkinlan/chrome-agent-platform) and an [API](https://github.com/paulkinlan/agent-do) that has a CLI and a TUI. I live in a lot of these tools now, they control my machines and help me work in ways that I personally find very useful.
+I've been noodling with lots of different types of harnesses that wrangle agents: [A voice-based one](https://github.com/PaulKinlan/voicebox) (more soon - but it's very cool), [a TweetDeck style Chrome harness](https://github.com/paulkinlan/chaos), [another Chrome Agent platform harness](https://github.com/paulkinlan/chrome-agent-platform) and an [API](https://github.com/paulkinlan/agent-do) that has a CLI and a TUI. I live in a lot of these tools now, they control my machines and help me work in ways that I personally find very useful. They create tools for me and orchestrate a lot tasks that I do.
 
-I've also been using a lot of Agent Harnesses. [Pi](https://pi.dev/) is my particular favourite because of its low footprint and its ethos of customization. I like it to the extent that I realised that my entire approach with [agent-do](https://github.com/paulkinlan/agent-do) was entirely wrong. Pi got me thinking about how I might bring the concept of harness customizability to the web.
+I've also been using a lot of other Agent Harnesses. [Pi](https://pi.dev/) is my particular favourite because of its low footprint and its ethos of customization. I liked it so much that I realised that my entire approach with [agent-do](https://github.com/paulkinlan/agent-do) was entirely wrong. Pi got me thinking about how I might bring the concept of harness customizability to the web.
 
 I built [a Markdown editor](https://markdown-editor.kinlan-test.workers.dev/) that I hoped would follow the spirit of Pi. A tiny core that does the bare minimum, while exposing a surface that is entirely customizable to what the user needs.
 
@@ -343,6 +343,15 @@ npm run deploy:app -- demos/packing-list
 
 It prints your app's address, `https://packing-list.<your-subdomain>.workers.dev/`. Add `--dev` to try it locally first. There's also a "Deploy one app" GitHub Actions workflow if you'd rather not deploy from your machine; [Deploying one app](https://extensibleweb.app/docs/guide/deploying-an-app) has the details.
 
+I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). This certainly isn't complete nor production-ready yet, and I'm not sure if this will take off or be the future, but I can't not explore these concepts especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
+
+I even recreated the Markdown Editor mentioned at the start of this post as an extensible set of components using this very platform.
+
+{{< figure src="/images/extensible-web-apps/screenshot-2026-11-10-at-19.19.53.png" alt="" caption="Markdown Editor written as an Extensible Web App" >}}
+
+So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint (I promise). I would love you to have a look and send me feedback on this experiment and if you are working on something similar.
+
+
 If you want to learn more, here are some good links to get started: 
 
 Core:
@@ -361,7 +370,3 @@ Developer Guide:
 * [Places](https://extensibleweb.app/docs/guide/places) (how user plugins draw where the app has no slot)
 * [Agents](https://extensibleweb.app/docs/guide/agents)
 * [Styling components](https://extensibleweb.app/docs/guide/styling)
-
-It has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). This certainly isn't complete nor production-ready yet, and I'm not sure if this will take off or be the future, but I can't not explore these concepts especially as everything around the web is evolving so quickly. I really do think the concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
-
-So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint. I would love you to have a look and send me feedback on this experiment and if you are working on something similar.
