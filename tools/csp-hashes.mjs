@@ -52,11 +52,12 @@ const INERT_TYPES = new Set([
   "importmap",
 ]);
 
-// Consume each complete value before reading names: quoted src= and type=
-// lookalikes are not attributes (aifocus-mdk3, aifocus-ebir). HTML keeps the
-// first occurrence when an attribute is repeated.
-function scriptAttributes(attrs) {
-  const attr = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+// HTML attribute separators are ASCII whitespace only. NBSP/FEFF and quote
+// characters inside an unquoted value stay inside it (a parse error for the
+// quotes, but not a new attribute). Consume full values before reading names.
+// HTML keeps the first occurrence when an attribute is repeated.
+function tagAttributes(attrs) {
+  const attr = /([^\t\n\f\r "'<>/=]+)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"([^"]*)"|'([^']*)'|([^\t\n\f\r >]+)))?/g;
   const values = new Map();
   for (const match of attrs.matchAll(attr)) {
     const name = match[1].toLowerCase();
@@ -65,19 +66,54 @@ function scriptAttributes(attrs) {
   return values;
 }
 
+// Find the closing > of a script start tag. A quote after = opens a quoted
+// value, but a quote already inside an unquoted value is an ordinary character
+// to the HTML tokenizer; treating it as an opener can hide the whole tag.
+function scriptTagEnd(html, start) {
+  let quote = "";
+  let unquoted = false;
+  let afterEqual = false;
+  for (let i = start; i < html.length; i++) {
+    const ch = html[i];
+    if (quote) {
+      if (ch === quote) quote = "";
+    } else if (unquoted) {
+      if (ch === ">") return i;
+      if (/[\t\n\f\r ]/.test(ch)) unquoted = false;
+    } else if (ch === ">") {
+      return i;
+    } else if (afterEqual) {
+      if (/[\t\n\f\r ]/.test(ch)) continue;
+      afterEqual = false;
+      if (ch === '"' || ch === "'") quote = ch;
+      else unquoted = true;
+    } else if (ch === "=") {
+      afterEqual = true;
+    }
+  }
+  return -1;
+}
+
 // Attribute parsing is deliberately narrow: the build output is Hugo's own,
 // and this needs to answer exactly one question per script - does a browser run
 // this body inline? A missing or non-JS type means yes.
 function scriptBodies(html) {
   const bodies = [];
-  const re = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
+  const open = /<script(?=[\t\n\f\r />])/gi;
+  const close = /<\/script[\t\n\f\r ]*>/gi;
   let match;
-  while ((match = re.exec(html)) !== null) {
-    const attrs = scriptAttributes(match[1] ?? "");
-    if (attrs.has("src")) continue;
-    const type = attrs.get("type")?.trim().toLowerCase();
-    if (type && INERT_TYPES.has(type)) continue;
-    bodies.push(match[2]);
+  while ((match = open.exec(html)) !== null) {
+    const end = scriptTagEnd(html, open.lastIndex);
+    if (end < 0) break;
+    close.lastIndex = end + 1;
+    const closing = close.exec(html);
+    if (!closing) break;
+    const attrs = tagAttributes(html.slice(open.lastIndex, end));
+    if (!attrs.has("src")) {
+      const type = attrs.get("type")?.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, "").toLowerCase();
+      if (!type || !INERT_TYPES.has(type)) bodies.push(html.slice(end + 1, closing.index));
+    }
+    open.lastIndex = close.lastIndex;
   }
   return bodies;
 }
@@ -90,25 +126,12 @@ function scriptBodies(html) {
 // (aifocus-rlng). Scanning is limited to start tags, with attribute values
 // blanked before names are matched, so text that merely mentions onclick= is
 // not a hit.
-const START_TAG = /<([a-zA-Z][a-zA-Z0-9:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
-const URL_ATTR = "href|src|action|formaction|xlink:href|poster|cite|background|data";
-// An attribute value is double-quoted, single-quoted or unquoted, and the HTML
-// tokenizer allows space around the '='. All three are the same URL to the
-// parser, so a scan that only reads quoted values is blind to
-// <a href=javascript:alert(1)> (aifocus-rlng review, round 2).
-const URL_ATTR_VALUE = new RegExp(`\\s(${URL_ATTR})\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, "gi");
-// A refresh URL lives inside content rather than a URL attribute. Consume
-// complete attribute values so quoted lookalike names do not match.
-const ATTRIBUTE = /\s*([^\s=/>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
-function metaRefreshUrl(attrs) {
-  const values = new Map();
-  for (const attr of attrs.matchAll(ATTRIBUTE)) {
-    const name = attr[1].toLowerCase();
-    // HTML keeps the first duplicate attribute; later values are discarded.
-    if (!values.has(name)) values.set(name, decodeCharRefs(attr[2] ?? attr[3] ?? attr[4] ?? ""));
-  }
-  if (values.get("http-equiv")?.trim().toLowerCase() !== "refresh") return null;
-  const content = values.get("content") ?? "";
+const START_TAG = /<([a-zA-Z][a-zA-Z0-9:-]*)(?=[\t\n\f\r />])/g;
+const URL_ATTRS = new Set(["href", "src", "action", "formaction", "xlink:href", "poster", "cite", "background", "data"]);
+// A refresh URL lives inside content rather than a URL attribute.
+function metaRefreshUrl(values) {
+  if (decodeCharRefs(values.get("http-equiv") ?? "").trim().toLowerCase() !== "refresh") return null;
+  const content = decodeCharRefs(values.get("content") ?? "");
   // Both separators and the url= prefix are optional for a refresh target.
   // Preserve newlines: isJavascriptUrl strips the URL parser's ASCII noise.
   const target = /^\s*(?:(?:\d+(?:\.\d*)?|\.\d+)[\d.]*\s*[;,]\s*)?(?:url\s*=\s*)?([\s\S]*)$/i.exec(content)?.[1];
@@ -142,21 +165,22 @@ function isJavascriptUrl(value) {
 export function inlineExecSurfaces(html) {
   const handlers = [];
   const urls = [];
-  for (const match of html.matchAll(START_TAG)) {
+  START_TAG.lastIndex = 0;
+  let match;
+  while ((match = START_TAG.exec(html)) !== null) {
+    const end = scriptTagEnd(html, START_TAG.lastIndex);
+    if (end < 0) break;
     const tag = match[1].toLowerCase();
-    const attrs = match[2] ?? "";
-    const blanked = attrs.replace(/"[^"]*"|'[^']*'?/g, '""');
-    for (const handler of blanked.matchAll(/\s(on[a-z]+)\s*=/gi)) {
-      handlers.push({ tag, attr: handler[1].toLowerCase() });
-    }
-    for (const value of attrs.matchAll(URL_ATTR_VALUE)) {
-      const raw = value[2] ?? value[3] ?? value[4] ?? "";
-      if (isJavascriptUrl(raw)) urls.push({ tag, attr: value[1].toLowerCase(), value: raw.slice(0, 80) });
+    const attrs = tagAttributes(html.slice(START_TAG.lastIndex, end));
+    for (const [name, raw] of attrs) {
+      if (/^on[a-z]+$/.test(name)) handlers.push({ tag, attr: name });
+      if (URL_ATTRS.has(name) && isJavascriptUrl(raw)) urls.push({ tag, attr: name, value: raw.slice(0, 80) });
     }
     if (tag === "meta") {
       const raw = metaRefreshUrl(attrs);
       if (raw != null && isJavascriptUrl(raw)) urls.push({ tag, attr: "content", value: raw.slice(0, 80) });
     }
+    START_TAG.lastIndex = end + 1;
   }
   return { handlers, urls };
 }
