@@ -84,7 +84,9 @@ async function signIn(env, login = "ana", extra = {}) {
     providerId: String(login.length * 1000 + login.charCodeAt(0)),
     handle: login,
     name: login.toUpperCase(),
-    avatarUrl: `https://avatars.example/${login}.png`,
+    // a provider-minted avatar host: the payload keeps it, and the sink guard
+    // (aifocus-r044) is what rejects anything else
+    avatarUrl: `https://pbs.twimg.com/profile_images/${login}_400x400.png`,
     profileUrl: `https://github.com/${login}`,
     ...extra,
   });
@@ -331,7 +333,7 @@ test("notes and comments: pending until approved, visible to their writer only",
   const note = (await res.json()).annotation;
   assert.equal(note.status, "pending");
   assert.equal(note.name, "ANA", "the name comes from the account, not the request");
-  assert.equal(note.avatarUrl, "https://avatars.example/ana.png");
+  assert.equal(note.avatarUrl, "https://pbs.twimg.com/profile_images/ana_400x400.png");
   assert.equal(note.profileUrl, "https://github.com/ana");
 
   res = await postAnnotation({ request: req("/api/reader/annotations", { method: "POST", body: { post: POST, type: "comment", body: "Nice post" }, reader: READER_A, session }), env });

@@ -620,6 +620,52 @@ test("a profile URL reaches .href only through safeHref()", () => {
   );
 });
 
+// Avatar URLs arrive from the same provider APIs and are rendered as an
+// <img src> in reader.js and account-page.js. They may only reach a src through
+// safeImgSrc() (aifocus-r044): img-src is deliberately wide so post images work
+// (aifocus-8f3j), so an unvalidated avatar URL lets a provider-controlled value
+// make every reader's browser request a host of the attacker's choosing.
+const AVATAR_FIELD = /avatar_?url/i;
+const SRC_ASSIGNMENT = /\.src\s*=|\bsrc\s*:|setAttribute\(\s*["']src["']/;
+const SRC_GUARDED = /safeImgSrc\(/;
+
+function unguardedAvatarSrcs(source) {
+  const failures = [];
+  source.split("\n").forEach((line, i) => {
+    if (!AVATAR_FIELD.test(line) || !SRC_ASSIGNMENT.test(line) || SRC_GUARDED.test(line)) return;
+    failures.push(`${i + 1}: ${line.trim()}`);
+  });
+  return failures;
+}
+
+test("a provider avatar URL reaches an img src only through safeImgSrc()", () => {
+  const failures = [];
+  for (const file of FILES) {
+    const source = fs.readFileSync(path.join(repoRoot, file), "utf8");
+    for (const failure of unguardedAvatarSrcs(source)) failures.push(`${file}:${failure}`);
+  }
+  assert.deepEqual(
+    failures,
+    [],
+    "a provider-supplied avatar URL reached a src without safeImgSrc() - import it from " +
+      "./safe-href.js and render no image when it returns null:\n" + failures.join("\n"),
+  );
+});
+
+test("the avatar-src guard catches the shapes it exists for", () => {
+  const caught = [
+    "img.src = person.avatarUrl;",
+    'nodes.push(el("img", { src: user.avatarUrl, alt: "" }));',
+    "node.setAttribute(\"src\", user.avatar_url);",
+  ];
+  for (const sample of caught) {
+    assert.equal(unguardedAvatarSrcs(sample).length, 1, `the guard must catch: ${sample}`);
+  }
+  // The guarded shape, and a line that merely reads the field, must pass.
+  assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("if (person?.avatarUrl) {}"), []);
+});
+
 test("the profile-href guard catches the shapes it exists for", () => {
   const caught = [
     "wrap.href = person.profileUrl;",
