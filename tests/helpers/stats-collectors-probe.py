@@ -25,6 +25,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from datetime import date, timedelta
 from email.message import Message
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -61,6 +62,24 @@ class FakeResponse:
 
     def __exit__(self, *exc):
         return False
+
+
+class StreamingResponse(FakeResponse):
+    """A response that yields no more than the caller asks for, and records how
+    much it handed out, so a case can assert how much of a body a collector
+    buffered before refusing it (aifocus-r6mb)."""
+
+    def __init__(self, size, headers=None):
+        self._size = size
+        self._pos = 0
+        self.consumed = 0
+        self.headers = headers or {}
+
+    def read(self, amt=None):
+        n = self._size - self._pos if amt is None else min(amt, self._size - self._pos)
+        self._pos += n
+        self.consumed += n
+        return b"x" * n
 
 
 class Stub:
@@ -107,6 +126,52 @@ def expect_data_error(fn, label):
     except common.CollectorDataError:
         return
     raise AssertionError(f"{label}: expected CollectorDataError, nothing was raised")
+
+
+def aligned_week(offset_days=60):
+    """The start of a chromestatus week (7-day steps from a series epoch) that
+    ended well before today, so a case does not depend on the machine's date."""
+    epoch = date(2020, 1, 1)
+    target = date.today() - timedelta(days=offset_days)
+    return epoch + timedelta(days=7 * ((target - epoch).days // 7))
+
+
+# --- collector_common: the capped read every fetch_capped caller relies on ---
+# aifocus-r6mb: the probe only drove collect-github.py, which inlines its own
+# read(MAX+1) check, so the shared fetch_capped() could lose its cap and the
+# probe stayed green. These cases pin the shared path directly.
+
+def case_common_over_cap_body_refused():
+    body = "x" * (common.MAX_RESPONSE_BYTES + 1)
+    with Stub([FakeResponse(body)]):
+        expect_data_error(lambda: common.fetch_capped("https://example.test/over-cap"),
+                          "collector_common over-cap body")
+    with Stub([FakeResponse(body)]):
+        expect_data_error(lambda: common.fetch_json_capped("https://example.test/over-cap"),
+                          "collector_common over-cap json body")
+
+
+def case_common_read_is_bounded():
+    # Refusing an over-cap body is not enough on its own: resp.read() with no
+    # amount also ends in the same raise, but only after buffering the whole
+    # hostile response. Pin the bounded read by asserting how much was consumed.
+    resp = StreamingResponse(8 * common.MAX_RESPONSE_BYTES)
+    with Stub([resp]):
+        expect_data_error(lambda: common.fetch_capped("https://example.test/huge"),
+                          "collector_common huge body")
+    assert resp.consumed <= common.MAX_RESPONSE_BYTES + 1, (
+        f"fetch_capped buffered {resp.consumed} bytes before refusing a "
+        f"{8 * common.MAX_RESPONSE_BYTES}-byte body")
+
+
+def case_common_accepts_body_at_cap():
+    # the boundary itself must be accepted, so an off-by-one (>= instead of >)
+    # fails here rather than in a collector run against a real 1 MiB feed
+    body = "x" * common.MAX_RESPONSE_BYTES
+    with Stub([FakeResponse(body)]):
+        assert common.fetch_capped("https://example.test/at-cap") == body
+    with Stub([FakeResponse(json.dumps({"ok": True}))]):
+        assert common.fetch_json_capped("https://example.test/at-cap-json") == {"ok": True}
 
 
 # --- httparchive: adoption is an origin count, validated finite and >= 0 ------
@@ -163,6 +228,124 @@ def case_httparchive_rejects_negative():
     ]), "httparchive negative adoption")
 
 
+# --- w3techs: fetch through the shared cap, validate each share -------------
+
+def w3techs_page(values, months=("Jan", "Feb", "Mar", "Apr", "May", "Jun")):
+    """A page shaped like the W3Techs history table: a header row of monthly
+    readings and one row per library."""
+    head = "<tr><th>Technology</th>" + "".join(f"<th>2026 1 {m}</th>" for m in months) + "</tr>"
+    row = "<tr><td>React</td>" + "".join(f"<td>{v}</td>" for v in values) + "</tr>"
+    return f"<table>{head}{row}</table>"
+
+
+def w3techs_main(page, run_date="2026-11-09"):
+    """Run collect-w3techs.main() against a stubbed page, return the CSV rows."""
+    mod = load("stats_collect_w3techs", "tools/stats/collect-w3techs.py")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    data = tmp / "data"
+    data.mkdir()
+    config = tmp / "series.json"
+    config.write_text(json.dumps({"series": [{
+        "id": "react-test",
+        "kind": "w3techs",
+        "file_prefix": "w3techs-react-test",
+        "tools": [{"name": "React"}],
+    }]}), encoding="utf-8")
+    mod.CONFIG = str(config)
+    mod.DATA_DIR = str(data)
+    argv = sys.argv
+    sys.argv = ["collect-w3techs.py", "--series", "react-test", "--run-date", run_date]
+    try:
+        with Stub([page if isinstance(page, FakeResponse) else FakeResponse(page)]):
+            mod.main()
+    finally:
+        sys.argv = argv
+    written = next(data.glob("*.csv"))
+    with written.open(encoding="utf-8", newline="") as f:
+        return list(csv.reader(f))
+
+
+def case_w3techs_accepts_monthly_share():
+    rows = w3techs_main(w3techs_page(["42.5%", "43.1%", "43.8%", "44.0%", "44.6%", "45.2%"]))
+    assert rows[0][0] == "tool", rows[0]
+    assert [row[0] for row in rows[1:]] == ["React"] * 6, rows
+    # a reading on the 1st describes the month that just ended
+    assert rows[1][1:5] == ["2025-12-01", "2025-12-31", "monthly", "42.5"], rows[1]
+    assert rows[-1][1:5] == ["2026-05-01", "2026-05-31", "monthly", "45.2"], rows[-1]
+
+
+def case_w3techs_rejects_impossible_share():
+    for bad in ("101%", "-1%", "NaN%"):
+        expect_data_error(lambda b=bad: w3techs_main(w3techs_page(["42.5%"] * 5 + [b])),
+                          f"w3techs share {bad}")
+
+
+def case_w3techs_over_cap_body_refused():
+    expect_data_error(lambda: w3techs_main("<table>" + "x" * (common.MAX_RESPONSE_BYTES + 1)),
+                      "w3techs over-cap body")
+
+
+# --- chromestatus: fetch through the shared cap, validate each day value -----
+
+def chromestatus_main(points, run_date="2026-11-09"):
+    """Run collect-chromestatus.main() against a stubbed timeline, return rows."""
+    mod = load("stats_collect_chromestatus", "tools/stats/collect-chromestatus.py")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    data = tmp / "data"
+    data.mkdir()
+    config = tmp / "series.json"
+    config.write_text(json.dumps({"series": [{
+        "id": "sw-test",
+        "kind": "chromestatus",
+        "bucket_id": 9999,
+        "primary": "ServiceWorkerPageLoads",
+        "epoch": "2020-01-01",
+        "file_prefix": "chromestatus-sw-test",
+    }]}), encoding="utf-8")
+    mod.CONFIG = str(config)
+    mod.DATA_DIR = str(data)
+    body = points if isinstance(points, (str, bytes)) else ")]}'\n" + json.dumps(points)
+    argv = sys.argv
+    sys.argv = ["collect-chromestatus.py", "--series", "sw-test", "--run-date", run_date]
+    try:
+        with Stub([FakeResponse(body)]):
+            mod.main()
+    finally:
+        sys.argv = argv
+    written = next(data.glob("*.csv"))
+    with written.open(encoding="utf-8", newline="") as f:
+        return list(csv.reader(f))
+
+
+def case_chromestatus_accepts_weekly_mean():
+    # two readings inside one epoch-aligned week: the row is their mean, as a
+    # percentage of page loads rounded to three decimals. The XSSI prefix the
+    # live endpoint sends is part of the case.
+    week = aligned_week()
+    points = [
+        {"date": (week + timedelta(days=1)).isoformat(), "day_percentage": 0.01, "property_name": "ServiceWorkerPageLoads"},
+        {"date": (week + timedelta(days=2)).isoformat(), "day_percentage": 0.03, "property_name": "ServiceWorkerPageLoads"},
+    ]
+    rows = chromestatus_main(points)
+    assert rows[0][0] == "tool", rows[0]
+    assert len(rows) == 2, rows
+    assert rows[1][0] == "ServiceWorkerPageLoads", rows[1]
+    assert rows[1][1:5] == [week.isoformat(), (week + timedelta(days=6)).isoformat(), "weekly", "2.0"], rows[1]
+
+
+def case_chromestatus_rejects_impossible_day_percentage():
+    week = aligned_week()
+    for bad in (101, -1, float("nan"), float("inf")):
+        points = [{"date": week.isoformat(), "day_percentage": bad}]
+        expect_data_error(lambda p=points: chromestatus_main(p),
+                          f"chromestatus day_percentage {bad!r}")
+
+
+def case_chromestatus_over_cap_body_refused():
+    expect_data_error(lambda: chromestatus_main("x" * (common.MAX_RESPONSE_BYTES + 1)),
+                      "chromestatus over-cap body")
+
+
 # --- openrouter: every macro category's share is validated -------------------
 
 def task_spend(tokens_share, spend_share=None):
@@ -184,9 +367,43 @@ def share_rows_for(payload):
     return mod.share_rows({}, "2026-11-09", payload)
 
 
-def case_openrouter_rejects_hostile_shares():
+def case_openrouter_rejects_hostile_token_shares():
+    # tokens bad, spend good: a regression that stops validating the tokens
+    # block is visible on its own (aifocus-r6mb).
     for bad in (float("nan"), float("inf"), 1e9, -0.1):
-        expect_data_error(lambda b=bad: share_rows_for(task_spend(b)), f"openrouter share {bad!r}")
+        expect_data_error(lambda b=bad: share_rows_for(task_spend(b, 0.30)),
+                          f"openrouter token share {bad!r}")
+
+
+def case_openrouter_rejects_hostile_spend_shares():
+    # tokens good, spend bad: the case the old single-share fixture could not
+    # distinguish, because it set both blocks bad at once.
+    for bad in (float("nan"), float("inf"), 1e9, -0.1):
+        expect_data_error(lambda b=bad: share_rows_for(task_spend(0.40, b)),
+                          f"openrouter spend share {bad!r}")
+
+
+def chart_rows_for(ys, run_date="2026-11-09", share=0.42, x="2026-10-26"):
+    mod = load("stats_collect_openrouter", "tools/stats/collect-openrouter.py")
+    payload = {"data": {"data": [{"x": x, "ys": ys}]}}
+    with Stub([FakeResponse(json.dumps(payload))]):
+        return mod.chart_rows({"id": "openrouter-tokens", "kind": "openrouter-chart"},
+                              run_date, task_spend(share))
+
+
+def case_openrouter_accepts_chart_tokens():
+    rows = chart_rows_for({"Model A": 1000, "Others": 40})
+    assert [row[0] for row in rows] == ["All tokens per week", "Programming tokens per week (estimate)"], rows
+    assert rows[0][4] == 1040, rows[0]
+    assert rows[1][4] == round(1040 * 0.42), rows[1]
+    samples = json.loads(rows[0][6])
+    assert samples == {"models": 1, "others": 40}, samples
+
+
+def case_openrouter_rejects_hostile_chart_tokens():
+    for bad in (float("nan"), float("inf"), -1):
+        expect_data_error(lambda b=bad: chart_rows_for({"Model A": 1000, "Others": b}),
+                          f"openrouter chart tokens Others={bad!r}")
 
 
 def case_openrouter_accepts_real_shares():
@@ -199,9 +416,11 @@ def case_openrouter_accepts_real_shares():
 
 
 def case_openrouter_rejects_window_days():
-    payload = task_spend(0.4)
-    payload["data"]["tokens"]["windowDays"] = float("nan")
-    expect_data_error(lambda: share_rows_for(payload), "openrouter windowDays NaN")
+    # both blocks, because each is validated on its own path (aifocus-r6mb)
+    for which in ("tokens", "spend"):
+        payload = task_spend(0.4)
+        payload["data"][which]["windowDays"] = float("nan")
+        expect_data_error(lambda p=payload: share_rows_for(p), f"openrouter windowDays NaN ({which})")
 
 
 # --- github: data errors fail loud and are not retried ----------------------
@@ -257,12 +476,24 @@ def case_github_network_error_still_retries():
 
 
 CASES = {
+    "common-over-cap-body-refused": case_common_over_cap_body_refused,
+    "common-read-is-bounded": case_common_read_is_bounded,
+    "common-accepts-body-at-cap": case_common_accepts_body_at_cap,
     "httparchive-accepts-origin-counts": case_httparchive_accepts_origin_counts,
     "httparchive-rejects-nan": case_httparchive_rejects_nan,
     "httparchive-rejects-negative": case_httparchive_rejects_negative,
-    "openrouter-rejects-hostile-shares": case_openrouter_rejects_hostile_shares,
+    "w3techs-accepts-monthly-share": case_w3techs_accepts_monthly_share,
+    "w3techs-rejects-impossible-share": case_w3techs_rejects_impossible_share,
+    "w3techs-over-cap-body-refused": case_w3techs_over_cap_body_refused,
+    "chromestatus-accepts-weekly-mean": case_chromestatus_accepts_weekly_mean,
+    "chromestatus-rejects-impossible-day-percentage": case_chromestatus_rejects_impossible_day_percentage,
+    "chromestatus-over-cap-body-refused": case_chromestatus_over_cap_body_refused,
+    "openrouter-rejects-hostile-token-shares": case_openrouter_rejects_hostile_token_shares,
+    "openrouter-rejects-hostile-spend-shares": case_openrouter_rejects_hostile_spend_shares,
     "openrouter-accepts-real-shares": case_openrouter_accepts_real_shares,
     "openrouter-rejects-window-days": case_openrouter_rejects_window_days,
+    "openrouter-accepts-chart-tokens": case_openrouter_accepts_chart_tokens,
+    "openrouter-rejects-hostile-chart-tokens": case_openrouter_rejects_hostile_chart_tokens,
     "github-data-error-not-retried": case_github_data_error_not_retried,
     "github-over-cap-body-refused": case_github_over_cap_body_refused,
     "github-error-body-is-capped": case_github_error_body_is_capped,

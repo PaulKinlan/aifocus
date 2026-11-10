@@ -12,6 +12,11 @@
 // The cases live in tests/helpers/stats-collectors-probe.py because the
 // collectors are Python; this file is the gate-side runner. Verified against the
 // pre-fix tip f3c694d: the four finding cases fail there and pass here.
+//
+// The common/w3techs/chromestatus cap cases and the split token/spend share
+// cases came from aifocus-r6mb: the probe only drove collect-github.py, which
+// inlines its own read(MAX+1) check, so the shared fetch_capped() could lose its
+// cap with the probe still green. Each of those mutants now fails here.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -24,12 +29,24 @@ const PROBE = "tests/helpers/stats-collectors-probe.py";
 // Every case the probe knows. Listed here so a case that silently stops running
 // (renamed, dropped from the probe's table) is a failure, not a smaller suite.
 const CASES = [
+  "common-over-cap-body-refused",
+  "common-read-is-bounded",
+  "common-accepts-body-at-cap",
   "httparchive-accepts-origin-counts",
   "httparchive-rejects-nan",
   "httparchive-rejects-negative",
-  "openrouter-rejects-hostile-shares",
+  "w3techs-accepts-monthly-share",
+  "w3techs-rejects-impossible-share",
+  "w3techs-over-cap-body-refused",
+  "chromestatus-accepts-weekly-mean",
+  "chromestatus-rejects-impossible-day-percentage",
+  "chromestatus-over-cap-body-refused",
+  "openrouter-rejects-hostile-token-shares",
+  "openrouter-rejects-hostile-spend-shares",
   "openrouter-accepts-real-shares",
   "openrouter-rejects-window-days",
+  "openrouter-accepts-chart-tokens",
+  "openrouter-rejects-hostile-chart-tokens",
   "github-data-error-not-retried",
   "github-over-cap-body-refused",
   "github-error-body-is-capped",
