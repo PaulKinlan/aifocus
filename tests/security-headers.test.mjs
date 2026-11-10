@@ -19,6 +19,7 @@ import { SECURITY_HEADERS, applySecurityHeaders } from "../functions/_lib/header
 import { json } from "../functions/_lib/reader.js";
 import { redirect } from "../functions/_lib/auth.js";
 import { onRequest } from "../functions/_middleware.js";
+import { attr, adminScriptViolation } from "./helpers/admin-script-guard.mjs";
 
 const BASELINE_NAMES = Object.keys(SECURITY_HEADERS);
 
@@ -186,21 +187,62 @@ test("built /admin/ page satisfies its own script-src 'self': no inline script, 
     return;
   }
   const html = fs.readFileSync(file, "utf8");
-  const NON_EXECUTABLE = /^application\/(ld\+json|json)$/i;
-  // Attribute values may be unquoted: hugo --minify emits src=/js/main.<hash>.js.
-  const attr = (attrs, name) => {
-    const m = new RegExp(`\\b${name}=(?:"([^"]*)"|([^\\s>]+))`, "i").exec(attrs);
-    return m ? (m[1] ?? m[2]) : null;
-  };
   const scripts = [...html.matchAll(/<script\b([^>]*)>/gi)].map((m) => m[1]);
   assert.ok(scripts.length > 0, "the admin page still loads its own bundled script");
   for (const attrs of scripts) {
-    const type = attr(attrs, "type");
-    if (type && NON_EXECUTABLE.test(type)) continue; // data blocks are not executed
-    const src = attr(attrs, "src");
-    assert.ok(src, `inline <script${attrs}> is blocked by the /admin/* policy`);
-    assert.ok(src.startsWith("/"), `script from ${src} is blocked by the /admin/* policy`);
+    const violation = adminScriptViolation(attrs);
+    assert.ok(!violation, violation);
   }
   assert.doesNotMatch(html, /\son[a-z]+=/i, "an on* handler (gtag bootstrap, font onload) is blocked by the /admin/* policy");
   assert.doesNotMatch(html, /googletagmanager|speculationrules/i, "the admin page loads no analytics and no inline speculation rules");
+});
+
+// The guard's own matching rules, unit-tested directly (aifocus-sy1d): the
+// shapes below once PASSED the built-page check - a green gate on markup that
+// script-src 'self' would break at runtime.
+test("admin script guard: attr() is anchored so data-* cannot masquerade as src or type", () => {
+  // \bsrc= matched inside data-src=, so a script carrying only data-src read
+  // as external same-origin and skipped the inline-script rejection.
+  assert.equal(attr(' data-src="/js/ok.js"', "src"), null);
+  assert.equal(attr(' data-type="application/json"', "type"), null);
+  // The anchor still reads genuine attributes, unquoted (hugo --minify) or
+  // quoted, at string start or after whitespace.
+  assert.equal(attr("src=/js/main.abc.js", "src"), "/js/main.abc.js");
+  assert.equal(attr(' type="module" src="/admin/js/main.abc.js"', "src"), "/admin/js/main.abc.js");
+  assert.equal(attr(' type="module"', "type"), "module");
+});
+
+test("admin script guard: src must start with exactly one '/' - no protocol-relative, no backslash form", () => {
+  // '//evil.example/x.js' starts with '/', so startsWith("/") passed it; under
+  // script-src 'self' the browser blocks it and /admin/ breaks silently.
+  assert.match(
+    adminScriptViolation(' src="//evil.example/x.js"'),
+    /blocked by the \/admin\/\* policy/,
+  );
+  // The URL parser normalizes '\' to '/' in special schemes, so src=/\\host/x.js
+  // resolves cross-origin exactly like the '//' form.
+  assert.match(
+    adminScriptViolation(' src="/\\\\evil.example/x.js"'),
+    /blocked by the \/admin\/\* policy/,
+  );
+  assert.equal(adminScriptViolation(' src="/js/main.abc.js"'), null);
+});
+
+test("admin script guard: executable inline scripts are rejected, data blocks are skipped", () => {
+  // data-src alone is NOT a src: the tag is executable inline and must be
+  // rejected, not passed as external same-origin (aifocus-sy1d shape 2).
+  assert.match(
+    adminScriptViolation(' data-src="/js/ok.js"'),
+    /^inline <script/,
+  );
+  // data-type alone is NOT a type: the tag is executable inline, so the
+  // NON_EXECUTABLE skip must not fire on it.
+  assert.match(
+    adminScriptViolation(' data-type="application/json"'),
+    /^inline <script/,
+  );
+  // Genuine data blocks stay skipped, and the bundled module script passes.
+  assert.equal(adminScriptViolation(' type="application/ld+json"'), null);
+  assert.equal(adminScriptViolation(' type="application/json"'), null);
+  assert.equal(adminScriptViolation(' type="module" src="/admin/js/main.abc.js" integrity="abc" crossorigin="anonymous"'), null);
 });
