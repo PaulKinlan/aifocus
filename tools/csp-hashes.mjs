@@ -33,6 +33,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { globSync } from "node:fs";
+import { parse } from "parse5";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -40,6 +41,38 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const HEADERS = path.join(ROOT, "static/_headers");
 const PUBLIC = path.join(ROOT, "public");
 const CSP_HEADER = "Content-Security-Policy:";
+
+// One tokenizer for every HTML question this tool asks (aifocus-pimy): both
+// scans walk the same parse5 tree instead of each carrying its own regex.
+// The regexes drifted from the tokenizer spec in ways that silently changed
+// what was hashed and what was flagged: START_TAG missed custom tag names
+// containing '_' or '.' and scanned fake markup inside comments and script
+// strings; scriptBodies missed </script foo> end tags so following bodies
+// merged into one hash; attribute names stopped at a quote or '<' so
+// <script src"=x> invented a src the browser does not have (aifocus-ji4m).
+// parse5 is already a devDependency and is what link-check scans with
+// (tools/link-check.mjs: measured ~10.5 ms/page, ~1 s across the build - the
+// price of a scan that cannot misread HTML the way a regex does).
+//
+// Depth-first element walk, template content included (a template's children
+// live in .content, not .childNodes).
+function* elements(node) {
+  for (const child of node.childNodes ?? []) {
+    if (child.tagName) {
+      yield child;
+      yield* elements(child.content ?? child);
+    }
+  }
+}
+
+// parse5 splits namespace prefixes into their own field (an SVG xlink:href
+// arrives as prefix "xlink" + name "href"), so rejoin for matching.
+const qname = (attr) => (attr.prefix ? `${attr.prefix}:${attr.name}` : attr.name);
+
+const attrValue = (el, name) => {
+  const attr = el.attrs.find((a) => qname(a) === name);
+  return attr ? attr.value : null;
+};
 
 // Inline <script> types a browser does not execute as script, so no hash applies.
 // Speculation rules are deliberately NOT here: they do not run as script, but
@@ -52,68 +85,24 @@ const INERT_TYPES = new Set([
   "importmap",
 ]);
 
-// HTML attribute separators are ASCII whitespace only. NBSP/FEFF and quote
-// characters inside an unquoted value stay inside it (a parse error for the
-// quotes, but not a new attribute). Consume full values before reading names.
-// HTML keeps the first occurrence when an attribute is repeated.
-function tagAttributes(attrs) {
-  const attr = /([^\t\n\f\r "'<>/=]+)(?:[\t\n\f\r ]*=[\t\n\f\r ]*(?:"([^"]*)"|'([^']*)'|([^\t\n\f\r >]+)))?/g;
-  const values = new Map();
-  for (const match of attrs.matchAll(attr)) {
-    const name = match[1].toLowerCase();
-    if (!values.has(name)) values.set(name, match[2] ?? match[3] ?? match[4] ?? "");
-  }
-  return values;
-}
-
-// Find the closing > of a script start tag. A quote after = opens a quoted
-// value, but a quote already inside an unquoted value is an ordinary character
-// to the HTML tokenizer; treating it as an opener can hide the whole tag.
-function scriptTagEnd(html, start) {
-  let quote = "";
-  let unquoted = false;
-  let afterEqual = false;
-  for (let i = start; i < html.length; i++) {
-    const ch = html[i];
-    if (quote) {
-      if (ch === quote) quote = "";
-    } else if (unquoted) {
-      if (ch === ">") return i;
-      if (/[\t\n\f\r ]/.test(ch)) unquoted = false;
-    } else if (ch === ">") {
-      return i;
-    } else if (afterEqual) {
-      if (/[\t\n\f\r ]/.test(ch)) continue;
-      afterEqual = false;
-      if (ch === '"' || ch === "'") quote = ch;
-      else unquoted = true;
-    } else if (ch === "=") {
-      afterEqual = true;
-    }
-  }
-  return -1;
-}
-
-// Attribute parsing is deliberately narrow: the build output is Hugo's own,
-// and this needs to answer exactly one question per script - does a browser run
-// this body inline? A missing or non-JS type means yes.
-function scriptBodies(html) {
+// The bodies a browser runs inline. What the parser hands back IS what the
+// browser executes: script content is raw text (character references are NOT
+// decoded, so the hash matches the bytes), the input stream is preprocessed
+// exactly as the spec preprocesses it, and an end tag closes the element even
+// when it carries attributes or a trailing solidus - </script foo> and
+// </script/> close in a browser, and each side of them hashes on its own
+// (aifocus-o561). An external src means the body is not inline; the attribute
+// must be NAMED src - <script src"=x> gives the browser one attribute named
+// `src"` and no src at all, so its body still executes and must be hashed
+// (aifocus-ji4m).
+function scriptBodies(document) {
   const bodies = [];
-  const open = /<script(?=[\t\n\f\r />])/gi;
-  const close = /<\/script[\t\n\f\r ]*>/gi;
-  let match;
-  while ((match = open.exec(html)) !== null) {
-    const end = scriptTagEnd(html, open.lastIndex);
-    if (end < 0) break;
-    close.lastIndex = end + 1;
-    const closing = close.exec(html);
-    if (!closing) break;
-    const attrs = tagAttributes(html.slice(open.lastIndex, end));
-    if (!attrs.has("src")) {
-      const type = attrs.get("type")?.replace(/^[\t\n\f\r ]+|[\t\n\f\r ]+$/g, "").toLowerCase();
-      if (!type || !INERT_TYPES.has(type)) bodies.push(html.slice(end + 1, closing.index));
-    }
-    open.lastIndex = close.lastIndex;
+  for (const el of elements(document)) {
+    if (el.tagName !== "script") continue;
+    if (attrValue(el, "src") != null) continue;
+    const type = attrValue(el, "type")?.trim().toLowerCase();
+    if (type && INERT_TYPES.has(type)) continue;
+    bodies.push(el.childNodes.map((n) => n.value ?? "").join(""));
   }
   return bodies;
 }
@@ -123,15 +112,40 @@ function scriptBodies(html) {
 // javascript: URL is refused too. The hash list cannot pin those, so they are
 // rejected by name instead of being hashed - a handler added without noticing
 // would fail silently in the browser while this tool reported the site clean
-// (aifocus-rlng). Scanning is limited to start tags, with attribute values
-// blanked before names are matched, so text that merely mentions onclick= is
-// not a hit.
-const START_TAG = /<([a-zA-Z][a-zA-Z0-9:-]*)(?=[\t\n\f\r />])/g;
-const URL_ATTRS = new Set(["href", "src", "action", "formaction", "xlink:href", "poster", "cite", "background", "data"]);
+// (aifocus-rlng). Walking the parsed tree means markup inside comments and
+// inside script strings is not scanned (it parses as comment and text nodes,
+// not elements), so a template mentioning onclick= in prose or code is not a
+// hit - the old regex scan flagged exactly that (aifocus-pimy).
+const URL_ATTRS = new Set([
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "xlink:href",
+  "poster",
+  "cite",
+  "background",
+  "data",
+]);
+
+// Attribute values arrive character-reference-decoded from the tokenizer,
+// which is the one decode pass a browser does. Do not decode again: a second
+// pass would turn javascript&amp;&#58;x into javascript:x and flag a URL the
+// browser never runs.
+
+// The URL parser strips ASCII tab, LF and CR anywhere in the input and trims
+// C0 controls and spaces at the ends, so java<TAB>script:alert(1) is a
+// javascript: URL. Undo that before deciding what the scheme is.
+const stripUrlNoise = (value) => value.replace(/[\t\n\r]/g, "").replace(/^[\u0000-\u0020]+/, "");
+
+function isJavascriptUrl(value) {
+  return /^javascript:/i.test(stripUrlNoise(value));
+}
+
 // A refresh URL lives inside content rather than a URL attribute.
-function metaRefreshUrl(values) {
-  if (decodeCharRefs(values.get("http-equiv") ?? "").trim().toLowerCase() !== "refresh") return null;
-  const content = decodeCharRefs(values.get("content") ?? "");
+function metaRefreshUrl(el) {
+  if (attrValue(el, "http-equiv")?.trim().toLowerCase() !== "refresh") return null;
+  const content = attrValue(el, "content") ?? "";
   // Both separators and the url= prefix are optional for a refresh target.
   // Preserve newlines: isJavascriptUrl strips the URL parser's ASCII noise.
   const target = /^\s*(?:(?:\d+(?:\.\d*)?|\.\d+)[\d.]*\s*[;,]\s*)?(?:url\s*=\s*)?([\s\S]*)$/i.exec(content)?.[1];
@@ -140,72 +154,54 @@ function metaRefreshUrl(values) {
   return target.replace(/^(['"])([\s\S]*)\1\s*$/, "$2");
 }
 
-// Character references are decoded before the scheme is read: a parser turns
-// javascript&#58;alert(1) and javascript&colon;alert(1) into the same URL the
-// browser refuses to run, and so must this scan.
-const NAMED_REFS = { colon: ":", tab: "\t", newline: "\n", sol: "/", amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: "\u00a0" };
-function decodeCharRefs(value) {
-  return value.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z][a-zA-Z0-9]*));?/g, (match, dec, hex, name) => {
-    if (dec) return String.fromCodePoint(Math.min(Number(dec), 0x10ffff));
-    if (hex) return String.fromCodePoint(Math.min(parseInt(hex, 16), 0x10ffff));
-    const ref = NAMED_REFS[name?.toLowerCase()];
-    return ref ?? match;
-  });
-}
-
-// The URL parser strips ASCII tab, LF and CR anywhere in the input and trims
-// C0 controls and spaces at the ends, so java<TAB>script:alert(1) is a
-// javascript: URL. Undo that before deciding what the scheme is.
-const stripUrlNoise = (value) => value.replace(/[\t\n\r]/g, "").replace(/^[\u0000-\u0020]+/, "");
-
-function isJavascriptUrl(value) {
-  return /^javascript:/i.test(stripUrlNoise(decodeCharRefs(value)));
-}
-
-export function inlineExecSurfaces(html) {
+function inlineExecSurfacesIn(document) {
   const handlers = [];
   const urls = [];
-  START_TAG.lastIndex = 0;
-  let match;
-  while ((match = START_TAG.exec(html)) !== null) {
-    const end = scriptTagEnd(html, START_TAG.lastIndex);
-    if (end < 0) break;
-    const tag = match[1].toLowerCase();
-    const attrs = tagAttributes(html.slice(START_TAG.lastIndex, end));
-    for (const [name, raw] of attrs) {
+  for (const el of elements(document)) {
+    const tag = el.tagName;
+    for (const attr of el.attrs) {
+      const name = qname(attr);
       if (/^on[a-z]+$/.test(name)) handlers.push({ tag, attr: name });
-      if (URL_ATTRS.has(name) && isJavascriptUrl(raw)) urls.push({ tag, attr: name, value: raw.slice(0, 80) });
+      if (URL_ATTRS.has(name) && isJavascriptUrl(attr.value)) {
+        urls.push({ tag, attr: name, value: attr.value.slice(0, 80) });
+      }
     }
     if (tag === "meta") {
-      const raw = metaRefreshUrl(attrs);
+      const raw = metaRefreshUrl(el);
       if (raw != null && isJavascriptUrl(raw)) urls.push({ tag, attr: "content", value: raw.slice(0, 80) });
     }
-    START_TAG.lastIndex = end + 1;
   }
   return { handlers, urls };
 }
 
-export function collectInlineExecSurfaces(dir = PUBLIC) {
+export function inlineExecSurfaces(html) {
+  return inlineExecSurfacesIn(parse(html));
+}
+
+// One parse per page feeds both scans: the hash list and the inline-exec
+// surface list always see the same elements the same way.
+export function scanSite(dir = PUBLIC) {
   const files = globSync("**/*.html", { cwd: dir }).sort();
-  const found = [];
+  const hashes = new Set();
+  const inline = [];
   for (const file of files) {
-    const { handlers, urls } = inlineExecSurfaces(readFileSync(path.join(dir, file), "utf8"));
-    for (const hit of handlers) found.push({ file, ...hit, kind: "handler" });
-    for (const hit of urls) found.push({ file, ...hit, kind: "javascript-url" });
+    const document = parse(readFileSync(path.join(dir, file), "utf8"));
+    for (const body of scriptBodies(document)) {
+      hashes.add(`'sha256-${createHash("sha256").update(body, "utf8").digest("base64")}'`);
+    }
+    const { handlers, urls } = inlineExecSurfacesIn(document);
+    for (const hit of handlers) inline.push({ file, ...hit, kind: "handler" });
+    for (const hit of urls) inline.push({ file, ...hit, kind: "javascript-url" });
   }
-  return found;
+  return { hashes: [...hashes].sort(), inline };
 }
 
 export function collectHashes(dir = PUBLIC) {
-  const files = globSync("**/*.html", { cwd: dir }).sort();
-  const hashes = new Set();
-  for (const file of files) {
-    const html = readFileSync(path.join(dir, file), "utf8");
-    for (const body of scriptBodies(html)) {
-      hashes.add(`'sha256-${createHash("sha256").update(body, "utf8").digest("base64")}'`);
-    }
-  }
-  return [...hashes].sort();
+  return scanSite(dir).hashes;
+}
+
+export function collectInlineExecSurfaces(dir = PUBLIC) {
+  return scanSite(dir).inline;
 }
 
 const isHash = (token) => /^'sha256-[A-Za-z0-9+/=]+'$/.test(token);
@@ -308,8 +304,7 @@ function main(argv) {
   const headers = readHeaders();
   const { lines, index, indent, value } = cspLine(headers);
   const policy = parsePolicy(value);
-  const hashes = collectHashes();
-  const inline = collectInlineExecSurfaces();
+  const { hashes, inline } = scanSite();
   const directive = policy.find((part) => part.startsWith("script-src "));
   const { hashes: declared, others } = scriptSrcParts(directive);
 
