@@ -246,3 +246,24 @@ test("admin script guard: executable inline scripts are rejected, data blocks ar
   assert.equal(adminScriptViolation(' type="application/json"'), null);
   assert.equal(adminScriptViolation(' type="module" src="/admin/js/main.abc.js" integrity="abc" crossorigin="anonymous"'), null);
 });
+
+test("admin script guard: src is checked after character references decode and URL normalization (aifocus-yeda)", () => {
+  // Each raw value here starts with a single '/', but the browser decodes
+  // character references and then normalizes the URL (strips leading/trailing
+  // C0 controls and spaces, removes every tab/LF/CR) BEFORE resolving it - so
+  // each of these loads //evil.example, cross-origin. Reading raw markup, the
+  // guard passed every one of them (aifocus-yeda).
+  assert.match(adminScriptViolation(' src="/&#47;evil.example/x.js"'), /blocked by the \/admin\/\* policy/);
+  assert.match(adminScriptViolation(' src="/&#x2f;evil.example/x.js"'), /blocked by the \/admin\/\* policy/);
+  assert.match(adminScriptViolation(' src="/&sol;evil.example/x.js"'), /blocked by the \/admin\/\* policy/);
+  assert.match(adminScriptViolation(' src="/&#9;&#47;evil.example/x.js"'), /blocked by the \/admin\/\* policy/);
+  assert.match(adminScriptViolation(' src="/&NewLine;/evil.example/x.js"'), /blocked by the \/admin\/\* policy/);
+  assert.match(adminScriptViolation(" src=/&#47;&#47;evil.example/x.js"), /blocked by the \/admin\/\* policy/);
+  // Values that decode and normalize to a genuine path-absolute same-origin
+  // URL still pass, including a decoded quote inside the path (the browser
+  // percent-encodes it; still same-origin).
+  assert.equal(adminScriptViolation(' src="/js/main.abc.js"'), null);
+  assert.equal(adminScriptViolation(' src="/a&quot;b/c.js"'), null);
+  // attr() exposes the DECODED value, which is what the checks above rely on.
+  assert.equal(attr(' src="/&#47;evil"', "src"), "//evil");
+});
