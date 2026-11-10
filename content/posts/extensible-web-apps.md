@@ -4,15 +4,15 @@ seotitle: ""
 slug: extensible-web-apps
 description: "I built Extensible Web Apps: web apps where everything is a plugin in its own Worker, so users (or their agents) can extend them without a fork or a deploy."
 date: 2026-11-08T19:21:51.772Z
-draft: true
+draft: false
 authors:
   - paulkinlan
 ---
-When I started to write this post it was about how much I am struggling with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software. I was finding that my agents would happily build my tools and products all in just a couple of files, or in ways that would just cause merge conflicts for even the smallest set of changes, however while I was writing that snoozefest it, I was trying to put what I was typing into practice and I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
+When I started to write this post it was about how much I am struggling with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software. I was finding that my agents would happily build my tools and products all in just a couple of files, or in ways that would just cause merge conflicts for even the smallest set of changes. However, while I was writing that snoozefest, I was trying to put what I was typing into practice and I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
 
 Stepping back a bit, I've been thinking for a long time about how the web might evolve now that we have the tools (LLMs and coding-harnesses) that can build almost anything and we also have the tools that can take almost anything the user needs.
 
-I've been noodling with lots of different types of harnesses that wrangle agents: [A voice-based one](https://github.com/PaulKinlan/voicebox) (more soon - but it's very cool), [a TweetDeck style Chrome harness](https://github.com/paulkinlan/chaos), [another Chrome Agent platform harness](https://github.com/paulkinlan/chrome-agent-platform) and an [API](https://github.com/paulkinlan/agent-do) that has a CLI and a TUI. I live in a lot of these tools now, they control my machines and help me work in ways that I personally find very useful. They create tools for me and orchestrate a lot tasks that I do.
+I've been noodling with lots of different types of harnesses that wrangle agents: [A voice-based one](https://github.com/PaulKinlan/voicebox) (more soon - but it's very cool), [a TweetDeck-style Chrome harness](https://github.com/paulkinlan/chaos), [another Chrome Agent platform harness](https://github.com/paulkinlan/chrome-agent-platform) and an [API](https://github.com/paulkinlan/agent-do) that has a CLI and a TUI. I live in a lot of these tools now, they control my machines and help me work in ways that I personally find very useful. They create tools for me and orchestrate a lot of tasks that I do.
 
 I've also been using a lot of other Agent Harnesses. [Pi](https://pi.dev/) is my particular favourite because of its low footprint and its ethos of customization. I liked it so much that I realised that my entire approach with [agent-do](https://github.com/paulkinlan/agent-do) was entirely wrong. Pi got me thinking about how I might bring the concept of harness customizability to the web.
 
@@ -30,13 +30,13 @@ And they can hook into events and actions that happen inside the web app such as
 
 {{< figure src="/images/extensible-web-apps/screenshot-2026-11-08-at-19.47.08.png" alt="" caption="The blue line is a sentence length plugin" >}}
 
-For example, I have a sentence length plugin that *could* be something that is in the core, and so could the *writing* streak plugin, but why should I have to rebuild and redeploy the project if I get bored of them one day? Do I really need to go back and re-build a project just to add a side-panel that checks all the claims that I am making? No, no I shouldn't have to.
+For example, I have a sentence length plugin that *could* be something that is in the core, and so could the *writing* streak plugin, but why should I have to rebuild and redeploy the project if I get bored of them one day? Do I really need to go back and re-build a project just to add a side-panel that checks all the claims that I am making? No, no, I shouldn't have to.
 
 The principles that I saw in Pi were incredibly invigorating and I started to see every problem in software as one that could be fixed with an Extensibility-shaped hammer.
 
 Then I remembered the awesome post "[Malleable software: Restoring user agency in a world of locked-down apps](https://www.inkandswitch.com/essay/malleable-software/)" by the folks at Ink and Switch (and lo and behold, they also built a Markdown Editor :D) and I really had to dive a lot deeper into this space and try and answer the question: Why don’t more websites offer customization? 
 
-{{< aside >}}There was a time where I was pitching every feature in Chrome should be a Web Intent that can be replaced by the users preferred service (my idea was instead of the "Print" opening the printer dialog, it would search for services the user had installed and offer that. It could point to the user's preferred service, maybe FedEx or ... a fax machine service){{</ aside >}}
+{{< aside >}}There was a time where I was pitching that every feature in Chrome should be a Web Intent that can be replaced by the user's preferred service (my idea was instead of the "Print" opening the printer dialog, it would search for services the user had installed and offer that. It could point to the user's preferred service, maybe FedEx or ... a fax machine service){{</ aside >}}
 
 So, why don't more websites offer customization? Easy. It's hard. 
 
@@ -49,10 +49,10 @@ It left me thinking. If I want the web to win in the long run then we need websi
 So, well, here we are... Introducing my experiment: [Extensible Web Apps](https://extensibleweb.app/) [[source](https://github.com/PaulKinlan/ExtensibleWebApps)] --- a harness that enables you to build and compose web apps that the user can extend how they see fit.
 
 {{< aside >}}
-I know, I know - the <a href="https://github.com/extensibleweb/manifesto">Extensible Web Manifesto</a>... I'm very likely to be prodding a sleeping bear, but the domain names were available, the name is very apropos of the intent of what I am about to describe, and, well, The Extensible Web manifesto was of a time that has passed (I should probably write this up on paul.kinlan.me).
+I know, I know - the <a href="https://github.com/extensibleweb/manifesto">Extensible Web Manifesto</a>... I'm very likely to be prodding a sleeping bear, but the domain names were available, the name is very apropos of the intent of what I am about to describe, and, well, the Extensible Web Manifesto was of a time that has passed (I should probably write this up on paul.kinlan.me).
 {{</ aside >}}
 
-Before I explain anything, have a play. This is a beat pad built on the platform, running live in this page. Press play. Then hit **Customize** in the corner, pick the **Sunset theme** sample and turn it on. You just installed a plugin into somebody else's app, and the author (me) didn't have to do anything to let you.
+Before I explain anything, have a play. This is a beat pad built on the platform, running live in this page. Press play. Then hit **Customize** in the corner, scroll down to "Samples for this app" and press **Add** next to **Sunset theme**. You'll be shown its code and what it's allowed to do (change the app's colours, and nothing else). Accept it. You just installed a plugin into somebody else's app, and the author (me) didn't have to do anything to let you.
 
 {{< demo src="https://extensibleweb.app/demos/beats/" title="Beat pad" height="680" caption="A step sequencer. The sequencer, the Euclidean rhythm menu and the ripples visualiser are each their own plugin." >}}
 
@@ -62,11 +62,11 @@ I also had some core things that I wanted to make sure you could customize:
 
 * A user should be able to add their own plugins
 * The plugins should be able to save their own data
-* The plugins should be able to themselves extended so they should define hooks that other plugins can listen for
+* The plugins should themselves be extensible, so they should be able to define hooks that other plugins can listen for
 * The plugins should be able to provide their own UI if they want
 * The developer should be able to provide places in their App UI for extension, while the user should be able to also override it and place the UI where they want
 
-While a user can write the code to customize the web app, the expectation is that people will use an LLM to create the plugins at runtime and as such LLMs are built into the harness as a core principle component (even if it's not enabled by an app developer).
+While a user can write the code to customize the web app, the expectation is that people will use an LLM to create the plugins at runtime and as such LLMs are built into the harness as a core principle component (even if it's not enabled by an app developer)..
 
 It's a rather complex system when you have to try and look at it all, but the way I would say it is: We have an app and it's made up of plugins that are managed by "the kernel". Plugins *are the system* and they are added by the developer who builds the app *and*, importantly, by the user.
 
@@ -78,7 +78,7 @@ Really, everything is a plugin. That includes the UI shell, storage, sync and th
 
 Technically, an app needs no server as it can run entirely in the client, but it can also open in a space that a group of people share, where the same kernel runs on a server too, with plugins of its own.
 
-Given this is a harness and it's for building apps, I don't take as severe a hardline about what's in the core as Pi or Cordis do. It's more akin to how the DeepSeek Harness builds on Cordis, meaning that I give you a product you can build applications on top of.
+Given this is a harness and it's for building apps, I don't take as severe a hard line about what's in the core as Pi or Cordis do. It's more akin to how the DeepSeek Harness builds on Cordis, meaning that I give you a product you can build applications on top of.
 
 One of the nice things about this is that because everything is a `Worker`, all app updates happen via messaging, which means cross-tab communication is easy. The demo that follows is a little bit more complex because it is technically two apps: a contact manager and a generic calendar, but because they both expose a contract for how they work via hooks, they can listen to changes in the data.
 
@@ -120,18 +120,40 @@ export default async function (ctx) {
 }
 ```
 
-Copy it, hit **Customize** in the Contacts demo above, paste it into the box under "Add a plugin", and click **Add this code**. It starts off, and the panel tells you exactly what it asks for (`ui`, `data:read:contacts`) and where it will draw before you turn it on. Turn it on, add another person, and the count goes up. That's the whole loop: an app author ships an app, and a user (or their agent) bends it to what they need, without a fork, a rebuild or a deploy.
+Copy it, hit **Customize** in the Contacts demo above, and at the bottom of the Plugins tab open "Add a plugin or an agent from files, code or an address". Paste it into the box and click **Add this code**. Nothing runs yet: you get a review card with the code and, in plain words, what it will be able to do ("Draw on this page. Read the contacts records, and hear when they change."). Accept it, add another person, and the count goes up. That's the whole loop: an app author ships an app, and a user (or their agent) bends it to what they need, without a fork, a rebuild or a deploy.
 
 {{< figure src="/images/extensible-web-apps/headcount.png" alt="The Contacts app with 'You know 3 people' added under its heading by a pasted plugin" caption="A plugin pasted into somebody else's app" >}}
 
-Say you build a web app and you don't have agent support, but the user wants to integrate Claude somehow? Well, we have an Agents plugin that can let the user configure their own agents. Say you had a Book tracking web app and your user keeps asking you to add Agent support in, but you really don't know what that means, or how it would help? The user adds the Agent plugin.
+**Now don't write any code at all.** I'll be honest, I just cheated. I handed you 18 lines of JavaScript and asked you to paste them into a box. That's fine for you and me, but it's hard enough for developers to think in manifests, permissions and places, and it's simply not something a normal person is ever going to do. They shouldn't have to. They should just ask.
+
+So the platform has an agent that is always there. In every app, Customize has a **Make a plugin** tab, and on it is a button: **Write it for me**. Try it on the Contacts demo (I'd [open it full screen](https://extensibleweb.app/demos/contacts/) for this one, because you're about to give it an API key):
+
+1. **Customize**, then **Make a plugin**, then **Write it for me**. The Plugin maker is itself just a plugin, so you get a review card for it like anything else. Accept it.
+2. It needs a language model to write with, so it offers the ones the site has: Claude, Gemini, OpenAI, or Ollama running on your own machine (no key needed). Pick one. With the hosted ones you'll be asked for your own API key the first time it writes. The key stays on your device and goes only to that provider; no plugin can ever read it.
+3. Say what you want, in your own words, and press **Make it**. It suggests a few to start you off, or try "Show how many of my contacts have a birthday this month, at the top".
+
+The agent looks at the page first (which plugins are on it, what data they own, where there's room to draw), writes a plugin, checks it against the same rules the kernel will hold it to, and then stops and shows you a review card: here's the code, and here's what it will be able to do. Nothing it writes runs until you accept. Don't like it? Tell it. "Make it a card", "put it under the birthdays list", "actually, only count this week". It knows which plugin you mean and saves it again.
+
+{{< figure src="/images/extensible-web-apps/plugin-maker.gif" alt="Asking the Plugin maker for a birthday count in the Contacts app, accepting the review card, and the count appearing on the page" caption="Asking for a plugin instead of writing one" >}}
+<!-- TODO PAUL: record this gif. Contacts demo: Customize, Make a plugin, Write it for me, ask for something, accept the card. Until then images/plugin-maker.png (the Make tab with the Plugin maker open) will do as a still; change .gif to .png above. -->
+
+No key to hand? Chapter 11 of [the homepage](https://extensibleweb.app/), "Let an agent change it", replays a real recorded run of the builder agent, tool call by tool call, and the last step is real: you get the review card, and if you accept it the plugin it wrote is yours.
+
+The important bit for me is that this agent isn't a feature of the Contacts app. The author of Contacts did nothing. It's *your* agent, and it goes where you go:
+
+* **Use in every app.** The model you just added is already yours in every app on the site, not just this one. Next to the Plugin maker in Customize (and any other plugin you've added) is a button that says exactly that, **Use in every app**. Press it and the agent is there in every app you open.
+* **It follows you.** Sign in and your plugins, your agents, where you moved things and the model you picked follow you to your other devices. Your API keys only follow if you ask, and they're encrypted on your device first so the site can't read them.
+* **Bring the agent you already have.** The same tab has "Share MCP link for this tab". Paste that into Claude Code, Cursor or any MCP client and the agent you already live in can see and reshape the exact page you have open, with the same review cards. And if your browser has an agent built in, an app can offer it the same tools through [WebMCP](https://extensibleweb.app/docs/guide/outside-agents).
+
+I keep coming back to this. In a chat app the agent is always there and the UI is whatever it makes up for you on the spot. On the web the UI is always there and (if we get this right) so is the agent, ready to bend it for you. I know which one I'd rather use every day.
+
+Writing plugins isn't the only thing an agent can do in an app. Say you build a web app and you don't have agent support, but the user wants to integrate Claude somehow? Say you had a Book tracking web app and your user keeps asking you to add Agent support in, but you really don't know what that means, or how it would help? Well, agents are plugins too, so the user can add their own.
 
 {{< figure src="/images/extensible-web-apps/agent.gif" alt="" caption="You can add your agent - in this case the Agent is a Librarian" >}}
 
 In this demo you can see that I submit the details of "Tools for Thought" (I'm a hypermedia nut) and I don't have the published date or the name of the Author and you can see the [Librarian Agent](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/demos/librarian/librarian.agent.md) listening for changes to the data store and then talking to the [Bibliographer Agent](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/demos/librarian/bibliographer.agent.md) to then make the changes needed to annotate the data (with permission). You can [try the Librarian yourself](https://extensibleweb.app/demos/librarian/), you'll just need to bring your own API key.
 
-How the agents work
-Here's the thing I love about this one: neither agent is code. An agent is a Markdown file. The frontmatter is its manifest (what it's allowed to do, what wakes it up, and how much it may spend) and the body is its instructions. The kernel turns the file into a plugin, so an agent goes through exactly the same permission gate as any other plugin. That's also why you get asked before the Librarian changes your books: it doesn't own the library collection, so every write it wants to make shows up on a review card.
+**How the agents work.** Here's the thing I love about this one: neither agent is code. An agent is a Markdown file. The frontmatter is its manifest (what it's allowed to do, what wakes it up, and how much it may spend) and the body is its instructions. The kernel turns the file into a plugin, so an agent goes through exactly the same permission gate as any other plugin. That's also why you get asked before the Librarian changes your books: it doesn't own the `library` collection, so every write it wants to make shows up on a review card.
 
 {{< figure src="/images/extensible-web-apps/agents.png" alt="Sequence diagram: you add a book with only a title; the kernel wakes the Librarian agent on data:changed:library; it asks the model, then messages the Bibliographer agent, which may ask you to pick between candidates; the Librarian writes the author and year back, and the kernel shows you a review card before the change lands" caption="What happens when you add a book with just a title" >}}
 
@@ -192,7 +214,6 @@ on:
   - message: true
 limits: { runs-per-hour: 30, tokens-per-day: 200000, steps: 6 }
 ---
-
 You know books. Others send you questions about one: usually who wrote it
 and the year it was first published.
 
@@ -206,17 +227,17 @@ pick. If you don't know the book at all, say "Unknown".
 
 And because agents are plugins, everything they do is an event any other plugin can listen to. The activity panel in the demo is an ordinary plugin with one permission, `hook:listen:agent:*`:
 
-```JavaScript
-ctx.on("agent:wake", ({ agent, trigger }) => add("woke", `${agent}: ${trigger.name}`));
-ctx.on("agent:toolResult", ({ agent, tool, ok }) => add("tool", `${agent} called ${tool}${ok ? "" : ", which failed"}`));
-ctx.on("agent:budget", ({ agent, limit, used, max }) => add("limit", `${agent} reached its ${limit} limit: ${used} of ${max}`));
+```js
+ctx.on("agent:wake", ({ agent, trigger }) => add("woke", `${agent}: ${trigger.kind === "command" ? `asked to ${trigger.name}` : trigger.name}`, "accent"));
+ctx.on("agent:toolResult", ({ agent, tool, ok }) => add("tool", `${agent} called ${tool}${ok ? "" : ", which failed"}`, ok ? "ok" : "danger"));
+ctx.on("agent:budget", ({ agent, limit, used, max }) => add("limit", `${agent} reached its ${limit} limit: ${used} of ${max}`, "warn"));
 ```
 
-So if your users want "AI in the app", you don't have to design that feature. They can drop in a Markdown file, and the platform holds it to the same rules as everything else. The Agents guide has the rest, including agents that check other plugins' writes before they land.
+So if your users want "AI in the app", you don't have to design that feature. They can paste a Markdown file like these into the same box in Customize where you pasted the plugin earlier (it takes agents too), and the platform holds it to the same rules as everything else. The [Agents guide](https://extensibleweb.app/docs/guide/agents) has the rest, including agents that check other plugins' writes before they land.
 
 I wanted to know how far the UI could go when every piece of it is a plugin drawing plain HTML from a worker, so I (well, me and my agents) built a bunch of apps. All of them are at [extensibleweb.app/demos](https://extensibleweb.app/demos/), and every one has the Customize button.
 
-* **[Studio board](https://extensibleweb.app/demos/board/)**: a kanban board with due dates, checklists, WIP limits and a "pulse" chart. Try the **Focus** and **Midnight theme** samples in Customize.
+* **[Studio board](https://extensibleweb.app/demos/board/)**: a kanban board with due dates, checklists, WIP limits and a "pulse" chart. Try the **Focus** and **Midnight theme** samples at the bottom of Customize.
 {{< demo src="https://extensibleweb.app/demos/board/" title="Studio board" height="680" >}}
 
   {{< figure src="/images/extensible-web-apps/board.png" alt="The Studio board kanban app" caption="Studio board image if it doesn't work for you" >}}
@@ -233,15 +254,20 @@ I wanted to know how far the UI could go when every piece of it is a plugin draw
 
 Want to build your own? You need a recent Node (I use 22) and that's it. There's no build step for your app: an app is an HTML page and some plugins, each one an ES module.
 
-**1. Make a project.** It isn't on npm yet, so you run it straight from GitHub: 
+**1. Make a project.** It isn't on npm yet, so you run it straight from GitHub:
 
 ```sh
 npx github:PaulKinlan/ExtensibleWebApps packing-list
 cd packing-list
 npm run dev
 ```
+<!-- TODO PAUL: once the two packages are published to npm, replace the first line with `npm create extensible-app packing-list` and delete the npm 12 note below. Today `npm create extensible-app` fails (the package isn't on npm), so don't use it in the post until then. -->
 
-That copies the whole platform into `packing-list/` (the kernel, the standard plugins, the service worker, and all the demos to learn from), installs it, and makes your app in `demos/packing-list/` from the starter. Open [http://localhost:5173/demos/packing-list/](http://localhost:5173/demos/packing-list/) and you have a working list app. The folder name becomes your app's id, so keep it to lowercase letters, digits and dashes.
+That makes a small project of your own in `packing-list/`: your app's three files at the top, and the platform (the kernel, the standard plugins, the service worker) as a dependency in `node_modules`, not a copy. The first install builds the platform, so give it a minute. Open [http://localhost:5173/](http://localhost:5173/) and you have a working list app. The folder name becomes your app's id, so keep it to lowercase letters, digits and dashes.
+
+{{< aside >}}
+On npm 12 the first line stops with <code>EALLOWGIT</code>, because npm 12 no longer fetches packages from git unless you say so. Until I publish to npm, put <code>npm_config_allow_git=all</code> in front: <code>npm_config_allow_git=all npx github:PaulKinlan/ExtensibleWebApps packing-list</code>.
+{{</ aside >}}
 
 **2. Look at what you got.** Three files. The page, `app.html`, says which plugins make up the app with `<link rel="plugin">`, and where they can draw with `<slot>`:
 
@@ -264,7 +290,7 @@ That copies the whole platform into `packing-list/` (the kernel, the standard pl
   <main>
     <slot name="main"><p>Loading…</p></slot>
   </main>
-  <slot name="debug"></slot>
+  <slot name="debug" float></slot>
 </body>
 </html>
 ```
@@ -330,30 +356,30 @@ And the view, `main.html`, is a plain `<template>`. Holes like `{{item.title}}` 
 
 (I've trimmed the starter a little here. The real files have comments explaining every line, and an empty state.)
 
-**3. Add a plugin.** Make a new file next to the others, add a `<link rel="plugin" href="weather.js">` to `app.html`, and a `<slot name="side">` if it needs somewhere to draw. Or don't touch the page at all and add it through Customize like you did above. `npm run check` finds the usual mistakes before you open the page: a manifest the kernel won't read, a plugin drawing into a `<slot>` the page doesn't have, or a call the plugin's permissions don't allow.
+**3. Add a plugin.** Make a new file next to the others, add a `<link rel="plugin" href="weather.js">` to `app.html`, and a `<slot name="side">` if it needs somewhere to draw. Or don't touch the page at all and add it through Customize like you did above, or ask the Plugin maker for it. `npm run check` finds the usual mistakes before you open the page: a manifest the kernel won't read, a plugin drawing into a `<slot>` the page doesn't have, or a call the plugin's permissions don't allow.
 
-**4. Or let your agent do it.** This is really how I expect most plugins to get written. The repo has an [AGENTS.md](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/AGENTS.md) with the rules the kernel enforces, and the site has an [llms.txt](https://extensibleweb.app/llms.txt). Point Claude, Pi, or whatever you use at your project and ask for the plugin you want.
+**4. Or let your agent do it.** This is really how I expect most plugins to get written. The repo has an [AGENTS.md](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/AGENTS.md) with the rules the kernel enforces (it's in your project too, at `node_modules/extensible-web-apps/AGENTS.md`), and the site has an [llms.txt](https://extensibleweb.app/llms.txt). Point Claude, Pi, or whatever you use at your project and ask for the plugin you want.
 
-**5. Ship it.** Any one app can go out on a Cloudflare Worker of its own, with the whole platform (including the server side for shared spaces) carried along:
+**5. Ship it.** Your app can go out on a Cloudflare Worker of its own, with the platform (including the server side for shared spaces) carried along:
 
 ```sh
-npx wrangler login                            # once per machine
-npm run deploy:app -- demos/packing-list
+npx wrangler login     # once per machine
+npm run deploy
 ```
 
-It prints your app's address, `https://packing-list.<your-subdomain>.workers.dev/`. Add `--dev` to try it locally first. There's also a "Deploy one app" GitHub Actions workflow if you'd rather not deploy from your machine; [Deploying one app](https://extensibleweb.app/docs/guide/deploying-an-app) has the details.
+It prints your app's address, `https://packing-list.<your-subdomain>.workers.dev/`. `npm run deploy -- --dev` runs the same Worker on your machine first. [An app of your own](https://extensibleweb.app/docs/guide/your-own-app) has the details.
 
 I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). 
 
-Is this the future of web apps? I don't know. I think it's compelling and I think it offers a practical vision for how the web can continue to evolve. But it's not without it's downsides. It's hard enough for developers to think about how to componentize your projects, imagine a normal person using your software? To that extent, I really think this will be "agent-led", i.e, you use the Agent system built into help you mold and craft the tools you use. Also, this certainly isn't complete nor production-ready yet, I built it over 4 days with an LLM after all.  
+Is this the future of web apps? I don't know. I think it's compelling and I think it offers a practical vision for how the web can continue to evolve. But it's not without its downsides. It's hard enough for developers to think about how to componentize their projects. Imagine a normal person using your software. To that extent, I really think this will be "agent-led", i.e., you don't write the plugin, you ask the agent that's always there to mold and craft the tools you use, and your job is to read the card and say yes or no. Also, this certainly isn't complete or production-ready yet; I built it over 4 days with an LLM after all.  
 
-For me though, I can't not explore these concepts especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
+For me though, I can't not explore these concepts, especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
 
-I even recreated the Markdown Editor mentioned at the start of this post as an extensible set of components using this very platform.
+I even recreated the Markdown Editor mentioned at the start of this post as [an extensible set of components using this very platform](https://extensibleweb.app/demos/markdown-editor/).
 
 {{< figure src="/images/extensible-web-apps/screenshot-2026-11-10-at-19.19.53.png" alt="" caption="Markdown Editor written as an Extensible Web App" >}}
 
-So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint (I promise). I would love you to have a look and send me feedback on this experiment and if you are working on something similar.
+So, anyway, I will get around to writing about merge issues, but for now you have a new way of creating web apps that 100% aren't SharePoint (I promise). I would love you to have a look and send me feedback on this experiment, and to hear if you are working on something similar.
 
 If you want to learn more, here are some good links to get started: 
 
@@ -372,4 +398,6 @@ Developer Guide:
 * [Data and Permissions](https://extensibleweb.app/docs/guide/data-and-permissions)
 * [Places](https://extensibleweb.app/docs/guide/places) (how user plugins draw where the app has no slot)
 * [Agents](https://extensibleweb.app/docs/guide/agents)
+* [Outside agents: WebMCP and MCP](https://extensibleweb.app/docs/guide/outside-agents)
+* [An app of your own](https://extensibleweb.app/docs/guide/your-own-app)
 * [Styling components](https://extensibleweb.app/docs/guide/styling)
