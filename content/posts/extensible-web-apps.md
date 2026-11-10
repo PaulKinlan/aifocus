@@ -8,6 +8,8 @@ draft: false
 authors:
   - paulkinlan
 ---
+{{< warning >}}This is a long post - if you want to jump to the thing I built, click [here](https://extensibleweb.app/){{</ warning >}}
+
 When I started to write this post it was about how much I am struggling with merge issues now that my agent fleet is working all day and more importantly how merging slows our ability to build software. I was finding that my agents would happily build my tools and products all in just a couple of files, or in ways that would just cause merge conflicts for even the smallest set of changes. However, while I was writing that snoozefest, I was trying to put what I was typing into practice and I think I've just rebuilt SharePoint... wait, wait, wait, stay with me... I promise this post will be good. If it's not, [email me](mailto:paul@aifoc.us?subject=What+are+you+on) or [X-flame me](https://x.com/intent/post?text=Hey+@Paul_Kinlan+what+were+you+on+when+you+made+this?&url=https://aifoc.us/extensible-web-apps/).
 
 Stepping back a bit, I've been thinking for a long time about how the web might evolve now that we have the tools (LLMs and coding-harnesses) that can build almost anything and we also have the tools that can take almost anything the user needs.
@@ -56,7 +58,7 @@ Before I explain anything, have a play. This is a beat pad built on the platform
 
 {{< demo src="https://extensibleweb.app/demos/beats/" title="Beat pad" height="680" caption="A step sequencer. The sequencer, the Euclidean rhythm menu and the ripples visualiser are each their own plugin." >}}
 
-Before we start, I am presuming that you don't mind that I built this with my agent with heavy and constant review (you will see Claude and other tools all over this repo). This web-app harness builds off the core kernel of Cordis and then attempts to build on top of the existing primitives of the web such as `<slot>`, `<template>`, `serviceWorker`, `Worker`, `SharedWorker`, `MessageChannel`, `@layer`, `@scope` to let you build rich and complex web applications that the user can customize without you having to do anything new.
+This web-app harness builds off the core kernel of Cordis and then attempts to build on top of the existing primitives of the web such as `<slot>`, `<template>`, `serviceWorker`, `Worker`, `SharedWorker`, `MessageChannel`, `@layer`, `@scope` to let you build rich and complex web applications that the user can customize without you having to do anything new.
 
 I also had some core things that I wanted to make sure you could customize:
 
@@ -82,7 +84,7 @@ Given this is a harness and it's for building apps, I don't take as severe a har
 
 One of the nice things about this is that because everything is a `Worker`, all app updates happen via messaging, which means cross-tab communication is easy. The demo that follows is a little bit more complex because it is technically two apps: a contact manager and a generic calendar, but because they both expose a contract for how they work via hooks, they can listen to changes in the data.
 
-You don't have to take my word for it. Below are the two real apps, each in its own iframe. Add someone in Contacts with a birthday in the next two weeks and watch it turn up in the Calendar's "Next two weeks" list. (I punched the air when that just worked, and then I punched it again when it also worked embedded in a blog post.)
+Below are the two real apps, each in its own iframe. You can add someone in Contacts with a birthday in the next two weeks and watch it turn up in the Calendar's "Next two weeks" list. (I punched the air when that just worked, and then I punched it again when it also worked embedded in a blog post.)
 
 {{< demo-row >}}
 {{< demo src="https://extensibleweb.app/demos/contacts/" title="Contacts" height="620" >}}
@@ -97,7 +99,7 @@ If you're reading this somewhere the iframes don't show up, here's what it looks
 Anything you change in these embedded demos stays in your browser, and it's kept apart from the same apps on extensibleweb.app itself (browsers partition storage for iframes by the site they're embedded in). So go wild, you won't break anything for anyone else.
 {{</ aside >}}
 
-Here's the bit I really want you to try. This is a whole plugin. It reads the contacts and puts a little line under the app's heading. The Contacts app has no slot for it, so the plugin names its own place in its manifest (`header h1`, put it `after`).
+I think the Plugin system is preetty neat too, and the code below is all you need. It reads the contacts and puts a little line under the app's heading. The Contacts app has no slot for it, so the plugin names its own place in its manifest (`header h1`, put it `after`).
 
 ```js
 export const manifest = {
@@ -120,24 +122,17 @@ export default async function (ctx) {
 }
 ```
 
-Copy it, hit **Customize** in the Contacts demo above, and at the bottom of the Plugins tab open "Add a plugin or an agent from files, code or an address". Paste it into the box and click **Add this code**. Nothing runs yet: you get a review card with the code and, in plain words, what it will be able to do ("Draw on this page. Read the contacts records, and hear when they change."). Accept it, add another person, and the count goes up. That's the whole loop: an app author ships an app, and a user (or their agent) bends it to what they need, without a fork, a rebuild or a deploy.
+You can copy this code, then tap **Customize** in the Contacts app, and at the bottom of the Plugins tab open "Add a plugin or an agent from files, code or an address" and just paste it in. Nothing will run straight away, instead you get a review card with the code and hopefully a description of what it will be able to do ("Draw on this page. Read the contacts records, and hear when they change."). If you accept it, add another person, and the count goes up. And that is pretty much it: an app author ships an app, and a user (or their agent) molds it to what they need, without a fork or a rebuild or a deploy.
 
 {{< figure src="/images/extensible-web-apps/headcount.png" alt="The Contacts app with 'You know 3 people' added under its heading by a pasted plugin" caption="A plugin pasted into somebody else's app" >}}
 
-**Now don't write any code at all.** I'll be honest, I just cheated. I handed you 18 lines of JavaScript and asked you to paste them into a box. That's fine for you and me, but it's hard enough for developers to think in manifests, permissions and places, and it's simply not something a normal person is ever going to do. They shouldn't have to. They should just ask.
+I think one of the big challenges is that you can't expect normal people to write code to extend a product. I think in an ideal malleable product of the future, the user should just be able to ask.
 
-So the platform has an agent that is always there. In every app, Customize has a **Make a plugin** tab, and on it is a button: **Write it for me**. Try it on the Contacts demo (I'd [open it full screen](https://extensibleweb.app/demos/contacts/) for this one, because you're about to give it an API key):
-
-1. **Customize**, then **Make a plugin**, then **Write it for me**. The Plugin maker is itself just a plugin, so you get a review card for it like anything else. Accept it.
-2. It needs a language model to write with, so it offers the ones the site has: Claude, Gemini, OpenAI, or Ollama running on your own machine (no key needed). Pick one. With the hosted ones you'll be asked for your own API key the first time it writes. The key stays on your device and goes only to that provider; no plugin can ever read it.
-3. Say what you want, in your own words, and press **Make it**. It suggests a few to start you off, or try "Show how many of my contacts have a birthday this month, at the top".
+So the platform has an agent that is always there. In every app, you can click on Customize and then go to a **Make a plugin** and use **Write it for me**. Try it on the Contacts demo (I'd [open it full screen](https://extensibleweb.app/demos/contacts/) for this one, because you're about to give it an API key - assuming you trust me). The neat thing is that "The Plugin maker" is itself just a plugin, so you get a review card for it like anything else.  It needs a language model to write with, so it offers the ones the site has: Claude, Gemini, OpenAI, or Ollama running on your own machine (no key needed). Pick one. With the hosted ones you'll be asked for your own API key the first time it writes. The key stays on your device and goes only to that provider; no plugin can ever read it and then you just say what you want, in your own words, and press **Make it** (I really should have done a "make it so" button instead... I should check that I can extend the product this way :D).
 
 The agent looks at the page first (which plugins are on it, what data they own, where there's room to draw), writes a plugin, checks it against the same rules the kernel will hold it to, and then stops and shows you a review card: here's the code, and here's what it will be able to do. Nothing it writes runs until you accept. Don't like it? Tell it. "Make it a card", "put it under the birthdays list", "actually, only count this week". It knows which plugin you mean and saves it again.
 
 {{< figure src="/images/extensible-web-apps/plugin-maker.png" alt="Asking the Plugin maker for a birthday count in the Contacts app, accepting the review card, and the count appearing on the page" caption="Asking for a plugin instead of writing one" >}}
-<!-- TODO PAUL: record this gif. Contacts demo: Customize, Make a plugin, Write it for me, ask for something, accept the card. Until then images/plugin-maker.png (the Make tab with the Plugin maker open) will do as a still; change .gif to .png above. -->
-
-No key to hand? Chapter 11 of [the homepage](https://extensibleweb.app/), "Let an agent change it", replays a real recorded run of the builder agent, tool call by tool call, and the last step is real: you get the review card, and if you accept it the plugin it wrote is yours.
 
 The important bit for me is that this agent isn't a feature of the Contacts app. The author of Contacts did nothing. It's *your* agent, and it goes where you go:
 
@@ -145,15 +140,13 @@ The important bit for me is that this agent isn't a feature of the Contacts app.
 * **It follows you.** Sign in and your plugins, your agents, where you moved things and the model you picked follow you to your other devices. Your API keys only follow if you ask, and they're encrypted on your device first so the site can't read them.
 * **Bring the agent you already have.** The same tab has "Share MCP link for this tab". Paste that into Claude Code, Cursor or any MCP client and the agent you already live in can see and reshape the exact page you have open, with the same review cards. And if your browser has an agent built in, an app can offer it the same tools through [WebMCP](https://extensibleweb.app/docs/guide/outside-agents).
 
-I keep coming back to this. In a chat app the agent is always there and the UI is whatever it makes up for you on the spot. On the web the UI is always there and (if we get this right) so is the agent, ready to bend it for you. I know which one I'd rather use every day.
-
 Writing plugins isn't the only thing an agent can do in an app. Say you build a web app and you don't have agent support, but the user wants to integrate Claude somehow? Say you had a Book tracking web app and your user keeps asking you to add Agent support in, but you really don't know what that means, or how it would help? Well, agents are plugins too, so the user can add their own.
 
 {{< figure src="/images/extensible-web-apps/agent.gif" alt="" caption="You can add your agent - in this case the Agent is a Librarian" >}}
 
 In this demo you can see that I submit the details of "Tools for Thought" (I'm a hypermedia nut) and I don't have the published date or the name of the Author and you can see the [Librarian Agent](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/demos/librarian/librarian.agent.md) listening for changes to the data store and then talking to the [Bibliographer Agent](https://github.com/PaulKinlan/ExtensibleWebApps/blob/main/demos/librarian/bibliographer.agent.md) to then make the changes needed to annotate the data (with permission). You can [try the Librarian yourself](https://extensibleweb.app/demos/librarian/), you'll just need to bring your own API key.
 
-**How the agents work.** Here's the thing I love about this one: neither agent is code. An agent is a Markdown file. The frontmatter is its manifest (what it's allowed to do, what wakes it up, and how much it may spend) and the body is its instructions. The kernel turns the file into a plugin, so an agent goes through exactly the same permission gate as any other plugin. That's also why you get asked before the Librarian changes your books: it doesn't own the `library` collection, so every write it wants to make shows up on a review card.
+Neither of the agents are code, they are a little Markdown file that has a manifest in the preamble (what it's allowed to do, what wakes it up, and how much it may spend) and the body in the instructions. The kernel turns the file into a plugin, so an agent goes through exactly the same permission gate as any other plugin. That's also why you get asked before the Librarian changes your books: it doesn't own the `library` collection, so every write it wants to make shows up on a review card.
 
 {{< figure src="/images/extensible-web-apps/agents.png" alt="Sequence diagram: you add a book with only a title; the kernel wakes the Librarian agent on data:changed:library; it asks the model, then messages the Bibliographer agent, which may ask you to pick between candidates; the Librarian writes the author and year back, and the kernel shows you a review card before the change lands" caption="What happens when you add a book with just a title" >}}
 
@@ -168,7 +161,9 @@ The whole app is one page. Two of the plugins are just Markdown files, linked wi
 <link rel="plugin" href="/std/llm/anthropic.js">
 ```
 
-This is the Librarian, the entire file. It wakes whenever a book changes (`on: - hook: data:changed:library`), it can read and write the library and send messages to the bibliographer, and nothing else. `model: fast` asks for whichever fast model the app's LLM plugin has, and `limits` caps how often it runs and how many tokens it uses; the kernel counts those, not the agent.
+(Fwiw - I'm not sure that the `<link rel>` approach is the correct one)
+
+What follows is the Librarian as it's entirely defined. It wakes whenever a book changes (`on: - hook: data:changed:library`), it can read and write the library and send messages to the bibliographer, and nothing else. `model: fast` asks for whichever fast model the app's LLM plugin has, and `limits` caps how often it runs and how many tokens it uses; the kernel counts those, not the agent.
 
 ```markdown
 ---
@@ -233,7 +228,7 @@ ctx.on("agent:toolResult", ({ agent, tool, ok }) => add("tool", `${agent} called
 ctx.on("agent:budget", ({ agent, limit, used, max }) => add("limit", `${agent} reached its ${limit} limit: ${used} of ${max}`, "warn"));
 ```
 
-So if your users want "AI in the app", you don't have to design that feature. They can paste a Markdown file like these into the same box in Customize where you pasted the plugin earlier (it takes agents too), and the platform holds it to the same rules as everything else. The [Agents guide](https://extensibleweb.app/docs/guide/agents) has the rest, including agents that check other plugins' writes before they land.
+When all this started working, I was giddy. But it means that if your users want "AI in the app", you don't have to design that feature. They do. They can paste a Markdown file like these into the same box in Customize where you pasted the plugin earlier (it takes agents too), and the platform holds it to the same rules as everything else. The [Agents guide](https://extensibleweb.app/docs/guide/agents) has the rest, including agents that check other plugins' writes before they land.
 
 I wanted to know how far the UI could go when every piece of it is a plugin drawing plain HTML from a worker, so I (well, me and my agents) built a bunch of apps. All of them are at [extensibleweb.app/demos](https://extensibleweb.app/demos/), and every one has the Customize button.
 
@@ -264,10 +259,6 @@ npm run dev
 <!-- TODO PAUL: once the two packages are published to npm, replace the first line with `npm create extensible-app packing-list` and delete the npm 12 note below. Today `npm create extensible-app` fails (the package isn't on npm), so don't use it in the post until then. -->
 
 That makes a small project of your own in `packing-list/`: your app's three files at the top, and the platform (the kernel, the standard plugins, the service worker) as a dependency in `node_modules`, not a copy. The first install builds the platform, so give it a minute. Open [http://localhost:5173/](http://localhost:5173/) and you have a working list app. The folder name becomes your app's id, so keep it to lowercase letters, digits and dashes.
-
-{{< aside >}}
-On npm 12 the first line stops with <code>EALLOWGIT</code>, because npm 12 no longer fetches packages from git unless you say so. Until I publish to npm, put <code>npm_config_allow_git=all</code> in front: <code>npm_config_allow_git=all npx github:PaulKinlan/ExtensibleWebApps packing-list</code>.
-{{</ aside >}}
 
 **2. Look at what you got.** Three files. The page, `app.html`, says which plugins make up the app with `<link rel="plugin">`, and where they can draw with `<slot>`:
 
@@ -369,13 +360,15 @@ npm run deploy
 
 It prints your app's address, `https://packing-list.<your-subdomain>.workers.dev/`. `npm run deploy -- --dev` runs the same Worker on your machine first. [An app of your own](https://extensibleweb.app/docs/guide/your-own-app) has the details.
 
-I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about an extensible system and how we can use a lot of existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). 
+Fun. Very Fun.
 
-Is this the future of web apps? I don't know. I think it's compelling and I think it offers a practical vision for how the web can continue to evolve. But it's not without its downsides. It's hard enough for developers to think about how to componentize their projects. Imagine a normal person using your software. To that extent, I really think this will be "agent-led", i.e., you don't write the plugin, you ask the agent that's always there to mold and craft the tools you use, and your job is to read the card and say yes or no. Also, this certainly isn't complete or production-ready yet; I built it over 4 days with an LLM after all.  
+I would never have done this project if I didn't have an LLM, but it has been incredibly fulfilling to think about how an extensible system can be structured and made to take advantage of a lot of the existing Web primitives to build complex composable web apps. I've particularly enjoyed getting back into MessageChannels and MessagePorts ([two of the most underrated APIs on the web](https://paul.kinlan.me/reinventing-web-intents/)). 
+
+Is this the future of web apps? I don't know. **I think it's compelling** and I think it offers a practical vision for how the web can continue to evolve. But it's not without its downsides. It's hard enough for developers to think about how to componentize their projects. Imagine a normal person using your software. To that extent, I really think this will be "agent-led", i.e., you don't write the plugin, you ask the agent that's always there to mold and craft the tools you use, and your job is to read the card and say yes or no. Also, this certainly isn't complete or production-ready yet; I built it over 4 days with an LLM after all.  
 
 For me though, I can't not explore these concepts, especially as everything around the web is evolving so quickly. The concepts of minimal cores, malleable software and user-extensibility are a very interesting area for the future of software and I want the web to be central.
 
-I even recreated the Markdown Editor mentioned at the start of this post as [an extensible set of components using this very platform](https://extensibleweb.app/demos/markdown-editor/).
+I even recreated the Markdown Editor mentioned at the start of this post as [an extensible set of components using this very platform](https://extensibleweb.app/demos/markdown-editor/) and finished writing this post in it just to prove to myself that extensible and malleable platforms can work.
 
 {{< figure src="/images/extensible-web-apps/screenshot-2026-11-10-at-19.19.53.png" alt="" caption="Markdown Editor written as an Extensible Web App" >}}
 
