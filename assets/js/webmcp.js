@@ -11,6 +11,17 @@ const OWNER_EMAIL = "paul@aifoc.us";
 
 const textResult = (text) => ({ content: [{ type: "text", text }] });
 
+// Tool arguments come from a model, and inputSchema is an annotation here: no
+// handler enforces it, so each execute must police its own inputs (aifocus-mbs0,
+// same reasoning as the read_article url guard). A non-numeric limit would
+// slice to an empty list and a negative one truncates from the end - both
+// silently wrong - so limits coerce to the schema's clamped integer range and
+// string arguments reject with the same kind of message read_article returns.
+const clampedLimit = (value, fallback, max) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), max) : fallback;
+};
+
 const extractArticleText = (html) => {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const content = doc.querySelector(".e-content");
@@ -24,7 +35,10 @@ const extractArticleText = (html) => {
   return { title, text };
 };
 
-const registerTools = (modelContext) => {
+// Exported for the test harness: a fake modelContext captures the tool
+// objects so tests can call each execute() with wrong-typed arguments the
+// way a non-conforming agent would (aifocus-mbs0).
+export const registerTools = (modelContext) => {
   modelContext.registerTool({
     name: "contact_paul",
     description:
@@ -49,6 +63,12 @@ const registerTools = (modelContext) => {
       required: ["subject", "body"],
     },
     async execute({ subject, body }, agent) {
+      if (typeof subject !== "string" || subject.trim() === "" || typeof body !== "string" || body.trim() === "") {
+        return textResult(
+          "Invalid arguments: contact_paul needs a non-empty subject string and a " +
+            "non-empty body string to draft the email.",
+        );
+      }
       const params = new URLSearchParams();
       if (subject) params.set("subject", subject);
       if (body) params.set("body", body);
@@ -91,8 +111,9 @@ const registerTools = (modelContext) => {
     },
     annotations: { readOnlyHint: true },
     async execute({ limit = 20 }) {
+      const capped = clampedLimit(limit, 20, 100);
       const index = await loadArticleIndex();
-      const articles = index.articles.slice(0, limit).map((a) => ({
+      const articles = index.articles.slice(0, capped).map((a) => ({
         title: a.title,
         url: a.url,
         date: a.date,
@@ -129,7 +150,13 @@ const registerTools = (modelContext) => {
     },
     annotations: { readOnlyHint: true },
     async execute({ query, limit = 10 }) {
-      const { source, results } = await searchSite(query, { limit });
+      if (typeof query !== "string" || query.trim() === "") {
+        return textResult(
+          "Invalid arguments: search_articles needs a non-empty query string, e.g. " +
+            "search_articles({ query: \"web assembly\" }).",
+        );
+      }
+      const { source, results } = await searchSite(query, { limit: clampedLimit(limit, 10, 50) });
       return textResult(
         JSON.stringify(
           { query, source, count: results.length, matches: results },
