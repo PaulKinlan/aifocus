@@ -19,6 +19,7 @@ import {
   withParam,
 } from "../../../_lib/auth.js";
 import { getProvider } from "../../../_lib/providers/index.js";
+import { SIGNIN_REASONS } from "../../../../assets/js/signin-reasons.js";
 
 export async function onRequestGet({ request, env, params }) {
   const url = new URL(request.url);
@@ -26,15 +27,15 @@ export async function onRequestGet({ request, env, params }) {
   const db = env?.READER_DB;
   const cleanup = provider?.cleanupCookies ? provider.cleanupCookies() : [];
   if (!provider || !provider.isConfigured(env) || !db) {
-    return redirect("/?signin=unavailable", [clearStateCookie(), ...cleanup]);
+    return redirect(withParam("/", "signin", SIGNIN_REASONS.unavailable), [clearStateCookie(), ...cleanup]);
   }
 
   const saved = await takeOAuthState(db, request, provider.id, url.searchParams.get("state"));
-  if (!saved) return redirect("/?signin=expired", [clearStateCookie(), ...cleanup]);
+  if (!saved) return redirect(withParam("/", "signin", SIGNIN_REASONS.expired), [clearStateCookie(), ...cleanup]);
   const back = (reason) => redirect(withParam(saved.return_to, "signin", reason), [clearStateCookie(), ...cleanup]);
 
   // The reader declined on the provider's page.
-  if (url.searchParams.get("error")) return back("cancelled");
+  if (url.searchParams.get("error")) return back(SIGNIN_REASONS.cancelled);
 
   try {
     const profile = await provider.complete({
@@ -51,11 +52,11 @@ export async function onRequestGet({ request, env, params }) {
     let user;
     if (current && current.id === saved.link_user_id) {
       user = await linkIdentity(db, current.id, profile);
-      if (user?.conflict) return back("already-linked");
+      if (user?.conflict) return back(SIGNIN_REASONS.alreadyLinked);
     } else {
       user = await upsertIdentity(db, profile);
     }
-    if (!user || user.status !== "active") return back("blocked");
+    if (!user || user.status !== "active") return back(SIGNIN_REASONS.blocked);
     const token = await createSession(db, user.id);
     const target = new URL(saved.return_to, url.origin);
     // Essays scroll to the reader section; /account/ stays at the top.
@@ -63,6 +64,6 @@ export async function onRequestGet({ request, env, params }) {
     return redirect(`${target.pathname}${target.search}${target.hash}`, [clearStateCookie(), ...cleanup, sessionCookie(token)]);
   } catch (err) {
     console.error(`auth callback ${provider.id} failed: ${providerErrorSummary(err)}`);
-    return back("failed");
+    return back(SIGNIN_REASONS.failed);
   }
 }

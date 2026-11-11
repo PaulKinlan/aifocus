@@ -1,17 +1,19 @@
+import { SIGNIN_REASONS } from "./signin-reasons.js";
+
 // Sign-in controls shared by the reader section on essays (reader.js) and
 // the /account/ page (account-page.js). Server side: functions/api/auth/*.
 // Starting a sign-in while already signed in links that sign-in method to
 // the current account.
 
 export const SIGNIN_MESSAGES = {
-  failed: "Sign-in did not complete. Try again, or use another account.",
-  cancelled: "Sign-in was cancelled.",
-  expired: "Sign-in took too long. Try again.",
-  unavailable: "That sign-in method is not available.",
-  "bad-handle": "That is not a valid Bluesky handle. It looks like you.bsky.social.",
-  "already-linked": "That account is already linked to a different aifoc.us account.",
-  blocked: "This account cannot post here.",
-  ratelimited: "Too many sign-in attempts. Wait a while and try again.",
+  [SIGNIN_REASONS.failed]: "Sign-in did not complete. Try again, or use another account.",
+  [SIGNIN_REASONS.cancelled]: "Sign-in was cancelled.",
+  [SIGNIN_REASONS.expired]: "Sign-in took too long. Try again.",
+  [SIGNIN_REASONS.unavailable]: "That sign-in method is not available.",
+  [SIGNIN_REASONS.badHandle]: "That is not a valid Bluesky handle. It looks like you.bsky.social.",
+  [SIGNIN_REASONS.alreadyLinked]: "That account is already linked to a different aifoc.us account.",
+  [SIGNIN_REASONS.blocked]: "This account cannot post here.",
+  [SIGNIN_REASONS.ratelimited]: "Too many sign-in attempts. Wait a while and try again.",
 };
 
 export const startUrl = (provider, returnTo) =>
