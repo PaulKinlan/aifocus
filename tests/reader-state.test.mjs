@@ -186,3 +186,11 @@ test("a storage failure on the reservation fails closed, it does not serve unmet
   assert.equal(res.status, 503);
   assert.match((await res.json()).error, /Reader state is unavailable/);
 });
+
+// The binding and parameter guards (moved from reader.test.mjs, aifocus-dsg4):
+// GET /api/reader/state is the reader API's unauthenticated GET, so its
+// guards live with the endpoint's other tests.
+test("state: 503 without the D1 binding, 400 without a post", async () => {
+  assert.equal((await getState({ request: req({ post: POST }), env: {} })).status, 503);
+  assert.equal((await getState({ request: new Request(`${ORIGIN}/api/reader/state`), env: makeEnv() })).status, 400);
+});
