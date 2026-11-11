@@ -186,6 +186,10 @@ export async function authServerMetadata(issuer, fetchImpl) {
   if (meta?.issuer !== issuer) throw new Error("bluesky: issuer mismatch");
   for (const key of ["authorization_endpoint", "token_endpoint", "pushed_authorization_request_endpoint"]) {
     if (typeof meta[key] !== "string" || !meta[key].startsWith("https://")) throw new Error(`bluesky: missing ${key}`);
+    // These endpoints are third-party data from the metadata document: each
+    // is fetched server-side (PAR, token) or navigated to (authorization), so
+    // each must pass the same public-host check as the issuer itself.
+    assertPublicHttpsUrl(meta[key]);
   }
   return meta;
 }
