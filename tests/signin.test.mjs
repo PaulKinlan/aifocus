@@ -1,13 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SIGNIN_MESSAGES, startUrl, takeSignInResult } from "../assets/js/signin.js";
+import { SIGNIN_REASONS } from "../assets/js/signin-reasons.js";
 
-// The server's auth endpoints redirect with these reasons; keep their reader-facing
-// messages in sync, including the rate-limit result from auth/start/[provider].js.
-const SERVER_REASONS = ["failed", "cancelled", "expired", "unavailable", "bad-handle", "already-linked", "blocked", "ratelimited"];
-
-test("every auth redirect reason has a reader-facing message", () => {
-  for (const reason of SERVER_REASONS) {
+// Auth handlers use SIGNIN_REASONS rather than copying the reason strings.
+// A newly exported reason must have a distinct reader-facing message.
+test("every shared auth redirect reason has a reader-facing message", () => {
+  assert.equal(new Set(Object.values(SIGNIN_REASONS)).size, Object.values(SIGNIN_REASONS).length);
+  assert.deepEqual(Object.keys(SIGNIN_MESSAGES).sort(), Object.values(SIGNIN_REASONS).sort());
+  for (const reason of Object.values(SIGNIN_REASONS)) {
     assert.equal(typeof SIGNIN_MESSAGES[reason], "string", reason);
     assert.ok(SIGNIN_MESSAGES[reason].length > 0, reason);
   }

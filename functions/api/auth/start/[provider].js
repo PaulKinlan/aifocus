@@ -19,6 +19,7 @@ import {
 import { hashIp, UNKNOWN_IP_BUCKET } from "../../../_lib/reader.js";
 import { getProvider } from "../../../_lib/providers/index.js";
 import { normalizeHandle } from "../../../_lib/providers/bluesky.js";
+import { SIGNIN_REASONS } from "../../../../assets/js/signin-reasons.js";
 
 const AUTH_STARTS_PER_HOUR = 30;
 
@@ -47,7 +48,7 @@ export async function onRequestGet({ request, env, params }) {
   const provider = getProvider(params.provider);
   const db = env?.READER_DB;
   if (!provider || !provider.isConfigured(env) || !db) {
-    return redirect(withParam(returnTo, "signin", "unavailable"));
+    return redirect(withParam(returnTo, "signin", SIGNIN_REASONS.unavailable));
   }
 
   const { verifier, challenge } = await pkcePair();
@@ -56,7 +57,7 @@ export async function onRequestGet({ request, env, params }) {
   // drive before any outbound fetch happens.
   const ipHash = (await hashIp(db, request.headers.get("CF-Connecting-IP"))) ?? UNKNOWN_IP_BUCKET;
   if (!(await reserveAuthStartSlot(db, ipHash, Date.now()))) {
-    return redirect(withParam(returnTo, "signin", "ratelimited"));
+    return redirect(withParam(returnTo, "signin", SIGNIN_REASONS.ratelimited));
   }
   try {
     let location;
@@ -67,7 +68,7 @@ export async function onRequestGet({ request, env, params }) {
       // and the state row carries the data the callback needs.
       const rawHandle = url.searchParams.get("handle");
       const handle = rawHandle ? normalizeHandle(rawHandle) : null;
-      if (rawHandle && rawHandle.trim() && !handle) return redirect(withParam(returnTo, "signin", "bad-handle"));
+      if (rawHandle && rawHandle.trim() && !handle) return redirect(withParam(returnTo, "signin", SIGNIN_REASONS.badHandle));
       const started = await provider.begin({ origin: url.origin, handle, state, challenge });
       location = started.url;
       data = started.data;
@@ -81,6 +82,6 @@ export async function onRequestGet({ request, env, params }) {
     return redirect(location, [stateCookie(state), ...extraCookies]);
   } catch (err) {
     console.error(`auth start ${provider.id} failed: ${providerErrorSummary(err)}`);
-    return redirect(withParam(returnTo, "signin", "failed"));
+    return redirect(withParam(returnTo, "signin", SIGNIN_REASONS.failed));
   }
 }
