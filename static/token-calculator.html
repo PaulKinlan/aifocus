@@ -364,7 +364,7 @@
 
 <div class="controls">
   <div class="control-group">
-    <label>Engineer salary (total comp)</label>
+    <label for="salary">Engineer salary (total comp)</label>
     <div class="slider-row">
       <input type="range" id="salary" min="50000" max="1000000" step="10000" value="350000">
       <span class="value-display" id="salary-display">$350,000</span>
@@ -372,7 +372,7 @@
   </div>
 
   <div class="control-group">
-    <label>Team size</label>
+    <label for="team">Team size</label>
     <div class="slider-row">
       <input type="range" id="team" min="1" max="200" step="1" value="20">
       <span class="value-display" id="team-display">20</span>
@@ -380,7 +380,7 @@
   </div>
 
   <div class="control-group">
-    <label>Model</label>
+    <label for="model">Model</label>
     <div class="sublabel">Blended rate computed from input/output ratio below</div>
     <select id="model">
       <option value="5,25">Claude Opus 4.5/4.6 ($5/$25 per 1M)</option>
@@ -398,7 +398,7 @@
   </div>
 
   <div class="control-group">
-    <label>Input token ratio</label>
+    <label for="input-ratio">Input token ratio</label>
     <div class="sublabel">Real-world programming data shows ~93% input. Adjust to see how the ratio affects blended cost.</div>
     <div class="slider-row">
       <input type="range" id="input-ratio" min="50" max="99" step="1" value="93">
@@ -407,7 +407,7 @@
   </div>
 
   <div class="control-group">
-    <label>Tokens per task</label>
+    <label for="tokens-per-task">Tokens per task</label>
     <div class="sublabel">Estimated tokens for one substantial coding task (context + output). Default 100K based on typical agent sessions.</div>
     <div class="slider-row">
       <input type="range" id="tokens-per-task" min="10000" max="2000000" step="10000" value="100000">
