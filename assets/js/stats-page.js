@@ -209,8 +209,19 @@ function setupChart(figure) {
     svg.append(cursor);
     const hit = el("rect", { x: m.left, y: m.top, width: W, height: H, fill: "transparent" });
     let lastBest = -1, tipW = 0, tipH = 0;
+    let chartRect = null, rectScrollX = 0, rectScrollY = 0;
+    hit.addEventListener("pointerenter", () => {
+      // Read once before pointermove writes cursor/tooltip positions.
+      chartRect = svg.getBoundingClientRect();
+      rectScrollX = window.scrollX; rectScrollY = window.scrollY;
+    });
     hit.addEventListener("pointermove", (ev) => {
-      const r = svg.getBoundingClientRect();
+      // Re-measure only if scrolling moved the SVG while the pointer stayed over it.
+      if (!chartRect || rectScrollX !== window.scrollX || rectScrollY !== window.scrollY) {
+        chartRect = svg.getBoundingClientRect();
+        rectScrollX = window.scrollX; rectScrollY = window.scrollY;
+      }
+      const r = chartRect;
       const px = ev.clientX - r.left;
       let best = 0, bd = Infinity;
       for (let i = 0; i < n; i++) { const d = Math.abs(x(i) - px); if (d < bd) { bd = d; best = i; } }
@@ -240,7 +251,7 @@ function setupChart(figure) {
       tip.style.left = `${Math.max(0, left)}px`;
       tip.style.top = `${Math.max(0, Math.min(ev.clientY - r.top - 10, height - tipH))}px`;
     });
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; chartRect = null; });
     svg.append(hit);
     host.prepend(svg);
   }
