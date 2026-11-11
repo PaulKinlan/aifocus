@@ -597,18 +597,35 @@ const PROFILE_URL = /profile_?url/i;
 const HREF_ASSIGNMENT = /\.href\s*=\s*/;
 const GUARDED = /safeHref\(/;
 
-// Find a statement delimiter without mistaking a semicolon inside a string
-// for one. This guard is deliberately a source scan, not a JS parser.
+// Find a statement delimiter without mistaking a semicolon in a string,
+// comment, or regex literal for one. This is a bounded source scan, not a JS
+// parser: a slash after expression-opening punctuation starts a regex literal.
 function statementEnd(text) {
-  let quote = null, escaped = false;
+  let quote = null, regex = false, charClass = false;
+  let blockComment = false, lineComment = false, escaped = false;
+  let previous = "";
   for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
+    const char = text[i], next = text[i + 1];
+    if (lineComment) { if (char === "\n") lineComment = false; continue; }
+    if (blockComment) {
+      if (char === "*" && next === "/") { blockComment = false; i += 1; }
+      continue;
+    }
     if (escaped) { escaped = false; continue; }
-    if (quote) {
+    if (quote || regex) {
       if (char === "\\") escaped = true;
-      else if (char === quote) quote = null;
-    } else if (char === "'" || char === '"' || char === "`") quote = char;
-    else if (char === ";") return i;
+      else if (regex && char === "[") charClass = true;
+      else if (regex && char === "]") charClass = false;
+      else if (quote && char === quote) quote = null;
+      else if (regex && char === "/" && !charClass) regex = false;
+      continue;
+    }
+    if (char === "/" && next === "/") { lineComment = true; i += 1; continue; }
+    if (char === "/" && next === "*") { blockComment = true; i += 1; continue; }
+    if (char === "/" && (!previous || /[([{=,:!?&|]/.test(previous))) { regex = true; continue; }
+    if (char === "'" || char === '"' || char === "`") { quote = char; continue; }
+    if (char === ";") return i;
+    if (!/\s/.test(char)) previous = char;
   }
   return -1;
 }
@@ -777,6 +794,9 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = safeImgSrc(user.avatarUrl) ||\n  user.avatarUrl;",
     "img.src = safeImgSrc(user.avatarUrl)\n  || user.avatarUrl;",
     "img.src = safeImgSrc(user.avatarUrl)\n  ?? user.avatarUrl;",
+    "img.src = safeImgSrc(/x;/)\n  || user.avatarUrl;",
+    "img.src = safeImgSrc(x) /* ; */\n  || user.avatarUrl;",
+    "img.src = safeImgSrc(/x[;/]/)\n  || user.avatarUrl;",
     "img.src =\n  safeImgSrc('x;y') || user.avatarUrl;",
     "img.src = safeImgSrc(x); other.src = user.avatarUrl;",
     "img.src = safeImgSrc(x) + ';' + user.avatarUrl;",
@@ -827,6 +847,7 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "wrap.href =\n  safeHref(item.author_url) || item.author_profile_url;",
     "wrap.href = safeHref(item.author_url) ||\n  item.author_profile_url;",
     "wrap.href = safeHref(item.author_url)\n  || item.author_profile_url;",
+    "wrap.href = safeHref(/x;/) /* ; */\n  || user.profileUrl;",
     "wrap.href = safeHref(x); other.href = user.profileUrl;",
     "wrap.href = safeHref(x); other.href =\n  user.profileUrl;",
   ];
