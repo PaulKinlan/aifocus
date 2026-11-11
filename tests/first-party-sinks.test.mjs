@@ -597,20 +597,44 @@ const PROFILE_URL = /profile_?url/i;
 const HREF_ASSIGNMENT = /\.href\s*=\s*/;
 const GUARDED = /safeHref\(/;
 
-// Keep each sink assignment with its continuation, stopping at a semicolon or
-// at a complete line (for semicolon-free code) before the next statement.
+// Find a statement delimiter without mistaking a semicolon inside a string
+// for one. This guard is deliberately a source scan, not a JS parser.
+function statementEnd(text) {
+  let quote = null, escaped = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (escaped) { escaped = false; continue; }
+    if (quote) {
+      if (char === "\\") escaped = true;
+      else if (char === quote) quote = null;
+    } else if (char === "'" || char === '"' || char === "`") quote = char;
+    else if (char === ";") return i;
+  }
+  return -1;
+}
+
+// Retain the pre-existing full physical-line check (including two sinks on a
+// line), then check each wrapped sink expression separately. Both operator-at-
+// end and operator-at-start wrapping are legal JavaScript.
 function sinkStatements(source, assignment) {
   const lines = source.split("\n");
   const statements = [];
+  const matches = new RegExp(assignment.source, "g");
   for (let i = 0; i < lines.length; i += 1) {
-    const match = assignment.exec(lines[i]);
-    if (!match) continue;
-    const number = i + 1;
-    let text = lines[i].slice(match.index);
-    while (!text.includes(";") && /(?:=|\|\||&&|\?\?|[(:,])\s*$/.test(lines[i]) && i + 1 < lines.length) {
-      text += `\n${lines[++i]}`;
+    const line = lines[i];
+    if (!assignment.test(line)) continue;
+    statements.push({ text: line, number: i + 1 });
+    for (const match of line.matchAll(matches)) {
+      let text = line.slice(match.index);
+      let end = statementEnd(text);
+      let next = i;
+      while (end < 0 && next + 1 < lines.length &&
+        (/(?:=|\|\||&&|\?\?|[(:,])\s*$/.test(lines[next]) || /^\s*(?:\|\||&&|\?\?)/.test(lines[next + 1]))) {
+        text += `\n${lines[++next]}`;
+        end = statementEnd(text);
+      }
+      if (next !== i) statements.push({ text: end < 0 ? text : text.slice(0, end), number: i + 1 });
     }
-    statements.push({ text: text.split(";", 1)[0], number });
   }
   return statements;
 }
@@ -751,6 +775,12 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = safeImgSrc(user.avatarUrl) || user.avatarUrl;",
     "img.src =\n  safeImgSrc(user.avatarUrl) || user.avatarUrl;",
     "img.src = safeImgSrc(user.avatarUrl) ||\n  user.avatarUrl;",
+    "img.src = safeImgSrc(user.avatarUrl)\n  || user.avatarUrl;",
+    "img.src = safeImgSrc(user.avatarUrl)\n  ?? user.avatarUrl;",
+    "img.src =\n  safeImgSrc('x;y') || user.avatarUrl;",
+    "img.src = safeImgSrc(x); other.src = user.avatarUrl;",
+    "img.src = safeImgSrc(x) + ';' + user.avatarUrl;",
+    "img.src = safeImgSrc(x); other.src =\n  user.avatarUrl;",
     'node.setAttribute("src", safeImgSrc("x") || user.avatarUrl);',
   ];
   for (const sample of caught) {
@@ -796,6 +826,9 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "wrap.href = safeHref(item.author_url) || item.author_profile_url;",
     "wrap.href =\n  safeHref(item.author_url) || item.author_profile_url;",
     "wrap.href = safeHref(item.author_url) ||\n  item.author_profile_url;",
+    "wrap.href = safeHref(item.author_url)\n  || item.author_profile_url;",
+    "wrap.href = safeHref(x); other.href = user.profileUrl;",
+    "wrap.href = safeHref(x); other.href =\n  user.profileUrl;",
   ];
   for (const sample of caught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the guard must catch: ${sample}`);
