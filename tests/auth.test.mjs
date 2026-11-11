@@ -606,6 +606,32 @@ test("Bluesky start refuses discovery that points off the public internet", asyn
     assert.equal(res.headers.get("Location"), "/p/?signin=failed");
   });
   assert.ok(!log3.some((l) => l.includes("10.0.0.1")), "the internal issuer is never fetched");
+
+  // The three endpoints read out of the auth-server metadata document are
+  // third-party data too: each one is fetched server-side (PAR, token) or
+  // navigated to (authorization), so a metadata document that aims any of
+  // them at a non-public host is refused before it is used (aifocus-bzer).
+  for (const key of ["authorization_endpoint", "token_endpoint", "pushed_authorization_request_endpoint"]) {
+    const env4 = makeEnv();
+    const log4 = [];
+    const base4 = blueskyFetch({ log: log4 });
+    await withFetch((url, init) => {
+      if (url.href === `${AS}/.well-known/oauth-authorization-server`) {
+        return json({
+          issuer: AS,
+          authorization_endpoint: `${AS}/authorize`,
+          token_endpoint: `${AS}/token`,
+          pushed_authorization_request_endpoint: `${AS}/par`,
+          [key]: "https://metadata:8443/x",
+        });
+      }
+      return base4(url, init);
+    }, async () => {
+      const res = await start({ request: req("/api/auth/start/bluesky?return=/p/&handle=ana.example.com"), env: env4, params: { provider: "bluesky" } });
+      assert.equal(res.headers.get("Location"), "/p/?signin=failed");
+    });
+    assert.ok(!log4.some((l) => l.includes("metadata:8443")), `the internal ${key} is never fetched`);
+  }
 });
 
 test("Bluesky start normalizes hostnames before the public-host checks", async () => {
