@@ -209,20 +209,17 @@ function setupChart(figure) {
     svg.append(cursor);
     const hit = el("rect", { x: m.left, y: m.top, width: W, height: H, fill: "transparent" });
     let lastBest = -1, tipW = 0, tipH = 0;
-    let chartRect = null, rectScrollX = 0, rectScrollY = 0;
-    hit.addEventListener("pointerenter", () => {
-      // Read once before pointermove writes cursor/tooltip positions.
-      chartRect = svg.getBoundingClientRect();
-      rectScrollX = window.scrollX; rectScrollY = window.scrollY;
-    });
     hit.addEventListener("pointermove", (ev) => {
-      // Re-measure only if scrolling moved the SVG while the pointer stayed over it.
-      if (!chartRect || rectScrollX !== window.scrollX || rectScrollY !== window.scrollY) {
-        chartRect = svg.getBoundingClientRect();
-        rectScrollX = window.scrollX; rectScrollY = window.scrollY;
-      }
-      const r = chartRect;
-      const px = ev.clientX - r.left;
+      // offsetX/Y are the pointer position relative to the nearest SVG
+      // viewport, computed by the browser when THIS event was hit-tested.
+      // They force no layout, and they cannot go stale between moves: a rect
+      // cached across moves drifts by the full reflow distance when content
+      // above the chart moves it without a window scroll - a font swap or an
+      // inserted heading is enough (aifocus-zrdn; aifocus-bcfn first cached
+      // the rect and invalidated it on scroll, which misses every other kind
+      // of reflow). The viewBox is 1:1 with the CSS box, so these are the
+      // svg-relative coordinates a getBoundingClientRect read would return.
+      const px = ev.offsetX;
       let best = 0, bd = Infinity;
       for (let i = 0; i < n; i++) { const d = Math.abs(x(i) - px); if (d < bd) { bd = d; best = i; } }
       cursor.setAttribute("x1", x(best)); cursor.setAttribute("x2", x(best)); cursor.setAttribute("visibility", "visible");
@@ -249,9 +246,9 @@ function setupChart(figure) {
       }
       const left = x(best) + 12 + tipW > width ? x(best) - tipW - 12 : x(best) + 12;
       tip.style.left = `${Math.max(0, left)}px`;
-      tip.style.top = `${Math.max(0, Math.min(ev.clientY - r.top - 10, height - tipH))}px`;
+      tip.style.top = `${Math.max(0, Math.min(ev.offsetY - 10, height - tipH))}px`;
     });
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; chartRect = null; });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
     host.prepend(svg);
   }
