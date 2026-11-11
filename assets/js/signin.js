@@ -11,6 +11,7 @@ export const SIGNIN_MESSAGES = {
   "bad-handle": "That is not a valid Bluesky handle. It looks like you.bsky.social.",
   "already-linked": "That account is already linked to a different aifoc.us account.",
   blocked: "This account cannot post here.",
+  ratelimited: "Too many sign-in attempts. Wait a while and try again.",
 };
 
 export const startUrl = (provider, returnTo) =>
@@ -65,5 +66,5 @@ export const takeSignInResult = () => {
   params.delete("signin");
   const query = params.toString();
   history.replaceState(history.state, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`);
-  return SIGNIN_MESSAGES[signin] || SIGNIN_MESSAGES.failed;
+  return Object.hasOwn(SIGNIN_MESSAGES, signin) ? SIGNIN_MESSAGES[signin] : SIGNIN_MESSAGES.failed;
 };
