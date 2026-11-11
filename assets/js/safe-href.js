@@ -71,8 +71,15 @@ export function safeImgSrc(value) {
 // runs with the moderator's Access session attached. Root-relative only:
 // exactly one leading '/', no protocol-relative host ('//' - and no backslash
 // form either, because the URL parser normalizes '\' to '/', so /\host/x
-// resolves cross-origin). Callers render plain text when this returns null,
-// like safeHref().
+// resolves cross-origin). No control characters anywhere either: the URL
+// parser strips ASCII tab, LF and CR from the input before parsing, so
+// '/\t/evil.example/x' parses exactly like '//evil.example/x' and resolves
+// off-origin; the remaining C0 controls are rejected with them because a
+// stored path carrying a control character is malformed data under any
+// reading of "root-relative". Callers render plain text when this returns
+// null, like safeHref().
 export function safePostPath(value) {
-  return typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : null;
+  return typeof value === "string" && /^\/(?![/\\])/.test(value) && !/[\u0000-\u001f]/.test(value)
+    ? value
+    : null;
 }
