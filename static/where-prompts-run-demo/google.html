@@ -108,7 +108,7 @@
     /* aifocus-ut70: the label is the tap target, not the 15px checkbox inside it
        (WCAG 2.2 SC 2.5.8 asks for 24x24 CSS px minimum). The checkbox stays
        small; the label around it grows to 24px with a little padding. */
-    .top-bar label.label { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 2px 4px; cursor: pointer; }
+    .top-bar label.label:not([for]) { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; padding: 2px 4px; cursor: pointer; }
     @media (max-width: 700px) {
       input[type="password"], input[type="text"], select {
         width: 100%;
@@ -324,17 +324,17 @@
   </div>
 
   <div class="top-bar">
-    <span class="label">Provider</span>
+    <label class="label" for="provider">Provider</label>
     <select id="provider">
       <option value="anthropic">Anthropic (Claude)</option>
       <option value="google" selected>Google (Gemini)</option>
       <option value="openai">OpenAI (GPT)</option>
     </select>
-    <span class="label">API key</span>
-    <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" />
+    <label class="label" for="apiKey">API key</label>
+    <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" aria-describedby="keyWarning" />
     <label class="label"><input id="rememberKey" type="checkbox" /> remember on this device</label>
-    <div class="hint">A remembered key is stored in this browser's origin-wide storage, where any other script on this origin can read it. It is a live credential with billing authority - use "Forget API key" when you are done.</div>
-    <span class="label">Model</span>
+    <div class="hint" id="keyWarning">A remembered key is stored in this browser's origin-wide storage, where any other script on this origin can read it. It is a live credential with billing authority - use "Forget API key" when you are done.</div>
+    <label class="label" for="model">Model</label>
     <input id="model" type="text" value="gemini-3.1-pro-preview" />
     <button id="reset" class="danger">Clear sandbox</button>
     <button id="forgetKey" class="danger">Forget API key</button>
@@ -348,6 +348,7 @@
         <button id="resetPrompt" style="padding: 3px 8px; font-size: 12px;">reset to default</button>
       </summary>
       <div class="panel-body">
+        <label class="label" for="systemPrompt">System prompt</label>
         <textarea id="systemPrompt" spellcheck="false"></textarea>
         <div class="hint">Edit the prompt to change how the journal behaves. That prose is the program.</div>
       </div>
@@ -371,6 +372,7 @@
     <section class="panel">
       <h2><span>You</span></h2>
       <div class="panel-body">
+        <label class="label" for="userInput">Your message</label>
         <textarea id="userInput" placeholder="What's on your mind? e.g. 'Had coffee with Alice, we talked about the new agent-do release. She's going to try it on her side.'" spellcheck="false"></textarea>
         <div class="row end">
           <button id="send" class="primary" disabled>Send</button>
