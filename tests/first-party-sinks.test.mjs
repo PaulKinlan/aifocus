@@ -597,18 +597,33 @@ const PROFILE_URL = /profile_?url/i;
 const HREF_ASSIGNMENT = /\.href\s*=\s*/;
 const GUARDED = /safeHref\(/;
 
+// Keep each sink assignment with its continuation, stopping at a semicolon or
+// at a complete line (for semicolon-free code) before the next statement.
+function sinkStatements(source, assignment) {
+  const lines = source.split("\n");
+  const statements = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const match = assignment.exec(lines[i]);
+    if (!match) continue;
+    const number = i + 1;
+    let text = lines[i].slice(match.index);
+    while (!text.includes(";") && /(?:=|\|\||&&|\?\?|[(:,])\s*$/.test(lines[i]) && i + 1 < lines.length) {
+      text += `\n${lines[++i]}`;
+    }
+    statements.push({ text: text.split(";", 1)[0], number });
+  }
+  return statements;
+}
+
 function unguardedHrefAssignments(source) {
   const failures = [];
   const aliasMention = aliasMentionRe(source, PROFILE_URL, GUARDED);
-  source.split("\n").forEach((line, i) => {
-    // Same sink-line rule as the avatar guard (aifocus-7ktf): a guard call
-    // must swallow the value; a raw field beside it in a fallback chain is a
-    // finding.
-    const stripped = stripGuardedSpans(line, GUARDED);
+  for (const { text, number } of sinkStatements(source, HREF_ASSIGNMENT)) {
+    // The guard must swallow the value, including a fallback on the next line.
+    const stripped = stripGuardedSpans(text, GUARDED);
     const carriesField = PROFILE_URL.test(stripped) || (aliasMention !== null && aliasMention.test(stripped));
-    if (!carriesField || !HREF_ASSIGNMENT.test(stripped)) return;
-    failures.push(`${i + 1}: ${line.trim()}`);
-  });
+    if (carriesField && HREF_ASSIGNMENT.test(stripped)) failures.push(`${number}: ${text.trim()}`);
+  }
   return failures;
 }
 
@@ -697,17 +712,12 @@ function stripGuardedSpans(rhs, guard) {
 function unguardedAvatarSrcs(source) {
   const failures = [];
   const aliasMention = aliasMentionRe(source, AVATAR_FIELD, SRC_GUARDED);
-  source.split("\n").forEach((line, i) => {
-    // A guard call must SWALLOW the value on the sink line too (aifocus-7ktf,
-    // the same rule the alias bindings follow): strip guarded spans and judge
-    // the remainder - img.src = safeImgSrc(x) || user.avatarUrl; keeps the raw
-    // provider field reachable when the sanitizer returns falsey, so it is a
-    // raw fallback, not a guarded line.
-    const stripped = stripGuardedSpans(line, SRC_GUARDED);
+  for (const { text, number } of sinkStatements(source, SRC_ASSIGNMENT)) {
+    // A guard call must swallow the value, not merely precede a raw fallback.
+    const stripped = stripGuardedSpans(text, SRC_GUARDED);
     const carriesField = AVATAR_FIELD.test(stripped) || (aliasMention !== null && aliasMention.test(stripped));
-    if (!carriesField || !SRC_ASSIGNMENT.test(stripped)) return;
-    failures.push(`${i + 1}: ${line.trim()}`);
-  });
+    if (carriesField && SRC_ASSIGNMENT.test(stripped)) failures.push(`${number}: ${text.trim()}`);
+  }
   return failures;
 }
 
@@ -739,6 +749,8 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     // A sanitizer beside the sink is not a guard over it: the raw field in
     // the falsey branch reaches the sink (aifocus-7ktf).
     "img.src = safeImgSrc(user.avatarUrl) || user.avatarUrl;",
+    "img.src =\n  safeImgSrc(user.avatarUrl) || user.avatarUrl;",
+    "img.src = safeImgSrc(user.avatarUrl) ||\n  user.avatarUrl;",
     'node.setAttribute("src", safeImgSrc("x") || user.avatarUrl);',
   ];
   for (const sample of caught) {
@@ -748,6 +760,9 @@ test("the avatar-src guard catches the shapes it exists for", () => {
   assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("if (person?.avatarUrl) {}"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src =\n  safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc('x');\nuser.avatarUrl;"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc('x')\nuser.avatarUrl;"), []);
   // A SANITIZED alias is not a raw-field alias: reader.js and account-page.js
   // bind safeImgSrc()'s result once and assign it to .src afterwards, and
   // that is exactly the guarded shape (aifocus-bnnl follow-up).
@@ -779,6 +794,8 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "const link = user.profileUrl;\nwrap.href = link;",
     // Same sink-line fallback rule (aifocus-7ktf).
     "wrap.href = safeHref(item.author_url) || item.author_profile_url;",
+    "wrap.href =\n  safeHref(item.author_url) || item.author_profile_url;",
+    "wrap.href = safeHref(item.author_url) ||\n  item.author_profile_url;",
   ];
   for (const sample of caught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the guard must catch: ${sample}`);
@@ -786,6 +803,9 @@ test("the profile-href guard catches the shapes it exists for", () => {
   // The guarded shape, and a line that merely reads the field, must pass.
   assert.deepEqual(unguardedHrefAssignments("const href = safeHref(user.profile_url);"), []);
   assert.deepEqual(unguardedHrefAssignments("name.textContent = user.profile_url;"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href =\n  safeHref(user.profile_url);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref('x');\nuser.profile_url;"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref('x')\nuser.profile_url;"), []);
   // Same sanitized-alias rule as the avatar guard - and a sanitizer mention
   // with a raw fallback still fails it (aifocus-wcpi).
   assert.deepEqual(unguardedHrefAssignments("const link = safeHref(user.profile_url);\nwrap.href = link;"), []);
