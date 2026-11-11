@@ -154,6 +154,17 @@ const POST_CASES = [
   ["https://aifoc.us/x/", null],
   ["//evil.example/x", null],
   ["/\\evil.example/x", null],
+  // Rejected: the URL parser strips ASCII tab, LF and CR from the input before
+  // it parses anything else, so a control right after the leading '/' turns
+  // the value into the protocol-relative form ('/\t/evil.example/x' parses
+  // like '//evil.example/x' and resolves off-origin, aifocus-72zc). Any other
+  // C0 control is rejected with them - a stored path carrying a control
+  // character is malformed data under the post-path contract, wherever it sits.
+  ["/\t/evil.example/x", null],
+  ["/\n/evil.example/x", null],
+  ["/\r/evil.example/x", null],
+  ["/\u0000/evil.example/x", null],
+  ["/a\tb", null],
   ["javascript:alert(document.domain)", null],
   ["http://evil.example/x", null],
   ["data:text/html,<script>alert(1)</script>", null],
@@ -172,7 +183,7 @@ test("safePostPath (assets/js/safe-href.js): root-relative only, everything else
 });
 
 test("the write side sanitizes the dangerous shapes; the sink side refuses them raw", () => {
-  for (const input of ["javascript:alert(1)", "//evil.example/x", "/\\evil.example/x", "http://evil.example/x", "data:text/html,x"]) {
+  for (const input of ["javascript:alert(1)", "//evil.example/x", "/\\evil.example/x", "/\t/evil.example/x", "http://evil.example/x", "data:text/html,x"]) {
     // Write side: whatever survives normalization is path-absolute same-origin
     // - the host of an absolute/protocol-relative URL is parsed away, and a
     // non-http scheme has no path to keep.
