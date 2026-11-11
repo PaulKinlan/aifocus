@@ -254,10 +254,15 @@ function setupChart(figure) {
         tipW = tip.offsetWidth;
         tipH = tip.offsetHeight;
       }
-      const xBestCss = x(best) * cssScale;
+      // Tooltip geometry is written in CSS px against the svg's CSS box, and
+      // cssScale is user units per CSS px - so coming back out of the viewBox
+      // means DIVIDING (aifocus-rs97: multiplying inflated the column and the
+      // fit clamp, pushing the tooltip over the hovered column and below the
+      // axis row below the 280px floor).
+      const xBestCss = x(best) / cssScale;
       const left = xBestCss + 12 + tipW > cssWidth ? xBestCss - tipW - 12 : xBestCss + 12;
       tip.style.left = `${Math.max(0, left)}px`;
-      tip.style.top = `${Math.max(0, Math.min(ev.offsetY - 10, height * cssScale - tipH))}px`;
+      tip.style.top = `${Math.max(0, Math.min(ev.offsetY - 10, height / cssScale - tipH))}px`;
     });
     hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
