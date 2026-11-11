@@ -853,7 +853,7 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "wrap.href = safeHref(item.author_url) ||\n  item.author_profile_url;",
     "wrap.href = safeHref(item.author_url)\n  || item.author_profile_url;",
     "wrap.href = cond ? safeHref(x)\n  : user.profileUrl;",
-    "wrap.href = safeHref(x)\n  + user.profileUrl;"
+    "wrap.href = safeHref(x)\n  + user.profileUrl;",
     "wrap.href = safeHref(/x;/) /* ; */\n  || user.profileUrl;",
     "wrap.href = safeHref(x); other.href = user.profileUrl;",
     "wrap.href = safeHref(x); other.href =\n  user.profileUrl;",
