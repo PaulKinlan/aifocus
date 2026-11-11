@@ -1,6 +1,6 @@
 // /admin/: moderation queue for reader notes and comments.
 
-import { safeHref } from "./safe-href.js";
+import { safeHref, safePostPath } from "./safe-href.js";
 
 const statusEl = document.querySelector("#mod-status");
 const list = document.querySelector("#mod-list");
@@ -36,9 +36,14 @@ const renderItem = (item) => {
 
   const meta = document.createElement("p");
   meta.className = "mod-meta";
-  const link = document.createElement("a");
-  link.href = item.post;
-  link.textContent = item.post;
+  // item.post is reader-supplied: the same sink-side rule as every other link
+  // on this page. normalizePostPath keeps written values clean, but the sink
+  // does not trust the writer - only a root-relative path may become an
+  // anchor, anything else renders as plain text (aifocus-dsqv).
+  const postPath = safePostPath(item.post);
+  const link = document.createElement(postPath ? "a" : "span");
+  if (postPath) link.href = postPath;
+  link.textContent = typeof item.post === "string" ? item.post : "";
   const type = document.createElement("span");
   type.textContent = item.type;
   // Signed-in writers link to the profile they signed in with.
