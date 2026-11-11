@@ -16,12 +16,14 @@ class StatsBuildTest(unittest.TestCase):
     def test_format_and_period_boundaries(self):
         self.assertEqual(build.fmt_value(0.75, "percent"), "0.75%")
         self.assertEqual(build.fmt_value(12.5, "percent"), "12.5%")
+        self.assertEqual(build.fmt_value(1, "percent"), "1.0%")
         self.assertEqual(build.fmt_value(1500, "usd"), "$1.5K")
         self.assertEqual(build.fmt_full(1250), "1,250")
         self.assertEqual(build.expected_end("2024-02-01", "monthly").isoformat(), "2024-02-29")
         self.assertEqual(build.expected_end("2026-01-05", "weekly").isoformat(), "2026-01-11")
         self.assertIsNone(build.pct_change(10, 0))
         self.assertEqual(build.fmt_change(15, 10)["fmt"], "+5 (+50%)")
+        self.assertEqual(build.fmt_change(8, 12)["fmt"], "−4 (−33%)")
 
     def test_latest_run_wins_and_partial_periods_are_excluded(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -52,6 +54,27 @@ class StatsBuildTest(unittest.TestCase):
             self.assertEqual(tool["prior"]["v"], 12)
             self.assertEqual(tool["change_prior"]["abs"], -4)
             self.assertEqual(tool["total"], 20)
+
+    def test_run_date_marks_an_ended_period_partial_and_excludes_it_from_total(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = pathlib.Path(directory) / "partial-2026-01-18.csv"
+            with open(path, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(["tool", "period_start", "period_end", "granularity", "total_count", "url"])
+                writer.writerow(["All", "2026-01-05", "2026-01-11", "weekly", 10, ""])
+                # The period has nominally ended but collection on its last day
+                # is still partial, even though expected_end() already passed.
+                writer.writerow(["All", "2026-01-12", "2026-01-18", "weekly", 6, ""])
+            series = {"id": "partial", "title": "Partial", "unit": "records", "file_prefix": "partial",
+                      "granularity": "weekly", "tools": [{"name": "All", "slot": 1}], "primary": "All"}
+            with patch.object(build, "DATA_DIR", directory):
+                output = build.compile_series(series)
+                excluded = build.load_series({**series, "show_partial": False})
+            points = output["tools"][0]["points"]
+            self.assertEqual([p["partial"] for p in points], [False, True])
+            self.assertEqual(output["tools"][0]["total"], 10, "partial values cannot inflate a published total")
+            self.assertEqual(output["tools"][0]["latest"]["v"], 10)
+            self.assertEqual(list(excluded[0]["All"]), ["2026-01-05"])
 
     def test_derived_percent_uses_matching_period_and_partial_state(self):
         start, end = "2026-01-05", "2026-01-11"
