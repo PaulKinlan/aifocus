@@ -61,3 +61,18 @@ export function safeImgSrc(value) {
   if (!AVATAR_HOSTS.has(url.hostname.toLowerCase())) return null;
   return url.href;
 }
+
+// The post-path half of the same contract (aifocus-dsqv): reader-supplied post
+// references are normalized to root-relative paths on write
+// (normalizePostPath, functions/_lib/reader.js), but the sink cannot trust
+// that a row was written by the current code - an older build, a manual D1
+// edit or a future writer that skips normalization would otherwise turn a
+// stored value into an anchor href, and a javascript: href clicked in /admin/
+// runs with the moderator's Access session attached. Root-relative only:
+// exactly one leading '/', no protocol-relative host ('//' - and no backslash
+// form either, because the URL parser normalizes '\' to '/', so /\host/x
+// resolves cross-origin). Callers render plain text when this returns null,
+// like safeHref().
+export function safePostPath(value) {
+  return typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : null;
+}
