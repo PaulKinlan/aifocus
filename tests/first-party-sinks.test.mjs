@@ -631,8 +631,9 @@ function statementEnd(text) {
 }
 
 // Retain the pre-existing full physical-line check (including two sinks on a
-// line), then check each wrapped sink expression separately. Both operator-at-
-// end and operator-at-start wrapping are legal JavaScript.
+// line), then check each wrapped sink expression separately. An operator on
+// either side of a line break can continue an assignment, including ternaries
+// and concatenation, not just the usual fallback operators.
 function sinkStatements(source, assignment) {
   const lines = source.split("\n");
   const statements = [];
@@ -646,7 +647,7 @@ function sinkStatements(source, assignment) {
       let end = statementEnd(text);
       let next = i;
       while (end < 0 && next + 1 < lines.length &&
-        (/(?:=|\|\||&&|\?\?|[(:,])\s*$/.test(lines[next]) || /^\s*(?:\|\||&&|\?\?)/.test(lines[next + 1]))) {
+        (/[=+\-*/%&|^?:!,([{<>~]\s*$/.test(lines[next]) || /^\s*[=+\-*/%&|^?:.,([<>~]/.test(lines[next + 1]))) {
         text += `\n${lines[++next]}`;
         end = statementEnd(text);
       }
@@ -794,6 +795,10 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = safeImgSrc(user.avatarUrl) ||\n  user.avatarUrl;",
     "img.src = safeImgSrc(user.avatarUrl)\n  || user.avatarUrl;",
     "img.src = safeImgSrc(user.avatarUrl)\n  ?? user.avatarUrl;",
+    "img.src = cond ? safeImgSrc(x)\n  : user.avatarUrl;",
+    "img.src = cond ?\n  safeImgSrc(x) : user.avatarUrl;",
+    "img.src = safeImgSrc(x) +\n  user.avatarUrl;",
+    "img.src = safeImgSrc(x)\n  + user.avatarUrl;",
     "img.src = safeImgSrc(/x;/)\n  || user.avatarUrl;",
     "img.src = safeImgSrc(x) /* ; */\n  || user.avatarUrl;",
     "img.src = safeImgSrc(/x[;/]/)\n  || user.avatarUrl;",
@@ -847,6 +852,8 @@ test("the profile-href guard catches the shapes it exists for", () => {
     "wrap.href =\n  safeHref(item.author_url) || item.author_profile_url;",
     "wrap.href = safeHref(item.author_url) ||\n  item.author_profile_url;",
     "wrap.href = safeHref(item.author_url)\n  || item.author_profile_url;",
+    "wrap.href = cond ? safeHref(x)\n  : user.profileUrl;",
+    "wrap.href = safeHref(x)\n  + user.profileUrl;"
     "wrap.href = safeHref(/x;/) /* ; */\n  || user.profileUrl;",
     "wrap.href = safeHref(x); other.href = user.profileUrl;",
     "wrap.href = safeHref(x); other.href =\n  user.profileUrl;",
