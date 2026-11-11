@@ -531,6 +531,16 @@ article {
   }
 }
 
+/* Live demo frames match the article surface while their lazy-loaded pages initialize. */
+.ewa-demo iframe {
+  display: block;
+  width: 100%;
+  height: var(--demo-height, 560px);
+  border: 1px solid rgba(127, 127, 127, .35);
+  border-radius: 10px;
+  background: var(--background);
+}
+
 /* /posts/ archive list (layouts/section.html). Each row is an article.h-entry.summary
    — the homepage's own list markup — so the rows inherit the site's list treatment
    (title and prose in the article's Georgia, the article's 1px separator, prose at

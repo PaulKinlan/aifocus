@@ -17,6 +17,6 @@
 {{- $title := .Get "title" | default "Live demo" -}}
 {{- $height := .Get "height" | default "560" -}}
 <figure class="ewa-demo">
-  <iframe src="{{ $src }}" title="{{ $title }}" loading="lazy" allow="clipboard-write" style="display:block;width:100%;height:{{ $height }}px;border:1px solid rgba(127,127,127,.35);border-radius:10px;background:#fff"></iframe>
+  <iframe src="{{ $src }}" title="{{ $title }}" loading="lazy" allow="clipboard-write" style="--demo-height:{{ $height }}px"></iframe>
   <figcaption>{{ with .Get "caption" }}{{ . | markdownify }} {{ end }}<a href="{{ $src }}" target="_blank" rel="noopener">Open {{ $title }} full screen ↗</a></figcaption>
 </figure>
