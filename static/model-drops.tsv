@@ -11,22 +11,22 @@ date	vendor	series	model	tier	notes
 2024-02-15	Google	Gemini Pro	Gemini 1.5 Pro	frontier	1M context window (preview)
 2024-02-21	Google	Gemma	Gemma 1	small	First Gemma open-weight family
 2024-02-26	Mistral	Mistral Large	Mistral Large	frontier	First Mistral closed flagship
+2024-03-04	Anthropic	Claude Haiku	Claude 3 Haiku	small	Claude 3 family launch
 2024-03-04	Anthropic	Claude Opus	Claude 3 Opus	frontier	Three-tier family launch, Opus flagship
 2024-03-04	Anthropic	Claude Sonnet	Claude 3 Sonnet	standard	Claude 3 family launch
-2024-03-04	Anthropic	Claude Haiku	Claude 3 Haiku	small	Claude 3 family launch
 2024-03-17	xAI	Grok	Grok-1	standard	Open-sourced
 2024-03-29	xAI	Grok	Grok-1.5	frontier	128K context
 2024-04-09	OpenAI	GPT	GPT-4 Turbo (2024-04)	frontier	Refreshed GPT-4 Turbo with vision GA
 2024-04-10	Mistral	Mixtral	Mixtral 8x22B	standard	Larger MoE
 2024-04-18	Meta	Llama	Llama 3 (70B)	frontier	Open-weight flagship
-2024-05-13	OpenAI	GPT	GPT-4o	frontier	Native multimodal (text/audio/vision)
 2024-05-13	01.AI	Yi	Yi-1.5	standard	Open-weight refresh
+2024-05-13	OpenAI	GPT	GPT-4o	frontier	Native multimodal (text/audio/vision)
 2024-05-14	Google	Gemini Flash	Gemini 1.5 Flash	standard	Fast/cheap tier, I/O launch
 2024-05-15	DeepSeek	DeepSeek V	DeepSeek-V2	standard	MoE, low-cost API
 2024-06-05	Zhipu	GLM	GLM-4-9B	small	First open-source GLM-4
 2024-06-20	Anthropic	Claude Sonnet	Claude 3.5 Sonnet	frontier	First 3.5; takes Opus 3 crown
-2024-06-27	Google	Gemma	Gemma 2	standard	9B/27B open-weight
 2024-06-27	Alibaba	Qwen	Qwen2	standard	Open-weight refresh
+2024-06-27	Google	Gemma	Gemma 2	standard	9B/27B open-weight
 2024-07-18	OpenAI	GPT mini	GPT-4o mini	small	Cheap, replaces 3.5 Turbo
 2024-07-23	Meta	Llama	Llama 3.1 (405B)	frontier	First open-weight rival to closed flagships
 2024-07-24	Mistral	Mistral Large	Mistral Large 2	frontier	123B dense
@@ -34,13 +34,13 @@ date	vendor	series	model	tier	notes
 2024-08-29	Zhipu	GLM	GLM-4-Plus	frontier	Closed flagship, GPT-4o tier
 2024-09-05	DeepSeek	DeepSeek V	DeepSeek-V2.5	standard	V2 + Coder-V2 merge
 2024-09-11	Mistral	Pixtral	Pixtral 12B	small	Mistral's first multimodal
-2024-09-12	OpenAI	o-series	o1-preview	frontier	First reasoning model
 2024-09-12	OpenAI	o-series	o1-mini	small	First reasoning model, mini
+2024-09-12	OpenAI	o-series	o1-preview	frontier	First reasoning model
 2024-09-19	Alibaba	Qwen	Qwen2.5	standard	Open-weight family
 2024-09-24	Google	Gemini Pro	Gemini 1.5 Pro (002)	frontier	Updated 1.5 series
 2024-09-25	Meta	Llama	Llama 3.2 (90B)	standard	First multimodal Llama
 2024-10-16	01.AI	Yi	Yi-Lightning	frontier	Cheap closed flagship, briefly top of LMSys
-2024-10-22	Anthropic	Claude Sonnet	Claude 3.5 Sonnet (new)	frontier	"Computer use" launch
+2024-10-22	Anthropic	Claude Sonnet	Claude 3.5 Sonnet (new)	frontier	Computer use launch
 2024-11-04	Anthropic	Claude Haiku	Claude 3.5 Haiku	small	Matches Opus 3 perf
 2024-11-18	Mistral	Pixtral	Pixtral Large	standard	Multimodal flagship
 2024-11-20	DeepSeek	DeepSeek R	DeepSeek-R1-Lite (preview)	frontier	First DeepSeek reasoning preview
@@ -50,8 +50,8 @@ date	vendor	series	model	tier	notes
 2024-12-11	Google	Gemini Flash	Gemini 2.0 Flash (experimental)	frontier	Agentic-era launch
 2024-12-26	DeepSeek	DeepSeek V	DeepSeek-V3	frontier	671B MoE open-weight; major news cycle
 2025-01-15	MiniMax	MiniMax	MiniMax-Text-01	standard	Lightning attention, 4M context
+2025-01-20	DeepSeek	DeepSeek R	DeepSeek-R1	frontier	"Open-weight reasoning; ""DeepSeek moment"""
 2025-01-20	Moonshot	Kimi	Kimi K1.5	frontier	Reasoning model
-2025-01-20	DeepSeek	DeepSeek R	DeepSeek-R1	frontier	Open-weight reasoning; "DeepSeek moment"
 2025-01-22	ByteDance	Doubao	Doubao 1.5 Pro	frontier	Closed flagship
 2025-01-29	Alibaba	Qwen	Qwen2.5-Max	frontier	MoE closed flagship
 2025-01-31	OpenAI	o-series	o3-mini	small	GA reasoning small
@@ -72,8 +72,8 @@ date	vendor	series	model	tier	notes
 2025-05-22	Anthropic	Claude Sonnet	Claude Sonnet 4	frontier	Claude 4 family launch
 2025-05-28	DeepSeek	DeepSeek R	DeepSeek-R1-0528	frontier	R1 refresh
 2025-06-10	OpenAI	o-series	o3-pro	frontier	Highest o-series tier
-2025-06-17	Google	Gemini Pro	Gemini 2.5 Pro (GA)	frontier	GA
 2025-06-17	Google	Gemini Flash	Gemini 2.5 Flash (GA)	standard	GA + Flash-Lite
+2025-06-17	Google	Gemini Pro	Gemini 2.5 Pro (GA)	frontier	GA
 2025-06-17	MiniMax	MiniMax	MiniMax-M1	frontier	Open hybrid-attention reasoning
 2025-07-09	xAI	Grok	Grok 4	frontier	Post-July 4 release
 2025-07-11	Moonshot	Kimi	Kimi K2	frontier	Open-weight, agentic
@@ -113,3 +113,39 @@ date	vendor	series	model	tier	notes
 2026-04-30	xAI	Grok	Grok 4.3	frontier	Native video/file, 1M ctx
 2026-05-05	OpenAI	GPT	GPT-5.5 Instant	standard	Free-tier default
 2026-05-07	Google	Gemini Flash	Gemini 3.1 Flash-Lite (GA)	small	GA after March preview
+2026-05-19	Google	Gemini Flash	Gemini 3.5 Flash	standard	OpenRouter google/gemini-3.5-flash
+2026-05-21	Alibaba	Qwen	Qwen3.7-Max	frontier	OpenRouter qwen/qwen3.7-max
+2026-05-27	Anthropic	Claude Opus	Claude Opus 4.8	frontier	OpenRouter anthropic/claude-opus-4.8
+2026-05-31	MiniMax	MiniMax	MiniMax M3	frontier	OpenRouter minimax/minimax-m3
+2026-06-09	Anthropic	Claude Fable	Claude Fable 5	frontier	OpenRouter anthropic/claude-fable-5
+2026-06-16	Zhipu	GLM	GLM-5.2	frontier	OpenRouter z-ai/glm-5.2
+2026-06-30	Anthropic	Claude Sonnet	Claude Sonnet 5	frontier	OpenRouter anthropic/claude-sonnet-5
+2026-07-08	xAI	Grok	Grok 4.5	frontier	OpenRouter x-ai/grok-4.5
+2026-07-09	OpenAI	GPT	GPT-5.6 Sol	frontier	OpenRouter openai/gpt-5.6-sol
+2026-07-09	OpenAI	GPT mini	GPT-5.6 Luna	small	OpenRouter openai/gpt-5.6-luna
+2026-07-16	Moonshot	Kimi	Kimi K3	frontier	OpenRouter moonshotai/kimi-k3
+2026-07-21	Google	Gemini Flash	Gemini 3.6 Flash	standard	OpenRouter google/gemini-3.6-flash
+2026-07-24	Anthropic	Claude Opus	Claude Opus 5	frontier	OpenRouter anthropic/claude-opus-5
+2026-08-12	Alibaba	Qwen	Qwen3.8	frontier	OpenRouter qwen/qwen3.8-2.4t-a95b
+2026-08-12	ByteDance	Doubao	Doubao Seed 2.1	frontier	OpenRouter bytedance-seed/seed-2-1-turbo
+2026-08-12	DeepSeek	DeepSeek V	DeepSeek-V4 Pro	frontier	OpenRouter deepseek/deepseek-v4-pro-0813
+2026-08-12	xAI	Grok	Grok 4.6	frontier	OpenRouter x-ai/grok-4.6
+2026-08-13	Google	Gemini Flash	Gemini 3.7 Flash	standard	OpenRouter google/gemini-3.7-flash
+2026-08-18	Zhipu	GLM	GLM-5.3	frontier	OpenRouter z-ai/glm-5.3
+2026-09-01	Anthropic	Claude Fable	Claude Fable 5.1	frontier	OpenRouter anthropic/claude-fable-5.1
+2026-09-02	Google	Gemini Flash	Gemini 3.8 Flash	standard	OpenRouter google/gemini-3.8-flash
+2026-09-04	OpenAI	o-series	GPT-6 Astra	frontier	OpenRouter openai/gpt-6-astra
+2026-09-10	DeepSeek	DeepSeek V	DeepSeek-V4.1 Flash	frontier	OpenRouter deepseek/deepseek-v4.1-flash
+2026-09-21	xAI	Grok	Grok 4.7	frontier	OpenRouter x-ai/grok-4.7
+2026-09-22	Anthropic	Claude Opus	Claude Opus 5.5	frontier	OpenRouter anthropic/claude-opus-5.5
+2026-09-22	OpenAI	GPT	GPT-6 Sol	frontier	OpenRouter openai/gpt-6-sol
+2026-09-22	OpenAI	GPT mini	GPT-6 Luna	small	OpenRouter openai/gpt-6-luna
+2026-09-28	Anthropic	Claude Sonnet	Claude Sonnet 5.5	frontier	OpenRouter anthropic/claude-sonnet-5.5
+2026-09-29	OpenAI	GPT	GPT-6.1 Sol	frontier	OpenRouter openai/gpt-6.1-sol
+2026-10-06	Mistral	Mistral Large	Mistral Large 4	frontier	OpenRouter mistralai/mistral-large-4-0
+2026-10-07	Anthropic	Claude Haiku	Claude Haiku 5.5	small	OpenRouter anthropic/claude-haiku-5.5
+2026-10-13	Google	Gemini Pro	Gemini 4 Argon	frontier	OpenRouter google/gemini-4-argon
+2026-10-19	MiniMax	MiniMax	MiniMax M3.1	frontier	OpenRouter minimax/minimax-m3.1-flash
+2026-10-23	Moonshot	Kimi	Kimi K3.1 Pro	frontier	OpenRouter moonshotai/kimi-k3.1-pro
+2026-11-09	Anthropic	Claude Fable	Claude Fable 5.2	frontier	OpenRouter anthropic/claude-fable-5.2
+2026-11-10	Google	Gemini Pro	Gemini 4 Carbon	frontier	OpenRouter google/gemini-4-carbon

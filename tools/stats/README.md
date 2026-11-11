@@ -15,6 +15,8 @@ collectors and the compile step; the page itself is `content/stats.md` +
 | `tools/stats/collect-httparchive.py` | HTTP Archive tech report collector (React origins, monthly, from `cdn.httparchive.org/v1`). |
 | `tools/stats/collect-openrouter.py` | OpenRouter collector: weekly token totals from the rankings chart and the task-category shares. |
 | `tools/stats/collect-w3techs.py` | W3Techs collector: share of all websites using React, monthly for the trailing year. |
+| `tools/stats/collect-model-gap.py` | Model-gap collector: fetches Chrome stable dates from Chromium Dash and built demos from `chrome-platform-showcase`, updates `static/model-gap.json`, and writes weekly missed-release and missed-feature counts per model. |
+| `tools/stats/collect-model-halflife.py` | Model half-life collector: syncs new headline text-model releases from OpenRouter `/api/v1/models` into `static/model-drops.tsv`, and writes monthly trailing-3-gap medians per model series and monthly release counts. |
 | `tools/stats/manual-add.py` | Appends one hand-read figure to a manual series and rebuilds (`--list` shows what to read). |
 | `tools/stats/build.py` | Merges every run CSV into `data/stats.json` and prints the change report. |
 | `tools/stats/update.sh` | Runs all of the above for one monthly update. |
@@ -77,7 +79,10 @@ the essays (step 4) stays manual.
 
 1. Add an entry to `series.json`. `kind` is `github-search` (set `search`,
    `date_field`, `granularity`, `epoch`, `tools[].query`), `chromestatus`
-   (`bucket_id`), or `manual` (a CSV under `static/data/manual/`).
+   (`bucket_id`), `httparchive` (`technology`), `w3techs`, `openrouter-chart`,
+   `openrouter-task-share`, `model-gap` (`metric`: `releases` or `features`),
+   `model-halflife` (`metric`: `median_gap` or `monthly_drops`),
+   or `manual` (a CSV under `static/data/manual/`).
 2. Give the tools you want on the chart a `slot` (1-8; colour follows the
    slot), or set `chart_top` to pick the top N by latest value.
 3. Give the series a one-sentence `how` (what is queried and counted) and a
@@ -114,6 +119,10 @@ the essays (step 4) stays manual.
   from `cdn.httparchive.org/v1`, which `collect-httparchive.py` uses. Other
   technologies (the CMS numbers in whither-cms, for instance) are one more
   series entry each with `"kind": "httparchive"`.
-- **Model release dates** (`static/model-drops.tsv`) and **model cutoffs**
-  (`static/model-gap.json`) are curated by hand and are not on this page; the
-  monthly routine is a good time to check them too.
+- **Model cutoffs and off-OpenRouter drops**: `collect-model-gap.py` refreshes
+  Chrome milestone dates and `chrome-platform-showcase` feature lists in
+  `static/model-gap.json`, and `collect-model-halflife.py` syncs new headline
+  text models from OpenRouter `/api/v1/models` into `static/model-drops.tsv`,
+  compiling both onto `/stats/`. Published knowledge cutoffs for newly released
+  models in `static/model-gap.json` (and releases that never appear on
+  OpenRouter) still need to be added by hand from vendor model cards.

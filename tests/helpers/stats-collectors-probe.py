@@ -535,6 +535,194 @@ def case_common_range_bounds():
                           f"finite_in_range count {bad!r}")
 
 
+# --- model-gap: schedule + showcase manifest guarded before writing JSON/CSVs -
+
+def model_gap_fixture():
+    return {
+        "updated": "2026-06-07",
+        "cutoffBasis": "published cutoff",
+        "note": "fixture",
+        "models": [
+            {"vendor": "Google", "model": "Gemini 3 Pro", "cutoff": "2025-01-31", "cutoffLabel": "January 2025",
+             "card": "https://deepmind.google/models/model-cards/gemini-3-pro/"},
+        ],
+        "chromeMilestones": [
+            {"m": 132, "date": "2025-01-14", "features": ["css-inertness"]},
+        ],
+    }
+
+
+def model_gap_main(schedule, showcase, metric="releases", run_date="2025-03-10", doc=None):
+    mod = load("stats_collect_model_gap", "tools/stats/collect-model-gap.py")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    data = tmp / "data"
+    data.mkdir()
+    mg_path = tmp / "model-gap.json"
+    mg_path.write_text(json.dumps(doc or model_gap_fixture()), encoding="utf-8")
+    config = tmp / "series.json"
+    config.write_text(json.dumps({"series": [{
+        "id": "mg-test",
+        "kind": "model-gap",
+        "metric": metric,
+        "epoch": "2025-01-27",
+        "file_prefix": "model-gap-test",
+        "tools": [{"name": "Gemini 3 Pro"}],
+    }]}), encoding="utf-8")
+    mod.CONFIG = str(config)
+    mod.DATA_DIR = str(data)
+    mod.MODEL_GAP_JSON = str(mg_path)
+    s_body = schedule if isinstance(schedule, str) else json.dumps(schedule)
+    f_body = showcase if isinstance(showcase, str) else json.dumps(showcase)
+    argv = sys.argv
+    sys.argv = ["collect-model-gap.py", "--series", "mg-test", "--run-date", run_date]
+    try:
+        with Stub([FakeResponse(s_body), FakeResponse(f_body)]):
+            mod.main()
+    finally:
+        sys.argv = argv
+    written = next(data.glob("*.csv"))
+    with written.open(encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+    return rows, json.loads(mg_path.read_text(encoding="utf-8"))
+
+
+def case_model_gap_accepts_releases_and_features():
+    schedule = {"mstones": [
+        {"mstone": 133, "stable_date": "2025-02-04T00:00:00"},
+        {"mstone": 134, "stable_date": "2025-03-04T00:00:00"},
+        {"mstone": 135, "stable_date": "2025-04-01T00:00:00"},
+    ]}
+    showcase = [
+        {"id": "v132/css-inertness", "status": "built"},
+        {"id": "v133/dialog-light-dismiss", "status": "built"},
+        {"id": "v133/popover-hint", "status": "built"},
+        {"id": "v134/css-shape-function", "status": "built"},
+    ]
+    rel_rows, updated = model_gap_main(schedule, showcase, metric="releases")
+    # 135 has no showcase features and is after run_date (2025-03-10), so omitted
+    assert [ms["m"] for ms in updated["chromeMilestones"]] == [132, 133, 134], updated
+    assert updated["chromeMilestones"][1]["features"] == ["dialog-light-dismiss", "popover-hint"]
+    # weeks from 2025-01-27 ending < 2025-03-10:
+    # 01-27..02-02 (0), 02-03..02-09 (1), 02-10..02-16 (1), 02-17..02-23 (1), 02-24..03-02 (1), 03-03..03-09 (2)
+    assert [r[4] for r in rel_rows[1:]] == ["0", "1", "1", "1", "1", "2"], rel_rows
+    feat_rows, _ = model_gap_main(schedule, showcase, metric="features")
+    assert [r[4] for r in feat_rows[1:]] == ["0", "2", "2", "2", "2", "3"], feat_rows
+
+
+def case_model_gap_rejects_bad_milestone_or_date():
+    good_showcase = [{"id": "v133/popover-hint", "status": "built"}]
+    for bad_m in (0, 1001, True, 133.5, "abc", float("nan")):
+        expect_data_error(
+            lambda b=bad_m: model_gap_main({"mstones": [{"mstone": b, "stable_date": "2025-02-04"}]}, good_showcase),
+            f"model-gap bad mstone {bad_m!r}",
+        )
+    for bad_date in ("not-a-date", "2025-13-40", "", None, 20250204):
+        expect_data_error(
+            lambda d=bad_date: model_gap_main({"mstones": [{"mstone": 133, "stable_date": d}]}, good_showcase),
+            f"model-gap bad stable_date {bad_date!r}",
+        )
+
+
+def case_model_gap_rejects_unsafe_feature_slug():
+    sched = {"mstones": [{"mstone": 133, "stable_date": "2025-02-04T00:00:00"}]}
+    for bad_id in ("v133/<img src=x>", "v133/../escape", "v133/UpperCase", "other/path", ""):
+        expect_data_error(
+            lambda i=bad_id: model_gap_main(sched, [{"id": i, "status": "built"}]),
+            f"model-gap unsafe route id {bad_id!r}",
+        )
+    expect_data_error(lambda: model_gap_main(sched, []), "model-gap empty showcase manifest")
+
+
+def case_model_gap_over_cap_body_refused():
+    huge = "x" * (common.MAX_RESPONSE_BYTES + 1)
+    good_sched = {"mstones": [{"mstone": 133, "stable_date": "2025-02-04T00:00:00"}]}
+    expect_data_error(lambda: model_gap_main(huge, [{"id": "v133/popover-hint", "status": "built"}]),
+                      "model-gap over-cap schedule")
+    expect_data_error(lambda: model_gap_main(good_sched, huge),
+                      "model-gap over-cap showcase")
+
+
+# --- model-halflife: OpenRouter catalogue guarded + deduplicated before TSV ---
+
+def model_halflife_main(payload, metric="median_gap", run_date="2026-10-05"):
+    mod = load("stats_collect_model_halflife", "tools/stats/collect-model-halflife.py")
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    data = tmp / "data"
+    data.mkdir()
+    tsv_path = tmp / "model-drops.tsv"
+    tsv_path.write_text(
+        "date\tvendor\tseries\tmodel\ttier\tnotes\n"
+        "2026-02-05\tAnthropic\tClaude Opus\tClaude Opus 4.6\tfrontier\tseed\n"
+        "2026-04-16\tAnthropic\tClaude Opus\tClaude Opus 4.7\tfrontier\tseed\n",
+        encoding="utf-8",
+    )
+    tools = [{"name": "Claude Opus"}] if metric == "median_gap" else [{"name": "All tracked labs"}, {"name": "Frontier tier"}]
+    config = tmp / "series.json"
+    config.write_text(json.dumps({"series": [{
+        "id": "mh-test",
+        "kind": "model-halflife",
+        "metric": metric,
+        "epoch": "2026-04-01",
+        "file_prefix": "model-halflife-test",
+        "tools": tools,
+    }]}), encoding="utf-8")
+    mod.CONFIG = str(config)
+    mod.DATA_DIR = str(data)
+    mod.MODEL_DROPS_TSV = str(tsv_path)
+    body = payload if isinstance(payload, (str, FakeResponse)) else json.dumps(payload)
+    argv = sys.argv
+    sys.argv = ["collect-model-halflife.py", "--series", "mh-test", "--run-date", run_date]
+    try:
+        with Stub([body if isinstance(body, FakeResponse) else FakeResponse(body)]):
+            mod.main()
+    finally:
+        sys.argv = argv
+    written = next(data.glob("*.csv"))
+    with written.open(encoding="utf-8", newline="") as f:
+        rows = list(csv.reader(f))
+    return rows, tsv_path.read_text(encoding="utf-8").splitlines()
+
+
+def case_model_halflife_accepts_and_dedups_drops():
+    from datetime import datetime, timezone
+    ts = lambda y, m, d: int(datetime(y, m, d, tzinfo=timezone.utc).timestamp())
+    payload = {"data": [
+        # already in TSV (4.7) -> must not duplicate
+        {"id": "anthropic/claude-opus-4.7", "created": ts(2026, 5, 15), "architecture": {"output_modalities": ["text"]}},
+        # new headline drop + its :batch twin (must collapse to one row)
+        {"id": "anthropic/claude-opus-4.8", "created": ts(2026, 5, 27), "architecture": {"output_modalities": ["text"]}},
+        {"id": "anthropic/claude-opus-4.8:batch", "created": ts(2026, 5, 27), "architecture": {"output_modalities": ["text"]}},
+        # image-output variant (must be skipped)
+        {"id": "google/gemini-3-pro-image", "created": ts(2026, 6, 18), "architecture": {"output_modalities": ["image", "text"]}},
+        # another Opus drop (5) on 2026-07-24
+        {"id": "anthropic/claude-opus-5", "created": ts(2026, 7, 24), "architecture": {"output_modalities": ["text"]}},
+    ]}
+    gap_rows, tsv_lines = model_halflife_main(payload, metric="median_gap")
+    # header + 2 seed rows + 2 synced Opus rows (4.8 and 5) = 5 lines
+    assert len(tsv_lines) == 5, tsv_lines
+    # Gaps: 02-05->04-16 = 70d; 04-16->05-27 = 41d (median of [41,70] = 55.5 -> 56);
+    # 05-27->07-24 = 58d (median of [41,58,70] = 58).
+    # Complete months Apr..Sep 2026: Apr=70, May=56, Jun=56, Jul=58, Aug=58, Sep=58
+    assert [r[4] for r in gap_rows[1:]] == ["70", "56", "56", "58", "58", "58"], gap_rows
+    drop_rows, _ = model_halflife_main(payload, metric="monthly_drops")
+    all_counts = [r[4] for r in drop_rows[1:] if r[0] == "All tracked labs"]
+    # Apr=1, May=1, Jun=0, Jul=1, Aug=0, Sep=0
+    assert all_counts == ["1", "1", "0", "1", "0", "0"], all_counts
+
+
+def case_model_halflife_rejects_hostile_created():
+    for bad in (float("nan"), float("inf"), True, -1, "yesterday", None, 99999999999):
+        payload = {"data": [{"id": "anthropic/claude-opus-5", "created": bad, "architecture": {"output_modalities": ["text"]}}]}
+        expect_data_error(lambda p=payload: model_halflife_main(p), f"model-halflife created {bad!r}")
+
+
+def case_model_halflife_over_cap_body_refused():
+    mod = load("stats_collect_model_halflife", "tools/stats/collect-model-halflife.py")
+    resp = StreamingResponse(4 * mod.MODEL_LIST_MAX_BYTES)
+    expect_data_error(lambda: model_halflife_main(resp), "model-halflife over-cap body")
+    assert resp.consumed <= mod.MODEL_LIST_MAX_BYTES + 1, resp.consumed
+
+
 CASES = {
     "common-rejects-non-numeric": case_common_rejects_non_numeric,
     "common-rejects-non-finite": case_common_rejects_non_finite,
@@ -558,6 +746,13 @@ CASES = {
     "openrouter-rejects-window-days": case_openrouter_rejects_window_days,
     "openrouter-accepts-chart-tokens": case_openrouter_accepts_chart_tokens,
     "openrouter-rejects-hostile-chart-tokens": case_openrouter_rejects_hostile_chart_tokens,
+    "model-gap-accepts-releases-and-features": case_model_gap_accepts_releases_and_features,
+    "model-gap-rejects-bad-milestone-or-date": case_model_gap_rejects_bad_milestone_or_date,
+    "model-gap-rejects-unsafe-feature-slug": case_model_gap_rejects_unsafe_feature_slug,
+    "model-gap-over-cap-body-refused": case_model_gap_over_cap_body_refused,
+    "model-halflife-accepts-and-dedups-drops": case_model_halflife_accepts_and_dedups_drops,
+    "model-halflife-rejects-hostile-created": case_model_halflife_rejects_hostile_created,
+    "model-halflife-over-cap-body-refused": case_model_halflife_over_cap_body_refused,
     "github-data-error-not-retried": case_github_data_error_not_retried,
     "github-over-cap-body-refused": case_github_over_cap_body_refused,
     "github-error-body-is-capped": case_github_error_body_is_capped,

@@ -1480,6 +1480,660 @@
         "Model cost uses list prices at the time of the snapshot.",
         "OpenRouter removed the per-category model ranking these figures came from during 2026; the weekly series above (Tokens routed through OpenRouter) is the automated replacement."
       ]
+    },
+    {
+      "id": "model-gap-releases",
+      "title": "Chrome stable releases since model knowledge cutoff",
+      "kind": "model-gap",
+      "metric": "releases",
+      "granularity": "weekly",
+      "epoch": "2024-07-29",
+      "cumulative": false,
+      "unit": "Chrome stable releases missed",
+      "how": "For each model in static/model-gap.json, count Chrome stable milestones whose release date falls after the model's published training-data or knowledge cutoff.",
+      "risk": "Chrome stable dates are fetched automatically from Chromium Dash, while the model roster and published cutoffs in static/model-gap.json are curated by hand; month-only cutoffs use the last day of that month.",
+      "file_prefix": "model-gap-releases",
+      "primary": "Gemini 3 Pro",
+      "tools": [
+        {
+          "name": "Claude Opus 4.8",
+          "label": "Claude Opus 4.8 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Claude Opus 4.7",
+          "label": "Claude Opus 4.7 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": ""
+        },
+        {
+          "name": "Claude Sonnet 4.6",
+          "label": "Claude Sonnet 4.6 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": ""
+        },
+        {
+          "name": "Grok 4.3",
+          "label": "Grok 4.3 (Dec 2025)",
+          "method": "cutoff 2025-12-31",
+          "query": "",
+          "slot": 3
+        },
+        {
+          "name": "GPT-5.5",
+          "label": "GPT-5.5 (Dec 2025)",
+          "method": "cutoff 2025-12-01",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "GPT-5.2",
+          "label": "GPT-5.2 (Aug 2025)",
+          "method": "cutoff 2025-08-31",
+          "query": "",
+          "slot": 4
+        },
+        {
+          "name": "Claude Opus 4.6",
+          "label": "Claude Opus 4.6 (Aug 2025)",
+          "method": "cutoff 2025-08-31",
+          "query": ""
+        },
+        {
+          "name": "Claude Sonnet 4.5",
+          "label": "Claude Sonnet 4.5 (Jul 2025)",
+          "method": "cutoff 2025-07-31",
+          "query": ""
+        },
+        {
+          "name": "Claude Haiku 4.5",
+          "label": "Claude Haiku 4.5 (Jul 2025)",
+          "method": "cutoff 2025-07-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3.5 Flash",
+          "label": "Gemini 3.5 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3.1 Pro",
+          "label": "Gemini 3.1 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3 Pro",
+          "label": "Gemini 3 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "Gemini 3 Flash",
+          "label": "Gemini 3 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 2.5 Pro",
+          "label": "Gemini 2.5 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 2.5 Flash",
+          "label": "Gemini 2.5 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Grok 4",
+          "label": "Grok 4 (Nov 2024)",
+          "method": "cutoff 2024-11-30",
+          "query": ""
+        },
+        {
+          "name": "GPT-5.1",
+          "label": "GPT-5.1 (Sep 2024)",
+          "method": "cutoff 2024-09-30",
+          "query": ""
+        },
+        {
+          "name": "GPT-5",
+          "label": "GPT-5 (Sep 2024)",
+          "method": "cutoff 2024-09-30",
+          "query": "",
+          "slot": 6
+        },
+        {
+          "name": "Llama 4",
+          "label": "Llama 4 (Aug 2024)",
+          "method": "cutoff 2024-08-31",
+          "query": "",
+          "slot": 7
+        },
+        {
+          "name": "DeepSeek V3",
+          "label": "DeepSeek V3 (Jul 2024)",
+          "method": "cutoff 2024-07-31",
+          "query": "",
+          "slot": 8
+        }
+      ],
+      "posts": [
+        {
+          "title": "please mind the model gap",
+          "url": "/please-mind-the-model-gap/",
+          "date": "2026-06-07"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Smallest gap cited in the essay (\"one model might be five Chrome releases behind\"; Jan 2026 cutoff)",
+          "tool": "Claude Opus 4.8",
+          "period": "2026-06-01",
+          "value": 5
+        },
+        {
+          "text": "January 2025 cutoff gap cited in the essay (\"missing more than fifteen... another seventeen\"; Gemini family)",
+          "tool": "Gemini 3 Pro",
+          "period": "2026-06-01",
+          "value": 17
+        },
+        {
+          "text": "Largest gap cited in the essay (\"another twenty-two\"; Jul 2024 cutoff)",
+          "tool": "DeepSeek V3",
+          "period": "2026-06-01",
+          "value": 22
+        }
+      ],
+      "method": "tools/stats/collect-model-gap.py reads each model's published training-data or knowledge cutoff from <a href=\"/model-gap.json\">/model-gap.json</a>, pulls Chrome stable release dates from the Chromium Dash schedule API (chromiumdash.appspot.com/fetch_milestone_schedule), updates /model-gap.json so the interactive widget in <a href=\"/model-gap.html\">/model-gap.html</a> stays current, and writes one weekly count per model starting at its cutoff week. One model per distinct cutoff is plotted on the chart; all twenty models in /model-gap.json stay in the table and CSV.",
+      "caveats": [
+        "When a model card publishes only a month and year, /model-gap.json uses the last day of that month so the gap count is conservative; Anthropic's earlier reliable knowledge cutoff would add more missed releases to the Claude rows.",
+        "Chrome moved from a four-week to a two-week stable release cycle in September 2026 (from Chrome 153), doubling the rate at which every static cutoff falls behind.",
+        "Chrome only: Safari, Firefox, Baseline status transitions, and third-party framework releases shipped after each cutoff compound the gap further.",
+        "New models and updated cutoffs are added to static/model-gap.json by hand when vendors publish model cards."
+      ]
+    },
+    {
+      "id": "model-gap-features",
+      "title": "Catalogued web platform features shipped since model cutoff",
+      "kind": "model-gap",
+      "metric": "features",
+      "granularity": "weekly",
+      "epoch": "2024-07-29",
+      "cumulative": false,
+      "unit": "catalogued features missed",
+      "how": "Sum of built feature demos in chrome-platform-showcase across every Chrome stable release shipped after each model's published cutoff.",
+      "risk": "Counts built demos in chrome-platform-showcase (which starts at Chrome 130 in October 2024), not every Blink shipping intent, so cutoffs before October 2024 tie on this series and the full count of platform changes is higher.",
+      "file_prefix": "model-gap-features",
+      "primary": "Gemini 3 Pro",
+      "tools": [
+        {
+          "name": "Claude Opus 4.8",
+          "label": "Claude Opus 4.8 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Claude Opus 4.7",
+          "label": "Claude Opus 4.7 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": ""
+        },
+        {
+          "name": "Claude Sonnet 4.6",
+          "label": "Claude Sonnet 4.6 (Jan 2026)",
+          "method": "cutoff 2026-01-31",
+          "query": ""
+        },
+        {
+          "name": "Grok 4.3",
+          "label": "Grok 4.3 (Dec 2025)",
+          "method": "cutoff 2025-12-31",
+          "query": "",
+          "slot": 3
+        },
+        {
+          "name": "GPT-5.5",
+          "label": "GPT-5.5 (Dec 2025)",
+          "method": "cutoff 2025-12-01",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "GPT-5.2",
+          "label": "GPT-5.2 (Aug 2025)",
+          "method": "cutoff 2025-08-31",
+          "query": "",
+          "slot": 4
+        },
+        {
+          "name": "Claude Opus 4.6",
+          "label": "Claude Opus 4.6 (Aug 2025)",
+          "method": "cutoff 2025-08-31",
+          "query": ""
+        },
+        {
+          "name": "Claude Sonnet 4.5",
+          "label": "Claude Sonnet 4.5 (Jul 2025)",
+          "method": "cutoff 2025-07-31",
+          "query": "",
+          "slot": 6
+        },
+        {
+          "name": "Claude Haiku 4.5",
+          "label": "Claude Haiku 4.5 (Jul 2025)",
+          "method": "cutoff 2025-07-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3.5 Flash",
+          "label": "Gemini 3.5 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3.1 Pro",
+          "label": "Gemini 3.1 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 3 Pro",
+          "label": "Gemini 3 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "Gemini 3 Flash",
+          "label": "Gemini 3 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 2.5 Pro",
+          "label": "Gemini 2.5 Pro (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Gemini 2.5 Flash",
+          "label": "Gemini 2.5 Flash (Jan 2025)",
+          "method": "cutoff 2025-01-31",
+          "query": ""
+        },
+        {
+          "name": "Grok 4",
+          "label": "Grok 4 (Nov 2024)",
+          "method": "cutoff 2024-11-30",
+          "query": "",
+          "slot": 7
+        },
+        {
+          "name": "GPT-5.1",
+          "label": "GPT-5.1 (Sep 2024)",
+          "method": "cutoff 2024-09-30",
+          "query": ""
+        },
+        {
+          "name": "GPT-5",
+          "label": "GPT-5 (Sep 2024)",
+          "method": "cutoff 2024-09-30",
+          "query": ""
+        },
+        {
+          "name": "Llama 4",
+          "label": "Llama 4 (Aug 2024)",
+          "method": "cutoff 2024-08-31",
+          "query": ""
+        },
+        {
+          "name": "DeepSeek V3",
+          "label": "DeepSeek V3 (Jul 2024)",
+          "method": "cutoff 2024-07-31",
+          "query": "",
+          "slot": 8
+        }
+      ],
+      "posts": [
+        {
+          "title": "please mind the model gap",
+          "url": "/please-mind-the-model-gap/",
+          "date": "2026-06-07"
+        }
+      ],
+      "claims": [],
+      "method": "tools/stats/collect-model-gap.py reads the built demo manifest from <a href=\"https://github.com/PaulKinlan/chrome-platform-showcase\">chrome-platform-showcase</a> (.route-manifest.baseline.json), updates each milestone's feature list in <a href=\"/model-gap.json\">/model-gap.json</a>, and sums the features across every Chrome stable milestone released after each model's published cutoff.",
+      "caveats": [
+        "chrome-platform-showcase begins at Chrome 130 (15 October 2024), so Chrome 128 and 129 carry zero catalogued demos and models with July–September 2024 cutoffs report the same feature sum.",
+        "A feature that evolves across multiple milestones (for example origin trials, follow-up sub-features, or spec adjustments) can appear in more than one milestone folder, matching how /model-gap.html counts per-release entries.",
+        "Not every Blink change has a showcase demo, so this is a representative lower bound rather than a complete changelog."
+      ]
+    },
+    {
+      "id": "model-halflife-cadence",
+      "title": "Days between headline model releases, by series",
+      "kind": "model-halflife",
+      "metric": "median_gap",
+      "granularity": "monthly",
+      "epoch": "2024-06-01",
+      "cumulative": false,
+      "unit": "median days (last 3 gaps)",
+      "how": "At the end of each calendar month, take all headline releases in static/model-drops.tsv up to that month for each model sub-series, compute consecutive release intervals in days, and take the median of the trailing three intervals.",
+      "risk": "Depends on how sub-series are split (for example GPT versus o-series, Gemini Pro versus Flash), and a dormant series stays flat at its last measured median until another release lands.",
+      "file_prefix": "model-halflife-cadence",
+      "primary": "Claude Opus",
+      "tools": [
+        {
+          "name": "Claude Opus",
+          "label": "Claude Opus",
+          "method": "Anthropic frontier line",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Claude Sonnet",
+          "label": "Claude Sonnet",
+          "method": "Anthropic standard/frontier line",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "GPT",
+          "label": "OpenAI GPT",
+          "method": "OpenAI GPT flagship line",
+          "query": "",
+          "slot": 3
+        },
+        {
+          "name": "Gemini Pro",
+          "label": "Gemini Pro",
+          "method": "Google flagship line",
+          "query": "",
+          "slot": 4
+        },
+        {
+          "name": "Gemini Flash",
+          "label": "Gemini Flash",
+          "method": "Google fast/standard line",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "Grok",
+          "label": "Grok",
+          "method": "xAI flagship line",
+          "query": "",
+          "slot": 6
+        },
+        {
+          "name": "DeepSeek V",
+          "label": "DeepSeek V",
+          "method": "DeepSeek V line",
+          "query": "",
+          "slot": 7
+        },
+        {
+          "name": "Qwen",
+          "label": "Qwen",
+          "method": "Alibaba flagship line",
+          "query": "",
+          "slot": 8
+        },
+        {
+          "name": "o-series",
+          "label": "OpenAI o-series",
+          "method": "OpenAI reasoning line",
+          "query": ""
+        },
+        {
+          "name": "Claude Haiku",
+          "label": "Claude Haiku",
+          "method": "Anthropic small line",
+          "query": ""
+        },
+        {
+          "name": "Claude Fable",
+          "label": "Claude Fable",
+          "method": "Anthropic Fable line",
+          "query": ""
+        },
+        {
+          "name": "GPT mini",
+          "label": "OpenAI GPT mini",
+          "method": "OpenAI small/fast line",
+          "query": ""
+        },
+        {
+          "name": "Gemma",
+          "label": "Gemma",
+          "method": "Google open-weight line",
+          "query": ""
+        },
+        {
+          "name": "Llama",
+          "label": "Llama",
+          "method": "Meta open-weight line",
+          "query": ""
+        },
+        {
+          "name": "Mistral Large",
+          "label": "Mistral Large",
+          "method": "Mistral flagship line",
+          "query": ""
+        },
+        {
+          "name": "GLM",
+          "label": "Zhipu GLM",
+          "method": "Zhipu flagship line",
+          "query": ""
+        },
+        {
+          "name": "MiniMax",
+          "label": "MiniMax",
+          "method": "MiniMax M-series",
+          "query": ""
+        },
+        {
+          "name": "Kimi",
+          "label": "Moonshot Kimi",
+          "method": "Moonshot K-series",
+          "query": ""
+        },
+        {
+          "name": "DeepSeek R",
+          "label": "DeepSeek R",
+          "method": "DeepSeek reasoning line",
+          "query": ""
+        },
+        {
+          "name": "Doubao",
+          "label": "ByteDance Doubao",
+          "method": "ByteDance Seed/Doubao line",
+          "query": ""
+        }
+      ],
+      "posts": [
+        {
+          "title": "how fast do ai models go stale?",
+          "url": "/model-half-life/",
+          "date": "2026-05-18"
+        }
+      ],
+      "claims": [
+        {
+          "text": "Claude Opus trailing-3 median release interval when published (May 2026 dataset)",
+          "tool": "Claude Opus",
+          "period": "2026-04-01",
+          "value": 73
+        },
+        {
+          "text": "OpenAI GPT trailing-3 median release interval when published (May 2026 dataset)",
+          "tool": "GPT",
+          "period": "2026-05-01",
+          "value": 85
+        },
+        {
+          "text": "Gemini Pro trailing-3 median release interval when published (May 2026 dataset)",
+          "tool": "Gemini Pro",
+          "period": "2026-04-01",
+          "value": 91
+        },
+        {
+          "text": "Claude Sonnet trailing-3 median release interval when published (May 2026 dataset)",
+          "tool": "Claude Sonnet",
+          "period": "2026-04-01",
+          "value": 130
+        }
+      ],
+      "method": "tools/stats/collect-model-halflife.py syncs post-May-2026 headline text-generation model launches from OpenRouter's public /api/v1/models catalogue into <a href=\"/model-drops.tsv\">/model-drops.tsv</a> (keeping the embedded <a href=\"/model-drops.html\">/model-drops.html</a> chart current), then computes the exact heuristic from the essay at the end of each calendar month: sort drops chronologically per sub-series, compute consecutive gaps in days, take the trailing three gaps (or all gaps when fewer than three exist), and round the median to the nearest day.",
+      "caveats": [
+        "Only sub-series with at least two releases by a given month have a defined interval; single-drop lines are omitted until their second release.",
+        "OpenRouter's created timestamp records when the model landed on OpenRouter, which can trail a vendor's blog announcement by a day or two; hand edits in static/model-drops.tsv are preserved across runs.",
+        "A series that stops shipping keeps its last measured trailing median rather than drifting upward, because no new inter-release interval has been observed."
+      ]
+    },
+    {
+      "id": "model-halflife-drops",
+      "title": "Headline AI model releases per month",
+      "kind": "model-halflife",
+      "metric": "monthly_drops",
+      "granularity": "monthly",
+      "epoch": "2023-01-01",
+      "unit": "headline releases per month",
+      "how": "Monthly count of headline model releases in static/model-drops.tsv across the twelve tracked US, Chinese, and European labs.",
+      "risk": "Counts distinct headline releases rather than minor API checkpoints, and excludes batch, free-tier, image-generation, and domain-specific model variants.",
+      "file_prefix": "model-halflife-drops",
+      "primary": "All tracked labs",
+      "tools": [
+        {
+          "name": "All tracked labs",
+          "label": "All tracked labs",
+          "method": "all 12 labs in /model-drops.tsv",
+          "query": "",
+          "slot": 1
+        },
+        {
+          "name": "Frontier tier",
+          "label": "Frontier tier only",
+          "method": "tier = frontier",
+          "query": "",
+          "slot": 2
+        },
+        {
+          "name": "US labs",
+          "label": "US labs (OpenAI, Anthropic, Google, xAI, Meta)",
+          "method": "OpenAI + Anthropic + Google + xAI + Meta",
+          "query": "",
+          "slot": 3
+        },
+        {
+          "name": "Chinese labs",
+          "label": "Chinese labs (DeepSeek, Alibaba, Zhipu, MiniMax, Moonshot, ByteDance)",
+          "method": "DeepSeek + Alibaba + Zhipu + MiniMax + Moonshot + ByteDance",
+          "query": "",
+          "slot": 4
+        },
+        {
+          "name": "European labs",
+          "label": "European labs (Mistral)",
+          "method": "Mistral",
+          "query": "",
+          "slot": 5
+        },
+        {
+          "name": "OpenAI",
+          "label": "OpenAI",
+          "method": "vendor = OpenAI",
+          "query": ""
+        },
+        {
+          "name": "Anthropic",
+          "label": "Anthropic",
+          "method": "vendor = Anthropic",
+          "query": ""
+        },
+        {
+          "name": "Google",
+          "label": "Google",
+          "method": "vendor = Google",
+          "query": ""
+        },
+        {
+          "name": "xAI",
+          "label": "xAI",
+          "method": "vendor = xAI",
+          "query": ""
+        },
+        {
+          "name": "Meta",
+          "label": "Meta",
+          "method": "vendor = Meta",
+          "query": ""
+        },
+        {
+          "name": "Mistral",
+          "label": "Mistral",
+          "method": "vendor = Mistral",
+          "query": ""
+        },
+        {
+          "name": "DeepSeek",
+          "label": "DeepSeek",
+          "method": "vendor = DeepSeek",
+          "query": ""
+        },
+        {
+          "name": "Alibaba",
+          "label": "Alibaba (Qwen)",
+          "method": "vendor = Alibaba",
+          "query": ""
+        },
+        {
+          "name": "Zhipu",
+          "label": "Zhipu (GLM)",
+          "method": "vendor = Zhipu",
+          "query": ""
+        },
+        {
+          "name": "MiniMax",
+          "label": "MiniMax",
+          "method": "vendor = MiniMax",
+          "query": ""
+        },
+        {
+          "name": "Moonshot",
+          "label": "Moonshot (Kimi)",
+          "method": "vendor = Moonshot",
+          "query": ""
+        },
+        {
+          "name": "ByteDance",
+          "label": "ByteDance (Doubao/Seed)",
+          "method": "vendor = ByteDance",
+          "query": ""
+        }
+      ],
+      "posts": [
+        {
+          "title": "how fast do ai models go stale?",
+          "url": "/model-half-life/",
+          "date": "2026-05-18"
+        }
+      ],
+      "claims": [],
+      "method": "Monthly release counts aggregated from <a href=\"/model-drops.tsv\">/model-drops.tsv</a> after syncing new headline text-generation models from OpenRouter's /api/v1/models endpoint (collapsing :batch, -pro, and dated checkpoint variants to one row per sub-series release).",
+      "caveats": [
+        "01.AI (Yi) is in the 2024 historical rows of /model-drops.tsv and is included in All tracked labs and Frontier/Standard counts.",
+        "Open-weight models that never appear on OpenRouter still need a manual row in static/model-drops.tsv."
+      ]
     }
   ]
 }
