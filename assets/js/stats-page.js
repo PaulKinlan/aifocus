@@ -145,7 +145,16 @@ function setupChart(figure) {
   function render() {
     // Measure before mutating: removing the SVG first would invalidate layout
     // and turn this clientWidth read into a forced synchronous reflow.
-    const width = Math.max(280, host.clientWidth || 600);
+    const cssWidth = host.clientWidth || 600;
+    const width = Math.max(280, cssWidth);
+    // Below a 280px host the CSS box is smaller than this viewBox (page.html
+    // sets svg { width: 100% }), so the browser scales the drawing and CSS px
+    // are width/cssWidth user units. Pointer coordinates arrive in CSS px,
+    // x(i), m and W are user units, and tooltip geometry is written in CSS
+    // px; convert once per render instead of assuming the mapping is 1:1
+    // (aifocus-lb2d: under ~312px viewports the cursor column sat 1-3 periods
+    // left of the pointer).
+    const cssScale = width / cssWidth;
     host.querySelector("svg")?.remove();
     host.querySelector(".no-js-note")?.remove();
     const height = Math.round(Math.min(360, Math.max(220, width * 0.45)));
@@ -209,20 +218,18 @@ function setupChart(figure) {
     svg.append(cursor);
     const hit = el("rect", { x: m.left, y: m.top, width: W, height: H, fill: "transparent" });
     let lastBest = -1, tipW = 0, tipH = 0;
-    let chartRect = null, rectScrollX = 0, rectScrollY = 0;
-    hit.addEventListener("pointerenter", () => {
-      // Read once before pointermove writes cursor/tooltip positions.
-      chartRect = svg.getBoundingClientRect();
-      rectScrollX = window.scrollX; rectScrollY = window.scrollY;
-    });
     hit.addEventListener("pointermove", (ev) => {
-      // Re-measure only if scrolling moved the SVG while the pointer stayed over it.
-      if (!chartRect || rectScrollX !== window.scrollX || rectScrollY !== window.scrollY) {
-        chartRect = svg.getBoundingClientRect();
-        rectScrollX = window.scrollX; rectScrollY = window.scrollY;
-      }
-      const r = chartRect;
-      const px = ev.clientX - r.left;
+      // offsetX/Y are the pointer position relative to the nearest SVG
+      // viewport's CSS box, computed by the browser when THIS event was
+      // hit-tested. They force no layout, and they cannot go stale between
+      // moves: a rect cached across moves drifts by the full reflow distance
+      // when content above the chart moves it without a window scroll - a
+      // font swap or an inserted heading is enough (aifocus-zrdn; aifocus-
+      // bcfn first cached the rect and invalidated it on scroll, which misses
+      // every other kind of reflow). They are CSS px; cssScale is user units
+      // per CSS px, so scale them up into the units x(i) lives in - at or
+      // above the 280px floor cssScale is 1.
+      const px = ev.offsetX * cssScale;
       let best = 0, bd = Infinity;
       for (let i = 0; i < n; i++) { const d = Math.abs(x(i) - px); if (d < bd) { bd = d; best = i; } }
       cursor.setAttribute("x1", x(best)); cursor.setAttribute("x2", x(best)); cursor.setAttribute("visibility", "visible");
@@ -247,11 +254,12 @@ function setupChart(figure) {
         tipW = tip.offsetWidth;
         tipH = tip.offsetHeight;
       }
-      const left = x(best) + 12 + tipW > width ? x(best) - tipW - 12 : x(best) + 12;
+      const xBestCss = x(best) * cssScale;
+      const left = xBestCss + 12 + tipW > cssWidth ? xBestCss - tipW - 12 : xBestCss + 12;
       tip.style.left = `${Math.max(0, left)}px`;
-      tip.style.top = `${Math.max(0, Math.min(ev.clientY - r.top - 10, height - tipH))}px`;
+      tip.style.top = `${Math.max(0, Math.min(ev.offsetY - 10, height * cssScale - tipH))}px`;
     });
-    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; chartRect = null; });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
     host.prepend(svg);
   }
