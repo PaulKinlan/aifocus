@@ -62,3 +62,16 @@ export function tooltipLeft(columnCss, tipWidth, cssWidth) {
 export function tooltipTop(offsetYCss, scale, tipHeight, attrHeight) {
   return Math.max(0, Math.min(offsetYCss - 10, attrHeight / scale - tipHeight));
 }
+
+// Caller conveniences binding the event to the contract, so the page's
+// handler carries no unit arithmetic of its own. nearestPeriod() converts
+// the pointer and picks the line; placeTooltip() returns the CSS left/top
+// for the hovered period once the tooltip's size is measured.
+export function nearestPeriod(offsetX, xs, scale) {
+  return nearestIndex(xs, cssToUser(offsetX, scale));
+}
+
+export function placeTooltip(offsetX, offsetY, tipWidth, tipHeight, xs, best, scale, cssWidth, attrHeight) {
+  const columnCss = userToCss(xs[best], scale);
+  return { left: tooltipLeft(columnCss, tipWidth, cssWidth), top: tooltipTop(offsetY, scale, tipHeight, attrHeight) };
+}

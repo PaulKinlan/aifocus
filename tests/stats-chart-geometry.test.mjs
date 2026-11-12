@@ -80,3 +80,33 @@ test("a reflow that changes the CSS box between renders remaps every conversion"
   assert.ok(Math.abs(cssToUser(120, after) - 120 * (280 / 244)) < 1e-9);
   assert.equal(userToCss(cssToUser(120, after), after), 120);
 });
+
+// --- caller binding (aifocus-kv2v) ------------------------------------------
+// The module test above executes the arithmetic, but both historical defects
+// were caller-side inversions in stats-page.js itself. Two layers pin the
+// caller: the exact delegating statements, and the absence of any unit
+// arithmetic left in the page. This is statement pinning (the repo's
+// sink-gate pattern), not arithmetic re-derivation - the numbers are the
+// executed tests' job.
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const page = readFileSync(fileURLToPath(new URL("../assets/js/stats-page.js", import.meta.url)), "utf8");
+
+test("stats-page.js delegates pointer math through the pinned calls, with nothing left to invert", () => {
+  assert.match(
+    page,
+    /const best = geometry\.nearestPeriod\(ev\.offsetX, xs, cssScale\);/,
+    "the period pick must go through the contract with the render's scale",
+  );
+  assert.match(
+    page,
+    /const \{ left, top \} = geometry\.placeTooltip\(ev\.offsetX, ev\.offsetY, tipW, tipH, xs, best, cssScale, cssWidth, height\);/,
+    "tooltip placement must go through the contract with every unit argument",
+  );
+  // No raw unit conversion may reappear in the page: the multiplication that
+  // caused lb2d and the division that rs97 got wrong both live in the module
+  // now, where the executed tests hold them.
+  assert.doesNotMatch(page, /[*\/] cssScale|cssScale [*\/]/, "unit arithmetic leaked back into stats-page.js");
+  assert.doesNotMatch(page, /getBoundingClientRect\(\)/, "stats-page.js must not read chart geometry directly on the pointer path");
+});

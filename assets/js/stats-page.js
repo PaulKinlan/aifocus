@@ -232,8 +232,7 @@ function setupChart(figure) {
       // every other kind of reflow). They are CSS px; cssScale is user units
       // per CSS px, so scale them up into the units x(i) lives in - at or
       // above the 280px floor cssScale is 1.
-      const px = geometry.cssToUser(ev.offsetX, cssScale);
-      const best = geometry.nearestIndex(xs, px);
+      const best = geometry.nearestPeriod(ev.offsetX, xs, cssScale);
       cursor.setAttribute("x1", x(best)); cursor.setAttribute("x2", x(best)); cursor.setAttribute("visibility", "visible");
       if (best !== lastBest) {
         lastBest = best;
@@ -256,14 +255,14 @@ function setupChart(figure) {
         tipW = tip.offsetWidth;
         tipH = tip.offsetHeight;
       }
-      // Tooltip geometry is written in CSS px against the svg's CSS box, and
-      // cssScale is user units per CSS px - so coming back out of the viewBox
-      // means DIVIDING (aifocus-rs97: multiplying inflated the column and the
-      // fit clamp, pushing the tooltip over the hovered column and below the
-      // axis row below the 280px floor).
-      const xBestCss = geometry.userToCss(x(best), cssScale);
-      tip.style.left = `${geometry.tooltipLeft(xBestCss, tipW, cssWidth)}px`;
-      tip.style.top = `${geometry.tooltipTop(ev.offsetY, cssScale, tipH, height)}px`;
+      // Tooltip geometry comes back in CSS px against the svg's CSS box.
+      // Both calls are pinned verbatim by tests/stats-chart-geometry.test.mjs
+      // (aifocus-kv2v): the two historical defects were caller-side
+      // inversions in this file, so the delegation itself is what the gate
+      // protects - no unit arithmetic may reappear here.
+      const { left, top } = geometry.placeTooltip(ev.offsetX, ev.offsetY, tipW, tipH, xs, best, cssScale, cssWidth, height);
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
     });
     hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
