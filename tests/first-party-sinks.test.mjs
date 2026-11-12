@@ -606,8 +606,12 @@ const HREF_OP = String.raw`(=(?!=)|\+=|-=|\*=|\/=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\
 // `x["hr" + "ef"]` is the same property as `x["href"]`: the engine joins the
 // operands. Every way to split the token across '+' operands is generated rather
 // than typed out, and a non-literal operand (`x["hr" + suffix]`) stays out - the
-// same limit the markup concat-key pass states. Single line only: a wrapped or
-// unquoted attribute form is aifocus-jfil's scope.
+// same limit the markup concat-key pass states.
+// A template literal with no interpolation IS the string, and so is a member
+// expression whose last name is 'href' (NAMES.href): the name side of an
+// attribute sink is asked "does this spell href", and a static spelling this
+// scan can read should not be the reason a raw value passes (aifocus-jfil).
+const HREF_QUOTE = `["'\`]`;
 function spelledApart(token) {
   const spellings = [];
   for (let mask = 1; mask < (1 << (token.length - 1)); mask += 1) {
@@ -618,17 +622,23 @@ function spelledApart(token) {
       else chunk += token[i];
     }
     chunks.push(chunk);
-    spellings.push(chunks.map((part) => `["']${part}["']`).join("[ \\t]*\\+[ \\t]*"));
+    spellings.push(chunks.map((part) => `${HREF_QUOTE}${part}${HREF_QUOTE}`).join("[ \\t]*\\+[ \\t]*"));
   }
   return spellings.join("|");
 }
-const HREF_KEY = `(?:"href"|'href'|${spelledApart("href")})`;
-// setAttributeNS(namespace, "href", value) names the attribute in its SECOND
-// argument, so the namespace is skipped without assuming anything about it.
+const HREF_KEY = `(?:${HREF_QUOTE}href${HREF_QUOTE}|${spelledApart("href")})`;
+// The name argument of setAttribute/setAttributeNS, in any spelling the scan can
+// read: a quoted or interpolation-free template literal, a bare identifier, or a
+// member expression ending in '.href'. Anything assembled from a runtime expression
+// stays out.
+const HREF_NAME = `(?:${HREF_QUOTE}href${HREF_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*href)`;
+// setAttributeNS(namespace, name, value) names the attribute in its SECOND
+// argument, so the namespace is skipped without assuming anything about it - and
+// its arguments may sit on separate lines, which the statement join covers.
 const HREF_ASSIGNMENT = new RegExp(
   String.raw`\.href\s*` + HREF_OP + String.raw`\s*` +
   String.raw`|\[\s*` + HREF_KEY + String.raw`\s*\]\s*` + HREF_OP + String.raw`\s*` +
-  String.raw`|\bsetAttribute(?:NS)?\(\s*(?:[^,()]*,\s*)?["']href["']\s*,\s*` +
+  String.raw`|\bsetAttribute(?:NS)?\(\s*(?:[^,()]*,\s*)?` + HREF_NAME + String.raw`\s*,` +
   String.raw`|\bhref\s*:\s*`,
 );
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
@@ -1044,6 +1054,18 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     'x["hr" + "ef"] = item.post;', "x['h' + 'ref'] = item.post;",
     'x["h" + "r" + "ef"] = item.post;',
     'el.setAttributeNS("http://www.w3.org/1999/xlink", "href", item.post);',
+    // aifocus-jfil: the name side is a spelling, not a quote style, and the call's
+    // arguments may be wrapped. A template with no interpolation is the string, a
+    // member expression ending in '.href' is the name written another way, and the
+    // statement join already carries the wrapped call.
+    'el.setAttributeNS(\n  "http://www.w3.org/1999/xlink", "href", item.post);',
+    'el.setAttribute(\n  "href",\n  item.post);',
+    'el.setAttributeNS(NS.XLINK, "href", item.post);',
+    "el.setAttribute(`href`, item.post);",
+    "el.setAttributeNS(NS.XLINK, `href`, item.post);",
+    "x[`href`] = item.post;",
+    "el.setAttribute(href, item.post);",
+    "el.setAttribute(NAMES.href, item.post);",
   ]) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
   }
@@ -1060,6 +1082,12 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "if (x.href === item.post) {}", "if (x.href == item.post) {}", "if (x.href != item.post) {}",
     "const joined = x.href + item.post;",
     'x["hr" + suffix] = item.post;', 'x["a" + "b"] = item.post;',
+    // The name rule must not read the VALUE position: a different attribute whose
+    // value happens to be a variable called href is not an href sink, and neither
+    // is a name that is a runtime expression.
+    'el.setAttribute("data-url", obj.href);',
+    "el.setAttribute(post.path, item.post);",
+    "el.setAttribute(`h${x}ref`, item.post);",
   ]) {
     assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
   }
