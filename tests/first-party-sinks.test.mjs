@@ -594,7 +594,7 @@ test("the stats-page.js allowlist entry still matches a live line (a stale allow
 // a javascript: or data: URI in an href executes when clicked, and the
 // moderation page's links carry the moderator's Cloudflare Access session.
 const PROFILE_URL = /profile_?url/i;
-const HREF_ASSIGNMENT = /\.href\s*=\s*|\bhref\s*:\s*/;
+const HREF_ASSIGNMENT = /\.href\s*(?:\+=|=(?!=))\s*|\[\s*["']href["']\s*\]\s*(?:\+=|=(?!=))\s*|\bsetAttribute\(\s*["']href["']\s*,\s*|\bhref\s*:\s*/;
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
 
 // Existing non-sanitized sources are pinned by exact statement, not by the
@@ -685,6 +685,28 @@ function sinkStatements(source, assignment) {
   return statements;
 }
 
+// Stop at the next object property, not at a comma/brace inside a template
+// interpolation, call or quoted string (e.g. `/search/?q=${encode(q)}`).
+function hrefValue(text) {
+  let quote = null, escaped = false, depth = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (escaped) { escaped = false; continue; }
+    if (quote) {
+      if (ch === "\\") escaped = true;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") { quote = ch; continue; }
+    if (ch === "(" || ch === "[" || ch === "{") depth++;
+    else if (ch === ")" || ch === "]" || ch === "}") {
+      if (depth === 0) return text.slice(0, i).trim();
+      depth--;
+    } else if (ch === "," && depth === 0) return text.slice(0, i).trim();
+  }
+  return text.trim();
+}
+
 function unguardedHrefAssignments(source, file = "sample.js") {
   const failures = new Set();
   const lines = source.split("\n");
@@ -702,15 +724,17 @@ function unguardedHrefAssignments(source, file = "sample.js") {
     for (const match of text.matchAll(new RegExp(HREF_ASSIGNMENT.source, "g"))) {
       const tail = text.slice(match.index + match[0].length);
       const end = statementEnd(tail);
-      const rhs = (end < 0 ? tail : tail.slice(0, end)).split(/[,}]/, 1)[0].trim();
+      let rhs = hrefValue(end < 0 ? tail : tail.slice(0, end));
       if (!rhs) continue;
+      const compound = match[0].includes("+=");
       const rawProfile = PROFILE_URL.test(rhs) || (rawProfileAlias && rawProfileAlias.test(rhs));
       if (HREF_PINS[file]?.includes(lines[number - 1].trim()) && !rawProfile) continue;
       const stripped = stripGuardedSpans(rhs, GUARDED).trim();
       const guarded = GUARDED.test(rhs) && !stripped;
-      // Dynamic templates need a fixed root-relative segment before interpolation.
-      const literal = /^(?:["']|`\/[a-z0-9-]+\/)/i.test(rhs);
-      if (guarded || (literal && !rawProfile) || (sanitized.has(rhs) && !rawProfile)) continue;
+      // A literal must be the ENTIRE expression: '"" + item.post' retains the
+      // untrusted value. Templates need a fixed root-relative path segment.
+      const literal = /^(?:"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`\/[a-z0-9-]+\/[^`]*`)$/i.test(rhs);
+      if (!compound && (guarded || (literal && !rawProfile) || (sanitized.has(rhs) && !rawProfile))) continue;
       failures.add(`${number}: ${lines[number - 1].trim()}`);
     }
   }
@@ -896,6 +920,10 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "const postPath = safePostPath(item.post)\n  || item.post;\nx.href = postPath;",
     "x.href = safeHref(user.profile_url); y.href = item.post;",
     "x.href = `/` + item.post;",
+    'x.href = "" + item.post;', "x.href = 'x' + item.post;",
+    'x.href += item.post;', 'x.href += "#fragment";',
+    'x["href"] = item.post;', "x['href'] += item.post;",
+    'x.setAttribute("href", item.post);',
   ]) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
   }
@@ -903,6 +931,7 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "x.href = safePostPath(item.post);", "x.href = safeHref(result.url);",
     "const postPath = safePostPath(item.post);\nx.href = postPath;",
     "const href = safeHref(item.profile_url);\nel('a', { href, text: 'Profile' });",
+    'x["href"] = safePostPath(item.post);', 'x.setAttribute("href", safePostPath(item.post));',
     'x.href = "/account/";', 'x.href = `/search/?q=${encodeURIComponent(query)}`;',
   ]) {
     assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
