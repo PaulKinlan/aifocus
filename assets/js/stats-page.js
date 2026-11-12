@@ -7,6 +7,8 @@
 // --viz-N custom properties on .stats-page (fixed per series slot, never
 // re-assigned when a line is hidden).
 
+import * as geometry from "./stats-chart-geometry.js";
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function compact(v, format) {
@@ -176,6 +178,7 @@ function setupChart(figure) {
     const n = data.periods.length;
     const t0 = Date.parse(data.periods[0].s), t1 = Date.parse(data.periods[n - 1].s);
     const x = (i) => m.left + (n === 1 ? W / 2 : ((Date.parse(data.periods[i].s) - t0) / (t1 - t0 || 1)) * W);
+    const xs = data.periods.map((_, i) => x(i));
     const y = (v) => m.top + H - (useLog ? (Math.log10(v) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo) || 1) : (v - lo) / (hi - lo)) * H;
 
     for (const t of ticks) {
@@ -229,9 +232,8 @@ function setupChart(figure) {
       // every other kind of reflow). They are CSS px; cssScale is user units
       // per CSS px, so scale them up into the units x(i) lives in - at or
       // above the 280px floor cssScale is 1.
-      const px = ev.offsetX * cssScale;
-      let best = 0, bd = Infinity;
-      for (let i = 0; i < n; i++) { const d = Math.abs(x(i) - px); if (d < bd) { bd = d; best = i; } }
+      const px = geometry.cssToUser(ev.offsetX, cssScale);
+      const best = geometry.nearestIndex(xs, px);
       cursor.setAttribute("x1", x(best)); cursor.setAttribute("x2", x(best)); cursor.setAttribute("visibility", "visible");
       if (best !== lastBest) {
         lastBest = best;
@@ -259,10 +261,9 @@ function setupChart(figure) {
       // means DIVIDING (aifocus-rs97: multiplying inflated the column and the
       // fit clamp, pushing the tooltip over the hovered column and below the
       // axis row below the 280px floor).
-      const xBestCss = x(best) / cssScale;
-      const left = xBestCss + 12 + tipW > cssWidth ? xBestCss - tipW - 12 : xBestCss + 12;
-      tip.style.left = `${Math.max(0, left)}px`;
-      tip.style.top = `${Math.max(0, Math.min(ev.offsetY - 10, height / cssScale - tipH))}px`;
+      const xBestCss = geometry.userToCss(x(best), cssScale);
+      tip.style.left = `${geometry.tooltipLeft(xBestCss, tipW, cssWidth)}px`;
+      tip.style.top = `${geometry.tooltipTop(ev.offsetY, cssScale, tipH, height)}px`;
     });
     hit.addEventListener("pointerleave", () => { tip.hidden = true; cursor.setAttribute("visibility", "hidden"); lastBest = -1; });
     svg.append(hit);
