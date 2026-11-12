@@ -847,13 +847,18 @@ const SRC_GUARDED = /safeImgSrc\(/;
 // limits the multi-line-expression case always had.
 function aliasMentionRe(source, field, guard) {
   const names = new Set();
-  const declaration = /(?:const|let|var)\s+(\w+)\s*=\s*([^;\n]*)/g;
+  // The declaration right-hand sides are read ONCE, before the fixpoint loop:
+  // reading them per iteration made the real-tree scans 7.6x their previous time
+  // once a right-hand side could span lines (aifocus-t60z).
+  const declarations = [];
+  for (const match of source.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*/g)) {
+    declarations.push({ name: match[1], rhs: declarationRhs(source, match.index + match[0].length) });
+  }
   for (;;) {
     let grew = false;
-    for (const match of source.matchAll(declaration)) {
-      const name = match[1];
+    for (const { name, rhs } of declarations) {
       if (names.has(name)) continue;
-      const remainder = stripGuardedSpans(match[2], guard);
+      const remainder = stripGuardedSpans(rhs, guard);
       const carrier = new RegExp(field.source + (names.size ? "|" + [...names].map((n) => `\\b${n}\\b`).join("|") : ""), field.flags).test(remainder);
       if (carrier) {
         names.add(name);
@@ -865,13 +870,53 @@ function aliasMentionRe(source, field, guard) {
   return names.size ? new RegExp(`\\b(?:${[...names].join("|")})\\b`) : null;
 }
 
+// The right-hand side of a declaration may be wrapped, and a guard call broken at
+// its paren is still a declaration of that call's result: 'const a = safeImgSrc' /
+// newline / '(user.avatarUrl) || user.avatarUrl' hands out the raw field on the
+// falsey branch, and reading only the first physical line registered no alias at
+// all, so 'img.src = a' stayed green (aifocus-t60z). Read to the end of the
+// statement, taking continuation lines only, so a runaway read cannot swallow the
+// statements that follow.
+function declarationRhs(source, start) {
+  // Walked with indexOf rather than by splitting the rest of the source: slicing
+  // and splitting the remainder per declaration is O(file size) per declaration,
+  // and that cost the real-tree scans 10x (aifocus-t60z).
+  let lineStart = start;
+  let lineEnd = source.indexOf("\n", lineStart);
+  if (lineEnd < 0) lineEnd = source.length;
+  // Fast path: a declaration that ends on its own line is cut at its first ';',
+  // which is the bound the one-line regex this replaced used. Only a declaration
+  // with no terminator on its line needs the statement scan below, and that is
+  // the shape the bead is about.
+  const firstSemicolon = source.indexOf(";", start);
+  if (firstSemicolon >= 0 && firstSemicolon < lineEnd) return source.slice(start, firstSemicolon);
+  for (let i = 0; i < 40; i += 1) {
+    const text = source.slice(start, lineEnd);
+    const stop = statementEnd(text);
+    if (stop >= 0) return text.slice(0, stop);
+    if (lineEnd >= source.length) return text;
+    const nextStart = lineEnd + 1;
+    let nextEnd = source.indexOf("\n", nextStart);
+    if (nextEnd < 0) nextEnd = source.length;
+    if (!continuesStatement(source.slice(lineStart, lineEnd), source.slice(nextStart, nextEnd))) return text;
+    lineStart = nextStart;
+    lineEnd = nextEnd;
+  }
+  return source.slice(start, lineEnd);
+}
+
 // Remove every balanced guard(...) call span from an expression, so a field
 // mentioned only INSIDE a sanitizer call counts as sanitized and a field left
 // in the remainder does not. An unclosed span strips to the end of the line:
 // text a paren scan cannot resolve is not executable JS, so how it reads does
 // not matter.
 function stripGuardedSpans(rhs, guard) {
-  const call = new RegExp(guard.source, "g");
+  // Whitespace between a function name and its call paren is not significant, so
+  // 'safeImgSrc' / newline / '(...)' is the same call. Without this the wrapped
+  // declaration's guard span is never stripped and the field it swallowed reads
+  // as a raw carrier (aifocus-t60z).
+  const callSource = guard.source.endsWith("\\(") ? `${guard.source.slice(0, -2)}\\s*\\(` : guard.source;
+  const call = new RegExp(callSource, "g");
   let result = "";
   let copied = 0;
   for (let match; (match = call.exec(rhs)) !== null; ) {
@@ -976,6 +1021,23 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     unguardedAvatarSrcs("const a = user.avatarUrl;\nconst b = safeImgSrc(a) || a;\nimg.src = b;").length,
     1,
   );
+  // A declaration wrapped at its paren is still that declaration: the guard call
+  // swallows only what its parens cover, so the falsey branch keeps the raw field
+  // reachable, and reading one physical line registered no alias at all
+  // (aifocus-t60z).
+  assert.equal(
+    unguardedAvatarSrcs("const a = safeImgSrc\n  (user.avatarUrl) || user.avatarUrl;\nimg.src = a;").length,
+    1,
+  );
+  assert.equal(
+    unguardedAvatarSrcs("const a = user.\n  avatarUrl;\nimg.src = a;").length,
+    1,
+  );
+  // The same wrap with nothing after the call is the guarded shape and must stay
+  // clean, whichever side of the paren the break sits on: whitespace between a
+  // function name and its call paren is not significant.
+  assert.deepEqual(unguardedAvatarSrcs("const a = safeImgSrc\n  (user.avatarUrl);\nimg.src = a;"), []);
+  assert.deepEqual(unguardedAvatarSrcs("const a = safeImgSrc(\n  user.avatarUrl);\nimg.src = a;"), []);
 });
 
 test("the href gate catches dynamic fields by sink shape, not profile field name", () => {
