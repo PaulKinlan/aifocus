@@ -17,6 +17,7 @@ Date defaults to today; the URL defaults to the tool's method field when it is a
 import argparse
 import csv
 import json
+import math
 import os
 import subprocess
 import sys
@@ -25,6 +26,12 @@ from datetime import date
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
 DATA_DIR = os.path.join(ROOT, "static", "data")
+
+# The column set build.py's read_run() reads with csv.DictReader, and the header
+# already committed in static/data/manual/*.csv. A series file created here must
+# start with it: without a header the first DATA row becomes the header and the
+# figure it holds is dropped silently (aifocus-ejut).
+HEADER = ["tool", "period_start", "period_end", "granularity", "total_count", "url", "note"]
 
 
 def main():
@@ -65,20 +72,42 @@ def main():
         return
     if args.tool not in tools:
         sys.exit(f"unknown tool {args.tool!r}; one of: " + ", ".join(tools))
-    value = float(args.value.replace(",", "").replace("_", ""))
-    if value.is_integer():
-        value = int(value)
+    value = parse_value(args.value)
     append(series, tools, args.tool, value, args)
     if not args.no_build:
         build()
+
+
+def parse_value(text):
+    """A published figure, from what someone typed after the tool name.
+
+    The separators are stripped because the figures are hand-read from a page
+    ('58,200,000'), and the value keeps its fraction when it has one. 'n/a' used
+    to raise a bare ValueError traceback here while every other bad argument got
+    a one-line message; float() also accepts 'nan'/'inf', and either would be
+    published on /stats/ as a figure - the same class of defect as aifocus-09r5
+    (aifocus-ejut).
+    """
+    try:
+        value = float(text.replace(",", "").replace("_", ""))
+    except ValueError:
+        sys.exit(f"value {text!r} is not a number")
+    if not math.isfinite(value):
+        sys.exit(f"value {text!r} is not a finite number")
+    return int(value) if value.is_integer() else value
 
 
 def append(series, tools, tool, value, args):
     method = tools[tool].get("method", "")
     url = args.url or (("https://" + method) if "." in method and " " not in method else method)
     path = os.path.join(DATA_DIR, series["file_prefix"] + ".csv")
+    # Decided before the open, because opening in append mode creates the file.
+    fresh = not os.path.exists(path) or os.path.getsize(path) == 0
     with open(path, "a", encoding="utf-8", newline="") as f:
-        csv.writer(f).writerow([tool, args.date, args.date, "snapshot", value, url, args.note])
+        writer = csv.writer(f)
+        if fresh:
+            writer.writerow(HEADER)
+        writer.writerow([tool, args.date, args.date, "snapshot", value, url, args.note])
     print(f"appended {tool} = {value:,} at {args.date} to {os.path.relpath(path, ROOT)}")
 
 
