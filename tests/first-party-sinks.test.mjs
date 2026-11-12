@@ -909,7 +909,13 @@ function sinkStatements(source, assignment) {
       }
       continue;
     }
-    push(line, i + 1);
+    // A line that finishes its own statement is pushed whole (two sinks on one
+    // line, and the pre-existing full physical-line check). A line that does NOT
+    // finish is deliberately not pushed as a truncated head: 'wrap.href =
+    // safeHref' on its own reads as an assignment of a bare identifier with no
+    // guard call, which is the false alarm aifocus-hh46 is about - the per-sink
+    // statement below carries the continuation and sees the caller's argument.
+    if (statementEnd(line) >= 0) push(line, i + 1);
     for (const match of line.matchAll(matches)) {
       let text = line.slice(match.index);
       let end = statementEnd(text);
@@ -1007,7 +1013,8 @@ test("every first-party dynamic href uses a guard or an exact reviewed pin", () 
 // make every reader's browser request a host of the attacker's choosing.
 const AVATAR_FIELD = /avatar_?url/i;
 const SRC_ASSIGNMENT = assignmentTo("src");
-const SRC_GUARDED = /safeImgSrc\(/;
+// Same break tolerance as GUARDED above (aifocus-hh46).
+const SRC_GUARDED = /safeImgSrc\s*\(/;
 
 // A provider field aliased to a local on an EARLIER line (const avatar =
 // user.avatarUrl; ...; img.src = avatar;) splits the field and the sink onto
@@ -1183,6 +1190,9 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = safeImgSrc(x) + ';' + user.avatarUrl;",
     "img.src = safeImgSrc(x); other.src =\n  user.avatarUrl;",
     'node.setAttribute("src", safeImgSrc("x") || user.avatarUrl);',
+    // The break tolerance above must not swallow a fallback that survives the
+    // call: only the balanced call span is stripped (aifocus-hh46).
+    "img.src = safeImgSrc\n  (user.avatarUrl) || user.avatarUrl;",
   ];
   for (const sample of caught) {
     assert.equal(unguardedAvatarSrcs(sample).length, 1, `the guard must catch: ${sample}`);
@@ -1199,6 +1209,11 @@ test("the avatar-src guard catches the shapes it exists for", () => {
   assert.deepEqual(unguardedAvatarSrcs("if (person?.avatarUrl) {}"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src =\n  safeImgSrc(user.avatarUrl);"), []);
+  // A break between the guard name and its argument list is still a call, so
+  // the value is swallowed and the line stays clean (aifocus-hh46).
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc\n  (user.avatarUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc\n  (a ? user.avatarUrl : b);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("const s = a ? b : c;\nimg.src = safeImgSrc\n  (user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc('x');\nuser.avatarUrl;"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc('x')\nuser.avatarUrl;"), []);
   // A SANITIZED alias is not a raw-field alias: reader.js and account-page.js
@@ -1358,6 +1373,8 @@ test("the profile-href guard catches the shapes it exists for", () => {
   assert.deepEqual(unguardedHrefAssignments("const href = safeHref(user.profile_url);"), []);
   assert.deepEqual(unguardedHrefAssignments("name.textContent = user.profile_url;"), []);
   assert.deepEqual(unguardedHrefAssignments("wrap.href =\n  safeHref(user.profile_url);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref\n  (user.profile_url);"), []);
+  assert.equal(unguardedHrefAssignments("wrap.href = safeHref\n  (item.author_url) || item.author_profile_url;").length, 1);
   assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref('x');\nuser.profile_url;"), []);
   assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref('x')\nuser.profile_url;"), []);
   // Same sanitized-alias rule as the avatar guard - and a sanitizer mention
