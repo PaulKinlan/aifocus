@@ -14,14 +14,14 @@ test("matchArticles scores title above summary, preserves equal-score order and 
   const { matchArticles } = await freshSearch();
   assert.deepEqual(matchArticles(articles, "web search", 2).map((a) => a.url), ["/web/", "/search/"]);
   assert.deepEqual(matchArticles(articles, "search", 3).map((a) => a.url), ["/web/", "/search/", "/other/"]);
-  // Two summary terms (2 points) versus one title term (4 points).
-  // A weight regression from 3 to 1 or 2 reverses this deliberately ordered fixture.
+  // Three summary terms (3 points) versus one title term (4 points).
+  // Weights 1 or 2 reverse this ranking, unlike the correct title weight 3.
   const weighted = [
-    { title: "nothing", summary: "web search", url: "/summary-multi/" },
-    { title: "Web", summary: "nothing", url: "/title-single/" },
+    { title: "nothing", summary: "alpha beta gamma", url: "/summary-three/" },
+    { title: "Alpha", summary: "nothing", url: "/title-one/" },
   ];
-  assert.deepEqual(matchArticles(weighted, "web search", 2).map((a) => a.url),
-    ["/title-single/", "/summary-multi/"]);
+  assert.deepEqual(matchArticles(weighted, "alpha beta gamma", 2).map((a) => a.url),
+    ["/title-one/", "/summary-three/"]);
   assert.deepEqual(matchArticles(articles, "   ", 1).map((a) => a.url), ["/other/"]);
   assert.deepEqual(matchArticles(articles, "missing", 10), []);
 });
@@ -77,14 +77,20 @@ test("searchSite propagates caller abort instead of falling back", async (t) => 
   const caller = new AbortController();
   const reason = new Error("user cancelled");
   let requests = 0;
-  t.mock.method(globalThis, "fetch", () => {
+  let requestSignal;
+  // No real 10s timer if a regression disconnects caller abort from fetch.
+  t.mock.method(globalThis, "setTimeout", () => 0);
+  t.mock.method(globalThis, "fetch", (_url, { signal }) => {
     requests++;
-    // Deliberately DIFFERENT from the caller's abort reason: `throw err`
-    // would surface this network error instead of the caller's reason.
-    return Promise.reject(new TypeError("network died"));
+    requestSignal = signal;
+    return new Promise((_resolve, reject) => signal.addEventListener("abort", () => {
+      // Deliberately DIFFERENT from the caller reason: `throw err` must fail.
+      reject(new TypeError("network died after abort"));
+    }, { once: true }));
   });
   const pending = searchSite("web", { signal: caller.signal });
   caller.abort(reason);
+  assert.equal(requestSignal.aborted, true, "caller cancellation must reach the in-flight API request");
   await assert.rejects(pending, (err) => err === reason);
   assert.equal(requests, 1, "cancellation must not fetch /index.json");
 });
