@@ -734,43 +734,61 @@ const continuesStatement = (line, nextLine) =>
 // terminator that decides a statement. A blank or comment-only line does not end
 // a statement either, so the join steps over it as well.
 function stripComments(text) {
-  // A comment needs a slash, so a line without one is already code: this keeps
-  // the per-file stripping pass off most lines (it cost 19 ms of the 34 ms the
-  // real-tree scans gained before the fast path).
+  // A comment needs a slash, so a source without one is already code.
   if (!text.includes("/")) return text;
+  // Copied in ranges rather than character by character: the scan runs over every
+  // byte of every first-party file twice per sweep, and appending each character
+  // made the whole-source pass cost 1.68x (aifocus-jum0).
+  const openers = "([{=,:!?&|";
   let out = "";
+  let copied = 0;
   let quote = null, regex = false, charClass = false;
   let blockComment = false, lineComment = false, escaped = false;
   let previous = "";
-  for (let i = 0; i < text.length; i += 1) {
+  let i = 0;
+  while (i < text.length) {
     const char = text[i], next = text[i + 1];
     if (lineComment) {
-      if (char === "\n") { lineComment = false; out += char; }
+      if (char === "\n") { lineComment = false; copied = i; i += 1; continue; }
+      i += 1;
       continue;
     }
     if (blockComment) {
-      if (char === "*" && next === "/") { blockComment = false; i += 1; }
-      else if (char === "\n") out += char;
+      if (char === "*" && next === "/") { blockComment = false; i += 2; copied = i; }
+      else if (char === "\n") { out += "\n"; copied = i + 1; i += 1; }
+      else i += 1;
       continue;
     }
-    if (escaped) { out += char; escaped = false; continue; }
+    if (escaped) { escaped = false; i += 1; continue; }
     if (quote || regex) {
-      out += char;
       if (char === "\\") escaped = true;
       else if (regex && char === "[") charClass = true;
       else if (regex && char === "]") charClass = false;
       else if (quote && char === quote) quote = null;
       else if (regex && char === "/" && !charClass) regex = false;
+      i += 1;
       continue;
     }
-    if (char === "/" && next === "/") { lineComment = true; i += 1; continue; }
-    if (char === "/" && next === "*") { blockComment = true; i += 1; continue; }
-    if (char === "/" && (!previous || /[([{=,:!?&|]/.test(previous))) { regex = true; out += char; continue; }
-    if (char === "'" || char === '"' || char === "`") { quote = char; out += char; continue; }
-    out += char;
-    if (!/\s/.test(char)) previous = char;
+    if (char === "/" && next === "/") {
+      out += text.slice(copied, i);
+      copied = i;
+      lineComment = true;
+      i += 2;
+      continue;
+    }
+    if (char === "/" && next === "*") {
+      out += text.slice(copied, i);
+      copied = i;
+      blockComment = true;
+      i += 2;
+      continue;
+    }
+    if (char === "/" && (!previous || openers.includes(previous))) { regex = true; i += 1; continue; }
+    if (char === "'" || char === '"' || char === "`") { quote = char; i += 1; continue; }
+    if (char !== " " && char !== "\t" && char !== "\n") previous = char;
+    i += 1;
   }
-  return out;
+  return out + text.slice(copied);
 }
 
 // A member name may sit on the line after its dot, so neither the sink pattern
@@ -800,7 +818,12 @@ function sinkStatements(source, assignment) {
   // One comment-stripping pass per file: a join attempt must not re-scan the same
   // line for comments every time a line above it continues (that pass cost the
   // real-tree scan 14.7x when it ran per attempt).
-  const code = lines.map(stripComments);
+  // Stripped over the WHOLE source, then split: stripComments() keeps every
+  // newline, so the line alignment holds, and a block comment spanning several
+  // lines is removed as one comment instead of leaving its tail ('still */') in
+  // the code text, where it defeated both the boundary test and the assignment
+  // match (aifocus-jum0).
+  const code = stripComments(source).split("\n");
   const isCode = code.map((line) => line.trim() !== "");
   // The next code line at or after `from`, or -1 when the break does not
   // continue the statement. Blank and comment-only lines are stepped over.
@@ -1338,6 +1361,11 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     "img.\n// why\nsrc = user.avatarUrl;",
     "img. /* why */\nsrc = user.avatarUrl;",
     "img.src\n\n// c\n\n= user.avatarUrl;",
+    // A block comment may span the break itself: stripping per line leaves its
+    // tail ('still */') in the code text and defeats both the boundary test and
+    // the assignment match (aifocus-jum0).
+    "img.src\n/* why\nstill */\n= user.avatarUrl;",
+    "img.\n/* why\nstill */\nsrc = user.avatarUrl;",
   ];
   for (const sample of srcCaught) {
     assert.equal(unguardedAvatarSrcs(sample).length, 1, `the avatar guard must catch: ${JSON.stringify(sample)}`);
@@ -1347,6 +1375,8 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     "wrap.\n/* c */\nhref = user.profileUrl;",
     "wrap.href\n  // c\n  = user.profileUrl;",
     "wrap.href /* c */\n= user.profileUrl;",
+    "wrap.href\n/* why\nstill */\n= item.profileUrl;",
+    "wrap.\n/* a\nb */\nhref = item.profileUrl;",
   ];
   for (const sample of hrefCaught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the href guard must catch: ${JSON.stringify(sample)}`);
@@ -1355,6 +1385,8 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   // comment may neither supply the guard nor end the statement.
   assert.deepEqual(unguardedAvatarSrcs('const u = "https://example.com"; img.src = safeImgSrc(u);'), []);
   assert.deepEqual(unguardedAvatarSrcs("// img.src = raw;\n/* img.src = raw; */"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src\n/* why\nstill */\n= safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("/* img.src = raw\n   still comment */\nimg.src = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = user.avatarUrl / 2; // half the pixels"), [
     "1: img.src = user.avatarUrl / 2; // half the pixels",
   ]);
