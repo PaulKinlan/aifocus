@@ -245,7 +245,7 @@ function setupChart(figure) {
           if (v == null) continue;
           const row = document.createElement("div"); row.className = "row";
           const name = document.createElement("span");
-          name.append(swatchFor(s.slot || s.i + 1), " ", s.label);
+          name.append(swatchFor(s.slot || s.i + 1), s.label);
           const val = document.createElement("span"); val.textContent = full(v, data.value_format);
           row.append(name, val); tip.append(row);
         }

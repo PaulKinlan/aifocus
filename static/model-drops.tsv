@@ -122,6 +122,7 @@ date	vendor	series	model	tier	notes
 2026-06-30	Anthropic	Claude Sonnet	Claude Sonnet 5	frontier	OpenRouter anthropic/claude-sonnet-5
 2026-07-08	xAI	Grok	Grok 4.5	frontier	OpenRouter x-ai/grok-4.5
 2026-07-09	OpenAI	GPT	GPT-5.6 Sol	frontier	OpenRouter openai/gpt-5.6-sol
+2026-07-09	OpenAI	GPT Terra	GPT-5.6 Terra	standard	OpenRouter openai/gpt-5.6-terra
 2026-07-09	OpenAI	GPT mini	GPT-5.6 Luna	small	OpenRouter openai/gpt-5.6-luna
 2026-07-16	Moonshot	Kimi	Kimi K3	frontier	OpenRouter moonshotai/kimi-k3
 2026-07-21	Google	Gemini Flash	Gemini 3.6 Flash	standard	OpenRouter google/gemini-3.6-flash
@@ -147,5 +148,6 @@ date	vendor	series	model	tier	notes
 2026-10-13	Google	Gemini Pro	Gemini 4 Argon	frontier	OpenRouter google/gemini-4-argon
 2026-10-19	MiniMax	MiniMax	MiniMax M3.1	frontier	OpenRouter minimax/minimax-m3.1-flash
 2026-10-23	Moonshot	Kimi	Kimi K3.1 Pro	frontier	OpenRouter moonshotai/kimi-k3.1-pro
+2026-10-26	OpenAI	GPT Terra	GPT-6.1 Terra	standard	OpenRouter openai/gpt-6.1-terra
 2026-11-09	Anthropic	Claude Fable	Claude Fable 5.2	frontier	OpenRouter anthropic/claude-fable-5.2
 2026-11-10	Google	Gemini Pro	Gemini 4 Carbon	frontier	OpenRouter google/gemini-4-carbon

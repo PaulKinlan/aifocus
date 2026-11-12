@@ -43,23 +43,25 @@ main:has(> .stats-page) { max-width: 68rem; }
 .stat-chart { margin: 0 0 1rem; position: relative; }
 .chart-controls { display: flex; justify-content: flex-end; gap: 1rem; font-size: .8rem; color: var(--muted); margin: 0 0 .25rem; }
 .chart-host { position: relative; min-height: 220px; }
-.chart-host svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-host > svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart-host text { font-size: .75rem; fill: var(--muted); }
 .chart-host .grid { stroke: var(--viz-grid); stroke-width: 1; }
 .chart-host .axis { stroke: var(--viz-axis); stroke-width: 1; }
 .chart-host .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.chart-host .pt { stroke-width: 2; fill: var(--background); }
+.chart-host .pt { stroke-width: 2; }
 .chart-host .cursor { stroke: var(--viz-axis); stroke-dasharray: 3 3; }
-.chart-tip { position: absolute; pointer-events: none; background: var(--background); border: 1px solid var(--line); border-radius: var(--radius); padding: .4rem .6rem; font-size: .8rem; box-shadow: 0 2px 8px rgba(0,0,0,.15); max-width: 16rem; z-index: 2; }
-.chart-tip b { display: block; margin-bottom: .2rem; }
-.chart-tip .row { display: flex; justify-content: space-between; gap: .75rem; font-variant-numeric: tabular-nums; }
+.chart-tip { position: absolute; pointer-events: none; background: var(--background); border: 1px solid var(--line); border-radius: var(--radius); padding: .45rem .65rem; font-size: .8rem; line-height: 1.35; box-shadow: 0 2px 8px rgba(0,0,0,.15); max-width: min(19rem, calc(100% - 1rem)); z-index: 2; }
+.chart-tip b { display: block; margin-bottom: .25rem; }
+.chart-tip .row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .1rem 0; font-variant-numeric: tabular-nums; }
+.chart-tip .row > span:first-child { display: inline-flex; align-items: center; gap: .4rem; min-width: 0; }
+.chart-tip .row > span:last-child { flex: 0 0 auto; font-weight: 500; }
 .chart-legend { list-style: none; padding: 0; margin: .4rem 0 0; display: flex; flex-wrap: wrap; gap: .25rem .9rem; font-size: .8rem; }
 .chart-legend button { background: none; border: 0; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: .35rem; }
 .chart-legend button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
 /* The swatch draws the series' own stroke (colour and dash pattern) rather than
    a filled dot, so the legend and the tooltip carry the same second channel as
    the line in the plot. */
-.swatch { display: inline-block; width: 1.15em; height: .55em; vertical-align: middle; overflow: visible; }
+.swatch { display: inline-block; flex: 0 0 auto; width: 18px; height: 8px; vertical-align: middle; overflow: visible; }
 .stat-chart figcaption { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
 .stat table { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
 .stats-page > :is(h1, .e-content, .stats-updated, .stats-toc),

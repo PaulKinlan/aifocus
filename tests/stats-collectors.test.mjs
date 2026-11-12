@@ -53,7 +53,7 @@ const CASES = [
   "openrouter-rejects-hostile-chart-tokens",
   "model-gap-accepts-releases-and-features",
   "model-gap-rejects-bad-milestone-or-date",
-  "model-gap-rejects-unsafe-feature-slug",
+  "model-gap-rejects-bad-chromestatus-feature",
   "model-gap-over-cap-body-refused",
   "model-halflife-accepts-and-dedups-drops",
   "model-halflife-rejects-hostile-created",

@@ -132,6 +132,10 @@ def classify_openrouter_model(provider, slug):
             label = f"GPT-{ver} {code.title()}" if code else f"GPT-{ver}"
             key = f"GPT|{ver}|{code}" if code else f"GPT|{ver}"
             return "OpenAI", "GPT", key, label, "frontier", f"OpenRouter {provider}/{slug}"
+        m = re.match(r"^gpt-(\d+(?:\.\d+)?)-terra(?:-pro)?$", slug)
+        if m:
+            ver = m.group(1)
+            return "OpenAI", "GPT Terra", f"GPT Terra|{ver}", f"GPT-{ver} Terra", "standard", f"OpenRouter {provider}/{slug}"
         m = re.match(r"^gpt-(\d+(?:\.\d+)?)-(mini|luna)(?:-pro)?$", slug)
         if m:
             ver, sub = m.group(1), m.group(2)
@@ -338,15 +342,17 @@ def refresh_drops_from_openrouter(existing_rows, run_date):
     return merged, len(candidates)
 
 
-def iter_complete_months(epoch, rd):
+def iter_months(epoch, rd):
     y, m = epoch.year, epoch.month
     while True:
-        last_day = calendar.monthrange(y, m)[1]
         start = date(y, m, 1)
-        end = date(y, m, last_day)
-        if end >= rd:
+        if start > rd:
             break
+        last_day = calendar.monthrange(y, m)[1]
+        end = min(date(y, m, last_day), rd)
         yield start, end
+        if date(y, m, last_day) >= rd:
+            break
         if m == 12:
             y, m = y + 1, 1
         else:
@@ -366,7 +372,7 @@ def median_gap_rows(series, run_date, drop_rows):
     out = []
     for name in tool_names:
         entries = by_series.get(name, [])
-        for start, end in iter_complete_months(epoch, rd):
+        for start, end in iter_months(epoch, rd):
             upto = [d for d, _ in entries if d <= end]
             med = trailing_median_gap(upto)
             if med is None:
@@ -397,7 +403,7 @@ def monthly_drop_rows(series, run_date, drop_rows):
         pred = buckets.get(name)
         if pred is None:
             raise CollectorDataError(f"unknown monthly_drops bucket {name!r}")
-        for start, end in iter_complete_months(epoch, rd):
+        for start, end in iter_months(epoch, rd):
             count = sum(1 for d, v, t in parsed if start <= d <= end and pred(v, t))
             out.append([name, start.isoformat(), end.isoformat(), "monthly", count, "/model-drops.tsv", 1])
     return out

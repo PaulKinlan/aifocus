@@ -51,4 +51,5 @@ test("the plotted line and the swatches carry the pattern, not just the colour",
   );
   assert.equal(script.match(/swatchFor\(/g).length >= 3, true, "the legend and tooltip should both use the stroke swatch");
   assert.doesNotMatch(script, /className = "swatch";\s*sw\.style\.background/, "a swatch is still a filled colour dot");
+  assert.doesNotMatch(page, /\.chart-host\s+svg\s*\{/, ".chart-host svg descendant rule stretches <svg class='swatch'> inside .chart-tip; scope with .chart-host > svg");
 });

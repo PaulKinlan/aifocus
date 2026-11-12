@@ -535,7 +535,7 @@ def case_common_range_bounds():
                           f"finite_in_range count {bad!r}")
 
 
-# --- model-gap: schedule + showcase manifest guarded before writing JSON/CSVs -
+# --- model-gap: schedule + chromestatus milestone features guarded ------------
 
 def model_gap_fixture():
     return {
@@ -552,7 +552,20 @@ def model_gap_fixture():
     }
 
 
-def model_gap_main(schedule, showcase, metric="releases", run_date="2025-03-10", doc=None):
+def cs_mstone(enabled=(), rollout=(), deprecated=(), removed=(), ot=(), flag=()):
+    def items(names, base):
+        return [{"id": base + i, "name": n} for i, n in enumerate(names)]
+    return ")]}'\n" + json.dumps({"features_by_type": {
+        "Enabled by default": items(enabled, 1000),
+        "Stepped rollout": items(rollout, 2000),
+        "Deprecated": items(deprecated, 3000),
+        "Removed": items(removed, 4000),
+        "Origin trial": items(ot, 5000),
+        "In developer trial (Behind a flag)": items(flag, 6000),
+    }})
+
+
+def model_gap_main(schedule, milestone_responses, metric="releases", run_date="2025-03-10", doc=None):
     mod = load("stats_collect_model_gap", "tools/stats/collect-model-gap.py")
     tmp = pathlib.Path(tempfile.mkdtemp())
     data = tmp / "data"
@@ -571,12 +584,17 @@ def model_gap_main(schedule, showcase, metric="releases", run_date="2025-03-10",
     mod.CONFIG = str(config)
     mod.DATA_DIR = str(data)
     mod.MODEL_GAP_JSON = str(mg_path)
-    s_body = schedule if isinstance(schedule, str) else json.dumps(schedule)
-    f_body = showcase if isinstance(showcase, str) else json.dumps(showcase)
+    s_resp = schedule if isinstance(schedule, FakeResponse) else FakeResponse(
+        schedule if isinstance(schedule, str) else json.dumps(schedule)
+    )
+    m_resps = [
+        r if isinstance(r, FakeResponse) else FakeResponse(r if isinstance(r, str) else json.dumps(r))
+        for r in milestone_responses
+    ]
     argv = sys.argv
     sys.argv = ["collect-model-gap.py", "--series", "mg-test", "--run-date", run_date]
     try:
-        with Stub([FakeResponse(s_body), FakeResponse(f_body)]):
+        with Stub([s_resp, *m_resps]):
             mod.main()
     finally:
         sys.argv = argv
@@ -592,54 +610,55 @@ def case_model_gap_accepts_releases_and_features():
         {"mstone": 134, "stable_date": "2025-03-04T00:00:00"},
         {"mstone": 135, "stable_date": "2025-04-01T00:00:00"},
     ]}
-    showcase = [
-        {"id": "v132/css-inertness", "status": "built"},
-        {"id": "v133/dialog-light-dismiss", "status": "built"},
-        {"id": "v133/popover-hint", "status": "built"},
-        {"id": "v134/css-shape-function", "status": "built"},
-    ]
-    rel_rows, updated = model_gap_main(schedule, showcase, metric="releases")
-    # 135 has no showcase features and is after run_date (2025-03-10), so omitted
+    m132 = cs_mstone(enabled=["CSS inertness"])
+    # Origin trials and developer-flag items must be excluded from shipped counts
+    m133 = cs_mstone(enabled=["Dialog light dismiss"], rollout=["Popover hint"], ot=["Experimental OT"], flag=["Flagged"])
+    m134 = cs_mstone(enabled=["CSS shape() function"])
+    rel_rows, updated = model_gap_main(schedule, [m132, m133, m134], metric="releases")
+    # 135 is after run_date (2025-03-10), so omitted
     assert [ms["m"] for ms in updated["chromeMilestones"]] == [132, 133, 134], updated
-    assert updated["chromeMilestones"][1]["features"] == ["dialog-light-dismiss", "popover-hint"]
-    # weeks from 2025-01-27 ending < 2025-03-10:
-    # 01-27..02-02 (0), 02-03..02-09 (1), 02-10..02-16 (1), 02-17..02-23 (1), 02-24..03-02 (1), 03-03..03-09 (2)
+    assert updated["chromeMilestones"][1]["features"] == ["dialog-light-dismiss", "popover-hint"], updated
     assert [r[4] for r in rel_rows[1:]] == ["0", "1", "1", "1", "1", "2"], rel_rows
-    feat_rows, _ = model_gap_main(schedule, showcase, metric="features")
+    feat_rows, _ = model_gap_main(schedule, [m132, m133, m134], metric="features")
     assert [r[4] for r in feat_rows[1:]] == ["0", "2", "2", "2", "2", "3"], feat_rows
 
 
 def case_model_gap_rejects_bad_milestone_or_date():
-    good_showcase = [{"id": "v133/popover-hint", "status": "built"}]
+    good_cs = [cs_mstone(enabled=["Popover hint"])] * 3
     for bad_m in (0, 1001, True, 133.5, "abc", float("nan")):
         expect_data_error(
-            lambda b=bad_m: model_gap_main({"mstones": [{"mstone": b, "stable_date": "2025-02-04"}]}, good_showcase),
+            lambda b=bad_m: model_gap_main({"mstones": [{"mstone": b, "stable_date": "2025-02-04"}]}, good_cs),
             f"model-gap bad mstone {bad_m!r}",
         )
     for bad_date in ("not-a-date", "2025-13-40", "", None, 20250204):
         expect_data_error(
-            lambda d=bad_date: model_gap_main({"mstones": [{"mstone": 133, "stable_date": d}]}, good_showcase),
+            lambda d=bad_date: model_gap_main({"mstones": [{"mstone": 133, "stable_date": d}]}, good_cs),
             f"model-gap bad stable_date {bad_date!r}",
         )
 
 
-def case_model_gap_rejects_unsafe_feature_slug():
+def case_model_gap_rejects_bad_chromestatus_feature():
     sched = {"mstones": [{"mstone": 133, "stable_date": "2025-02-04T00:00:00"}]}
-    for bad_id in ("v133/<img src=x>", "v133/../escape", "v133/UpperCase", "other/path", ""):
+    m132 = cs_mstone(enabled=["CSS inertness"])
+    for bad_payload in (
+        {"features_by_type": "not-a-dict"},
+        {"features_by_type": {"Enabled by default": [{"id": True, "name": "Bad bool id"}]}},
+        {"features_by_type": {"Enabled by default": [{"id": -5, "name": "Negative id"}]}},
+        {"features_by_type": {"Enabled by default": [{"id": 1, "name": "   "}]}},
+    ):
         expect_data_error(
-            lambda i=bad_id: model_gap_main(sched, [{"id": i, "status": "built"}]),
-            f"model-gap unsafe route id {bad_id!r}",
+            lambda p=bad_payload: model_gap_main(sched, [m132, p]),
+            f"model-gap bad chromestatus payload {bad_payload!r}",
         )
-    expect_data_error(lambda: model_gap_main(sched, []), "model-gap empty showcase manifest")
 
 
 def case_model_gap_over_cap_body_refused():
     huge = "x" * (common.MAX_RESPONSE_BYTES + 1)
     good_sched = {"mstones": [{"mstone": 133, "stable_date": "2025-02-04T00:00:00"}]}
-    expect_data_error(lambda: model_gap_main(huge, [{"id": "v133/popover-hint", "status": "built"}]),
+    expect_data_error(lambda: model_gap_main(huge, [cs_mstone(enabled=["Popover hint"])]),
                       "model-gap over-cap schedule")
-    expect_data_error(lambda: model_gap_main(good_sched, huge),
-                      "model-gap over-cap showcase")
+    expect_data_error(lambda: model_gap_main(good_sched, [huge]),
+                      "model-gap over-cap chromestatus")
 
 
 # --- model-halflife: OpenRouter catalogue guarded + deduplicated before TSV ---
@@ -702,12 +721,11 @@ def case_model_halflife_accepts_and_dedups_drops():
     assert len(tsv_lines) == 5, tsv_lines
     # Gaps: 02-05->04-16 = 70d; 04-16->05-27 = 41d (median of [41,70] = 55.5 -> 56);
     # 05-27->07-24 = 58d (median of [41,58,70] = 58).
-    # Complete months Apr..Sep 2026: Apr=70, May=56, Jun=56, Jul=58, Aug=58, Sep=58
-    assert [r[4] for r in gap_rows[1:]] == ["70", "56", "56", "58", "58", "58"], gap_rows
+    # Complete months Apr..Sep 2026 + partial Oct (2026-10-01..2026-10-05):
+    assert [r[4] for r in gap_rows[1:]] == ["70", "56", "56", "58", "58", "58", "58"], gap_rows
     drop_rows, _ = model_halflife_main(payload, metric="monthly_drops")
     all_counts = [r[4] for r in drop_rows[1:] if r[0] == "All tracked labs"]
-    # Apr=1, May=1, Jun=0, Jul=1, Aug=0, Sep=0
-    assert all_counts == ["1", "1", "0", "1", "0", "0"], all_counts
+    assert all_counts == ["1", "1", "0", "1", "0", "0", "0"], all_counts
 
 
 def case_model_halflife_rejects_hostile_created():
@@ -748,7 +766,7 @@ CASES = {
     "openrouter-rejects-hostile-chart-tokens": case_openrouter_rejects_hostile_chart_tokens,
     "model-gap-accepts-releases-and-features": case_model_gap_accepts_releases_and_features,
     "model-gap-rejects-bad-milestone-or-date": case_model_gap_rejects_bad_milestone_or_date,
-    "model-gap-rejects-unsafe-feature-slug": case_model_gap_rejects_unsafe_feature_slug,
+    "model-gap-rejects-bad-chromestatus-feature": case_model_gap_rejects_bad_chromestatus_feature,
     "model-gap-over-cap-body-refused": case_model_gap_over_cap_body_refused,
     "model-halflife-accepts-and-dedups-drops": case_model_halflife_accepts_and_dedups_drops,
     "model-halflife-rejects-hostile-created": case_model_halflife_rejects_hostile_created,

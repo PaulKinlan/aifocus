@@ -371,11 +371,16 @@ def slim(compiled):
     out = json.loads(json.dumps(compiled))
     for s in out["series"]:
         for block in [s] + s.get("derived", []):
+            primary = block.get("primary")
             for t in block["tools"]:
-                # The page draws from `chart` and `table`; the per-period history
-                # stays in the run CSVs (collect-github.py reads those directly).
+                # The page draws from `chart` and `table`, and only reads KPI
+                # fields from the primary tool; the per-period history stays in
+                # the run CSVs (collect-github.py reads those directly).
                 t.pop("points", None)
                 t.pop("prior", None)
+                if t.get("name") != primary:
+                    for k in ("method", "query", "value_format", "ago", "change_prior", "change_ago", "total", "total_fmt", "latest_fmt"):
+                        t.pop(k, None)
     return out
 
 

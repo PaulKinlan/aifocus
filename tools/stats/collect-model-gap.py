@@ -1,21 +1,26 @@
 #!/usr/bin/env python3
 """
-tools/stats/collect-model-gap.py - track Chrome stable releases and catalogued
-platform features shipped after each model's published knowledge cutoff.
+tools/stats/collect-model-gap.py - track Chrome stable releases and shipped web
+platform features (from Chrome Platform Status) after each model's published
+knowledge cutoff.
 
     python3 tools/stats/collect-model-gap.py --series model-gap-releases
     python3 tools/stats/collect-model-gap.py --series model-gap-features
+    python3 tools/stats/collect-model-gap.py --series model-gap-releases --full
 
-No credentials. Two unauthenticated GETs through collector_common.fetch_json_capped:
+No credentials. Unauthenticated GETs through collector_common:
   1. Chromium Dash milestone schedule (stable release dates per Chrome milestone)
      https://chromiumdash.appspot.com/fetch_milestone_schedule?offset=-35&n=45
-  2. chrome-platform-showcase route manifest (built feature demos per milestone)
-     https://raw.githubusercontent.com/PaulKinlan/chrome-platform-showcase/main/.route-manifest.baseline.json
+  2. Chrome Platform Status milestone features API (shipped features per milestone)
+     https://chromestatus.com/api/v0/features?milestone=<m>
 
-Unless --no-update-json is passed, the collector refreshes chromeMilestones and
-updated in static/model-gap.json so the embedded /model-gap.html timeline stays
-current alongside /stats/. Model entries and their published cutoffs in
-static/model-gap.json remain hand-curated.
+Counts features in the shipped stable buckets of features_by_type ("Enabled by
+default", "Stepped rollout", "Deprecated", "Removed"), excluding flags and
+origin trials ("Origin trial", "In developer trial (Behind a flag)").
+
+Unless --no-update-json is passed, refreshes chromeMilestones and updated in
+static/model-gap.json (re-fetching the trailing `resample` milestones plus any
+milestone missing features, or every milestone when --full is passed).
 
 Series config (tools/stats/series.json):
   "kind": "model-gap", "metric": "releases" | "features",
@@ -23,7 +28,6 @@ Series config (tools/stats/series.json):
 """
 
 import argparse
-import collections
 import csv
 import json
 import os
@@ -35,18 +39,27 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
-from collector_common import CollectorDataError, UA, fetch_json_capped, finite_in_range  # noqa: E402
+from collector_common import (  # noqa: E402
+    UA,
+    CollectorDataError,
+    fetch_capped,
+    fetch_json_capped,
+    finite_in_range,
+    non_negative_int,
+)
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ROOT = os.path.abspath(os.path.join(_HERE, "..", ".."))
 CONFIG = os.path.join(ROOT, "tools", "stats", "series.json")
 DATA_DIR = os.path.join(ROOT, "static", "data")
 MODEL_GAP_JSON = os.path.join(ROOT, "static", "model-gap.json")
 
 SCHEDULE_URL = "https://chromiumdash.appspot.com/fetch_milestone_schedule?offset=-35&n=45"
-SHOWCASE_URL = "https://raw.githubusercontent.com/PaulKinlan/chrome-platform-showcase/main/.route-manifest.baseline.json"
+CHROMESTATUS_MILESTONE_URL = "https://chromestatus.com/api/v0/features?milestone={m}"
+
+SHIPPED_BUCKETS = ("Enabled by default", "Stepped rollout", "Deprecated", "Removed")
 
 ISO_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:$|T)")
-ROUTE_ID_RE = re.compile(r"^v(\d+)/([a-z0-9][a-z0-9-]*)$")
+SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 HTTPS_URL_RE = re.compile(r"^https://[^\s\"'<>]+$")
 
 
@@ -69,6 +82,15 @@ def parse_milestone_int(raw, label):
     return int(v)
 
 
+def slugify_feature(name, feat_id):
+    if not isinstance(name, str) or not name.strip():
+        raise CollectorDataError(f"chromestatus feature {feat_id} has empty or non-string name: {name!r}")
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:80].rstrip("-")
+    if not slug or not SLUG_RE.match(slug):
+        slug = f"feature-{feat_id}"
+    return slug
+
+
 def fetch_schedule():
     payload = fetch_json_capped(SCHEDULE_URL, headers={"User-Agent": UA, "Accept": "application/json"})
     if not isinstance(payload, dict) or not isinstance(payload.get("mstones"), list) or not payload["mstones"]:
@@ -83,27 +105,35 @@ def fetch_schedule():
     return out
 
 
-def fetch_showcase_features():
-    payload = fetch_json_capped(SHOWCASE_URL, headers={"User-Agent": UA, "Accept": "application/json"})
-    if not isinstance(payload, list) or not payload:
-        raise CollectorDataError("chrome-platform-showcase manifest must be a non-empty JSON list")
-    by_m = collections.defaultdict(set)
-    for item in payload:
-        if not isinstance(item, dict):
-            raise CollectorDataError(f"showcase manifest entry is not an object: {item!r}")
-        if item.get("status") != "built":
-            continue
-        raw_id = item.get("id")
-        if not isinstance(raw_id, str):
-            raise CollectorDataError(f"showcase manifest entry missing string id: {item!r}")
-        match = ROUTE_ID_RE.match(raw_id)
-        if not match:
-            raise CollectorDataError(f"showcase manifest built id {raw_id!r} does not match v<milestone>/<slug>")
-        m = parse_milestone_int(int(match.group(1)), f"showcase milestone in {raw_id!r}")
-        by_m[m].add(match.group(2))
-    if not by_m:
-        raise CollectorDataError("chrome-platform-showcase manifest contained zero built features")
-    return {m: sorted(slugs) for m, slugs in by_m.items()}
+def fetch_milestone_features(m):
+    url = CHROMESTATUS_MILESTONE_URL.format(m=m)
+    body = fetch_capped(url, headers={"User-Agent": UA, "Accept": "application/json"})
+    # chromestatus prefixes JSON responses with )]}' to prevent XSSI.
+    if body.startswith(")]}'"):
+        body = body.split("\n", 1)[1]
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as err:
+        raise CollectorDataError(f"chromestatus M{m}: invalid JSON") from err
+    if not isinstance(payload, dict) or not isinstance(payload.get("features_by_type"), dict):
+        raise CollectorDataError(f"chromestatus M{m}: missing features_by_type object")
+
+    fbt = payload["features_by_type"]
+    seen_ids = set()
+    slugs = []
+    for bucket in SHIPPED_BUCKETS:
+        items = fbt.get(bucket, [])
+        if not isinstance(items, list):
+            raise CollectorDataError(f"chromestatus M{m} bucket {bucket!r} is not a list")
+        for item in items:
+            if not isinstance(item, dict):
+                raise CollectorDataError(f"chromestatus M{m} feature entry is not an object")
+            fid = non_negative_int(item.get("id"), f"chromestatus M{m} feature id")
+            if fid in seen_ids:
+                continue
+            seen_ids.add(fid)
+            slugs.append(slugify_feature(item.get("name"), fid))
+    return sorted(slugs)
 
 
 def validate_model_gap_doc(doc):
@@ -131,33 +161,38 @@ def validate_model_gap_doc(doc):
         if not isinstance(feats, list):
             raise CollectorDataError(f"model-gap.json M{m} features must be a list")
         for slug in feats:
-            if not isinstance(slug, str) or not re.match(r"^[a-z0-9][a-z0-9-]*$", slug):
+            if not isinstance(slug, str) or not SLUG_RE.match(slug):
                 raise CollectorDataError(f"model-gap.json M{m} invalid feature slug {slug!r}")
 
 
-def refresh_model_gap_doc(doc, run_date):
+def refresh_model_gap_doc(doc, run_date, *, full=False, resample=3):
     validate_model_gap_doc(doc)
     rd = parse_iso_date(run_date, "run_date")
     schedule = fetch_schedule()
-    showcase = fetch_showcase_features()
 
     by_m = {}
     for ms in doc["chromeMilestones"]:
         m = int(ms["m"])
-        by_m[m] = {"m": m, "date": ms["date"], "features": list(ms.get("features", []))}
+        if parse_iso_date(ms["date"], f"M{m} date") <= rd:
+            by_m[m] = {"m": m, "date": ms["date"], "features": list(ms.get("features", []))}
 
     for m, stable_date in sorted(schedule.items()):
-        if m in by_m or stable_date <= rd or m in showcase:
-            feats = showcase[m] if m in showcase else by_m.get(m, {}).get("features", [])
-            by_m[m] = {"m": m, "date": stable_date.isoformat(), "features": feats}
+        if stable_date <= rd or m in by_m:
+            by_m[m] = {
+                "m": m,
+                "date": stable_date.isoformat(),
+                "features": by_m.get(m, {}).get("features", []),
+            }
 
-    for m, feats in sorted(showcase.items()):
-        if m in by_m:
-            by_m[m]["features"] = feats
+    all_m = sorted(by_m)
+    recent_cutoff = set(all_m[-resample:]) if resample > 0 else set()
+    for m in all_m:
+        if full or m in recent_cutoff or not by_m[m]["features"]:
+            by_m[m]["features"] = fetch_milestone_features(m)
 
     updated_doc = dict(doc)
     updated_doc["updated"] = rd.isoformat()
-    updated_doc["chromeMilestones"] = [by_m[m] for m in sorted(by_m)]
+    updated_doc["chromeMilestones"] = [by_m[m] for m in all_m]
     validate_model_gap_doc(updated_doc)
     return updated_doc
 
@@ -208,6 +243,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--series", required=True)
     ap.add_argument("--run-date")
+    ap.add_argument("--full", action="store_true", help="re-fetch ChromeStatus feature lists for every milestone")
     ap.add_argument("--no-update-json", action="store_true", help="compute CSV rows from model-gap.json without fetching or rewriting it")
     args = ap.parse_args()
 
@@ -222,7 +258,7 @@ def main():
         doc = json.load(f)
 
     if not args.no_update_json:
-        doc = refresh_model_gap_doc(doc, run_date)
+        doc = refresh_model_gap_doc(doc, run_date, full=args.full)
         with open(MODEL_GAP_JSON, "w", encoding="utf-8") as f:
             json.dump(doc, f, indent=2, ensure_ascii=False)
             f.write("\n")

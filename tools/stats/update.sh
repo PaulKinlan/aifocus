@@ -31,24 +31,24 @@ for arg in "$@"; do [ "$arg" = "--dry-run" ] && DRY="--dry-run"; done
 
 echo "== stats update $RUN_DATE"
 if [ -z "$DRY" ]; then
-  python3 -I tools/stats/collect-chromestatus.py --series service-worker-page-loads --run-date "$RUN_DATE" || echo "chromestatus collector failed; continuing"
-  python3 -I tools/stats/collect-httparchive.py --series react-httparchive --run-date "$RUN_DATE" || echo "httparchive collector failed; continuing"
-  python3 -I tools/stats/collect-w3techs.py --series react-w3techs --run-date "$RUN_DATE" || echo "w3techs collector failed; continuing"
+  python3 -B tools/stats/collect-chromestatus.py --series service-worker-page-loads --run-date "$RUN_DATE" || echo "chromestatus collector failed; continuing"
+  python3 -B tools/stats/collect-httparchive.py --series react-httparchive --run-date "$RUN_DATE" || echo "httparchive collector failed; continuing"
+  python3 -B tools/stats/collect-w3techs.py --series react-w3techs --run-date "$RUN_DATE" || echo "w3techs collector failed; continuing"
   for s in openrouter-tokens openrouter-task-share; do
-    python3 -I tools/stats/collect-openrouter.py --series "$s" --run-date "$RUN_DATE" || echo "openrouter collector ($s) failed; continuing"
+    python3 -B tools/stats/collect-openrouter.py --series "$s" --run-date "$RUN_DATE" || echo "openrouter collector ($s) failed; continuing"
   done
-  python3 -I tools/stats/collect-model-gap.py --series model-gap-releases --run-date "$RUN_DATE" || echo "model-gap collector (model-gap-releases) failed; continuing"
-  python3 -I tools/stats/collect-model-gap.py --series model-gap-features --run-date "$RUN_DATE" --no-update-json || echo "model-gap collector (model-gap-features) failed; continuing"
-  python3 -I tools/stats/collect-model-halflife.py --series model-halflife-cadence --run-date "$RUN_DATE" || echo "model-halflife collector (model-halflife-cadence) failed; continuing"
-  python3 -I tools/stats/collect-model-halflife.py --series model-halflife-drops --run-date "$RUN_DATE" --no-update-tsv || echo "model-halflife collector (model-halflife-drops) failed; continuing"
+  python3 -B tools/stats/collect-model-gap.py --series model-gap-releases --run-date "$RUN_DATE" || echo "model-gap collector (model-gap-releases) failed; continuing"
+  python3 -B tools/stats/collect-model-gap.py --series model-gap-features --run-date "$RUN_DATE" --no-update-json || echo "model-gap collector (model-gap-features) failed; continuing"
+  python3 -B tools/stats/collect-model-halflife.py --series model-halflife-cadence --run-date "$RUN_DATE" || echo "model-halflife collector (model-halflife-cadence) failed; continuing"
+  python3 -B tools/stats/collect-model-halflife.py --series model-halflife-drops --run-date "$RUN_DATE" --no-update-tsv || echo "model-halflife collector (model-halflife-drops) failed; continuing"
 fi
 for s in $SERIES; do
   echo "== $s"
-  python3 -I tools/stats/collect-github.py --series "$s" --run-date "$RUN_DATE" "$@"
+  python3 -B tools/stats/collect-github.py --series "$s" --run-date "$RUN_DATE" "$@"
 done
 [ -n "$DRY" ] && exit 0
 
-python3 -I tools/stats/build.py ${STATS_REPORT:+--report "$STATS_REPORT"}
+python3 -B tools/stats/build.py ${STATS_REPORT:+--report "$STATS_REPORT"}
 
 cat <<MSG
 
@@ -57,7 +57,7 @@ Manual series (edit the CSV, then re-run: python3 tools/stats/build.py):
     python3 tools/stats/manual-add.py react-builtwith "BuiltWith: React live sites" <n>
     python3 tools/stats/manual-add.py react-builtwith "BuiltWith: React in top 1m" <n>
   static/data/manual/openrouter-programming.csv  frozen: the per-category ranking it came from is gone; see openrouter-tokens
-  static/model-gap.json  Chrome milestones and showcase features refresh above; add new models and published cutoffs by hand
+  static/model-gap.json  Chrome milestones and chromestatus.com features refresh above; add new models and published cutoffs by hand
   static/model-drops.tsv  headline OpenRouter text models sync above; add off-OpenRouter releases or date corrections by hand
 
 Changed files:

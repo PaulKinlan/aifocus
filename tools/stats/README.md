@@ -15,7 +15,7 @@ collectors and the compile step; the page itself is `content/stats.md` +
 | `tools/stats/collect-httparchive.py` | HTTP Archive tech report collector (React origins, monthly, from `cdn.httparchive.org/v1`). |
 | `tools/stats/collect-openrouter.py` | OpenRouter collector: weekly token totals from the rankings chart and the task-category shares. |
 | `tools/stats/collect-w3techs.py` | W3Techs collector: share of all websites using React, monthly for the trailing year. |
-| `tools/stats/collect-model-gap.py` | Model-gap collector: fetches Chrome stable dates from Chromium Dash and built demos from `chrome-platform-showcase`, updates `static/model-gap.json`, and writes weekly missed-release and missed-feature counts per model. |
+| `tools/stats/collect-model-gap.py` | Model-gap collector: fetches Chrome stable dates from Chromium Dash and shipped milestone features from `chromestatus.com`, updates `static/model-gap.json`, and writes weekly missed-release and missed-feature counts per model. |
 | `tools/stats/collect-model-halflife.py` | Model half-life collector: syncs new headline text-model releases from OpenRouter `/api/v1/models` into `static/model-drops.tsv`, and writes monthly trailing-3-gap medians per model series and monthly release counts. |
 | `tools/stats/manual-add.py` | Appends one hand-read figure to a manual series and rebuilds (`--list` shows what to read). |
 | `tools/stats/build.py` | Merges every run CSV into `data/stats.json` and prints the change report. |
@@ -120,8 +120,9 @@ the essays (step 4) stays manual.
   technologies (the CMS numbers in whither-cms, for instance) are one more
   series entry each with `"kind": "httparchive"`.
 - **Model cutoffs and off-OpenRouter drops**: `collect-model-gap.py` refreshes
-  Chrome milestone dates and `chrome-platform-showcase` feature lists in
-  `static/model-gap.json`, and `collect-model-halflife.py` syncs new headline
+  Chrome milestone dates (from Chromium Dash) and shipped milestone feature
+  lists (from `chromestatus.com`) in `static/model-gap.json`, and
+  `collect-model-halflife.py` syncs new headline
   text models from OpenRouter `/api/v1/models` into `static/model-drops.tsv`,
   compiling both onto `/stats/`. Published knowledge cutoffs for newly released
   models in `static/model-gap.json` (and releases that never appear on
