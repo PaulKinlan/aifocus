@@ -631,14 +631,18 @@ const HREF_KEY = `(?:${HREF_QUOTE}href${HREF_QUOTE}|${spelledApart("href")})`;
 // read: a quoted or interpolation-free template literal, a bare identifier, or a
 // member expression ending in '.href'. Anything assembled from a runtime expression
 // stays out.
-const HREF_NAME = `(?:${HREF_QUOTE}href${HREF_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*href)`;
+// A qualified name is the same attribute: 'xlink:href' is how SVG spells the
+// link target, so a raw value there is the same sink, and the name to compare is
+// its last ':'-separated segment. A space between a function name and its call
+// paren is not significant either (aifocus-jjbw).
+const HREF_NAME = `(?:${HREF_QUOTE}(?:[\\w$.-]+:)*href${HREF_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*href)`;
 // setAttributeNS(namespace, name, value) names the attribute in its SECOND
 // argument, so the namespace is skipped without assuming anything about it - and
 // its arguments may sit on separate lines, which the statement join covers.
 const HREF_ASSIGNMENT = new RegExp(
   String.raw`\.href\s*` + HREF_OP + String.raw`\s*` +
   String.raw`|\[\s*` + HREF_KEY + String.raw`\s*\]\s*` + HREF_OP + String.raw`\s*` +
-  String.raw`|\bsetAttribute(?:NS)?\(\s*(?:[^,()]*,\s*)?` + HREF_NAME + String.raw`\s*,` +
+  String.raw`|\bsetAttribute(?:NS)?\s*\(\s*(?:[^,()]*,\s*)?` + HREF_NAME + String.raw`\s*,` +
   String.raw`|\bhref\s*:\s*`,
 );
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
@@ -1069,6 +1073,14 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "x[`href`] = item.post;",
     "el.setAttribute(href, item.post);",
     "el.setAttribute(NAMES.href, item.post);",
+    // A qualified name is the same attribute: 'xlink:href' is how SVG spells the
+    // link target, and a space between a function name and its call paren is not
+    // significant (aifocus-jjbw).
+    'el.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", item.post);',
+    'el.setAttribute("xlink:href", item.post);',
+    "el.setAttributeNS(ns, `xlink:href`, item.post);",
+    'el.setAttribute ("href", item.post);',
+    'el.setAttributeNS (ns, "href", item.post);',
   ]) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
   }
@@ -1091,6 +1103,11 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     'el.setAttribute("data-url", obj.href);',
     "el.setAttribute(post.path, item.post);",
     "el.setAttribute(`h${x}ref`, item.post);",
+    // Only the LAST ':'-separated segment decides: a hyphenated name that merely
+    // contains href, and a qualified name that names something else, are not this
+    // rule's business.
+    'el.setAttribute("data-href", item.post);',
+    'el.setAttribute("xml:lang", item.lang);',
   ]) {
     assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
   }
