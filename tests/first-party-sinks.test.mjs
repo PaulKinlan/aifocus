@@ -639,8 +639,19 @@ const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelled
 // identifier or member expression ending in the name, or a ':'-qualified name
 // whose last segment is it ('xlink:href', aifocus-jjbw). Anything assembled from a
 // runtime expression stays out - the same computed-key limit stated above.
+// The name argument of setAttribute/setAttributeNS, in any spelling this scan can
+// read: a quoted or interpolation-free template literal (aifocus-jfil), a bare
+// identifier or member expression ending in the name, a ':'-qualified name whose
+// last segment is it ('xlink:href', aifocus-jjbw), or a STATIC concatenation of
+// quoted literals - 'hr' + 'ef', and the qualified 'xlink:' + 'href' (aifocus-45d5).
+// The key branch has always read static concat because the engine folds it; the
+// name branch read only a whole name inside one quote pair, so the same spelling
+// was caught in brackets and missed in a call. A name with a runtime operand
+// ('prefix + "href"') still stays out: that is assembly, not a spelling.
 const attributeName = (token) =>
-  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${token}${NAME_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*${token})`;
+  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${token}${NAME_QUOTE}` +
+  `|(?:${NAME_QUOTE}[\\w$.-]+:${NAME_QUOTE}\\s*\\+\\s*)?${attributeKey(token)}` +
+  `|(?:[A-Za-z_$][\\w$]*\\.)*${token})`;
 
 // setAttributeNS(namespace, name, value) names the attribute in its SECOND
 // argument, so the namespace is skipped without assuming anything about it - and
@@ -1249,6 +1260,12 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "el.setAttributeNS(ns, `xlink:href`, item.post);",
     'el.setAttribute ("href", item.post);',
     'el.setAttributeNS (ns, "href", item.post);',
+    // A statically concatenated name is a spelling, not assembly: the engine folds
+    // the operands, and the key branch has always read that (aifocus-45d5).
+    'el.setAttribute("hr" + "ef", item.post);',
+    "el.setAttribute('h' + 'ref', item.post);",
+    'el.setAttributeNS(ns, "xlink:" + "href", item.post);',
+    "el.setAttributeNS(ns, `xlink:` + `href`, item.post);",
   ]) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
   }
@@ -1276,6 +1293,12 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     // rule's business.
     'el.setAttribute("data-href", item.post);',
     'el.setAttribute("xml:lang", item.lang);',
+    // A name with a runtime operand is assembly, not a spelling, and a join that
+    // spells something else is not this rule's business.
+    'el.setAttribute(prefix + "href", item.post);',
+    'el.setAttributeNS(ns, prefix + "href", item.post);',
+    'el.setAttribute("a" + "b", item.post);',
+    'el.setAttribute("xlink:" + "src", item.post);',
   ]) {
     assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
   }
