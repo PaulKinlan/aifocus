@@ -17,14 +17,25 @@ test("gate reporter attributes executed files, not skipped or failed-to-load fil
     fs.writeFileSync(path.join(root, "tests/skipped.test.mjs"),
       'import test from "node:test"; test.skip("not run", () => {});\n');
     fs.writeFileSync(path.join(root, "tests/unloaded.test.mjs"), "this is invalid js syntax\n");
+    fs.writeFileSync(path.join(root, "tests/group-skipped.test.mjs"),
+      'import { describe, it } from "node:test"; describe("group", () => { it.skip("skipped inner", () => {}); });\n');
+    fs.writeFileSync(path.join(root, "tests/group-disabled.test.mjs"),
+      'import { describe, it } from "node:test"; describe.skip("group", () => { it("disabled", () => {}); });\n');
+    fs.writeFileSync(path.join(root, "tests/todo.test.mjs"),
+      'import test from "node:test"; test.todo("not yet implemented");\n');
+    fs.writeFileSync(path.join(root, "tests/group-ran.test.mjs"),
+      'import { describe, it } from "node:test"; describe("group", () => { it("inner ran", () => {}); });\n');
     const env = { ...process.env };
     delete env.NODE_TEST_CONTEXT; // this is a separate test-runner integration probe
     const run = spawnSync(process.execPath, ["--test", `--test-reporter=${reporter}`,
-      "tests/ran.test.mjs", "tests/skipped.test.mjs", "tests/unloaded.test.mjs"],
+      "tests/ran.test.mjs", "tests/group-ran.test.mjs", "tests/skipped.test.mjs",
+      "tests/group-skipped.test.mjs", "tests/group-disabled.test.mjs", "tests/todo.test.mjs",
+      "tests/unloaded.test.mjs"],
     { cwd: root, env, encoding: "utf8", timeout: 15_000 });
     assert.equal(run.status, 1, `a parse failure must fail the gate: ${run.error || run.stderr}`);
     assert.match(run.stdout, /fast-gate: ran: tests\/ran\.test\.mjs/);
-    assert.doesNotMatch(run.stdout, /fast-gate: ran: tests\/(?:skipped|unloaded)\.test\.mjs/);
+    assert.match(run.stdout, /fast-gate: ran: tests\/group-ran\.test\.mjs/);
+    assert.doesNotMatch(run.stdout, /fast-gate: ran: tests\/(?:skipped|unloaded|group-skipped|group-disabled|todo)\.test\.mjs/);
     assert.match(run.stdout, /actual case/);
     assert.match(run.stdout, /SyntaxError/, "spec diagnostics must survive a failing file");
     assert.match(run.stdout, /ℹ fail 1/, "Node failure summary must survive the reporter");

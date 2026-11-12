@@ -10,7 +10,8 @@ export default async function* nodeTestEvidence(source) {
   async function* observe() {
     for await (const event of source) {
       if ((event.type === "test:pass" || event.type === "test:fail") &&
-          event.data.entryFile && !event.data.skip && !event.data.todo) {
+          event.data.details?.type === "test" && event.data.entryFile &&
+          !event.data.skip && !event.data.todo) {
         const file = path.relative(process.cwd(), event.data.entryFile).replaceAll(path.sep, "/");
         if (file.startsWith("tests/") && file.endsWith(".test.mjs")) executed.add(file);
       }
