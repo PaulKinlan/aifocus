@@ -658,28 +658,99 @@ function statementEnd(text) {
   return -1;
 }
 
+// A line break continues a statement when it falls at an operator, a comma, an
+// opening bracket, or a closing bracket that finishes a call the previous line
+// opened (aifocus-1wjv: 'img.src = safeImgSrc(x' / ')'). A property dot also
+// continues, because JavaScript reads a member name from the next line - but
+// only when the next line really starts a member name, so a period that ends a
+// sentence in a comment continues nothing.
+const CONTINUES_AFTER = /[=+\-*/%&|^?:!,([{<>~]\s*$/;
+const CONTINUES_BEFORE = /^\s*[=+\-*/%&|^?:.,([<>~)\]}]/;
+const continuesStatement = (line, nextLine) =>
+  CONTINUES_AFTER.test(line) || CONTINUES_BEFORE.test(nextLine) ||
+  (/\.\s*$/.test(line) && !/^\s*\/\//.test(line) && /^\s*[\w$]/.test(nextLine));
+
+// A member name may sit on the line after its dot, so neither the sink pattern
+// nor the provider field is safe to match against raw source: '.src' can be
+// '.', newline, 'src' (aifocus-1wjv). Rejoin only the dot break - every other
+// newline stays, because statementEnd and the comment handling read line
+// boundaries to know where a statement and a comment end.
+const glueAfterDot = (text) => text.replace(/\.\n[ \t]*/g, ".");
+
+// Both sink rules name 'href', 'src' or 'setAttribute' literally, and a join can
+// never split one of those tokens (it rejoins at a dot, an operator or a
+// bracket, never inside a name), so a line pair that mentions none of them
+// cannot open a sink statement. This is what keeps the join attempt off the
+// thousands of lines that cannot start one: joining on every line cost the
+// real-tree scans 105x their previous time (6.7 ms -> 706 ms over the 20 first-
+// party files), which is a gate cost paid for nothing.
+const SINK_TOKEN = /href|src|setAttribute/;
+
 // Retain the pre-existing full physical-line check (including two sinks on a
-// line), then check each wrapped sink expression separately. An operator on
-// either side of a line break can continue an assignment, including ternaries
-// and concatenation, not just the usual fallback operators.
+// line), then check each wrapped sink expression separately, and finally check
+// statements the physical line cannot even recognise - those whose break sits
+// inside the sink pattern or between the pattern and its '='.
 function sinkStatements(source, assignment) {
   const lines = source.split("\n");
   const statements = [];
+  const seen = new Set();
   const matches = new RegExp(assignment.source, "g");
+  const push = (text, number) => {
+    // One statement reported once: a joined statement and its per-sink slice
+    // can be the same text, and a duplicate failure for one sink is noise.
+    const key = `${number}\u0000${text}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    statements.push({ text, number });
+  };
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
-    if (!assignment.test(line)) continue;
-    statements.push({ text: line, number: i + 1 });
+    if (!assignment.test(line)) {
+      const following = lines[i + 1] ?? "";
+      if (!SINK_TOKEN.test(line) && !SINK_TOKEN.test(following)) continue;
+      if (!continuesStatement(line, following)) continue;
+      let text = line;
+      let next = i;
+      // 40 lines is a bound on a pathological file, not a statement limit: a
+      // real continuation is a handful of lines, and an unbounded join over a
+      // file that never terminates a statement is quadratic.
+      while (next + 1 < lines.length && next - i < 40 &&
+        continuesStatement(lines[next], lines[next + 1])) {
+        text += `\n${lines[++next]}`;
+      }
+      if (next === i) continue;
+      const joined = glueAfterDot(text);
+      // Only a sink whose match BEGINS in this physical line: that is the one
+      // shape this branch exists for (the pattern split across the boundary).
+      // A match further down the joined text belongs to a statement the outer
+      // loop reaches on its own line, and a later line's dynamic href must not
+      // be attributed to this one - the pin list is keyed by the line it is on,
+      // so hoisting it here would report a pinned statement as unpinned.
+      const anchor = lines[i].length;
+      const inLine = [...joined.matchAll(matches)].filter((match) => match.index < anchor);
+      if (!inLine.length) continue;
+      const headEnd = statementEnd(joined);
+      const head = joined.slice(0, headEnd < 0 ? joined.length : headEnd);
+      if (assignment.test(head)) push(head, i + 1);
+      for (const match of inLine) {
+        if (match.index < head.length) continue;
+        const slice = joined.slice(match.index);
+        const end = statementEnd(slice);
+        push(end < 0 ? slice : slice.slice(0, end), i + 1);
+      }
+      continue;
+    }
+    push(line, i + 1);
     for (const match of line.matchAll(matches)) {
       let text = line.slice(match.index);
       let end = statementEnd(text);
       let next = i;
       while (end < 0 && next + 1 < lines.length &&
-        (/[=+\-*/%&|^?:!,([{<>~]\s*$/.test(lines[next]) || /^\s*[=+\-*/%&|^?:.,([<>~]/.test(lines[next + 1]))) {
+        continuesStatement(lines[next], lines[next + 1])) {
         text += `\n${lines[++next]}`;
         end = statementEnd(text);
       }
-      if (next !== i) statements.push({ text: end < 0 ? text : text.slice(0, end), number: i + 1 });
+      if (next !== i) push(end < 0 ? text : text.slice(0, end), i + 1);
     }
   }
   return statements;
@@ -977,5 +1048,63 @@ test("the profile-href guard catches the shapes it exists for", () => {
   assert.equal(
     unguardedHrefAssignments('const link = safeHref("https://example.com") || user.profileUrl;\nwrap.href = link;').length,
     1,
+  );
+});
+
+// aifocus-1wjv: the break can sit INSIDE the sink pattern or the field name, not
+// only at an operator, so a decision taken on one physical line cannot see the
+// statement at all ('img.src' + '= field', 'img.' + 'src = field', 'field.' +
+// 'name'). JavaScript accepts a newline after a dot, so these are real sinks a
+// reader could write, and the fix is that the scanner joins the continuation
+// before it decides, not that the sink patterns got looser.
+test("a break inside the sink pattern or the field name cannot hide a raw sink", () => {
+  const srcCaught = [
+    "img.src\n  = user.avatarUrl;",
+    "img.\n  src = user.avatarUrl;",
+    "img.src = user.\n  avatarUrl;",
+    "img.src = person.\n  avatar_url;",
+  ];
+  for (const sample of srcCaught) {
+    assert.equal(unguardedAvatarSrcs(sample).length, 1, `the avatar guard must catch: ${JSON.stringify(sample)}`);
+  }
+  const hrefCaught = [
+    "wrap.href\n  = user.profileUrl;",
+    "wrap.\n  href = user.profileUrl;",
+    "wrap.href = user.\n  profileUrl;",
+    "who.href = item.\n  author_profile_url;",
+  ];
+  for (const sample of hrefCaught) {
+    assert.equal(unguardedHrefAssignments(sample).length, 1, `the href guard must catch: ${JSON.stringify(sample)}`);
+  }
+  // Joining must not turn a completed guard into an alarm: the guard call still
+  // swallows the value across the break, whichever side the break is on.
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(x\n  );"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(user.\n  avatarUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref(\n  user.profileUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = safeHref(user.\n  profileUrl);"), []);
+  // A period that ends a sentence in a comment continues nothing, so a comment
+  // line above a guarded sink cannot be glued onto it and read as raw.
+  assert.deepEqual(unguardedHrefAssignments("// Values arrive from the API.\nwrap.href = safeHref(user.profileUrl);"), []);
+  assert.deepEqual(unguardedAvatarSrcs("// Set by the server.\nimg.src = safeImgSrc(user.avatarUrl);"), []);
+  // A sink sharing its first physical line with an earlier statement is still
+  // one sink (the join has to look past the earlier ';'), and a field the
+  // joined block carries BEFORE the match still counts - otherwise splitting
+  // the property across two lines would only move the hole.
+  assert.equal(unguardedAvatarSrcs("const other = 1; img.\n  src = user.avatarUrl;").length, 1);
+  assert.equal(unguardedAvatarSrcs("user.avatarUrl && (img.\n  src = user.avatarUrl);").length, 1);
+  assert.equal(unguardedHrefAssignments("const other = 1; wrap.\n  href = user.profileUrl;").length, 1);
+  // A sink that sits on a LATER line of a joined statement is that line's
+  // sink, not this one's. Reporting it here would move a pinned dynamic href
+  // to the wrong line: HREF_PINS is keyed by the statement's own line, so a
+  // pinned href read from the line above it reads as unpinned (this is exactly
+  // what assets/js/command-palette.js:327 did once the branch was merged with
+  // the aifocus-ls6a shape rule).
+  assert.deepEqual(
+    unguardedHrefAssignments(
+      '    el("ul", { class: "palette-sources" }, ...body.sources.map((source) =>\n' +
+        '      el("li", {}, el("a", { href: source.url, text: source.title }), " ",\n',
+      "assets/js/command-palette.js",
+    ),
+    [],
   );
 });
