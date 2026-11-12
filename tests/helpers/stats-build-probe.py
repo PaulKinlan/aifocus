@@ -90,5 +90,90 @@ class StatsBuildTest(unittest.TestCase):
         self.assertIsNone(derived["tools"][0]["latest"], "partial periods must not become current claims")
 
 
+    def test_claims_value_at_fallback_and_change_report(self):
+        # aifocus-bym2: value_at(), build_claims() and change_report() publish
+        # the "written as X, now Y" comparison a human reviews, but nothing
+        # executed them before this case (the --check self-comparison cannot
+        # detect a wrong number). Points cover an exact claim period, the
+        # last-point-on-or-before fallback, the not-comparable branch, the
+        # tool-missing branch and the change report's claim/revision lines.
+        tool = {
+            "name": "All", "label": "All commits", "value_format": None,
+            "points": [
+                {"s": "2025-06-16", "e": "2025-06-22", "v": 100, "fmt": "100", "full": "100", "url": "https://example.test/a", "partial": False},
+                {"s": "2025-10-27", "e": "2025-11-02", "v": 300, "fmt": "300", "full": "300", "url": "https://example.test/b", "partial": False},
+                {"s": "2026-01-05", "e": "2026-01-11", "v": 360, "fmt": "360", "full": "360", "url": "https://example.test/c", "partial": False},
+            ],
+            "latest": {"s": "2026-01-05", "e": "2026-01-11", "v": 360, "fmt": "360", "full": "360"},
+        }
+        tools = {"All": tool}
+        claims = [
+            {"text": "exact period", "tool": "All", "period": "2025-06-16", "value": 100},
+            {"text": "fallback period", "tool": "All", "period": "2025-08-01", "value": 100},
+            {"text": "not comparable", "tool": "All", "period": "2026-01-05", "value": 360, "comparable": False},
+            {"text": "missing tool", "tool": "No-such-tool", "period": "2026-01-05", "value": 5},
+        ]
+        out = build.build_claims(claims, tools, "weekly")
+        # Exact match: measured is the claim period itself, flagged exact.
+        self.assertEqual(out[0]["measured"]["s"], "2025-06-16")
+        self.assertTrue(out[0]["measured"]["exact"])
+        self.assertEqual(out[0]["period_label"], "w/c 16 Jun 2025")
+        self.assertEqual(out[0]["value_fmt"], "100")
+        # No point at 2025-08-01: the last point on or before it wins, and the
+        # row says so via exact=False rather than pretending to be exact.
+        self.assertEqual(out[1]["measured"]["s"], "2025-06-16")
+        self.assertFalse(out[1]["measured"]["exact"])
+        # The not-comparable claim publishes no change at all.
+        self.assertEqual(out[2]["change"], {"abs": None, "pct": None, "fmt": "not comparable"})
+        # A tool the series no longer knows: no measurement, no now, and the
+        # unf formatted claim value; the change degenerates to the dash.
+        self.assertIsNone(out[3]["measured"])
+        self.assertIsNone(out[3]["now"])
+        self.assertEqual(out[3]["tool_label"], "No-such-tool")
+        self.assertEqual(out[3]["value_fmt"], "5")
+        self.assertEqual(out[3]["change"], {"abs": None, "pct": None, "fmt": "\u2013"})
+        # The comparable claims do publish the change against latest.
+        self.assertEqual(out[0]["change"]["fmt"], "+260 (+260%)")
+
+        compiled = {
+            "generated": "2026-01-12T00:00:00Z",
+            "series": [
+                {
+                    "title": "Sample", "id": "sample", "unit": "records", "granularity": "weekly",
+                    "period_count": 2, "last_period_label": "w/c 5 Jan 2026",
+                    "runs": [{"date": "2026-01-16"}, {"date": "2026-01-23"}],
+                    "tools": [{
+                        "label": "All commits", "chart": True,
+                        "latest": {"s": "2026-01-05", "e": "2026-01-11", "full": "360"},
+                        "ago": {"s": "2025-12-29", "e": "2026-01-04"},
+                        "change_ago": {"fmt": "+30 (+9%)"},
+                        "points": [
+                            {"s": "2026-01-05", "runs": {"2026-01-16": None, "2026-01-23": 360}},
+                            {"s": "2025-12-29", "runs": {"2026-01-16": 330, "2026-01-23": 360}},
+                        ],
+                    }],
+                    "claims": out,
+                    "derived": [],
+                },
+                {"title": "Empty", "id": "empty", "unit": "records", "granularity": "weekly",
+                 "period_count": 0, "last_period_label": "", "runs": [], "tools": [], "claims": [], "derived": []},
+            ],
+        }
+        report = build.change_report(compiled)
+        self.assertIn("# /stats/ change report, 2026-01-12T00:00:00Z", report)
+        self.assertIn("- Latest run: 2026-01-23 (previous 2026-01-16); 2 complete periods, last complete w/c 5 Jan 2026.", report)
+        self.assertIn("**All commits**: 360 records (w/c 5 Jan 2026); vs w/c 29 Dec 2025: +30 (+9%)", report)
+        self.assertIn("; revised since previous run: 2025-12-29 +9%", report)
+        self.assertIn("- Claim: exact period: written as 100; now 360 (w/c 5 Jan 2026): +260 (+260%).", report)
+        self.assertIn("- Claim: fallback period: written as 100; now 360 (w/c 5 Jan 2026): +260 (+260%).", report)
+        # The not-comparable claim carries a now value, so it IS reported -
+        # with the "not comparable" marker instead of a fabricated delta.
+        self.assertIn("- Claim: not comparable: written as 360; now 360 (w/c 5 Jan 2026): not comparable.", report)
+        # The tool-missing claim has no now value, so change_report omits it
+        # entirely rather than inventing a comparison.
+        self.assertNotIn("missing tool", report)
+        self.assertIn("## Empty (`empty`)\n\nNo data yet.", report)
+
+
 if __name__ == "__main__":
     unittest.main()

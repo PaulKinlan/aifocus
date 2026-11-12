@@ -608,9 +608,6 @@ const HREF_PINS = {
     'el("li", {}, el("a", { href: source.url, text: source.title }), " ",', // answer source
     "location.href = run.href;", // selected palette action (includes static commands)
   ],
-  "assets/js/account-page.js": [
-    'const postLink = (post) => el("a", { href: post, text: titles.get(post) || post });',
-  ],
   "assets/js/admin-page.js": [
     "link.href = item.path;", // /api/admin/og/items path
     "preview.href = `${cardUrl(item.path)}?t=${item.updated_at || Date.now()}`;", // local /og/ builder
