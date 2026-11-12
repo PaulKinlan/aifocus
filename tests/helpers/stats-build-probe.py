@@ -166,6 +166,12 @@ class StatsBuildTest(unittest.TestCase):
         self.assertIn("; revised since previous run: 2025-12-29 +9%", report)
         self.assertIn("- Claim: exact period: written as 100; now 360 (w/c 5 Jan 2026): +260 (+260%).", report)
         self.assertIn("- Claim: fallback period: written as 100; now 360 (w/c 5 Jan 2026): +260 (+260%).", report)
+        # The not-comparable claim carries a now value, so it IS reported -
+        # with the "not comparable" marker instead of a fabricated delta.
+        self.assertIn("- Claim: not comparable: written as 360; now 360 (w/c 5 Jan 2026): not comparable.", report)
+        # The tool-missing claim has no now value, so change_report omits it
+        # entirely rather than inventing a comparison.
+        self.assertNotIn("missing tool", report)
         self.assertIn("## Empty (`empty`)\n\nNo data yet.", report)
 
 
