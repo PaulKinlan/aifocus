@@ -4,7 +4,7 @@
 // a sign-in while signed in adds that method to the current account.
 
 import { loadArticleIndex } from "./site-search.js";
-import { safeHref, safeImgSrc } from "./safe-href.js";
+import { safeHref, safeImgSrc, safePostPath } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
 const RETURN = "/account/";
@@ -56,7 +56,19 @@ const api = async (path, options = {}) => {
   return body;
 };
 
-const postLink = (post) => el("a", { href: post, text: titles.get(post) || post });
+// item.post is reader-supplied: the same sink-side rule as every other link
+// on this page. normalizePostPath keeps written values clean, but the sink
+// does not trust the writer - a legacy, migrated or manually corrected row
+// reaches this page without passing through today's writer - so only a
+// root-relative path may become an anchor, anything else renders as plain
+// text (aifocus-twij, mirroring admin-page's renderItem and the aifocus-dsqv
+// contract in safe-href.js).
+const postLink = (post) => {
+  const path = safePostPath(post);
+  return path
+    ? el("a", { href: path, text: titles.get(post) || post })
+    : el("span", { text: typeof post === "string" ? post : "" });
+};
 
 const when = (ms) => el("time", { datetime: new Date(ms).toISOString(), text: new Date(ms).toLocaleDateString() });
 
