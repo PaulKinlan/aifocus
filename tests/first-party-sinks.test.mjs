@@ -601,17 +601,20 @@ const PROFILE_URL = /profile_?url/i;
 // exactly like '=' and must not need its own line here every time a new operator
 // lands in the language (aifocus-baau). Comparisons stay out by the (?!=) guard on
 // the plain form: `x.href === y` and `x.href == y` match none of these.
-const HREF_OP = String.raw`(=(?!=)|\+=|-=|\*=|\/=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=)`;
+// One assignment-shape vocabulary for both sink rules. The href rule was the first
+// to stop enumerating its spellings; the src rule was left enumerating them, so it
+// accepted '=' only, a quoted key only and a quote-literal attribute name only, and
+// 'img.src += user.avatarUrl', 'img["src"] += user.avatarUrl' and
+// 'img.setAttribute(`src`, user.avatarUrl)' stayed green (aifocus-6its). Building
+// both rules from assignmentTo() means a spelling cannot be added to one side and
+// forgotten on the other.
+const ASSIGN_OP = String.raw`(=(?!=)|\+=|-=|\*=|\/=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=)`;
+const NAME_QUOTE = `["'\`]`;
 
 // `x["hr" + "ef"]` is the same property as `x["href"]`: the engine joins the
 // operands. Every way to split the token across '+' operands is generated rather
 // than typed out, and a non-literal operand (`x["hr" + suffix]`) stays out - the
 // same limit the markup concat-key pass states.
-// A template literal with no interpolation IS the string, and so is a member
-// expression whose last name is 'href' (NAMES.href): the name side of an
-// attribute sink is asked "does this spell href", and a static spelling this
-// scan can read should not be the reason a raw value passes (aifocus-jfil).
-const HREF_QUOTE = `["'\`]`;
 function spelledApart(token) {
   const spellings = [];
   for (let mask = 1; mask < (1 << (token.length - 1)); mask += 1) {
@@ -622,29 +625,34 @@ function spelledApart(token) {
       else chunk += token[i];
     }
     chunks.push(chunk);
-    spellings.push(chunks.map((part) => `${HREF_QUOTE}${part}${HREF_QUOTE}`).join("[ \\t]*\\+[ \\t]*"));
+    spellings.push(chunks.map((part) => `${NAME_QUOTE}${part}${NAME_QUOTE}`).join("[ \\t]*\\+[ \\t]*"));
   }
   return spellings.join("|");
 }
-const HREF_KEY = `(?:${HREF_QUOTE}href${HREF_QUOTE}|${spelledApart("href")})`;
-// The name argument of setAttribute/setAttributeNS, in any spelling the scan can
-// read: a quoted or interpolation-free template literal, a bare identifier, or a
-// member expression ending in '.href'. Anything assembled from a runtime expression
-// stays out.
-// A qualified name is the same attribute: 'xlink:href' is how SVG spells the
-// link target, so a raw value there is the same sink, and the name to compare is
-// its last ':'-separated segment. A space between a function name and its call
-// paren is not significant either (aifocus-jjbw).
-const HREF_NAME = `(?:${HREF_QUOTE}(?:[\\w$.-]+:)*href${HREF_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*href)`;
+
+// The bracket form of the property: the literal key in any quote style, or a join
+// that spells it.
+const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelledApart(token)})`;
+
+// The name argument of setAttribute/setAttributeNS, in any spelling this scan can
+// read: a quoted or interpolation-free template literal (aifocus-jfil), a bare
+// identifier or member expression ending in the name, or a ':'-qualified name
+// whose last segment is it ('xlink:href', aifocus-jjbw). Anything assembled from a
+// runtime expression stays out - the same computed-key limit stated above.
+const attributeName = (token) =>
+  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${token}${NAME_QUOTE}|(?:[A-Za-z_$][\\w$]*\\.)*${token})`;
+
 // setAttributeNS(namespace, name, value) names the attribute in its SECOND
 // argument, so the namespace is skipped without assuming anything about it - and
-// its arguments may sit on separate lines, which the statement join covers.
-const HREF_ASSIGNMENT = new RegExp(
-  String.raw`\.href\s*` + HREF_OP + String.raw`\s*` +
-  String.raw`|\[\s*` + HREF_KEY + String.raw`\s*\]\s*` + HREF_OP + String.raw`\s*` +
-  String.raw`|\bsetAttribute(?:NS)?\s*\(\s*(?:[^,()]*,\s*)?` + HREF_NAME + String.raw`\s*,` +
-  String.raw`|\bhref\s*:\s*`,
+// its arguments may sit on separate lines, which the statement join covers. A
+// space between a function name and its call paren is not significant.
+const assignmentTo = (token) => new RegExp(
+  `\\.${token}\\s*` + ASSIGN_OP + `\\s*` +
+  `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*` + ASSIGN_OP + `\\s*` +
+  `|\\bsetAttribute(?:NS)?\\s*\\(\\s*(?:[^,()]*,\\s*)?` + attributeName(token) + `\\s*,` +
+  `|\\b${token}\\s*:\\s*`,
 );
+const HREF_ASSIGNMENT = assignmentTo("href");
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
 
 // Existing non-sanitized sources are pinned by exact statement, not by the
@@ -887,7 +895,7 @@ test("every first-party dynamic href uses a guard or an exact reviewed pin", () 
 // (aifocus-8f3j), so an unvalidated avatar URL lets a provider-controlled value
 // make every reader's browser request a host of the attacker's choosing.
 const AVATAR_FIELD = /avatar_?url/i;
-const SRC_ASSIGNMENT = /\.src\s*=|\bsrc\s*:|setAttribute\(\s*["']src["']/;
+const SRC_ASSIGNMENT = assignmentTo("src");
 const SRC_GUARDED = /safeImgSrc\(/;
 
 // A provider field aliased to a local on an EARLIER line (const avatar =
@@ -980,6 +988,20 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     "img.src = person.avatarUrl;",
     'nodes.push(el("img", { src: user.avatarUrl, alt: "" }));',
     "node.setAttribute(\"src\", user.avatar_url);",
+    // The src rule is built from the same assignment vocabulary as the href rule
+    // (aifocus-6its): a compound operator writes the previous value back, a
+    // bracket key is the same property, and the attribute name is a spelling - a
+    // template, a bare identifier, a member expression, a qualified name - not a
+    // quote style.
+    "img.src += user.avatarUrl;",
+    'img["src"] += user.avatarUrl;',
+    "img.setAttribute(`src`, user.avatarUrl);",
+    'img.setAttributeNS(ns, "src", user.avatarUrl);',
+    "img.setAttribute(NAMES.src, user.avatarUrl);",
+    "img.setAttributeNS(ns, `src`, user.avatarUrl);",
+    'img["sr" + "c"] = user.avatarUrl;',
+    'img.setAttributeNS(ns, "xlink:src", user.avatarUrl);',
+    'img.setAttribute ("src", user.avatarUrl);',
     // The field aliased to a local first: both lines alone pass the line
     // pairing, the pair must not (aifocus-bnnl).
     "const avatar = user.avatarUrl;\nimg.src = avatar;",
@@ -1011,6 +1033,13 @@ test("the avatar-src guard catches the shapes it exists for", () => {
   }
   // The guarded shape, and a line that merely reads the field, must pass.
   assert.deepEqual(unguardedAvatarSrcs("const avatarSrc = safeImgSrc(user.avatarUrl);"), []);
+  // The shared vocabulary must not read a comparison as a write, a hyphenated name
+  // as the attribute, or a guarded call as a sink: the same limits the href rule
+  // states (aifocus-6its).
+  assert.deepEqual(unguardedAvatarSrcs("if (img.src === user.avatarUrl) {}"), []);
+  assert.deepEqual(unguardedAvatarSrcs("const seen = img.src;"), []);
+  assert.deepEqual(unguardedAvatarSrcs('el.setAttribute("data-src", user.avatarUrl);'), []);
+  assert.deepEqual(unguardedAvatarSrcs('el.setAttribute("src", safeImgSrc(user.avatarUrl));'), []);
   assert.deepEqual(unguardedAvatarSrcs("if (person?.avatarUrl) {}"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src =\n  safeImgSrc(user.avatarUrl);"), []);
