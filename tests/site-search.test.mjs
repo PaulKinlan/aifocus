@@ -14,6 +14,14 @@ test("matchArticles scores title above summary, preserves equal-score order and 
   const { matchArticles } = await freshSearch();
   assert.deepEqual(matchArticles(articles, "web search", 2).map((a) => a.url), ["/web/", "/search/"]);
   assert.deepEqual(matchArticles(articles, "search", 3).map((a) => a.url), ["/web/", "/search/", "/other/"]);
+  // Two summary terms (2 points) versus one title term (4 points).
+  // A weight regression from 3 to 1 or 2 reverses this deliberately ordered fixture.
+  const weighted = [
+    { title: "nothing", summary: "web search", url: "/summary-multi/" },
+    { title: "Web", summary: "nothing", url: "/title-single/" },
+  ];
+  assert.deepEqual(matchArticles(weighted, "web search", 2).map((a) => a.url),
+    ["/title-single/", "/summary-multi/"]);
   assert.deepEqual(matchArticles(articles, "   ", 1).map((a) => a.url), ["/other/"]);
   assert.deepEqual(matchArticles(articles, "missing", 10), []);
 });
@@ -69,9 +77,11 @@ test("searchSite propagates caller abort instead of falling back", async (t) => 
   const caller = new AbortController();
   const reason = new Error("user cancelled");
   let requests = 0;
-  t.mock.method(globalThis, "fetch", (_url, { signal }) => {
+  t.mock.method(globalThis, "fetch", () => {
     requests++;
-    return new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    // Deliberately DIFFERENT from the caller's abort reason: `throw err`
+    // would surface this network error instead of the caller's reason.
+    return Promise.reject(new TypeError("network died"));
   });
   const pending = searchSite("web", { signal: caller.signal });
   caller.abort(reason);
@@ -91,7 +101,8 @@ test("searchSite uses its deadline before keyword fallback without waiting ten s
     }, { once: true }));
   });
   const pending = searchSite("web", { limit: 1 });
-  assert.equal(deadlineMs, SEARCH_TIMEOUT_MS);
+  assert.equal(SEARCH_TIMEOUT_MS, 10_000, "the public deadline is ten seconds");
+  assert.equal(deadlineMs, SEARCH_TIMEOUT_MS, "the timer uses the exported deadline");
   deadline();
   const result = await pending;
   assert.equal(observedReason.name, "TimeoutError");
