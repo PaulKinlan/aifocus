@@ -4,7 +4,8 @@
 # Six mechanical signals, in order, so a failure names which one broke:
 #   1. the site still compiles (`hugo --minify`): broken frontmatter, template errors, bad shortcodes;
 #   2. no oversized asset was added - `static/` is published byte-for-byte (tools/asset-size-check.sh);
-#   3. automated tests pass (`node --test tests/*.test.mjs`). This glob is what runs
+#   3. automated tests pass (`node --test tests/*.test.mjs` with a reporter that
+#      emits per-file evidence from executed Node test events). This glob is what runs
 #      tests/stats-collectors.test.mjs, which drives every collector guard through
 #      tests/helpers/stats-collectors-probe.py (stubbed fetch, no network, ~0.2 s):
 #      the shared response cap and the finite/range checks that turn a broken feed
@@ -36,7 +37,7 @@ cd "$ROOT"
 
 npm run build
 bash tools/asset-size-check.sh
-node --test tests/*.test.mjs
+node --test --test-reporter=./tools/node-test-evidence.mjs tests/*.test.mjs
 node tools/link-check.mjs
 python3 tools/stats/build.py --check
 node tools/csp-hashes.mjs --check
