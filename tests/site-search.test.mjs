@@ -14,6 +14,14 @@ test("matchArticles scores title above summary, preserves equal-score order and 
   const { matchArticles } = await freshSearch();
   assert.deepEqual(matchArticles(articles, "web search", 2).map((a) => a.url), ["/web/", "/search/"]);
   assert.deepEqual(matchArticles(articles, "search", 3).map((a) => a.url), ["/web/", "/search/", "/other/"]);
+  // Three summary terms (3 points) versus one title term (4 points).
+  // Weights 1 or 2 reverse this ranking, unlike the correct title weight 3.
+  const weighted = [
+    { title: "nothing", summary: "alpha beta gamma", url: "/summary-three/" },
+    { title: "Alpha", summary: "nothing", url: "/title-one/" },
+  ];
+  assert.deepEqual(matchArticles(weighted, "alpha beta gamma", 2).map((a) => a.url),
+    ["/title-one/", "/summary-three/"]);
   assert.deepEqual(matchArticles(articles, "   ", 1).map((a) => a.url), ["/other/"]);
   assert.deepEqual(matchArticles(articles, "missing", 10), []);
 });
@@ -69,12 +77,20 @@ test("searchSite propagates caller abort instead of falling back", async (t) => 
   const caller = new AbortController();
   const reason = new Error("user cancelled");
   let requests = 0;
+  let requestSignal;
+  // No real 10s timer if a regression disconnects caller abort from fetch.
+  t.mock.method(globalThis, "setTimeout", () => 0);
   t.mock.method(globalThis, "fetch", (_url, { signal }) => {
     requests++;
-    return new Promise((_resolve, reject) => signal.addEventListener("abort", () => reject(signal.reason), { once: true }));
+    requestSignal = signal;
+    return new Promise((_resolve, reject) => signal.addEventListener("abort", () => {
+      // Deliberately DIFFERENT from the caller reason: `throw err` must fail.
+      reject(new TypeError("network died after abort"));
+    }, { once: true }));
   });
   const pending = searchSite("web", { signal: caller.signal });
   caller.abort(reason);
+  assert.equal(requestSignal.aborted, true, "caller cancellation must reach the in-flight API request");
   await assert.rejects(pending, (err) => err === reason);
   assert.equal(requests, 1, "cancellation must not fetch /index.json");
 });
@@ -91,7 +107,8 @@ test("searchSite uses its deadline before keyword fallback without waiting ten s
     }, { once: true }));
   });
   const pending = searchSite("web", { limit: 1 });
-  assert.equal(deadlineMs, SEARCH_TIMEOUT_MS);
+  assert.equal(SEARCH_TIMEOUT_MS, 10_000, "the public deadline is ten seconds");
+  assert.equal(deadlineMs, SEARCH_TIMEOUT_MS, "the timer uses the exported deadline");
   deadline();
   const result = await pending;
   assert.equal(observedReason.name, "TimeoutError");
