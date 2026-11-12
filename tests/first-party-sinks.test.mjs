@@ -667,12 +667,62 @@ const continuesStatement = (line, nextLine) =>
   CONTINUES_AFTER.test(line) || CONTINUES_BEFORE.test(nextLine) ||
   (/\.\s*$/.test(line) && !/^\s*\/\//.test(line) && /^\s*[\w$]/.test(nextLine));
 
+// A comment outside a string is not part of the statement: 'img.src /* pick */'
+// newline '= raw' is one assignment, and 'img. /* why */' newline 'src = raw' is
+// one member access, so a joined statement is matched with its comments removed
+// and the boundary test judges the code that remains (aifocus-88tg). The same
+// state machine statementEnd uses decides what a comment is, so '//' inside a
+// string ('https://...') stays text and a comment may not carry the guard or the
+// terminator that decides a statement. A blank or comment-only line does not end
+// a statement either, so the join steps over it as well.
+function stripComments(text) {
+  // A comment needs a slash, so a line without one is already code: this keeps
+  // the per-file stripping pass off most lines (it cost 19 ms of the 34 ms the
+  // real-tree scans gained before the fast path).
+  if (!text.includes("/")) return text;
+  let out = "";
+  let quote = null, regex = false, charClass = false;
+  let blockComment = false, lineComment = false, escaped = false;
+  let previous = "";
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i], next = text[i + 1];
+    if (lineComment) {
+      if (char === "\n") { lineComment = false; out += char; }
+      continue;
+    }
+    if (blockComment) {
+      if (char === "*" && next === "/") { blockComment = false; i += 1; }
+      else if (char === "\n") out += char;
+      continue;
+    }
+    if (escaped) { out += char; escaped = false; continue; }
+    if (quote || regex) {
+      out += char;
+      if (char === "\\") escaped = true;
+      else if (regex && char === "[") charClass = true;
+      else if (regex && char === "]") charClass = false;
+      else if (quote && char === quote) quote = null;
+      else if (regex && char === "/" && !charClass) regex = false;
+      continue;
+    }
+    if (char === "/" && next === "/") { lineComment = true; i += 1; continue; }
+    if (char === "/" && next === "*") { blockComment = true; i += 1; continue; }
+    if (char === "/" && (!previous || /[([{=,:!?&|]/.test(previous))) { regex = true; out += char; continue; }
+    if (char === "'" || char === '"' || char === "`") { quote = char; out += char; continue; }
+    out += char;
+    if (!/\s/.test(char)) previous = char;
+  }
+  return out;
+}
+
 // A member name may sit on the line after its dot, so neither the sink pattern
 // nor the provider field is safe to match against raw source: '.src' can be
 // '.', newline, 'src' (aifocus-1wjv). Rejoin only the dot break - every other
 // newline stays, because statementEnd and the comment handling read line
-// boundaries to know where a statement and a comment end.
-const glueAfterDot = (text) => text.replace(/\.\n[ \t]*/g, ".");
+// boundaries to know where a statement and a comment end. Trailing blanks after
+// the dot and any blank or comment-only lines between dot and name are stepped
+// over, since a property access cannot be ended by them (aifocus-88tg).
+const glueAfterDot = (text) => text.replace(/\.([ \t]*)\n(?:[ \t]*\n)*[ \t]*/g, ".");
 
 // Both sink rules name 'href', 'src' or 'setAttribute' literally, and a join can
 // never split one of those tokens (it rejoins at a dot, an operator or a
@@ -689,6 +739,26 @@ const SINK_TOKEN = /href|src|setAttribute/;
 // inside the sink pattern or between the pattern and its '='.
 function sinkStatements(source, assignment) {
   const lines = source.split("\n");
+  // One comment-stripping pass per file: a join attempt must not re-scan the same
+  // line for comments every time a line above it continues (that pass cost the
+  // real-tree scan 14.7x when it ran per attempt).
+  const code = lines.map(stripComments);
+  const isCode = code.map((line) => line.trim() !== "");
+  // The next code line at or after `from`, or -1 when the break does not
+  // continue the statement. Blank and comment-only lines are stepped over.
+  const continuation = (from) => {
+    let to = from + 1;
+    while (to < lines.length && !isCode[to]) to += 1;
+    if (to >= lines.length) return -1;
+    return continuesStatement(code[from], code[to]) ? to : -1;
+  };
+  // The nearest line at or after i that mentions a token, so the pre-check below
+  // is a lookup: walking forward from every line to find one made the scan
+  // quadratic on a file whose last token is early (that walk cost 7x).
+  const nextTokenLine = new Array(lines.length + 1).fill(-1);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    nextTokenLine[i] = SINK_TOKEN.test(lines[i]) ? i : nextTokenLine[i + 1];
+  }
   const statements = [];
   const seen = new Set();
   const matches = new RegExp(assignment.source, "g");
@@ -704,18 +774,28 @@ function sinkStatements(source, assignment) {
     const line = lines[i];
     if (!assignment.test(line)) {
       const following = lines[i + 1] ?? "";
-      if (!SINK_TOKEN.test(line) && !SINK_TOKEN.test(following)) continue;
-      if (!continuesStatement(line, following)) continue;
-      let text = line;
+      // Both rules name a token literally and a join cannot split one, so a
+      // statement that mentions none of them cannot be a sink. A blank or
+      // comment-only line does not carry the token either, so the token may sit
+      // one code line further down ('img.' then a comment line then
+      // 'src = raw'); the joined text is re-checked as well, because the join
+      // steps over those lines and reaches the token this test cannot see.
+      if (!SINK_TOKEN.test(line) && !SINK_TOKEN.test(following)) {
+        const tokenLine = nextTokenLine[i + 2];
+        if (tokenLine < 0 || tokenLine - i > 40) continue;
+      }
+      let text = code[i];
       let next = i;
       // 40 lines is a bound on a pathological file, not a statement limit: a
       // real continuation is a handful of lines, and an unbounded join over a
       // file that never terminates a statement is quadratic.
-      while (next + 1 < lines.length && next - i < 40 &&
-        continuesStatement(lines[next], lines[next + 1])) {
-        text += `\n${lines[++next]}`;
+      while (next - i < 40 && next + 1 < lines.length) {
+        const to = continuation(next);
+        if (to < 0) break;
+        while (next < to) text += `\n${code[++next]}`;
       }
       if (next === i) continue;
+      if (!SINK_TOKEN.test(text)) continue;
       const joined = glueAfterDot(text);
       // Only a sink whose match BEGINS in this physical line: that is the one
       // shape this branch exists for (the pattern split across the boundary).
@@ -723,7 +803,7 @@ function sinkStatements(source, assignment) {
       // loop reaches on its own line, and a later line's dynamic href must not
       // be attributed to this one - the pin list is keyed by the line it is on,
       // so hoisting it here would report a pinned statement as unpinned.
-      const anchor = lines[i].length;
+      const anchor = code[i].length;
       const inLine = [...joined.matchAll(matches)].filter((match) => match.index < anchor);
       if (!inLine.length) continue;
       const headEnd = statementEnd(joined);
@@ -1054,6 +1134,43 @@ test("the profile-href guard catches the shapes it exists for", () => {
 // 'name'). JavaScript accepts a newline after a dot, so these are real sinks a
 // reader could write, and the fix is that the scanner joins the continuation
 // before it decides, not that the sink patterns got looser.
+test("a break next to a comment or a blank line cannot hide a raw sink", () => {
+  // A blank line does not end a statement and a comment is not part of one, so
+  // neither can be a place to hide the sink from the join (aifocus-88tg).
+  const srcCaught = [
+    "img.src\n\n  = user.avatarUrl;",
+    "img.src /* pick */\n= user.avatarUrl;",
+    "img.\n// why\nsrc = user.avatarUrl;",
+    "img. /* why */\nsrc = user.avatarUrl;",
+    "img.src\n\n// c\n\n= user.avatarUrl;",
+  ];
+  for (const sample of srcCaught) {
+    assert.equal(unguardedAvatarSrcs(sample).length, 1, `the avatar guard must catch: ${JSON.stringify(sample)}`);
+  }
+  const hrefCaught = [
+    "wrap.href\n\n  = user.profileUrl;",
+    "wrap.\n/* c */\nhref = user.profileUrl;",
+    "wrap.href\n  // c\n  = user.profileUrl;",
+    "wrap.href /* c */\n= user.profileUrl;",
+  ];
+  for (const sample of hrefCaught) {
+    assert.equal(unguardedHrefAssignments(sample).length, 1, `the href guard must catch: ${JSON.stringify(sample)}`);
+  }
+  // Stripping comments must not read a '//' inside a string as a comment, and a
+  // comment may neither supply the guard nor end the statement.
+  assert.deepEqual(unguardedAvatarSrcs('const u = "https://example.com"; img.src = safeImgSrc(u);'), []);
+  assert.deepEqual(unguardedAvatarSrcs("// img.src = raw;\n/* img.src = raw; */"), []);
+  assert.deepEqual(unguardedAvatarSrcs("img.src = user.avatarUrl / 2; // half the pixels"), [
+    "1: img.src = user.avatarUrl / 2; // half the pixels",
+  ]);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href = user.profileUrl; /* c */"), [
+    "1: wrap.href = user.profileUrl; /* c */",
+  ]);
+  // Two statements with a blank line between them stay two: the second is not
+  // joined onto the first, so a guarded pair stays silent.
+  assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(a);\n\nimg.src = safeImgSrc(b);"), []);
+});
+
 test("a break inside the sink pattern or the field name cannot hide a raw sink", () => {
   const srcCaught = [
     "img.src\n  = user.avatarUrl;",
