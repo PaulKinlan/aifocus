@@ -594,7 +594,43 @@ test("the stats-page.js allowlist entry still matches a live line (a stale allow
 // a javascript: or data: URI in an href executes when clicked, and the
 // moderation page's links carry the moderator's Cloudflare Access session.
 const PROFILE_URL = /profile_?url/i;
-const HREF_ASSIGNMENT = /\.href\s*(?:\+=|=(?!=))\s*|\[\s*["']href["']\s*\]\s*(?:\+=|=(?!=))\s*|\bsetAttribute\(\s*["']href["']\s*,\s*|\bhref\s*:\s*/;
+
+// Every operator that can write a value into an href. Enumerating them is how the
+// rule missed `x.href ||= raw`: a compound assignment keeps (or falls back to) the
+// previous value and then appends/overwrites with the new one, so it is a sink
+// exactly like '=' and must not need its own line here every time a new operator
+// lands in the language (aifocus-baau). Comparisons stay out by the (?!=) guard on
+// the plain form: `x.href === y` and `x.href == y` match none of these.
+const HREF_OP = String.raw`(=(?!=)|\+=|-=|\*=|\/=|%=|\*\*=|<<=|>>=|>>>=|&=|\|=|\^=|&&=|\|\|=|\?\?=)`;
+
+// `x["hr" + "ef"]` is the same property as `x["href"]`: the engine joins the
+// operands. Every way to split the token across '+' operands is generated rather
+// than typed out, and a non-literal operand (`x["hr" + suffix]`) stays out - the
+// same limit the markup concat-key pass states. Single line only: a wrapped or
+// unquoted attribute form is aifocus-jfil's scope.
+function spelledApart(token) {
+  const spellings = [];
+  for (let mask = 1; mask < (1 << (token.length - 1)); mask += 1) {
+    const chunks = [];
+    let chunk = token[0];
+    for (let i = 1; i < token.length; i += 1) {
+      if (mask & (1 << (i - 1))) { chunks.push(chunk); chunk = token[i]; }
+      else chunk += token[i];
+    }
+    chunks.push(chunk);
+    spellings.push(chunks.map((part) => `["']${part}["']`).join("[ \\t]*\\+[ \\t]*"));
+  }
+  return spellings.join("|");
+}
+const HREF_KEY = `(?:"href"|'href'|${spelledApart("href")})`;
+// setAttributeNS(namespace, "href", value) names the attribute in its SECOND
+// argument, so the namespace is skipped without assuming anything about it.
+const HREF_ASSIGNMENT = new RegExp(
+  String.raw`\.href\s*` + HREF_OP + String.raw`\s*` +
+  String.raw`|\[\s*` + HREF_KEY + String.raw`\s*\]\s*` + HREF_OP + String.raw`\s*` +
+  String.raw`|\bsetAttribute(?:NS)?\(\s*(?:[^,()]*,\s*)?["']href["']\s*,\s*` +
+  String.raw`|\bhref\s*:\s*`,
+);
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
 
 // Existing non-sanitized sources are pinned by exact statement, not by the
@@ -781,6 +817,11 @@ function hrefValue(text) {
 function unguardedHrefAssignments(source, file = "sample.js") {
   const failures = new Set();
   const lines = source.split("\n");
+  // Compiled once: HREF_ASSIGNMENT is a long alternation now, and compiling it
+  // per statement cost the real-tree scan 4x its previous time (15.7 ms ->
+  // 63.6 ms over the 20 first-party files) even though the matching itself is
+  // unchanged. matchAll() clones the regex, so one global copy is safe here.
+  const matchAllHref = new RegExp(HREF_ASSIGNMENT.source, "g");
   const rawProfileAlias = aliasMentionRe(source, PROFILE_URL, GUARDED);
   const sanitized = new Set();
   for (const match of source.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*/g)) {
@@ -792,12 +833,14 @@ function unguardedHrefAssignments(source, file = "sample.js") {
   for (const { text, number } of sinkStatements(source, HREF_ASSIGNMENT)) {
     // A physical line can contain more than one sink. Inspect each RHS, not
     // just the first guard on the line; the stripped remainder must be safe.
-    for (const match of text.matchAll(new RegExp(HREF_ASSIGNMENT.source, "g"))) {
+    for (const match of text.matchAll(matchAllHref)) {
       const tail = text.slice(match.index + match[0].length);
       const end = statementEnd(tail);
       let rhs = hrefValue(end < 0 ? tail : tail.slice(0, end));
       if (!rhs) continue;
-      const compound = match[0].includes("+=");
+      // A compound operator keeps the earlier value, so the guard cannot make it
+      // safe: `x.href += raw` is a sink even with a guarded right-hand side.
+      const compound = (match[1] ?? match[2] ?? "=") !== "=";
       const rawProfile = PROFILE_URL.test(rhs) || (rawProfileAlias && rawProfileAlias.test(rhs));
       if (HREF_PINS[file]?.includes(lines[number - 1].trim()) && !rawProfile) continue;
       const stripped = stripGuardedSpans(rhs, GUARDED).trim();
@@ -995,6 +1038,15 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     'x.href += item.post;', 'x.href += "#fragment";',
     'x["href"] = item.post;', "x['href'] += item.post;",
     'x.setAttribute("href", item.post);',
+    // aifocus-baau: the operator set and the bracket key are shapes, not a list of
+    // spellings someone has to remember to extend. A compound assignment is a sink
+    // like any other (the earlier value survives), a key assembled from literals is
+    // the same property as 'href', and setAttributeNS names the attribute second.
+    "x.href ||= item.post;", "x.href &&= item.post;", "x.href ??= item.post;",
+    "x.href **= 2;", "x.href <<= 1;",
+    'x["hr" + "ef"] = item.post;', "x['h' + 'ref'] = item.post;",
+    'x["h" + "r" + "ef"] = item.post;',
+    'el.setAttributeNS("http://www.w3.org/1999/xlink", "href", item.post);',
   ]) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
   }
@@ -1004,6 +1056,13 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "const href = safeHref(item.profile_url);\nel('a', { href, text: 'Profile' });",
     'x["href"] = safePostPath(item.post);', 'x.setAttribute("href", safePostPath(item.post));',
     'x.href = "/account/";', 'x.href = `/search/?q=${encodeURIComponent(query)}`;',
+    // The shapes the operator and key rules must not swallow: a comparison reads
+    // the attribute, a bare concatenation is not a write, a computed key with a
+    // non-literal operand is not decidable here, and a join that spells something
+    // other than the token is not this rule's business.
+    "if (x.href === item.post) {}", "if (x.href == item.post) {}", "if (x.href != item.post) {}",
+    "const joined = x.href + item.post;",
+    'x["hr" + suffix] = item.post;', 'x["a" + "b"] = item.post;',
   ]) {
     assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
   }
