@@ -594,8 +594,36 @@ test("the stats-page.js allowlist entry still matches a live line (a stale allow
 // a javascript: or data: URI in an href executes when clicked, and the
 // moderation page's links carry the moderator's Cloudflare Access session.
 const PROFILE_URL = /profile_?url/i;
-const HREF_ASSIGNMENT = /\.href\s*=\s*/;
-const GUARDED = /safeHref\(/;
+const HREF_ASSIGNMENT = /\.href\s*=\s*|\bhref\s*:\s*/;
+const GUARDED = /safe(?:Href|PostPath)\s*\(/;
+
+// Existing non-sanitized sources are pinned by exact statement, not by the
+// name of the field. Their current provenance must be reviewed if it changes;
+// a NEW dynamic href, including one sourced from .post/.path/.url, fails.
+// These pins do not assert that the upstream source is inherently safe.
+const HREF_PINS = {
+  "assets/js/search-render.js": ["link.href = result.url;"], // /index.json build output
+  "assets/js/command-palette.js": [
+    "for (const essay of current.results) items.push({ id: essay.url, essay, run: { href: essay.url } });",
+    'el("li", {}, el("a", { href: source.url, text: source.title }), " ",', // answer source
+    "location.href = run.href;", // selected palette action (includes static commands)
+  ],
+  "assets/js/account-page.js": [
+    'const postLink = (post) => el("a", { href: post, text: titles.get(post) || post });',
+  ],
+  "assets/js/admin-page.js": [
+    "link.href = item.path;", // /api/admin/og/items path
+    "preview.href = `${cardUrl(item.path)}?t=${item.updated_at || Date.now()}`;", // local /og/ builder
+  ],
+  "assets/js/reader.js": ["link.href = fragmentLink(item.quote);"], // text fragment builder
+  "assets/js/signin.js": ["link.href = startUrl(provider.id, returnTo);"], // local /auth/ builder
+  "assets/js/palette-commands.js": [
+    'groups.push({ id: "follow", label: "Follow", items: FOLLOW_LINKS.map((l) => ({ ...l, run: { href: l.href } })) });',
+    'groups.push({ id: "go", label: "Go to", items: NAV_LINKS.map((l) => ({ ...l, run: { href: l.href } })) });',
+  ], // FOLLOW_LINKS and NAV_LINKS are literals above
+  "assets/js/webmcp.js": ["window.location.href = mailto;"], // local mailto builder
+  "static/where-prompts-run-demo/demo.js": ["if (url) window.location.href = url;"], // demo navigation
+};
 
 // Find a statement delimiter without mistaking a semicolon in a string,
 // comment, or regex literal for one. This is a bounded source scan, not a JS
@@ -657,30 +685,48 @@ function sinkStatements(source, assignment) {
   return statements;
 }
 
-function unguardedHrefAssignments(source) {
-  const failures = [];
-  const aliasMention = aliasMentionRe(source, PROFILE_URL, GUARDED);
-  for (const { text, number } of sinkStatements(source, HREF_ASSIGNMENT)) {
-    // The guard must swallow the value, including a fallback on the next line.
-    const stripped = stripGuardedSpans(text, GUARDED);
-    const carriesField = PROFILE_URL.test(stripped) || (aliasMention !== null && aliasMention.test(stripped));
-    if (carriesField && HREF_ASSIGNMENT.test(stripped)) failures.push(`${number}: ${text.trim()}`);
+function unguardedHrefAssignments(source, file = "sample.js") {
+  const failures = new Set();
+  const lines = source.split("\n");
+  const rawProfileAlias = aliasMentionRe(source, PROFILE_URL, GUARDED);
+  const sanitized = new Set();
+  for (const match of source.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*/g)) {
+    const tail = source.slice(match.index + match[0].length);
+    const end = statementEnd(tail);
+    const value = (end < 0 ? tail.split("\n", 1)[0] : tail.slice(0, end)).trim();
+    if (GUARDED.test(value) && !stripGuardedSpans(value, GUARDED).trim()) sanitized.add(match[1]);
   }
-  return failures;
+  for (const { text, number } of sinkStatements(source, HREF_ASSIGNMENT)) {
+    // A physical line can contain more than one sink. Inspect each RHS, not
+    // just the first guard on the line; the stripped remainder must be safe.
+    for (const match of text.matchAll(new RegExp(HREF_ASSIGNMENT.source, "g"))) {
+      const tail = text.slice(match.index + match[0].length);
+      const end = statementEnd(tail);
+      const rhs = (end < 0 ? tail : tail.slice(0, end)).split(/[,}]/, 1)[0].trim();
+      if (!rhs) continue;
+      const rawProfile = PROFILE_URL.test(rhs) || (rawProfileAlias && rawProfileAlias.test(rhs));
+      if (HREF_PINS[file]?.includes(lines[number - 1].trim()) && !rawProfile) continue;
+      const stripped = stripGuardedSpans(rhs, GUARDED).trim();
+      const guarded = GUARDED.test(rhs) && !stripped;
+      // Dynamic templates need a fixed root-relative segment before interpolation.
+      const literal = /^(?:["']|`\/[a-z0-9-]+\/)/i.test(rhs);
+      if (guarded || (literal && !rawProfile) || (sanitized.has(rhs) && !rawProfile)) continue;
+      failures.add(`${number}: ${lines[number - 1].trim()}`);
+    }
+  }
+  return [...failures];
 }
 
-test("a profile URL reaches .href only through safeHref()", () => {
+test("every first-party dynamic href uses a guard or an exact reviewed pin", () => {
   const failures = [];
   for (const file of FILES) {
     const source = fs.readFileSync(path.join(repoRoot, file), "utf8");
-    for (const failure of unguardedHrefAssignments(source)) failures.push(`${file}:${failure}`);
+    for (const failure of unguardedHrefAssignments(source, file)) failures.push(`${file}:${failure}`);
+    for (const pin of HREF_PINS[file] ?? []) {
+      assert.equal(source.split("\n").filter((line) => line.trim() === pin).length, 1, `${file}: stale or duplicate href pin: ${pin}`);
+    }
   }
-  assert.deepEqual(
-    failures,
-    [],
-    "a provider-supplied profile URL was assigned to an href without safeHref() - import it from " +
-      "./safe-href.js and render a span when it returns null:\n" + failures.join("\n"),
-  );
+  assert.deepEqual(failures, [], "dynamic href without safeHref/safePostPath or exact reviewed pin:\n" + failures.join("\n"));
 });
 
 // Avatar URLs arrive from the same provider APIs and are rendered as an
@@ -838,6 +884,35 @@ test("the avatar-src guard catches the shapes it exists for", () => {
     unguardedAvatarSrcs("const a = user.avatarUrl;\nconst b = safeImgSrc(a) || a;\nimg.src = b;").length,
     1,
   );
+});
+
+test("the href gate catches dynamic fields by sink shape, not profile field name", () => {
+  for (const sample of [
+    "x.href = item.post;", "x.href = item.path;", "x.href = result.url;",
+    'el("a", { href: post, text: "Post" });',
+    "x.href = safePostPath(item.post) || item.post;",
+    "const url = item.post;\nx.href = url;",
+    "const postPath = safePostPath(item.post) || item.post;\nx.href = postPath;",
+    "const postPath = safePostPath(item.post)\n  || item.post;\nx.href = postPath;",
+    "x.href = safeHref(user.profile_url); y.href = item.post;",
+    "x.href = `/` + item.post;",
+  ]) {
+    assert.equal(unguardedHrefAssignments(sample).length, 1, `must reject ${sample}`);
+  }
+  for (const sample of [
+    "x.href = safePostPath(item.post);", "x.href = safeHref(result.url);",
+    "const postPath = safePostPath(item.post);\nx.href = postPath;",
+    "const href = safeHref(item.profile_url);\nel('a', { href, text: 'Profile' });",
+    'x.href = "/account/";', 'x.href = `/search/?q=${encodeURIComponent(query)}`;',
+  ]) {
+    assert.deepEqual(unguardedHrefAssignments(sample), [], `must allow ${sample}`);
+  }
+  const file = "assets/js/search-render.js";
+  assert.deepEqual(unguardedHrefAssignments("link.href = result.url;", file), []);
+  assert.equal(unguardedHrefAssignments("link.href = item.post;", file).length, 1,
+    "the exact legacy pin must not exempt a new field in the same file");
+  assert.equal(unguardedHrefAssignments("link.href = result.url || item.post;", file).length, 1,
+    "the exact legacy pin must not exempt a raw fallback");
 });
 
 test("the profile-href guard catches the shapes it exists for", () => {
