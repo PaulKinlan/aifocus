@@ -899,7 +899,10 @@ function sinkStatements(source, assignment) {
       // loop reaches on its own line, and a later line's dynamic href must not
       // be attributed to this one - the pin list is keyed by the line it is on,
       // so hoisting it here would report a pinned statement as unpinned.
-      const anchor = code[i].length;
+      // Compare offsets in the joined text: a CR (or blanks) after a dot is
+      // removed by glueAfterDot, and counting it in the raw-line length would
+      // attribute a next-line match to this line and report it twice.
+      const anchor = glueAfterDot(code[i] + "\n").replace(/\r?\n$/, "").length;
       const inLine = [...joined.matchAll(matches)].filter((match) => match.index < anchor);
       if (!inLine.length) continue;
       const headEnd = statementEnd(joined);
@@ -1457,6 +1460,17 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   assert.equal(unguardedHrefAssignments("wrap.\r\nhref = user.profileUrl;").length, 1);
   assert.deepEqual(unguardedAvatarSrcs("img.\r\nsrc = safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedHrefAssignments("wrap.\r\nhref = safeHref(user.profileUrl);"), []);
+  // The setAttribute match starts on the SECOND line after the dot is glued.
+  // A CRLF must not shift the joined-text anchor and report one sink twice;
+  // the independent sink on line 3 still needs its own report (aifocus-oton).
+  assert.deepEqual(
+    unguardedAvatarSrcs("el.\r\nsetAttribute(\"src\", user.avatarUrl);\r\nimg.src = user.avatarUrl;\r\n"),
+    ["2: setAttribute(\"src\", user.avatarUrl);", "3: img.src = user.avatarUrl;"],
+  );
+  assert.deepEqual(unguardedHrefAssignments("el.\r\nsetAttribute(\"href\", user.profileUrl);\r\n"),
+    ["2: setAttribute(\"href\", user.profileUrl);"]);
+  assert.deepEqual(unguardedAvatarSrcs("el.   \nsetAttribute(\"src\", user.avatarUrl);"),
+    ["2: setAttribute(\"src\", user.avatarUrl);"]);
 });
 
 test("a break inside the sink pattern or the field name cannot hide a raw sink", () => {
