@@ -383,12 +383,17 @@ def case_openrouter_rejects_hostile_spend_shares():
                           f"openrouter spend share {bad!r}")
 
 
-def chart_rows_for(ys, run_date="2026-11-09", share=0.42, x="2026-10-26"):
+def chart_rows_for(ys, run_date="2026-11-09", share=0.42, x="2026-10-26", *,
+                   points=None, epoch=None, window_days=30):
     mod = load("stats_collect_openrouter", "tools/stats/collect-openrouter.py")
-    payload = {"data": {"data": [{"x": x, "ys": ys}]}}
+    series = {"id": "openrouter-tokens", "kind": "openrouter-chart"}
+    if epoch is not None:
+        series["epoch"] = epoch
+    payload = {"data": {"data": points if points is not None else [{"x": x, "ys": ys}]}}
+    spend = task_spend(share)
+    spend["data"]["tokens"]["windowDays"] = window_days
     with Stub([FakeResponse(json.dumps(payload))]):
-        return mod.chart_rows({"id": "openrouter-tokens", "kind": "openrouter-chart"},
-                              run_date, task_spend(share))
+        return mod.chart_rows(series, run_date, spend)
 
 
 def case_openrouter_accepts_chart_tokens():
@@ -404,6 +409,83 @@ def case_openrouter_rejects_hostile_chart_tokens():
     for bad in (float("nan"), float("inf"), -1):
         expect_data_error(lambda b=bad: chart_rows_for({"Model A": 1000, "Others": b}),
                           f"openrouter chart tokens Others={bad!r}")
+
+
+def case_openrouter_chart_epoch_and_window_edges():
+    # Real series epoch, unsorted feed, and both strict/inclusive date edges.
+    dates = ["2026-11-03", "2026-10-10", "2025-11-02", "2026-11-02", "2025-11-03", "2026-10-09"]
+    points = [{"x": day, "ys": {"Model A": 100 + i}} for i, day in enumerate(dates)]
+    rows = chart_rows_for({}, points=points, epoch="2025-11-03")
+    all_rows = [(row[1], row[2], row[4]) for row in rows if row[0] == "All tokens per week"]
+    assert all_rows == [
+        ("2025-11-03", "2025-11-09", 104),
+        ("2026-10-09", "2026-10-15", 105),
+        ("2026-10-10", "2026-10-16", 101),
+        ("2026-11-02", "2026-11-08", 103),
+        ("2026-11-03", "2026-11-09", 100),
+    ], all_rows
+    estimated = [(row[1], row[2], row[4]) for row in rows if row[0] == "Programming tokens per week (estimate)"]
+    assert estimated == [("2026-10-10", "2026-10-16", round(101 * 0.42)),
+                         ("2026-11-02", "2026-11-08", round(103 * 0.42))], estimated
+    assert json.loads(rows[0][6]) == {"models": 1, "others": 0}, rows[0]
+    assert json.loads(next(row for row in rows if row[0].startswith("Programming"))[6]) == {
+        "code_token_share": 0.42, "window_days": 30,
+    }
+    # No epoch field uses the collector default, not the configured series epoch.
+    default = chart_rows_for({}, points=[{"x": "2025-10-27", "ys": {"Model A": 1}}])
+    assert [(row[0], row[1]) for row in default] == [("All tokens per week", "2025-10-27")], default
+    # A feed's 7-day window must override the 30-day default.
+    narrow = chart_rows_for({"Model A": 100}, x="2026-10-30", window_days=7)
+    assert [row[0] for row in narrow] == ["All tokens per week"], narrow
+    included = chart_rows_for({"Model A": 100}, x="2026-11-02", window_days=7)
+    assert [row[0] for row in included] == ["All tokens per week", "Programming tokens per week (estimate)"], included
+    assert json.loads(included[1][6])["window_days"] == 7, included
+
+
+def case_openrouter_main_csv_and_dispatch():
+    mod = load("stats_collect_openrouter", "tools/stats/collect-openrouter.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        mod.DATA_DIR = str(root)
+        mod.CONFIG = str(root / "series.json")
+        (root / "series.json").write_text(json.dumps({"series": [
+            {"id": "or-chart", "kind": "openrouter-chart", "file_prefix": "or-chart", "epoch": "2025-11-03"},
+            {"id": "or-share", "kind": "openrouter-task-share", "file_prefix": "or-share"},
+            {"id": "not-or", "kind": "httparchive", "file_prefix": "bad"},
+        ]}), encoding="utf-8")
+        spend = FakeResponse(json.dumps(task_spend(0.42, 0.30)))
+        chart = FakeResponse(json.dumps({"data": {"data": [{"x": "2026-11-02", "ys": {"Model A": 100}}]}}))
+        argv = sys.argv
+        try:
+            sys.argv = ["collect-openrouter.py", "--series", "or-chart", "--run-date", "2026-11-09"]
+            with Stub([spend, chart]) as stub:
+                mod.main()
+                assert stub.calls == 2, stub.calls
+            with (root / "or-chart-2026-11-09.csv").open(encoding="utf-8", newline="") as f:
+                rows = list(csv.reader(f))
+            assert rows[0] == ["tool", "period_start", "period_end", "granularity", "total_count", "url", "samples"], rows[0]
+            assert [(r[0], r[1], r[4]) for r in rows[1:]] == [
+                ("All tokens per week", "2026-11-02", "100"),
+                ("Programming tokens per week (estimate)", "2026-11-02", "42"),
+            ], rows
+            sys.argv = ["collect-openrouter.py", "--series", "or-share", "--run-date", "2026-11-09"]
+            with Stub([spend]) as stub:
+                mod.main()
+                assert stub.calls == 1, stub.calls
+            with (root / "or-share-2026-11-09.csv").open(encoding="utf-8", newline="") as f:
+                share_rows = list(csv.reader(f))
+            assert len(share_rows) == 5 and all(r[3] == "snapshot" for r in share_rows[1:]), share_rows
+            for series_id in ("not-or", "missing"):
+                sys.argv = ["collect-openrouter.py", "--series", series_id, "--run-date", "2026-11-09"]
+                try:
+                    mod.main()
+                except SystemExit as err:
+                    assert "is not an openrouter series" in str(err), err
+                else:
+                    raise AssertionError(f"{series_id} accepted")
+            assert sorted(p.name for p in root.glob("*.csv")) == ["or-chart-2026-11-09.csv", "or-share-2026-11-09.csv"]
+        finally:
+            sys.argv = argv
 
 
 def case_openrouter_accepts_real_shares():
@@ -764,6 +846,8 @@ CASES = {
     "openrouter-rejects-window-days": case_openrouter_rejects_window_days,
     "openrouter-accepts-chart-tokens": case_openrouter_accepts_chart_tokens,
     "openrouter-rejects-hostile-chart-tokens": case_openrouter_rejects_hostile_chart_tokens,
+    "openrouter-chart-epoch-and-window-edges": case_openrouter_chart_epoch_and_window_edges,
+    "openrouter-main-csv-and-dispatch": case_openrouter_main_csv_and_dispatch,
     "model-gap-accepts-releases-and-features": case_model_gap_accepts_releases_and_features,
     "model-gap-rejects-bad-milestone-or-date": case_model_gap_rejects_bad_milestone_or_date,
     "model-gap-rejects-bad-chromestatus-feature": case_model_gap_rejects_bad_chromestatus_feature,
