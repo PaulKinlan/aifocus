@@ -475,14 +475,18 @@ def case_openrouter_main_csv_and_dispatch():
             with (root / "or-share-2026-11-09.csv").open(encoding="utf-8", newline="") as f:
                 share_rows = list(csv.reader(f))
             assert len(share_rows) == 5 and all(r[3] == "snapshot" for r in share_rows[1:]), share_rows
-            for series_id in ("not-or", "missing"):
-                sys.argv = ["collect-openrouter.py", "--series", series_id, "--run-date", "2026-11-09"]
-                try:
-                    mod.main()
-                except SystemExit as err:
-                    assert "is not an openrouter series" in str(err), err
-                else:
-                    raise AssertionError(f"{series_id} accepted")
+            # Invalid series must exit before fetching, and even a regression
+            # in that ordering must never reach the live network (aifocus-g4qj).
+            with Stub([AssertionError("series validation must precede any fetch")]) as guard:
+                for series_id in ("not-or", "missing"):
+                    sys.argv = ["collect-openrouter.py", "--series", series_id, "--run-date", "2026-11-09"]
+                    try:
+                        mod.main()
+                    except SystemExit as err:
+                        assert "is not an openrouter series" in str(err), err
+                    else:
+                        raise AssertionError(f"{series_id} accepted")
+                assert guard.calls == 0, guard.calls
             assert sorted(p.name for p in root.glob("*.csv")) == ["or-chart-2026-11-09.csv", "or-share-2026-11-09.csv"]
         finally:
             sys.argv = argv
