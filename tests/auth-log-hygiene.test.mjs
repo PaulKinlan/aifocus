@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { createD1 } from "./helpers/d1.mjs";
 import { classifyOAuthError, providerErrorSummary, STATE_COOKIE } from "../functions/_lib/auth.js";
 import { complete as githubComplete } from "../functions/_lib/providers/github.js";
+import { complete as xComplete } from "../functions/_lib/providers/x.js";
 import { authServerForPds, authServerMetadata, dpopPost, generateDpopKey } from "../functions/_lib/providers/bluesky.js";
 import { onRequestGet as start } from "../functions/api/auth/start/[provider].js";
 import { onRequestGet as callback } from "../functions/api/auth/callback/[provider].js";
@@ -259,6 +260,69 @@ test("github /user malformed body falls to the fixed shape check, not a parse er
       return true;
     },
   );
+});
+
+// X uses the same fixed-error boundary as GitHub, but its token and /2/users/me
+// branches must be exercised independently: a provider-local regression must
+// not be hidden by a green classifyOAuthError unit test (aifocus-fqp1).
+const xToken = "https://api.x.com/2/oauth2/token";
+const xMe = "https://api.x.com/2/users/me";
+const xRun = (routes, params = new URLSearchParams({ code: "c0de" })) =>
+  xComplete({
+    env: { X_CLIENT_ID: "x-id", X_CLIENT_SECRET: "x-secret" }, params,
+    redirectUri: `${ORIGIN}/api/auth/callback/x`, verifier: "verifier",
+    fetchImpl: async (input) => {
+      const url = new URL(typeof input === "string" ? input : input.url);
+      const key = url.origin + url.pathname;
+      if (!(key in routes)) throw new Error(`unstubbed ${key}`);
+      return routes[key]();
+    },
+  });
+
+test("X complete() rejects missing code without making a request", async () => {
+  await assert.rejects(() => xRun({}, new URLSearchParams()), /x: missing code/);
+});
+
+test("X complete() does not reflect hostile token error bodies", async () => {
+  const hostile = () => new Response(JSON.stringify({
+    error: "invalid_grant PRIVATE_TOKEN_MARKER",
+    error_description: "client_secret=PRIVATE_CLIENT_MARKER",
+  }), { status: 400 });
+  await assert.rejects(() => xRun({ [xToken]: hostile }), (err) => {
+    assert.equal(err.message, "x: token exchange failed (HTTP 400)");
+    assert.ok(!err.message.includes("PRIVATE_TOKEN_MARKER"));
+    assert.ok(!err.message.includes("PRIVATE_CLIENT_MARKER"));
+    return true;
+  });
+  await assert.rejects(() => xRun({ [xToken]: () => new Response(JSON.stringify({ error: "invalid_grant" }), { status: 400 }) }),
+    /x: token exchange failed \(invalid_grant\)/);
+  for (const response of [json({ token_type: "bearer" }), new Response("PRIVATE_TOKEN_MARKER", { status: 200 })]) {
+    await assert.rejects(() => xRun({ [xToken]: () => response }), (err) => {
+      assert.equal(err.message, "x: token exchange failed (HTTP 200)");
+      return true;
+    });
+  }
+});
+
+test("X complete() reports /2/users/me failures without reflecting the body", async () => {
+  const token = () => json({ access_token: "x-token" });
+  await assert.rejects(() => xRun({ [xToken]: token, [xMe]: () => new Response("PRIVATE_USER_MARKER", { status: 502 }) }),
+    (err) => {
+      assert.equal(err.message, "x: /2/users/me HTTP 502");
+      assert.ok(!err.message.includes("PRIVATE_USER_MARKER"));
+      return true;
+    });
+  for (const body of ["PRIVATE_USER_MARKER not JSON", JSON.stringify({ data: { id: "777" } }), JSON.stringify({ data: { username: "ana" } })]) {
+    await assert.rejects(() => xRun({ [xToken]: token, [xMe]: () => new Response(body) }), (err) => {
+      assert.equal(err.message, "x: unexpected /2/users/me body");
+      assert.ok(!err.message.includes("PRIVATE_USER_MARKER"));
+      return true;
+    });
+  }
+  const user = await xRun({ [xToken]: token, [xMe]: () => json({ data: { id: 777, username: "ana" } }) });
+  assert.deepEqual(user, {
+    provider: "x", providerId: "777", handle: "ana", name: null, avatarUrl: null, profileUrl: "https://x.com/ana",
+  });
 });
 
 // --- end to end: one clean log line from start to console --------------------
