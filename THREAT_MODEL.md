@@ -73,11 +73,11 @@ anyone who can read a backup, a replica or a debug session".
 | OG card metering order | the per-IP slot is reserved (`reserveOgSlot`) **before** every billed operation of a card render - the Workers AI hook, the Browser Rendering screenshot and the R2 put - so a hammering client cannot make the site pay for a card it will be charged for. What runs before the meter is deliberately unmetered: one `ASSETS` read of `og-card.html`, one `og_hooks` row read, and one R2 `get` on the stored-PNG path, which is why a card that is already in R2 costs no quota | `functions/_lib/og.js serveCard` |
 | AI-written share-card text | a generated hook is stored in `og_hooks` with its `source` and `model`, is limited to 96 tokens and passed through `cleanHook()` (one line, no markup), and reaches the card only through `fillHook()`/`escapeHtml()`. The whole table is listable, editable and deletable by a moderator at `/api/admin/og/*` behind the Access guard, so AI-written text that ships is reviewable after the fact and its provenance is recorded | `functions/_lib/og.js`, `functions/api/admin/og.js` |
 | Shared cache | identical questions are answered from the edge cache before the meter, so a cached answer costs nothing and does not spend a slot | `functions/api/ask.js` |
-| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard. The browser attaches that JWT to any same-origin request, so the `/admin/` **page** runs under its own CSP with `script-src 'self'` - no `'unsafe-inline'`, no third-party hosts - and `head.html` skips the gtag block, the inline speculation rules and the `onload` font promotion for `type: admin`, so content-page script trust is not shared with the moderator's authority (aifocus-wwfp). `/api/admin/*` itself is unaffected: it is JSON behind the per-handler guard | `functions/_lib/access.js`, `functions/api/admin/*`, `static/_headers` `/admin/*`, `themes/aifocustheme/layouts/_partials/head.html` |
+| Admin authority | RS256 Access JWT verified against the team's published certs, with `aud`, issuer and expiry checked; the guard is called **per handler** (eight call sites, one per exported handler in the five `functions/api/admin/*` modules), and there is no prefix-level guard. The browser attaches that JWT to any same-origin request, so the `/admin/` **page** runs under its own CSP with `script-src 'self'` and `connect-src 'self'` - no `'unsafe-inline'`, no third-party hosts, no third-party connect origin - and `head.html` skips the gtag block, the inline speculation rules and the `onload` font promotion for `type: admin`, so content-page script trust is not shared with the moderator's authority (aifocus-wwfp). `/api/admin/*` itself is unaffected: it is JSON behind the per-handler guard | `functions/_lib/access.js`, `functions/api/admin/*`, `static/_headers` `/admin/*`, `themes/aifocustheme/layouts/_partials/head.html` |
 | Session tokens | 32-byte random, stored only as SHA-256, `HttpOnly; Secure; SameSite=Lax` | `functions/_lib/auth.js` |
 | OAuth state | single-use row deleted on read, bound to a cookie, expired on a TTL | `functions/_lib/auth.js` |
 | IP addresses | never stored in the clear: salted SHA-256, with the salt in the `settings` table | `functions/_lib/reader.js hashIp` |
-| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), a narrowed `/admin/*` CSP (`script-src 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
+| Response headers | HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, a site CSP (with `frame-ancestors 'self'`), a narrowed `/admin/*` CSP (`script-src 'self'`, `connect-src 'self'`), `noindex` on `/admin/*` and on share-card pages | `static/_headers` (static responses), `functions/_lib/headers.js` (Function responses) |
 | Inline script execution | the site CSP's `script-src` allows no `'unsafe-inline'`: the 12 distinct inline script bodies the build produces are pinned by `sha256` hash - 11 that execute (the gtag loader, the OG-card font measure and nine page scripts) plus the inline speculation-rules block, which does not run as script but is still gated by `script-src` - so an injected inline `<script>` does not run. The hash list is generated from the built HTML (`node tools/csp-hashes.mjs`) and the gate fails when it drifts (`--check`), because a script without a hash is silently blocked rather than silently allowed. The same gate rejects the other inline execution surfaces this policy disables and no hash can cover - inline `on*=` event handler attributes and `javascript:` URLs - by name, so a handler added to a template fails the gate instead of failing silently in the browser (aifocus-rlng). `style-src` **does** still allow `'unsafe-inline'`: 71 `style=` attributes cannot be pinned without `'unsafe-hashes'`, so style injection remains possible where an injection sink exists - script execution, the part that leads to credential and session theft, does not | `static/_headers`, `tools/csp-hashes.mjs`, `tools/gate.sh` (signal 6) |
 | Input limits | per-field caps on quote, context, body and name; query length and result limit capped; post paths normalised against the built `/index.json` | `functions/_lib/reader.js LIMITS`, `functions/api/search.js`, `functions/api/reader/annotations.js` |
 | Profile links | a provider-supplied `profile_url`/`profileUrl` becomes an anchor `href` only through `safeHref()`, which accepts an absolute `https:` URL and nothing else - any other value renders as plain text. The same rule is applied on the way into and out of D1, so a provider that starts returning a `javascript:`/`data:` URI, or a row stored before the guard, cannot reach a page (aifocus-d7jb) | `assets/js/safe-href.js`, `functions/_lib/auth.js safeProfileUrl`, `tests/safe-href.test.mjs`, `tests/first-party-sinks.test.mjs` |
@@ -96,8 +96,10 @@ into `json()`, the OAuth redirect helper, the OG renderer, and the responses
 `_middleware.js` itself constructs. `tests/security-headers.test.mjs` fails
 the gate if the code-side set and the `_headers` `/*` block drift apart, or if
 a Function response path is built without the baseline, and if the `/admin/*`
-policy stops being the `/*` policy with `script-src` narrowed to `'self'` (the
-one duplicated block, deliberately: the two must change together). A route that
+policy stops being the `/*` policy with `script-src` and `connect-src` narrowed
+to `'self'` (the one duplicated block, deliberately: the two must change
+together; those two directives may only ever narrow relative to `/*`, and every
+other directive must stay identical). A route that
 needs different headers says so in its handler, and the set-if-absent rule
 keeps that value.
 
@@ -255,6 +257,7 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
 | aifocus-f7r | privileged trust/block changes recorded no actor, and there was no admin audit table | d93f730 and 6e37443: `migrations/0009_admin_actions.sql`, with `adminActionStmt()` called from every admin handler |
 | aifocus-0cz | `/api/reader/state` ran three D1 queries per unauthenticated request with no per-IP cap | 245ce0d: `reserveReadEvent` (600/hour, `read_events`) reserves before the batch; extended to `/api/account` and `/api/auth/me` in aifocus-pr7b |
 | aifocus-rom | there was no account erasure path | dbf82c8: `DELETE /api/account` hard-deletes the account, its sign-ins and its activity |
+| aifocus-wn4o | the `/admin/*` CSP kept the site-wide `connect-src`, so a first-party script on the moderation page could POST the moderator data it reads to any allowlisted analytics or model-provider origin | `static/_headers` narrows `/admin/*` `connect-src` to `'self'` (the page fetches only `/api/admin/*`); the drift guard now compares `script-src` and `connect-src` as source lists against `/*` and requires every other directive to stay identical |
 
 ## 7. Accepted residual risk
 - **Image egress is allowed to any `https:` origin** (`img-src 'self' data:
@@ -293,7 +296,12 @@ This list is a pointer, not the ledger: `bd list` is authoritative.
   runs with the moderator's Access cookie attached. The boundary is "our code as
   built", not "no code"; treating a first-party dependency as trusted is the
   residual risk, and the reason the admin page loads no analytics at all rather
-  than allowlisting it.
+  than allowlisting it. `connect-src 'self'` narrows that trust further
+  (aifocus-wn4o): the page fetches only `/api/admin/*`, so a hostile first-party
+  body can read moderator data but cannot POST or beacon it to any of the
+  analytics or model-provider origins the site-wide policy allows. That closes
+  the fetch and beacon path only - `img-src 'self' data: https:` is inherited by
+  the block, so an image URL remains a channel (section 7, aifocus-8f3j).
 - **A reader's provider API key can sit in origin-wide `localStorage`** when the
   journal demo's "remember on this device" box is ticked:
   `persistKeyForThisDevice()` (`static/where-prompts-run-demo/demo.js`) stores
@@ -331,7 +339,8 @@ Re-read this file when a change:
 - changes `static/_headers` allowlists, or adds an inline script, an `on*`
   handler or a third-party `<script>` to a template - `head.html` guards those
   surfaces for `type: admin`, and a new one needs the same guard or it silently
-  stops working on `/admin/` (the `/admin/*` policy is narrower than `/*`);
+  stops working on `/admin/` (the `/admin/*` policy is narrower than `/*`:
+  `script-src` and `connect-src` are `'self'` only);
 - makes a new caller of `reserveWriteEvent()`, `reserveSearchSlot()`, `askLog`
   or the og render reservation, or moves that call relative to the work it
   pays for;
