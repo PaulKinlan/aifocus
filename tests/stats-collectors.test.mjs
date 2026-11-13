@@ -51,6 +51,8 @@ const CASES = [
   "openrouter-rejects-window-days",
   "openrouter-accepts-chart-tokens",
   "openrouter-rejects-hostile-chart-tokens",
+  "openrouter-chart-epoch-and-window-edges",
+  "openrouter-main-csv-and-dispatch",
   "model-gap-accepts-releases-and-features",
   "model-gap-rejects-bad-milestone-or-date",
   "model-gap-rejects-bad-chromestatus-feature",
