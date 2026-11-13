@@ -796,7 +796,11 @@ function stripComments(text) {
     }
     if (char === "/" && (!previous || openers.includes(previous))) { regex = true; i += 1; continue; }
     if (char === "'" || char === '"' || char === "`") { quote = char; i += 1; continue; }
-    if (char !== " " && char !== "\t" && char !== "\n") previous = char;
+    // Whitespace here is /\s/, not a ' '/'\t'/'\n' list: the list let a '\r'
+    // set previous, so a regex literal opening after a CRLF break was read as
+    // division and the '//' in its body swallowed the rest of the line,
+    // hiding a split sink after it (aifocus-28kp).
+    if (!/\s/.test(char)) previous = char;
     i += 1;
   }
   return out + text.slice(copied);
@@ -809,7 +813,7 @@ function stripComments(text) {
 // boundaries to know where a statement and a comment end. Trailing blanks after
 // the dot and any blank or comment-only lines between dot and name are stepped
 // over, since a property access cannot be ended by them (aifocus-88tg).
-const glueAfterDot = (text) => text.replace(/\.([ \t]*)\n(?:[ \t]*\n)*[ \t]*/g, ".");
+const glueAfterDot = (text) => text.replace(/\.([ \t]*)\r?\n(?:[ \t]*\r?\n)*[ \t]*/g, ".");
 
 // Both sink rules name 'href', 'src' or 'setAttribute' literally, and a join can
 // never split one of those tokens (it rejoins at a dot, an operator or a
@@ -1436,6 +1440,23 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   // Two statements with a blank line between them stay two: the second is not
   // joined onto the first, so a guarded pair stays silent.
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(a);\n\nimg.src = safeImgSrc(b);"), []);
+  // A regex literal opening as the first character after a CRLF break is a
+  // regex, not division: with a '\r' setting `previous`, the '//' inside a
+  // URL-style body ('/https?:\/\//') was read as a line comment and swallowed
+  // the rest of that line, hiding the sink's dot on it (aifocus-28kp).
+  assert.equal(unguardedAvatarSrcs("const urlRe =\r\n  /https?:\\/\\//.test(u); img.\nsrc = user.avatarUrl;").length, 1);
+  assert.equal(unguardedHrefAssignments("const urlRe =\r\n  /https?:\\/\\//.test(u); wrap.\nhref = user.profileUrl;").length, 1);
+  // A CRLF dot break leaves '\r' before '\n'. Rejoining the member access
+  // must work even with an intervening blank line or an earlier regex literal
+  // (aifocus-uhtu); guarded calls after the same break stay silent.
+  for (const source of [
+    "const t = 1;\r\nimg.\r\nsrc = user.avatarUrl;\r\n",
+    "const t = /a\\/b/.test(u);\r\nimg.\r\nsrc = user.avatarUrl;\r\n",
+    "const t = 1;\r\nimg.\r\n\r\nsrc = user.avatarUrl;\r\n",
+  ]) assert.equal(unguardedAvatarSrcs(source).length, 1, JSON.stringify(source));
+  assert.equal(unguardedHrefAssignments("wrap.\r\nhref = user.profileUrl;").length, 1);
+  assert.deepEqual(unguardedAvatarSrcs("img.\r\nsrc = safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.\r\nhref = safeHref(user.profileUrl);"), []);
 });
 
 test("a break inside the sink pattern or the field name cannot hide a raw sink", () => {
