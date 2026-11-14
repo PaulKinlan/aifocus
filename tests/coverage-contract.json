@@ -1,0 +1,5 @@
+{
+  "tests/helpers/manual-add-probe.py": "tests/manual-add.test.mjs",
+  "tests/helpers/stats-build-probe.py": "tests/stats-build.test.mjs",
+  "tests/helpers/stats-collectors-probe.py": "tests/stats-collectors.test.mjs"
+}
