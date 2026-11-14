@@ -661,7 +661,9 @@ const assignmentTo = (token) => new RegExp(
   `\\.${token}\\s*` + ASSIGN_OP + `\\s*` +
   `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*` + ASSIGN_OP + `\\s*` +
   `|\\bsetAttribute(?:NS)?\\s*\\(\\s*(?:[^,()]*,\\s*)?` + attributeName(token) + `\\s*,` +
-  `|\\b${token}\\s*:\\s*`,
+  // A quoted object-literal key is the same property: { "href": raw } writes
+  // .href exactly as { href: raw } does (aifocus-o2js).
+  `|(?:\\b${token}|${NAME_QUOTE}${token}${NAME_QUOTE})\\s*:\\s*`,
 );
 const HREF_ASSIGNMENT = assignmentTo("href");
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
@@ -1302,6 +1304,7 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "el.setAttribute(`href`, item.post);",
     "el.setAttributeNS(NS.XLINK, `href`, item.post);",
     "x[`href`] = item.post;",
+    'return { "href": item.post };', "return { 'href': item.post };",
     "el.setAttribute(href, item.post);",
     "el.setAttribute(NAMES.href, item.post);",
     // A qualified name is the same attribute: 'xlink:href' is how SVG spells the
