@@ -923,13 +923,20 @@ function sinkStatements(source, assignment) {
     // guard call, which is the false alarm aifocus-hh46 is about - the per-sink
     // statement below carries the continuation and sees the caller's argument.
     if (statementEnd(line) >= 0) push(line, i + 1);
-    for (const match of line.matchAll(matches)) {
-      let text = line.slice(match.index);
+    for (const match of code[i].matchAll(matches)) {
+      // The same continuation the non-matching branch uses: comment-stripped
+      // lines with blank and comment-only lines stepped over. Extending with the
+      // raw rule stopped at the first comment or blank line, so
+      // 'img.src =' / '// why' / 'user.avatarUrl;' truncated the statement before
+      // the value arrived - a missed sink in the src rule, and a truncated head
+      // reported as a dynamic href in the href rule (aifocus-6iv1).
+      let text = code[i].slice(match.index);
       let end = statementEnd(text);
       let next = i;
-      while (end < 0 && next + 1 < lines.length &&
-        continuesStatement(lines[next], lines[next + 1])) {
-        text += `\n${lines[++next]}`;
+      while (end < 0 && next - i < 40) {
+        const to = continuation(next);
+        if (to < 0) break;
+        while (next < to) text += `\n${code[++next]}`;
         end = statementEnd(text);
       }
       if (next !== i) push(end < 0 ? text : text.slice(0, end), i + 1);
@@ -1413,6 +1420,12 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     // the assignment match (aifocus-jum0).
     "img.src\n/* why\nstill */\n= user.avatarUrl;",
     "img.\n/* why\nstill */\nsrc = user.avatarUrl;",
+    // A break on the other side of the operator: the direct-match branch used to
+    // extend with the raw rule, so the statement stopped at the comment or blank
+    // line and the value never arrived (aifocus-6iv1).
+    "img.src =\n  // explanation\n  user.avatarUrl;",
+    "img.src =\n\n  user.avatarUrl;",
+    "img.src =\n  /* c */\n  user.avatarUrl;",
   ];
   for (const sample of srcCaught) {
     assert.equal(unguardedAvatarSrcs(sample).length, 1, `the avatar guard must catch: ${JSON.stringify(sample)}`);
@@ -1424,6 +1437,8 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     "wrap.href /* c */\n= user.profileUrl;",
     "wrap.href\n/* why\nstill */\n= item.profileUrl;",
     "wrap.\n/* a\nb */\nhref = item.profileUrl;",
+    "wrap.href =\n  // explanation\n  item.profileUrl;",
+    "wrap.href =\n\n  item.profileUrl;",
   ];
   for (const sample of hrefCaught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the href guard must catch: ${JSON.stringify(sample)}`);
@@ -1434,6 +1449,10 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   assert.deepEqual(unguardedAvatarSrcs("// img.src = raw;\n/* img.src = raw; */"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src\n/* why\nstill */\n= safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("/* img.src = raw\n   still comment */\nimg.src = safeImgSrc(user.avatarUrl);"), []);
+  // The same break with a guarded value must stay silent: the statement now
+  // reaches the value, and the value is a call the guard swallows.
+  assert.deepEqual(unguardedAvatarSrcs("img.src =\n  // c\n  safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href =\n  // c\n  safeHref(user.profileUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = user.avatarUrl / 2; // half the pixels"), [
     "1: img.src = user.avatarUrl / 2; // half the pixels",
   ]);
