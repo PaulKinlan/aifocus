@@ -634,6 +634,12 @@ function spelledApart(token) {
 // that spells it.
 const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelledApart(token)})`;
 
+// setAttribute() lowercases its qualified name on an HTML element (DOM spec), so
+// a case-variant spelling ("HREF") still sets the href attribute (aifocus-geat).
+// Only a quoted literal name is case-folded: a bare or member identifier is a
+// JavaScript property name and stays case-sensitive.
+const caseVariant = (token) => token.replace(/[a-z]/gi, (c) => `[${c.toLowerCase()}${c.toUpperCase()}]`);
+
 // The name argument of setAttribute/setAttributeNS, in any spelling this scan can
 // read: a quoted or interpolation-free template literal (aifocus-jfil), a bare
 // identifier or member expression ending in the name, or a ':'-qualified name
@@ -649,7 +655,7 @@ const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelled
 // was caught in brackets and missed in a call. A name with a runtime operand
 // ('prefix + "href"') still stays out: that is assembly, not a spelling.
 const attributeName = (token) =>
-  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${token}${NAME_QUOTE}` +
+  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${caseVariant(token)}${NAME_QUOTE}` +
   `|(?:${NAME_QUOTE}[\\w$.-]+:${NAME_QUOTE}\\s*\\+\\s*)?${attributeKey(token)}` +
   `|(?:[A-Za-z_$][\\w$]*\\.)*${token})`;
 
@@ -662,8 +668,10 @@ const assignmentTo = (token) => new RegExp(
   `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*` + ASSIGN_OP + `\\s*` +
   `|\\bsetAttribute(?:NS)?\\s*\\(\\s*(?:[^,()]*,\\s*)?` + attributeName(token) + `\\s*,` +
   // A quoted object-literal key is the same property: { "href": raw } writes
-  // .href exactly as { href: raw } does (aifocus-o2js).
-  `|(?:\\b${token}|${NAME_QUOTE}${token}${NAME_QUOTE})\\s*:\\s*`,
+  // .href exactly as { href: raw } does (aifocus-o2js), and so does a computed
+  // key whose spelling is a literal: { ["href"]: raw } (aifocus-vcqf).
+  `|(?:\\b${token}|${NAME_QUOTE}${token}${NAME_QUOTE})\\s*:\\s*` +
+  `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*:\\s*`,
 );
 const HREF_ASSIGNMENT = assignmentTo("href");
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
@@ -1305,6 +1313,8 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "el.setAttributeNS(NS.XLINK, `href`, item.post);",
     "x[`href`] = item.post;",
     'return { "href": item.post };', "return { 'href': item.post };",
+    'return { ["href"]: item.post };', 'return { ["hr" + "ef"]: item.post };',
+    'el.setAttribute("HREF", item.post);', 'el.setAttribute("Href", item.post);',
     "el.setAttribute(href, item.post);",
     "el.setAttribute(NAMES.href, item.post);",
     // A qualified name is the same attribute: 'xlink:href' is how SVG spells the
