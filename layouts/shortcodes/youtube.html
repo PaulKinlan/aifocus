@@ -4,31 +4,110 @@
   Differences from the built-in:
   - Embeds via youtube-nocookie.com so no third-party cookies are set on load
     (privacy-enhanced mode).
-  - Always emits a descriptive iframe title for assistive technology: the
-    `title` param if given, otherwise "YouTube video: <page title>".
+  - Sizes the player to the video's native aspect ratio (`--yt-aspect`), read
+    from `data/youtube.json` when cached or fetched at build time from YouTube's
+    player/oEmbed metadata for new embeds (falling back to 16 / 9 offline).
+    Previously the default branch set only `min-height: 14rem` on a wrapper
+    around an `position: absolute` iframe, collapsing every unclassed embed to
+    224px tall, while `class="youtube"` hardcoded 16:9 (`padding-bottom: 56.25%`)
+    even for 16:10 / 4:3 screen recordings and vertical videos.
+  - Supports optional `caption`, `height`, and `aspect-ratio` (or `ratio`)
+    parameters in addition to Hugo's standard `id`, `class`, `title`,
+    `autoplay`, `controls`, `loop`, `mute`, `start`, and `end`.
+  - Always emits a descriptive iframe title for assistive technology.
   - loading="lazy" so off-screen players are not fetched eagerly.
-
-  Params mirror the internal shortcode: id (or positional 0), class, title,
-  autoplay, controls, loop, mute, start, end.
 */ -}}
 {{- $id := .Get "id" | default (.Get 0) -}}
 {{- with $id -}}
+  {{- $vid := . -}}
   {{- $class := $.Get "class" -}}
-  {{- $title := $.Get "title" | default (printf "YouTube video: %s" $.Page.Title) -}}
+  {{- $caption := $.Get "caption" -}}
+  {{- $heightParam := $.Get "height" -}}
+  {{- $ratioParam := $.Get "aspect-ratio" | default ($.Get "ratio") -}}
+
+  {{- $w := 0 -}}
+  {{- $h := 0 -}}
+  {{- $videoTitle := "" -}}
+
+  {{- with index site.Data.youtube $vid -}}
+    {{- with .width }}{{ $w = int . }}{{ end -}}
+    {{- with .height }}{{ $h = int . }}{{ end -}}
+    {{- with .title }}{{ $videoTitle = . }}{{ end -}}
+  {{- end -}}
+
+  {{- /* Build-time lookup for newly embedded videos not yet in data/youtube.json. */ -}}
+  {{- if or (le $w 0) (le $h 0) -}}
+    {{- $body := dict "context" (dict "client" (dict "clientName" "ANDROID" "clientVersion" "20.10.38")) "videoId" $vid | jsonify -}}
+    {{- $opts := dict "method" "post" "body" $body "headers" (dict "Content-Type" "application/json" "User-Agent" "com.google.android.youtube/20.10.38") -}}
+    {{- with try (resources.GetRemote "https://www.youtube.com/youtubei/v1/player?prettyPrint=false" $opts) -}}
+      {{- with .Value -}}
+        {{- with try (.Content | transform.Unmarshal) -}}
+          {{- with .Value -}}
+            {{- if not $videoTitle -}}
+              {{- with .videoDetails.title }}{{ $videoTitle = . }}{{ end -}}
+            {{- end -}}
+            {{- range .streamingData.adaptiveFormats -}}
+              {{- if and (le $w 0) .width .height -}}
+                {{- $w = int .width -}}
+                {{- $h = int .height -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- if or (le $w 0) (le $h 0) -}}
+    {{- $oembedURL := printf "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=%s&maxwidth=1280&maxheight=1280&format=json" $vid -}}
+    {{- with try (resources.GetRemote $oembedURL) -}}
+      {{- with .Value -}}
+        {{- with try (.Content | transform.Unmarshal) -}}
+          {{- with .Value -}}
+            {{- if and .width .height -}}
+              {{- $w = int .width -}}
+              {{- $h = int .height -}}
+            {{- end -}}
+            {{- if not $videoTitle -}}
+              {{- with .title }}{{ $videoTitle = . }}{{ end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+
+  {{- $defaultTitle := cond (ne $videoTitle "") (printf "YouTube video: %s" $videoTitle) (printf "YouTube video: %s" $.Page.Title) -}}
+  {{- $title := $.Get "title" | default $defaultTitle -}}
   {{- $autoplay := $.Get "autoplay" | default "0" -}}
   {{- $controls := $.Get "controls" | default "1" -}}
   {{- $loop := $.Get "loop" | default "0" -}}
   {{- $mute := $.Get "mute" | default "0" -}}
   {{- $start := $.Get "start" | default "0" -}}
   {{- $end := $.Get "end" | default "0" -}}
-  {{- $src := printf "https://www.youtube-nocookie.com/embed/%s?autoplay=%s&controls=%s&end=%s&loop=%s&mute=%s&start=%s" . $autoplay $controls $end $loop $mute $start -}}
-  {{- if $class -}}
-  <div class="{{ $class }}">
+  {{- $src := printf "https://www.youtube-nocookie.com/embed/%s?autoplay=%s&controls=%s&end=%s&loop=%s&mute=%s&start=%s" $vid $autoplay $controls $end $loop $mute $start -}}
+
+  {{- $classes := "youtube" -}}
+  {{- if and (gt $h $w) (not $heightParam) (not $ratioParam) -}}
+    {{- $classes = printf "%s youtube-portrait" $classes -}}
+  {{- end -}}
+  {{- if and $class (ne $class "youtube") -}}
+    {{- $classes = printf "%s %s" $classes $class -}}
+  {{- end -}}
+
+  {{- $style := "" -}}
+  {{- if $heightParam -}}
+    {{- $hVal := cond (gt (len (findRE "^[0-9]+$" (printf "%v" $heightParam))) 0) (printf "%vpx" $heightParam) (printf "%v" $heightParam) -}}
+    {{- $style = printf "height: %s; aspect-ratio: auto;" $hVal -}}
+  {{- else if $ratioParam -}}
+    {{- $style = printf "--yt-aspect: %s;" $ratioParam -}}
+  {{- else if and (gt $w 0) (gt $h 0) -}}
+    {{- $style = printf "--yt-aspect: %d / %d;" $w $h -}}
+  {{- end -}}
+
+  {{- if $caption -}}<figure>{{- end -}}
+  <div class="{{ $classes }}"{{ with $style }} style="{{ . | safeCSS }}"{{ end }}>
     <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="{{ $src | safeURL }}" title="{{ $title }}"></iframe>
   </div>
-  {{- else -}}
-  <div style="position: relative; min-height: 14rem;">
-    <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" src="{{ $src | safeURL }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" title="{{ $title }}"></iframe>
-  </div>
-  {{- end -}}
+  {{- with $caption }}<figcaption><p>{{ . | markdownify }}</p></figcaption></figure>{{- end -}}
 {{- end -}}

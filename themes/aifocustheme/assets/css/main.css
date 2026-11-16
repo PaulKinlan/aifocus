@@ -501,21 +501,30 @@ article {
     clear: both;
   }
 
-  div.youtube {
-    margin-bottom: 1em;
-    position: relative;
-    padding-bottom: 56.25%;
-    height: 0;
+  .youtube {
+    margin: 0 auto 1em;
+    width: 100%;
+    aspect-ratio: var(--yt-aspect, 16 / 9);
+    border-radius: 10px;
     overflow: hidden;
+    background-color: #000;
 
     iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
+      display: block;
       width: 100%;
       height: 100%;
       border: 0;
     }
+  }
+
+  .youtube.youtube-portrait {
+    width: auto;
+    max-width: 100%;
+    height: min(80vh, 42rem);
+  }
+
+  figure .youtube {
+    margin-bottom: 0;
   }
 
   div.metadata:has(img.author-image) {
