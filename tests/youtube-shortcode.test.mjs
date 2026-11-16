@@ -59,9 +59,9 @@ test("every built YouTube embed uses .youtube, privacy-enhanced domain, lazy loa
       assert.doesNotMatch(parentStyle, /min-height:\s*14rem/, `${file}: YouTube wrapper for ${vid} collapsed to min-height: 14rem`);
 
       if (youtubeMeta[vid]) {
-        const expected = `--yt-aspect: ${youtubeMeta[vid].width} / ${youtubeMeta[vid].height};`;
+        const expected = new RegExp(`--yt-aspect:\\s*${youtubeMeta[vid].width}\\s*/\\s*${youtubeMeta[vid].height}\\b`);
         assert.ok(
-          parentStyle.includes(expected) || parentStyle.includes("height:"),
+          expected.test(parentStyle) || parentStyle.includes("height:"),
           `${file}: YouTube wrapper for ${vid} expected ${expected}, got style=${JSON.stringify(parentStyle)}`,
         );
       }
