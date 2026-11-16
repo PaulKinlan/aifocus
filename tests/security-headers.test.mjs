@@ -148,34 +148,66 @@ function headerBlock(rulePath) {
   return block;
 }
 
-// The CSP directive list as a comparable string, with script-src replaced by a
-// placeholder so the two policies can be compared for every OTHER directive.
-function directives(policy, scriptSrc) {
+// The directives the /admin/* block is allowed to narrow relative to /*. Every
+// other directive must stay byte-identical to the /* value, because the guard's
+// job there is accidental-drift detection. These two are compared as source
+// lists instead: adding a source is what the guard must catch, and narrowing one
+// is the change (script-src and connect-src, aifocus-wwfp and aifocus-wn4o).
+const NARROWABLE = ["script-src", "connect-src"];
+
+// The CSP directive list as a comparable string, with each narrowable directive
+// replaced by a placeholder so the two policies can be compared for every OTHER
+// directive.
+function directives(policy) {
   return policy
     .split(";")
     .map((d) => d.trim())
     .filter(Boolean)
-    .map((d) => (d === "script-src" || d.startsWith("script-src ") ? `script-src ${scriptSrc}` : d))
+    .map((d) => (NARROWABLE.includes(d.split(" ")[0]) ? `${d.split(" ")[0]} <narrowed>` : d))
     .join("; ");
 }
 
-test("drift guard: the /admin/* policy is the baseline policy with script-src narrowed to 'self'", () => {
-  const policy = headerBlock("/admin/*")["Content-Security-Policy"];
-  assert.ok(policy, "/admin/* declares its own Content-Security-Policy");
-  const scriptSrc = policy
+// The sources of one directive in a policy, as a Set.
+function directiveSources(policy, name) {
+  const directive = policy
     .split(";")
     .map((d) => d.trim())
-    .find((d) => d.startsWith("script-src "))
-    .slice("script-src ".length)
-    .trim();
+    .find((d) => d === name || d.startsWith(`${name} `));
+  assert.ok(directive, `policy declares ${name}`);
+  return new Set(directive.slice(name.length).trim().split(/\s+/).filter(Boolean));
+}
+
+test("drift guard: the /admin/* policy narrows script-src and connect-src and changes nothing else", () => {
+  const policy = headerBlock("/admin/*")["Content-Security-Policy"];
+  assert.ok(policy, "/admin/* declares its own Content-Security-Policy");
+  const baseline = SECURITY_HEADERS["Content-Security-Policy"];
+
   // 'self' only: no 'unsafe-inline' (which would let an injected inline script
   // ride the moderator's Access cookie into /api/admin/*) and no third-party
   // host (which would let a compromised analytics/widget dependency do it).
-  assert.equal(scriptSrc, "'self'", "/admin/* script-src must be exactly 'self'");
+  assert.deepEqual(
+    directiveSources(policy, "script-src"),
+    new Set(["'self'"]),
+    "/admin/* script-src must be exactly 'self'",
+  );
+
+  // connect-src 'self' (aifocus-wn4o): assets/js/admin-page.js fetches only
+  // /api/admin/*, so any other origin here is an exfil target for a first-party
+  // module carrying moderator data. 'self' has to stay for those API calls, and
+  // nothing else may appear - every origin this block lists is also allowed by
+  // /*, so the only direction this directive can move is narrower.
+  const connect = directiveSources(policy, "connect-src");
+  assert.ok(connect.has("'self'"), "/admin/* connect-src must keep 'self' so the page can call /api/admin/*");
+  assert.deepEqual(
+    connect,
+    new Set(["'self'"]),
+    "/admin/* connect-src must be exactly 'self' - no origin the /* policy allows may reappear here",
+  );
+
   assert.equal(
-    directives(policy, "'self'"),
-    directives(SECURITY_HEADERS["Content-Security-Policy"], "'self'"),
-    "/admin/* CSP must be the /* CSP with script-src narrowed - change both together",
+    directives(policy),
+    directives(baseline),
+    "/admin/* CSP must be the /* CSP with only script-src and connect-src narrowed - change both together",
   );
 });
 

@@ -634,6 +634,12 @@ function spelledApart(token) {
 // that spells it.
 const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelledApart(token)})`;
 
+// setAttribute() lowercases its qualified name on an HTML element (DOM spec), so
+// a case-variant spelling ("HREF") still sets the href attribute (aifocus-geat).
+// Only a quoted literal name is case-folded: a bare or member identifier is a
+// JavaScript property name and stays case-sensitive.
+const caseVariant = (token) => token.replace(/[a-z]/gi, (c) => `[${c.toLowerCase()}${c.toUpperCase()}]`);
+
 // The name argument of setAttribute/setAttributeNS, in any spelling this scan can
 // read: a quoted or interpolation-free template literal (aifocus-jfil), a bare
 // identifier or member expression ending in the name, or a ':'-qualified name
@@ -649,7 +655,7 @@ const attributeKey = (token) => `(?:${NAME_QUOTE}${token}${NAME_QUOTE}|${spelled
 // was caught in brackets and missed in a call. A name with a runtime operand
 // ('prefix + "href"') still stays out: that is assembly, not a spelling.
 const attributeName = (token) =>
-  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${token}${NAME_QUOTE}` +
+  `(?:${NAME_QUOTE}(?:[\\w$.-]+:)*${caseVariant(token)}${NAME_QUOTE}` +
   `|(?:${NAME_QUOTE}[\\w$.-]+:${NAME_QUOTE}\\s*\\+\\s*)?${attributeKey(token)}` +
   `|(?:[A-Za-z_$][\\w$]*\\.)*${token})`;
 
@@ -661,7 +667,11 @@ const assignmentTo = (token) => new RegExp(
   `\\.${token}\\s*` + ASSIGN_OP + `\\s*` +
   `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*` + ASSIGN_OP + `\\s*` +
   `|\\bsetAttribute(?:NS)?\\s*\\(\\s*(?:[^,()]*,\\s*)?` + attributeName(token) + `\\s*,` +
-  `|\\b${token}\\s*:\\s*`,
+  // A quoted object-literal key is the same property: { "href": raw } writes
+  // .href exactly as { href: raw } does (aifocus-o2js), and so does a computed
+  // key whose spelling is a literal: { ["href"]: raw } (aifocus-vcqf).
+  `|(?:\\b${token}|${NAME_QUOTE}${token}${NAME_QUOTE})\\s*:\\s*` +
+  `|\\[\\s*` + attributeKey(token) + `\\s*\\]\\s*:\\s*`,
 );
 const HREF_ASSIGNMENT = assignmentTo("href");
 const GUARDED = /safe(?:Href|PostPath)\s*\(/;
@@ -796,7 +806,11 @@ function stripComments(text) {
     }
     if (char === "/" && (!previous || openers.includes(previous))) { regex = true; i += 1; continue; }
     if (char === "'" || char === '"' || char === "`") { quote = char; i += 1; continue; }
-    if (char !== " " && char !== "\t" && char !== "\n") previous = char;
+    // Whitespace here is /\s/, not a ' '/'\t'/'\n' list: the list let a '\r'
+    // set previous, so a regex literal opening after a CRLF break was read as
+    // division and the '//' in its body swallowed the rest of the line,
+    // hiding a split sink after it (aifocus-28kp).
+    if (!/\s/.test(char)) previous = char;
     i += 1;
   }
   return out + text.slice(copied);
@@ -809,7 +823,7 @@ function stripComments(text) {
 // boundaries to know where a statement and a comment end. Trailing blanks after
 // the dot and any blank or comment-only lines between dot and name are stepped
 // over, since a property access cannot be ended by them (aifocus-88tg).
-const glueAfterDot = (text) => text.replace(/\.([ \t]*)\n(?:[ \t]*\n)*[ \t]*/g, ".");
+const glueAfterDot = (text) => text.replace(/\.([ \t]*)\r?\n(?:[ \t]*\r?\n)*[ \t]*/g, ".");
 
 // Both sink rules name 'href', 'src' or 'setAttribute' literally, and a join can
 // never split one of those tokens (it rejoins at a dot, an operator or a
@@ -895,7 +909,10 @@ function sinkStatements(source, assignment) {
       // loop reaches on its own line, and a later line's dynamic href must not
       // be attributed to this one - the pin list is keyed by the line it is on,
       // so hoisting it here would report a pinned statement as unpinned.
-      const anchor = code[i].length;
+      // Compare offsets in the joined text: a CR (or blanks) after a dot is
+      // removed by glueAfterDot, and counting it in the raw-line length would
+      // attribute a next-line match to this line and report it twice.
+      const anchor = glueAfterDot(code[i] + "\n").replace(/\r?\n$/, "").length;
       const inLine = [...joined.matchAll(matches)].filter((match) => match.index < anchor);
       if (!inLine.length) continue;
       const headEnd = statementEnd(joined);
@@ -916,13 +933,20 @@ function sinkStatements(source, assignment) {
     // guard call, which is the false alarm aifocus-hh46 is about - the per-sink
     // statement below carries the continuation and sees the caller's argument.
     if (statementEnd(line) >= 0) push(line, i + 1);
-    for (const match of line.matchAll(matches)) {
-      let text = line.slice(match.index);
+    for (const match of code[i].matchAll(matches)) {
+      // The same continuation the non-matching branch uses: comment-stripped
+      // lines with blank and comment-only lines stepped over. Extending with the
+      // raw rule stopped at the first comment or blank line, so
+      // 'img.src =' / '// why' / 'user.avatarUrl;' truncated the statement before
+      // the value arrived - a missed sink in the src rule, and a truncated head
+      // reported as a dynamic href in the href rule (aifocus-6iv1).
+      let text = code[i].slice(match.index);
       let end = statementEnd(text);
       let next = i;
-      while (end < 0 && next + 1 < lines.length &&
-        continuesStatement(lines[next], lines[next + 1])) {
-        text += `\n${lines[++next]}`;
+      while (end < 0 && next - i < 40) {
+        const to = continuation(next);
+        if (to < 0) break;
+        while (next < to) text += `\n${code[++next]}`;
         end = statementEnd(text);
       }
       if (next !== i) push(end < 0 ? text : text.slice(0, end), i + 1);
@@ -1288,6 +1312,9 @@ test("the href gate catches dynamic fields by sink shape, not profile field name
     "el.setAttribute(`href`, item.post);",
     "el.setAttributeNS(NS.XLINK, `href`, item.post);",
     "x[`href`] = item.post;",
+    'return { "href": item.post };', "return { 'href': item.post };",
+    'return { ["href"]: item.post };', 'return { ["hr" + "ef"]: item.post };',
+    'el.setAttribute("HREF", item.post);', 'el.setAttribute("Href", item.post);',
     "el.setAttribute(href, item.post);",
     "el.setAttribute(NAMES.href, item.post);",
     // A qualified name is the same attribute: 'xlink:href' is how SVG spells the
@@ -1406,6 +1433,12 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     // the assignment match (aifocus-jum0).
     "img.src\n/* why\nstill */\n= user.avatarUrl;",
     "img.\n/* why\nstill */\nsrc = user.avatarUrl;",
+    // A break on the other side of the operator: the direct-match branch used to
+    // extend with the raw rule, so the statement stopped at the comment or blank
+    // line and the value never arrived (aifocus-6iv1).
+    "img.src =\n  // explanation\n  user.avatarUrl;",
+    "img.src =\n\n  user.avatarUrl;",
+    "img.src =\n  /* c */\n  user.avatarUrl;",
   ];
   for (const sample of srcCaught) {
     assert.equal(unguardedAvatarSrcs(sample).length, 1, `the avatar guard must catch: ${JSON.stringify(sample)}`);
@@ -1417,6 +1450,8 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
     "wrap.href /* c */\n= user.profileUrl;",
     "wrap.href\n/* why\nstill */\n= item.profileUrl;",
     "wrap.\n/* a\nb */\nhref = item.profileUrl;",
+    "wrap.href =\n  // explanation\n  item.profileUrl;",
+    "wrap.href =\n\n  item.profileUrl;",
   ];
   for (const sample of hrefCaught) {
     assert.equal(unguardedHrefAssignments(sample).length, 1, `the href guard must catch: ${JSON.stringify(sample)}`);
@@ -1427,6 +1462,10 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   assert.deepEqual(unguardedAvatarSrcs("// img.src = raw;\n/* img.src = raw; */"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src\n/* why\nstill */\n= safeImgSrc(user.avatarUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("/* img.src = raw\n   still comment */\nimg.src = safeImgSrc(user.avatarUrl);"), []);
+  // The same break with a guarded value must stay silent: the statement now
+  // reaches the value, and the value is a call the guard swallows.
+  assert.deepEqual(unguardedAvatarSrcs("img.src =\n  // c\n  safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.href =\n  // c\n  safeHref(user.profileUrl);"), []);
   assert.deepEqual(unguardedAvatarSrcs("img.src = user.avatarUrl / 2; // half the pixels"), [
     "1: img.src = user.avatarUrl / 2; // half the pixels",
   ]);
@@ -1436,6 +1475,34 @@ test("a break next to a comment or a blank line cannot hide a raw sink", () => {
   // Two statements with a blank line between them stay two: the second is not
   // joined onto the first, so a guarded pair stays silent.
   assert.deepEqual(unguardedAvatarSrcs("img.src = safeImgSrc(a);\n\nimg.src = safeImgSrc(b);"), []);
+  // A regex literal opening as the first character after a CRLF break is a
+  // regex, not division: with a '\r' setting `previous`, the '//' inside a
+  // URL-style body ('/https?:\/\//') was read as a line comment and swallowed
+  // the rest of that line, hiding the sink's dot on it (aifocus-28kp).
+  assert.equal(unguardedAvatarSrcs("const urlRe =\r\n  /https?:\\/\\//.test(u); img.\nsrc = user.avatarUrl;").length, 1);
+  assert.equal(unguardedHrefAssignments("const urlRe =\r\n  /https?:\\/\\//.test(u); wrap.\nhref = user.profileUrl;").length, 1);
+  // A CRLF dot break leaves '\r' before '\n'. Rejoining the member access
+  // must work even with an intervening blank line or an earlier regex literal
+  // (aifocus-uhtu); guarded calls after the same break stay silent.
+  for (const source of [
+    "const t = 1;\r\nimg.\r\nsrc = user.avatarUrl;\r\n",
+    "const t = /a\\/b/.test(u);\r\nimg.\r\nsrc = user.avatarUrl;\r\n",
+    "const t = 1;\r\nimg.\r\n\r\nsrc = user.avatarUrl;\r\n",
+  ]) assert.equal(unguardedAvatarSrcs(source).length, 1, JSON.stringify(source));
+  assert.equal(unguardedHrefAssignments("wrap.\r\nhref = user.profileUrl;").length, 1);
+  assert.deepEqual(unguardedAvatarSrcs("img.\r\nsrc = safeImgSrc(user.avatarUrl);"), []);
+  assert.deepEqual(unguardedHrefAssignments("wrap.\r\nhref = safeHref(user.profileUrl);"), []);
+  // The setAttribute match starts on the SECOND line after the dot is glued.
+  // A CRLF must not shift the joined-text anchor and report one sink twice;
+  // the independent sink on line 3 still needs its own report (aifocus-oton).
+  assert.deepEqual(
+    unguardedAvatarSrcs("el.\r\nsetAttribute(\"src\", user.avatarUrl);\r\nimg.src = user.avatarUrl;\r\n"),
+    ["2: setAttribute(\"src\", user.avatarUrl);", "3: img.src = user.avatarUrl;"],
+  );
+  assert.deepEqual(unguardedHrefAssignments("el.\r\nsetAttribute(\"href\", user.profileUrl);\r\n"),
+    ["2: setAttribute(\"href\", user.profileUrl);"]);
+  assert.deepEqual(unguardedAvatarSrcs("el.   \nsetAttribute(\"src\", user.avatarUrl);"),
+    ["2: setAttribute(\"src\", user.avatarUrl);"]);
 });
 
 test("a break inside the sink pattern or the field name cannot hide a raw sink", () => {

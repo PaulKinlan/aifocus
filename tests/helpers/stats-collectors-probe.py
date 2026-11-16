@@ -383,12 +383,17 @@ def case_openrouter_rejects_hostile_spend_shares():
                           f"openrouter spend share {bad!r}")
 
 
-def chart_rows_for(ys, run_date="2026-11-09", share=0.42, x="2026-10-26"):
+def chart_rows_for(ys, run_date="2026-11-09", share=0.42, x="2026-10-26", *,
+                   points=None, epoch=None, window_days=30):
     mod = load("stats_collect_openrouter", "tools/stats/collect-openrouter.py")
-    payload = {"data": {"data": [{"x": x, "ys": ys}]}}
+    series = {"id": "openrouter-tokens", "kind": "openrouter-chart"}
+    if epoch is not None:
+        series["epoch"] = epoch
+    payload = {"data": {"data": points if points is not None else [{"x": x, "ys": ys}]}}
+    spend = task_spend(share)
+    spend["data"]["tokens"]["windowDays"] = window_days
     with Stub([FakeResponse(json.dumps(payload))]):
-        return mod.chart_rows({"id": "openrouter-tokens", "kind": "openrouter-chart"},
-                              run_date, task_spend(share))
+        return mod.chart_rows(series, run_date, spend)
 
 
 def case_openrouter_accepts_chart_tokens():
@@ -406,6 +411,87 @@ def case_openrouter_rejects_hostile_chart_tokens():
                           f"openrouter chart tokens Others={bad!r}")
 
 
+def case_openrouter_chart_epoch_and_window_edges():
+    # Real series epoch, unsorted feed, and both strict/inclusive date edges.
+    dates = ["2026-11-03", "2026-10-10", "2025-11-02", "2026-11-02", "2025-11-03", "2026-10-09"]
+    points = [{"x": day, "ys": {"Model A": 100 + i}} for i, day in enumerate(dates)]
+    rows = chart_rows_for({}, points=points, epoch="2025-11-03")
+    all_rows = [(row[1], row[2], row[4]) for row in rows if row[0] == "All tokens per week"]
+    assert all_rows == [
+        ("2025-11-03", "2025-11-09", 104),
+        ("2026-10-09", "2026-10-15", 105),
+        ("2026-10-10", "2026-10-16", 101),
+        ("2026-11-02", "2026-11-08", 103),
+        ("2026-11-03", "2026-11-09", 100),
+    ], all_rows
+    estimated = [(row[1], row[2], row[4]) for row in rows if row[0] == "Programming tokens per week (estimate)"]
+    assert estimated == [("2026-10-10", "2026-10-16", round(101 * 0.42)),
+                         ("2026-11-02", "2026-11-08", round(103 * 0.42))], estimated
+    assert json.loads(rows[0][6]) == {"models": 1, "others": 0}, rows[0]
+    assert json.loads(next(row for row in rows if row[0].startswith("Programming"))[6]) == {
+        "code_token_share": 0.42, "window_days": 30,
+    }
+    # No epoch field uses the collector default, not the configured series epoch.
+    default = chart_rows_for({}, points=[{"x": "2025-10-27", "ys": {"Model A": 1}}])
+    assert [(row[0], row[1]) for row in default] == [("All tokens per week", "2025-10-27")], default
+    # A feed's 7-day window must override the 30-day default.
+    narrow = chart_rows_for({"Model A": 100}, x="2026-10-30", window_days=7)
+    assert [row[0] for row in narrow] == ["All tokens per week"], narrow
+    included = chart_rows_for({"Model A": 100}, x="2026-11-02", window_days=7)
+    assert [row[0] for row in included] == ["All tokens per week", "Programming tokens per week (estimate)"], included
+    assert json.loads(included[1][6])["window_days"] == 7, included
+
+
+def case_openrouter_main_csv_and_dispatch():
+    mod = load("stats_collect_openrouter", "tools/stats/collect-openrouter.py")
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        mod.DATA_DIR = str(root)
+        mod.CONFIG = str(root / "series.json")
+        (root / "series.json").write_text(json.dumps({"series": [
+            {"id": "or-chart", "kind": "openrouter-chart", "file_prefix": "or-chart", "epoch": "2025-11-03"},
+            {"id": "or-share", "kind": "openrouter-task-share", "file_prefix": "or-share"},
+            {"id": "not-or", "kind": "httparchive", "file_prefix": "bad"},
+        ]}), encoding="utf-8")
+        spend = FakeResponse(json.dumps(task_spend(0.42, 0.30)))
+        chart = FakeResponse(json.dumps({"data": {"data": [{"x": "2026-11-02", "ys": {"Model A": 100}}]}}))
+        argv = sys.argv
+        try:
+            sys.argv = ["collect-openrouter.py", "--series", "or-chart", "--run-date", "2026-11-09"]
+            with Stub([spend, chart]) as stub:
+                mod.main()
+                assert stub.calls == 2, stub.calls
+            with (root / "or-chart-2026-11-09.csv").open(encoding="utf-8", newline="") as f:
+                rows = list(csv.reader(f))
+            assert rows[0] == ["tool", "period_start", "period_end", "granularity", "total_count", "url", "samples"], rows[0]
+            assert [(r[0], r[1], r[4]) for r in rows[1:]] == [
+                ("All tokens per week", "2026-11-02", "100"),
+                ("Programming tokens per week (estimate)", "2026-11-02", "42"),
+            ], rows
+            sys.argv = ["collect-openrouter.py", "--series", "or-share", "--run-date", "2026-11-09"]
+            with Stub([spend]) as stub:
+                mod.main()
+                assert stub.calls == 1, stub.calls
+            with (root / "or-share-2026-11-09.csv").open(encoding="utf-8", newline="") as f:
+                share_rows = list(csv.reader(f))
+            assert len(share_rows) == 5 and all(r[3] == "snapshot" for r in share_rows[1:]), share_rows
+            # Invalid series must exit before fetching, and even a regression
+            # in that ordering must never reach the live network (aifocus-g4qj).
+            with Stub([AssertionError("series validation must precede any fetch")]) as guard:
+                for series_id in ("not-or", "missing"):
+                    sys.argv = ["collect-openrouter.py", "--series", series_id, "--run-date", "2026-11-09"]
+                    try:
+                        mod.main()
+                    except SystemExit as err:
+                        assert "is not an openrouter series" in str(err), err
+                    else:
+                        raise AssertionError(f"{series_id} accepted")
+                assert guard.calls == 0, guard.calls
+            assert sorted(p.name for p in root.glob("*.csv")) == ["or-chart-2026-11-09.csv", "or-share-2026-11-09.csv"]
+        finally:
+            sys.argv = argv
+
+
 def case_openrouter_accepts_real_shares():
     rows = share_rows_for(task_spend(0.42, 0.30))
     tokens = [row[4] for row in rows if row[0].endswith("share of tokens (30 days)")]
@@ -421,6 +507,93 @@ def case_openrouter_rejects_window_days():
         payload = task_spend(0.4)
         payload["data"][which]["windowDays"] = float("nan")
         expect_data_error(lambda p=payload: share_rows_for(p), f"openrouter windowDays NaN ({which})")
+
+
+# --- github: period selection and CSV publication are offline contracts -----
+
+def case_github_periods_boundaries():
+    mod = load("stats_collect_github", "tools/stats/collect-github.py")
+    weeks = [("2026-01-05", "2026-01-11"), ("2026-01-12", "2026-01-18")]
+    assert mod.periods("weekly", "2026-01-05", date(2026, 1, 19)) == weeks
+    assert mod.periods("weekly", "2026-01-05", date(2026, 1, 18)) == weeks[:1]
+    assert mod.periods("weekly", "2026-01-05", date(2026, 1, 5)) == []
+    months = [("2024-01-01", "2024-01-31"), ("2024-02-01", "2024-02-29")]
+    assert mod.periods("monthly", "2024-01-01", date(2024, 3, 1)) == months
+    assert mod.periods("monthly", "2024-01-01", date(2024, 2, 29)) == months[:1]
+    assert mod.periods("monthly", "2025-12-01", date(2026, 1, 1)) == [("2025-12-01", "2025-12-31")]
+    try:
+        mod.periods("daily", "2026-01-05", date(2026, 2, 1))
+    except SystemExit as err:
+        assert "unsupported granularity" in str(err), err
+    else:
+        raise AssertionError("unknown granularity accepted")
+
+
+def case_github_search_urls():
+    mod = load("stats_collect_github", "tools/stats/collect-github.py")
+    query = 'author:bot "hello world"'
+    encoded = "author%3Abot%20%22hello%20world%22"
+    assert mod.web_search_url("commits", query) == f"https://github.com/search?q={encoded}&type=commits"
+    assert mod.web_search_url("issues", "is:pr label:bug").endswith("&type=pullrequests")
+    assert mod.web_search_url("issues", "is:issue label:bug").endswith("&type=issues")
+
+
+def case_github_write_csv_merges_and_medians():
+    mod = load("stats_collect_github", "tools/stats/collect-github.py")
+    series = {"file_prefix": "github-probe", "granularity": "weekly",
+              "date_field": "committer-date", "search": "commits"}
+    a = {"name": "A", "query": "author:a"}
+    b = {"name": "B", "query": "author:b"}
+    s, e, later, later_end = "2026-01-05", "2026-01-11", "2026-01-12", "2026-01-18"
+    with tempfile.TemporaryDirectory() as tmp:
+        mod.DATA_DIR = tmp
+        path = pathlib.Path(tmp) / "github-probe-2026-01-19.csv"
+        mod.write_csv(series, [(a, s, e), (b, s, e)],
+                      {f"A|{s}..{e}": [7, 9], f"B|{s}..{e}": [4]}, "2026-01-19")
+        with path.open(encoding="utf-8", newline="") as f:
+            first = list(csv.DictReader(f))
+        assert [(r["tool"], r["total_count"]) for r in first] == [("A", "9"), ("B", "4")], first
+        assert json.loads(first[0]["samples"]) == [7, 9], first
+        assert first[0]["url"].endswith("&type=commits"), first
+        assert "committer-date%3A2026-01-05..2026-01-11" in first[0]["url"], first
+
+        # Re-measuring A must replace its result (upper median of four sorted
+        # samples), while a no-data B task keeps its earlier row unchanged.
+        mod.write_csv(series, [(a, s, e), (b, s, e), (b, later, later_end)],
+                      {f"A|{s}..{e}": [40, 10, 30, 20], f"B|{s}..{e}": [None],
+                       f"B|{later}..{later_end}": [None]}, "2026-01-19")
+        with path.open(encoding="utf-8", newline="") as f:
+            merged = list(csv.DictReader(f))
+        assert [(r["tool"], r["period_start"], r["total_count"]) for r in merged] == [
+            ("A", s, "30"), ("B", s, "4")], merged
+        assert json.loads(merged[0]["samples"]) == [10, 20, 30, 40], merged
+        assert merged[1] == first[1], (merged[1], first[1])
+        mod.write_csv(series, [(b, later, later_end)],
+                      {f"B|{later}..{later_end}": [2, 3, 1]}, "2026-01-19")
+        with path.open(encoding="utf-8", newline="") as f:
+            final = list(csv.DictReader(f))
+        assert [(r["tool"], r["period_start"], r["total_count"]) for r in final] == [
+            ("A", s, "30"), ("B", s, "4"), ("B", later, "2")], final
+
+
+def case_github_existing_complete_skips_partial():
+    mod = load("stats_collect_github", "tools/stats/collect-github.py")
+    import build
+    series = {"file_prefix": "github-probe", "granularity": "weekly"}
+    old_data_dir = build.DATA_DIR
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            build.DATA_DIR = tmp
+            path = pathlib.Path(tmp) / "github-probe-2026-01-19.csv"
+            with path.open("w", encoding="utf-8", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["tool", "period_start", "period_end", "granularity", "total_count", "url", "samples"])
+                w.writerow(["A", "2026-01-05", "2026-01-11", "weekly", 7, "", "[7]"])
+                w.writerow(["B", "2026-01-12", "2026-01-17", "weekly", 8, "", "[8]"])
+                w.writerow(["C", "2026-01-12", "2026-01-19", "weekly", 9, "", "[9]"])
+            assert mod.existing_complete(series) == {("A", "2026-01-05")}
+    finally:
+        build.DATA_DIR = old_data_dir
 
 
 # --- github: data errors fail loud and are not retried ----------------------
@@ -764,6 +937,8 @@ CASES = {
     "openrouter-rejects-window-days": case_openrouter_rejects_window_days,
     "openrouter-accepts-chart-tokens": case_openrouter_accepts_chart_tokens,
     "openrouter-rejects-hostile-chart-tokens": case_openrouter_rejects_hostile_chart_tokens,
+    "openrouter-chart-epoch-and-window-edges": case_openrouter_chart_epoch_and_window_edges,
+    "openrouter-main-csv-and-dispatch": case_openrouter_main_csv_and_dispatch,
     "model-gap-accepts-releases-and-features": case_model_gap_accepts_releases_and_features,
     "model-gap-rejects-bad-milestone-or-date": case_model_gap_rejects_bad_milestone_or_date,
     "model-gap-rejects-bad-chromestatus-feature": case_model_gap_rejects_bad_chromestatus_feature,
@@ -771,6 +946,10 @@ CASES = {
     "model-halflife-accepts-and-dedups-drops": case_model_halflife_accepts_and_dedups_drops,
     "model-halflife-rejects-hostile-created": case_model_halflife_rejects_hostile_created,
     "model-halflife-over-cap-body-refused": case_model_halflife_over_cap_body_refused,
+    "github-periods-boundaries": case_github_periods_boundaries,
+    "github-search-urls": case_github_search_urls,
+    "github-write-csv-merges-and-medians": case_github_write_csv_merges_and_medians,
+    "github-existing-complete-skips-partial": case_github_existing_complete_skips_partial,
     "github-data-error-not-retried": case_github_data_error_not_retried,
     "github-over-cap-body-refused": case_github_over_cap_body_refused,
     "github-error-body-is-capped": case_github_error_body_is_capped,
