@@ -10,7 +10,11 @@ draft: false
 authors:
   - paulkinlan
 ---
-I built a [voice harness](https://github.com/PaulKinlan/voicebox). That is, a harness like Claude or the [pi-cli](https://pi.dev/), but you can control actions via just your voice. I use it quite a lot and it's given me a glimpse of how a future operating system might work.
+Earlier this year I built an Esper Machine that I was planning to integrate in to my [IO talk](https://youtu.be/YuMdsHIXatY) to showcase something cool that we can do on the web.
+
+{{< youtube id="LQJ0EEn357I" >}}
+
+I think it was really cool and it got me thinking about how we might be able to use voice to do more with my computer, so much so that I built a [voice harness](https://github.com/PaulKinlan/voicebox). That is, a harness like Claude or the [pi-cli](https://pi.dev/), but you can control all of the actions via just your voice. I use it quite a lot and it's given me a glimpse of how a future operating system might work.
 
 This post isn't about voice interaction (although it is very cool). It's about the web runtime I built around it, which lets me control my machine with my voice and builds a new operating layer in the browser through mini-apps. It's also about what building it showed me the web platform is still missing.
 
