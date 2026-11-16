@@ -98,5 +98,5 @@ There are also gaps. A lot of the daemon exists because the browser can't do the
 
 I had a lot of fun building this project as it let me push the boundaries of what I think people are doing on the web and it was also very interesting to explore the concept of functionality built by the LLM being usable by the LLM in future interactions. I can see a world where we build composable units of programs that can be summoned by my voice, which leads me to the fact that I think we will see Agent Harnesses move more and more into Operating System territory.
 
-The code is on [GitHub](https://github.com/PaulKinlan/voicebox). If you're working on any of these problems, I would be very happy to work on this with you, so let me know.
+The code is on [GitHub](https://github.com/PaulKinlan/voicebox). If you're working on any of these problems, I would be very happy to work on this with you, so let me know. Oh, and this project can be pretty expensive to run.
 
