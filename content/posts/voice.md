@@ -5,7 +5,7 @@ slug: voice-harness
 description: "A browser-based voice harness built on Gemini Live, OPFS,
   mini-apps and WebMCP turned into an operating layer and it rocked my socks
   off!"
-date: 2026-11-12T11:25:51.870Z
+date: 2026-11-16T20:56:45.248Z
 draft: false
 authors:
   - paulkinlan
