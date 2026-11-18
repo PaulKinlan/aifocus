@@ -214,9 +214,60 @@ const renderAccount = () => {
   }
 };
 
-const renderItem = (item) => {
+// One inline reply form at a time, opened under the comment being answered.
+let openReplyForm = null;
+
+const closeReplyForm = () => {
+  openReplyForm?.remove();
+  openReplyForm = null;
+};
+
+const renderReplyForm = (item, li) => {
+  const form = document.createElement("form");
+  form.className = "reader-form reader-reply-form";
+  const label = document.createElement("label");
+  label.append(`Reply to ${item.name || "this comment"}`);
+  const textarea = document.createElement("textarea");
+  textarea.name = "body";
+  textarea.rows = 3;
+  textarea.maxLength = 2000;
+  textarea.required = true;
+  label.append(textarea);
+  const actions = document.createElement("div");
+  actions.className = "reader-dialog-actions";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "Cancel";
+  cancel.addEventListener("click", () => {
+    closeReplyForm();
+    li.querySelector(":scope > .reader-meta [data-reply]")?.focus();
+  });
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "Post reply";
+  actions.append(cancel, submit);
+  form.append(label, actions);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submit.disabled = true;
+    try {
+      const saved = await createAnnotation({ type: "comment", parentId: item.id, body: textarea.value });
+      closeReplyForm();
+      setStatus(saved?.status === "approved"
+        ? "Reply posted."
+        : "Reply saved. Other readers will see it once it is approved.");
+    } catch (err) {
+      submit.disabled = false;
+      setStatus(err.message);
+    }
+  });
+  return form;
+};
+
+const renderItem = (item, depth = 0) => {
   const li = document.createElement("li");
   li.className = "reader-item";
+  li.dataset.id = item.id;
   if (item.quote) {
     const quote = document.createElement("blockquote");
     const link = document.createElement("a");
@@ -236,12 +287,36 @@ const renderItem = (item) => {
   const when = document.createElement("time");
   when.dateTime = new Date(item.createdAt).toISOString();
   when.textContent = new Date(item.createdAt).toLocaleDateString();
-  meta.append(who, when);
+  meta.append(who);
+  if (item.isAuthor) {
+    const author = document.createElement("span");
+    author.className = "reader-badge reader-badge-author";
+    author.textContent = "Author";
+    meta.append(author);
+  }
+  meta.append(when);
   if (item.mine && STATUS_LABELS[item.status]) {
     const badge = document.createElement("span");
     badge.className = "reader-badge";
     badge.textContent = STATUS_LABELS[item.status];
     meta.append(badge);
+  }
+  // Comments (not notes) can be replied to by any signed-in reader, at any
+  // depth. Replies are moderated like comments.
+  if (item.type === "comment" && state.viewer) {
+    const reply = document.createElement("button");
+    reply.type = "button";
+    reply.dataset.reply = "";
+    reply.textContent = "Reply";
+    reply.addEventListener("click", () => {
+      const existing = openReplyForm?.parentElement === li;
+      closeReplyForm();
+      if (existing) return;
+      openReplyForm = renderReplyForm(item, li);
+      meta.after(openReplyForm);
+      openReplyForm.querySelector("textarea").focus();
+    });
+    meta.append(reply);
   }
   if (item.mine) {
     const del = document.createElement("button");
@@ -251,6 +326,16 @@ const renderItem = (item) => {
     meta.append(del);
   }
   li.append(meta);
+  if (item.replies?.length) {
+    const list = document.createElement("ol");
+    list.className = "reader-list reader-replies";
+    // Indent stops growing after a few levels so deep threads stay readable
+    // on narrow screens; the tree itself has no depth limit.
+    if (depth >= 3) list.classList.add("reader-replies-flat");
+    list.setAttribute("aria-label", item.replies.length === 1 ? "1 reply" : `${item.replies.length} replies`);
+    list.append(...item.replies.map((reply) => renderItem(reply, depth + 1)));
+    li.append(list);
+  }
   return li;
 };
 
@@ -363,8 +448,10 @@ const render = () => {
   }
   const notesWrap = section.querySelector(".reader-notes");
   notesWrap.hidden = state.notes.length === 0;
-  section.querySelector('[data-list="notes"]').replaceChildren(...state.notes.map(renderItem));
-  section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map(renderItem));
+  section.querySelector('[data-list="notes"]').replaceChildren(...state.notes.map((n) => renderItem(n)));
+  // A refresh rebuilds the list; an open reply form is dropped with it.
+  openReplyForm = null;
+  section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map((c) => renderItem(c)));
   renderAccount();
   applyHighlights();
   renderMarginNotes();

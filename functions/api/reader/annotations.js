@@ -1,4 +1,4 @@
-// POST   /api/reader/annotations  { post, type, quote?: { exact, prefix, suffix }, body? }
+// POST   /api/reader/annotations  { post, type, quote?: { exact, prefix, suffix }, body?, parentId? }
 // DELETE /api/reader/annotations?id=<id>
 //
 // Highlights are quotes only and need no account. The server checks the quote
@@ -10,6 +10,14 @@
 // notes and comments published straight away, unless the safety screen flags
 // them. Each body is screened by a Workers AI
 // safety model; the verdict is shown to the moderator.
+//
+// A comment with a parentId is a reply. Replies nest to any depth. The parent
+// must be a comment on the same post that the replier can see: it and every
+// comment above it must be approved or written by the replier. Replies are
+// moderated exactly like comments.
+//
+// Comments and replies from the site author's account (functions/_lib/
+// site-author.js) are published straight away and labelled "Author".
 
 import {
   ANNOTATION_TYPES,
@@ -33,6 +41,35 @@ import {
   publicAnnotation,
 } from "../../_lib/reader.js";
 import { getSessionUser } from "../../_lib/auth.js";
+import { isSiteAuthor } from "../../_lib/site-author.js";
+
+const ID_RE = /^[0-9a-f]{32}$/;
+
+// Walk from the parent up to its top-level comment. Returns null unless every
+// comment in the chain is on this post and visible to the replier.
+async function visibleParent(db, parentId, post, readerId, userId) {
+  const { results = [] } = await db
+    .prepare(
+      `WITH RECURSIVE chain (id, parent_id, post, type, status, reader, user_id) AS (
+         SELECT id, parent_id, post, type, status, reader, user_id FROM annotations WHERE id = ?1
+         UNION ALL
+         SELECT a.id, a.parent_id, a.post, a.type, a.status, a.reader, a.user_id
+         FROM annotations a JOIN chain ON a.id = chain.parent_id
+       )
+       SELECT * FROM chain`,
+    )
+    .bind(parentId)
+    .all();
+  if (results.length === 0) return null;
+  const visible = (row) =>
+    row.post === post &&
+    row.type === "comment" &&
+    (row.status === "approved" || row.reader === readerId || (row.user_id !== null && row.user_id === userId));
+  // A missing ancestor (deleted) leaves the chain short of a top-level row.
+  const top = results[results.length - 1];
+  if (top.parent_id !== null && top.parent_id !== undefined) return null;
+  return results.every(visible) ? results[0] : null;
+}
 
 export async function onRequestPost({ request, env }) {
   const db = env?.READER_DB;
@@ -56,6 +93,10 @@ export async function onRequestPost({ request, env }) {
   const prefix = cleanText(input?.quote?.prefix, LIMITS.context);
   const suffix = cleanText(input?.quote?.suffix, LIMITS.context);
   const body = cleanText(input?.body, LIMITS.body);
+  const parentId = input?.parentId ?? null;
+  if (parentId !== null && (type !== "comment" || typeof parentId !== "string" || !ID_RE.test(parentId))) {
+    return json({ error: "Invalid reply" }, 400);
+  }
 
   const needsQuote = type === "highlight" || type === "note";
   const needsBody = type === "note" || type === "comment";
@@ -124,8 +165,15 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
+  if (parentId !== null && !(await visibleParent(db, parentId, post, reader.id, user.id))) {
+    return json({ error: "That comment is not available to reply to" }, 404);
+  }
+
   const screen = needsBody ? await screenText(env, [exact, body].filter(Boolean).join("\n\n")) : null;
-  const autoApprove = type === "highlight" || (Boolean(user?.trusted) && screen === "safe");
+  const author = needsBody ? await isSiteAuthor(env, db, user.id) : false;
+  // The site author's own comments are published as written; the screen
+  // verdict is still stored for the record.
+  const autoApprove = type === "highlight" || author || (Boolean(user?.trusted) && screen === "safe");
   const row = {
     id: randomId(),
     post,
@@ -137,6 +185,7 @@ export async function onRequestPost({ request, env }) {
     body: needsBody ? body : null,
     author_name: needsBody ? user.display_name : null,
     user_id: user ? user.id : null,
+    parent_id: parentId,
     status: autoApprove ? "approved" : "pending",
     screen,
     ip_hash: ipHash,
@@ -147,17 +196,18 @@ export async function onRequestPost({ request, env }) {
   // insert is therefore conditional on the account row still existing, in the
   // same statement, so an erasure that lands mid-request cannot be followed by
   // a row carrying the deleted account's id, name and content (aifocus-z2j0).
+  // parent_id is written only for replies, so top-level comments keep working
+  // on a database where migration 0011 has not been applied yet.
+  const columns = ["id", "post", "reader", "type", "quote_exact", "quote_prefix", "quote_suffix", "body",
+    "author_name", "user_id", "status", "screen", "ip_hash", "created_at"];
+  if (row.parent_id !== null) columns.push("parent_id");
   const insert = await db
     .prepare(
-      `INSERT INTO annotations
-        (id, post, reader, type, quote_exact, quote_prefix, quote_suffix, body, author_name, user_id, status, screen, ip_hash, created_at)
-       SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14
+      `INSERT INTO annotations (${columns.join(", ")})
+       SELECT ${columns.map((_, i) => `?${i + 1}`).join(", ")}
        WHERE ?10 IS NULL OR EXISTS (SELECT 1 FROM users WHERE id = ?10)`,
     )
-    .bind(
-      row.id, row.post, row.reader, row.type, row.quote_exact, row.quote_prefix, row.quote_suffix,
-      row.body, row.author_name, row.user_id, row.status, row.screen, row.ip_hash, row.created_at,
-    )
+    .bind(...columns.map((c) => row[c]))
     .run();
   const inserted = insert?.meta?.changes ?? insert?.changes ?? 0;
   if (inserted === 0) {
@@ -169,7 +219,7 @@ export async function onRequestPost({ request, env }) {
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};
   const shaped = publicAnnotation(
-    { ...row, user_display_name: user?.display_name, user_avatar_url: user?.avatar_url, user_profile_url: user?.profile_url },
+    { ...row, user_display_name: user?.display_name, user_avatar_url: user?.avatar_url, user_profile_url: user?.profile_url, is_site_author: author },
     { mine: true },
   );
   return json({ annotation: shaped }, 201, headers);

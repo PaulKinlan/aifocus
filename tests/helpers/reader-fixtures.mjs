@@ -12,7 +12,7 @@ import { createD1 } from "./d1.mjs";
 import { READER_COOKIE } from "../../functions/_lib/reader.js";
 import { SESSION_COOKIE, createSession, upsertIdentity } from "../../functions/_lib/auth.js";
 
-export const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0006_write_events.sql", "0009_admin_actions.sql"].map((f) =>
+export const MIGRATIONS = ["0001_reader.sql", "0003_auth.sql", "0005_reaction_ip.sql", "0006_write_events.sql", "0009_admin_actions.sql", "0011_comment_replies.sql"].map((f) =>
   fileURLToPath(new URL(`../../migrations/${f}`, import.meta.url)),
 );
 // The tree as a functions deploy can find it: before migration 0005 ran.

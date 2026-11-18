@@ -6,7 +6,9 @@ the post looks as it did before.
 
 Notes and comments need a signed-in account (GitHub, Bluesky or X; see
 functions/_lib/auth.js) and are held for moderation (/admin/) unless the
-moderator has marked the account as trusted. The writer always sees their
+moderator has marked the account as trusted or it is the site author's.
+Signed-in readers can reply to comments; replies nest without a depth limit
+and follow the same moderation rules. The writer always sees their
 own; other readers see them once approved.
 */}}
 <section class="reader" id="reader" data-post="{{ .RelPermalink }}" aria-labelledby="reader-heading" hidden>
@@ -76,6 +78,11 @@ own; other readers see them once approved.
 .reader-item p { margin: .25rem 0; white-space: pre-wrap; }
 .reader-meta { color: var(--muted); font-size: .85rem; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
 .reader-badge { border: 1px solid var(--line); border-radius: 999px; padding: 0 .5rem; }
+.reader-replies { margin: .5rem 0 0 .75rem; padding-left: .75rem; border-left: 2px solid var(--line); }
+.reader-replies-flat { margin-left: 0; padding-left: 0; border-left: 0; }
+.reader-replies > .reader-item:first-child { border-top: 0; padding-top: .25rem; }
+.reader-badge-author { border-color: var(--link); color: var(--link); }
+.reader-reply-form { margin-top: .5rem; }
 .reader-meta button { min-height: 0; padding: .1rem .5rem; font-size: .85rem; }
 .reader-form { display: grid; gap: .5rem; margin-top: 1rem; }
 .reader-form label { display: grid; gap: .25rem; }
