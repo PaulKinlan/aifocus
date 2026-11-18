@@ -84,8 +84,22 @@ export async function onRequestGet({ request, env }) {
   }
 
   // Group approved quotes (highlights and notes) by passage so the page can
-  // shade a passage by how many readers marked it.
+  // shade a passage by how many readers marked it. `count` is the number of
+  // distinct people (account, or reader cookie when signed out) with an
+  // approved highlight or note on the passage, so one person who both
+  // highlights and annotates a passage counts once.
+  //
+  // `people` lists those people as small numbers that are only meaningful
+  // inside this response. The page merges overlapping passages into one run
+  // and needs to count each person once across them; it never needs, and
+  // never gets, the reader ids or account ids themselves.
   const passages = new Map();
+  const personNumbers = new Map();
+  const personNumber = (row) => {
+    const key = row.user_id ? `u:${row.user_id}` : `r:${row.reader}`;
+    if (!personNumbers.has(key)) personNumbers.set(key, personNumbers.size + 1);
+    return personNumbers.get(key);
+  };
   const notes = [];
   const commentRows = [];
   for (const row of rows.results ?? []) {
@@ -97,10 +111,10 @@ export async function onRequestGet({ request, env }) {
         exact: row.quote_exact,
         prefix: row.quote_prefix || "",
         suffix: row.quote_suffix || "",
-        count: 0,
+        people: new Set(),
         mine: false,
       };
-      if (row.status === "approved") entry.count += 1;
+      if (row.status === "approved") entry.people.add(personNumber(row));
       if (isMine) entry.mine = true;
       passages.set(key, entry);
     }
@@ -138,7 +152,11 @@ export async function onRequestGet({ request, env }) {
     post,
     reactions,
     myReactions: (mine.results ?? []).map((r) => r.kind),
-    highlights: [...passages.values()],
+    highlights: [...passages.values()].map(({ people, ...entry }) => ({
+      ...entry,
+      count: people.size,
+      people: [...people],
+    })),
     notes,
     comments,
     viewer: publicUser(user),

@@ -42,6 +42,7 @@ import {
 } from "../../_lib/reader.js";
 import { getSessionUser } from "../../_lib/auth.js";
 import { isSiteAuthor } from "../../_lib/site-author.js";
+import { notifyPendingAnnotation } from "../../_lib/notify.js";
 
 const ID_RE = /^[0-9a-f]{32}$/;
 
@@ -71,7 +72,7 @@ async function visibleParent(db, parentId, post, readerId, userId) {
   return results.every(visible) ? results[0] : null;
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   const db = env?.READER_DB;
   if (!db) return json({ error: "Reader features are not configured" }, 503);
   if (!isSameOrigin(request)) return json({ error: "Forbidden" }, 403);
@@ -215,6 +216,14 @@ export async function onRequestPost({ request, env }) {
     // between the session check and here, so the request is no longer signed
     // in. Report that instead of a phantom annotation.
     return json({ error: "Not signed in" }, 401);
+  }
+
+  // Tell the moderator a note or comment is waiting (functions/_lib/notify.js).
+  // Runs after the response so a slow or failing send never delays the reader.
+  if (row.status === "pending") {
+    const sending = notifyPendingAnnotation(env, { row, origin: url.origin });
+    if (typeof waitUntil === "function") waitUntil(sending);
+    else await sending;
   }
 
   const headers = reader.isNew ? { "Set-Cookie": readerCookieHeader(reader.id) } : {};

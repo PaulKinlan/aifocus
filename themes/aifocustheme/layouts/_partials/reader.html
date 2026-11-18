@@ -118,6 +118,10 @@ own; other readers see them once approved.
 ::highlight(reader-shared-3) { background-color: rgb(255 214 0 / .5); }
 ::highlight(reader-mine) { background-color: rgb(80 160 255 / .3); }
 ::highlight(reader-note) { text-decoration: underline dotted; text-decoration-color: var(--link); text-underline-offset: .2em; }
+/* How many people highlighted the run of text just before it (reader.js
+   renderCounts). Kept out of selections so copying a passage does not pick
+   up the number. */
+.reader-hl-count { display: inline-block; margin-left: .2em; padding: 0 .35em; border: 1px solid rgb(255 214 0 / .8); border-radius: 999px; background: var(--control-bg); color: var(--color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: .7em; font-weight: 600; line-height: 1.5; vertical-align: .25em; user-select: none; -webkit-user-select: none; cursor: default; }
 /* Notes beside the passage they quote (reader.js renderMarginNotes). Narrow
    windows: a collapsed disclosure after the block. Wide windows: inserted
    before the block and positioned in the right margin, level with it. */
