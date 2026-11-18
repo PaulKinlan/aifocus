@@ -166,3 +166,34 @@ test("annotations: rate limited per reader", async () => {
   }
   assert.equal(last.status, 429);
 });
+
+test("highlight counts: distinct people per passage, with response-local person numbers for merging overlaps", async () => {
+  const env = makeEnv();
+  const db = env.READER_DB.raw;
+  const READER_C = "c".repeat(32);
+  const insert = db.prepare(
+    "INSERT INTO annotations (id, post, reader, type, quote_exact, status, created_at, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  );
+  // A and B highlight the same passage; A also leaves an approved note on it,
+  // which must not count A twice. C highlights an overlapping, longer
+  // passage. A pending note from C on a third passage is not counted.
+  insert.run("1".repeat(32), POST, READER_A, "highlight", "realise", "approved", 1, null);
+  insert.run("2".repeat(32), POST, READER_B, "highlight", "realise", "approved", 2, null);
+  insert.run("3".repeat(32), POST, READER_A, "note", "realise", "approved", 3, null);
+  insert.run("4".repeat(32), POST, READER_C, "highlight", "I didn't realise", "approved", 4, null);
+  insert.run("5".repeat(32), POST, READER_C, "note", "setting goals", "pending", 5, null);
+
+  const state = await (await getState({ request: req(`/api/reader/state?post=${POST}`, { reader: READER_B }), env })).json();
+  const byQuote = Object.fromEntries(state.highlights.map((h) => [h.exact, h]));
+  assert.equal(byQuote.realise.count, 2, "A's highlight and note count once");
+  assert.equal(byQuote.realise.mine, true);
+  assert.equal(byQuote["I didn't realise"].count, 1);
+  assert.equal(byQuote["setting goals"], undefined, "another reader's pending note is not shown");
+
+  // The person numbers let the page union overlapping passages: A, B and C
+  // are three different numbers, and A has the same number on both rows.
+  const union = new Set([...byQuote.realise.people, ...byQuote["I didn't realise"].people]);
+  assert.equal(union.size, 3);
+  for (const n of union) assert.ok(Number.isInteger(n) && n > 0, "numbers, not reader or account ids");
+  assert.ok(!JSON.stringify(state.highlights).includes(READER_A), "reader ids are never exposed");
+});
