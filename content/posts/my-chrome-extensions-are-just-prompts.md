@@ -4,7 +4,7 @@ seotitle: ""
 slug: my-chrome-extensions-are-just-prompts
 description: ""
 date: 2026-11-18T22:29:30.910Z
-draft: true
+draft: false
 authors:
   - paulkinlan
 ---
@@ -75,21 +75,21 @@ return pages.map((p) => ({ id: p.tabId, title: p.title, excerpt: p.excerpt }));
 
 Now 50 tabs can be read in parallel, and only the distilled result goes back into the conversation. It speeds things up a lot (from minutes per run to seconds in some cases).
 
-The fun part is where that code runs. An extension's service worker can't `eval` anything, the CSP forbids it. So the script takes a bit of a journey through the service worker which then hands the code off to the offscreen document, which hosts a sandboxed iframe, and that iframe is the only place in the whole extension where dynamic code is allowed to run.
+I was quite happy with where I got the code to run, because by default an extension's service worker can't `eval` anything because of the tight CSP in the extensions platofrm. So the `code-mode` takes a bit of a journey through the Service Worker which then hands the code off to the offscreen document, which hosts a sandboxed iframe, and that iframe is the only place in the whole extension where dynamic code is allowed to run.
 
 {{< figure src="/images/my-chrome-extensions-are-just-prompts/code-mode.svg" alt="Sequence diagram: the model writes a script, the service worker passes it through the offscreen document into a sandboxed iframe, and every tool call inside the script is sent back to the service worker to be checked, run and logged." caption="code_mode: the script runs in a sandbox, the tools run in the service worker" >}}
 
-The sandbox has an opaque origin and no `chrome.*` APIs and no network (`connect-src 'none'`). The only thing the script can do is call `tools.<name>()`, which is a `postMessage` back to the service worker (postMessage is my [fave](https://paul.kinlan.me/tags/postmessage/)), where the real tool runs with the same permission checks as any other call. Each run gets a one-time id and nonce, there is a cap on tool calls (100 by default) and a timeout (60 seconds by default), and `code_mode` can't call itself. Every inner call still lands in the audit log, so you don't lose the trace just because the model wrote a loop.
+The sandbox has an opaque origin and no `chrome.*` APIs and no network (`connect-src 'none'`). The only thing the script can do is call `tools.<name>()`, which is a `postMessage` back to the service worker (postMessage is my [fave](https://paul.kinlan.me/tags/postmessage/)), where the real tool runs with the same permission checks as any other call. 
 
-One detail that made me smile: if the generated script reaches for `fetch` or `localStorage`, the sandbox doesn't just fail, it throws an error that tells the model which tool to use instead. The error message is part of the prompt.
+**Compile things that should be repeatable**
 
-**Scripts the model writes once and never pays for again**
+I was in two minds about this. On one hand I wanted the extension to be completely agent derived which means that I had to make a decision on if after the same event happens (say onTabUpdated), should the logic that is run via the agent be exactly the same every time? I think the default answer is: Yes, obviously because users would hate it if it was different. **HOWEVER**, I really like the idea that previous steps could influence future iterations and that we build emergent systems out of the changing state that our extension has built.
 
-The model can save a script it wrote with `saveAs`, and it can bind that script to a Chrome event such as `tabs.onUpdated`. The next time that event fires, the saved script runs first. If it returns `{ handled: true }` the LLM is never woken up at all, and if it returns `{ handled: false }` the event falls through to a normal run.
+In the end, I just made it so that the system _can_ save a script it wrote with `saveAs`, and it can bind that script to a Chrome event such as `tabs.onUpdated`. The next time that event fires, the saved script runs first.
 
-So a prompt can start life as a fully non-deterministic agent, and then compile the boring, repeatable parts of itself down into plain code that costs zero tokens. I find that a really interesting direction: the prompt is the program, and the model is also the compiler.
+The prompt can now start life as a fully non-deterministic agent, and then compile th repeatable parts so that I can reduce the token cost to almost zero if it chooses (I really can't believe I keep saying "it" like it's anything other than a script powered by matmul)
 
-**The popup is a JSON block in the prompt**
+**Deterministic UI**
 
 I'm not sure if I'm too happy about this. But a lot of feedback that I recieved from teams is that they need to define a way to make UI consistently and easiliy.  I followed some of the techniques that I found in A2UI and I added support for adding a fenced `ui` block to `prompt.md`, the popup and side panel are rendered from it. It does mean there is no HTML and no need for framework. But it also is one of the areas where I think regular people would clearly struggle and I want a better way to define UI 
 
@@ -120,25 +120,27 @@ This is pretty much the whole UI for the Sorting Hat tab organiser example (trim
 ```
 ````
 
-I endeded up creating are a few dozen component types (buttons, selects, switches, metrics, cards, a chat box, a live console) and a handful of themes into the studio.
+I endeded up creating are a few dozen component types (buttons, selects, switches, metrics, cards, a chat box, a live console) and a handful of themes into the studio to make it easier to build with, but still... ehh. not the happiest about this.
 
- **Undo is a journal of inverse operations**
+ **OMG. What did you do!?!?... Undo**
+ 
+Everyone I spoke to wanted to be able to undo the actions the Agent took. Firstly, we don't always have confidence the agent will get things right, so you need to be 100% confident that you can undo. Unfortunately, you can't ask an LLM to "undo that thing you just did" and trust it to remember what it did.
 
-You can't ask an LLM to "undo that" and trust it to remember what it did. So every tool that changes something records how to reverse it *before* it makes the change. Grouping tabs stores which group each tab was in before. Closing a tab stores its URL, window, position and whether it was pinned. Setting a storage key stores the previous value.
+I made it so that every tool that changes something also records how to reverse it *before* it makes the change. Grouping tabs will store which group each tab was in before. Closing a tab stores its URL, window, position and whether it was pinned. Setting a storage key stores the previous value.
 
-The last 100 actions are kept, and the `action-history` component in the UI block above gives you per-action undo and an "undo the whole last run" button for free. The undo itself is plain deterministic code. No model involved.
+It's not perfect, but the last 100 actions are kept so that undo itself is a relatively small piece of deterministic code.
 
-**Tracing everything**
+**I don't trust you. Trace everything**
 
-Every run gets a full record: what triggered it, the model, every tool call with its arguments, result and timing, the token counts and an estimated cost. The detail goes into OPFS and a small index goes into `chrome.storage.local`, and you can browse, filter and export all of it from the options page. There is also a live console that streams the run as it happens, including the model's reasoning.
+Every run gets records a full record of everything that happened: what triggered it, the model, every tool call with its arguments, result and timing, the token counts and an estimated cost. It all goes into OPFS that you can browse, filter and export all of it from the options page. There is also a live console that streams the run as it happens, including the model's reasoning.
 
-This turned out to be the feature I use the most. When an extension does something odd, the answer is nearly always in the trace, and the fix is nearly always a sentence in the prompt.
+This turned out to be the feature I use the most. I can trace what the prompt did and go and fix it. I can also performance benchmark the process and use that to ask my tools to help me refine the prompt to make it more efficient.
 
 **Treating the web as untrusted**
 
 Page titles, URLs and page text all end up in the model's context, and all of them are written by someone else. Everything that comes from the browser is sanitised and wrapped in a clearly marked "this is data, not instructions" fence before the model sees it, and a page can't close that fence itself to break out. It's a mitigation and not a solution, and I come back to this at the end.
 
----
+**Wrapping up**
 
 I really liked this project not only because we've used it to test some early concepts and it showed me how valuable the rapid iteration is, but also because it furthered my thinking on how we can compose agents from small prompts into useful experiences and how systems built around [extensions](/extensible-web-apps/) can enable more customizable products that can be as simple or as complex as _you_ need. 
 
@@ -147,5 +149,7 @@ As people build more agentic software we are going to have to think about how ou
 Make _your_ software so indispensable to _your_ users because they customized it to _their_ needs and moving to another platform or tool makes no sense.
 
 This project and the concept of extensible and customizable software is not without risk. While these extensions would not be allowed in the Chrome Web Store and can only be loaded in "developer-mode", if this is _a_ future to how software is created then how do we enable more people to safely run prompts or non-deterministic software? Do we need better virtualisation? Do we need to provide better segregation between the user-defined extension and the site they are operating on? It seems to me that it's quite possible to imagine a world where a specially crafted web page could influence the execution of the extension in future runs to extract sensitive information or manipulate a page to hide some other actions the tool has taken.
+
+Risky but fun. Seems to be the motto of a lot of LLM-powered software these days.
 
 That's it for me. I really just wanted to give you a glimpse of you being able to hyper-customize Chrome with just a few prompts. Have fun.
