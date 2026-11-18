@@ -6,8 +6,9 @@
 // Highlights are drawn with the CSS Custom Highlight API, so the article text
 // is never modified. Browsers without it still get reactions, notes and
 // comments; only the shading is missing. Notes are also shown beside the
-// block they quote (see renderMarginNotes); those elements are marked
-// data-reader-ui and skipped by the text index.
+// block they quote (see renderMarginNotes), and each highlighted run gets a
+// small count of the people who marked it (see renderCounts); those elements
+// are marked data-reader-ui and skipped by the text index.
 
 import { quotePatternFor } from "./quote-pattern.js";
 import { safeHref, safeImgSrc } from "./safe-href.js";
@@ -96,10 +97,10 @@ const similarity = (a, b) => {
   return n;
 };
 
-// Find the Range for a stored quote. Whitespace is matched loosely; when the
-// quote occurs more than once, the occurrence whose surrounding text best
-// matches the stored prefix and suffix wins.
-const findRange = (index, quote) => {
+// Find the offsets in the index text of a stored quote. Whitespace is
+// matched loosely; when the quote occurs more than once, the occurrence whose
+// surrounding text best matches the stored prefix and suffix wins.
+const findSpan = (index, quote) => {
   const pattern = quotePatternFor(quote.exact);
   if (!pattern) return null;
   // matchAll works from a copy, but reset anyway so the shared pattern cannot
@@ -114,13 +115,37 @@ const findRange = (index, quote) => {
       similarity([...after].reverse().join(""), [...(quote.suffix || "")].reverse().join(""));
     if (!best || score > best.score) best = { start: match.index, end: match.index + match[0].length, score };
   }
-  if (!best) return null;
-  const start = locate(index, best.start);
-  const end = locate(index, best.end);
+  return best;
+};
+
+const rangeFor = (index, span) => {
+  const start = locate(index, span.start);
+  const end = locate(index, span.end);
   const range = document.createRange();
   range.setStart(start.node, start.offset);
   range.setEnd(end.node, end.offset);
   return range;
+};
+
+const findRange = (index, quote) => {
+  const span = findSpan(index, quote);
+  return span ? rangeFor(index, span) : null;
+};
+
+// The text position just after a span's last character. locate() resolves an
+// offset that falls on a node boundary to the start of the NEXT node, which
+// for a passage ending a paragraph is the start of the following one; this
+// resolves it to the end of the node the span ends in.
+const locateEnd = (index, offset) => {
+  let lo = 0;
+  let hi = index.nodes.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (index.nodes[mid].start < offset) lo = mid;
+    else hi = mid - 1;
+  }
+  const entry = index.nodes[lo];
+  return { node: entry.node, offset: Math.min(Math.max(0, offset - entry.start), entry.node.data.length) };
 };
 
 // A Text Fragment link (#:~:text=) that opens the post scrolled to the quote.
@@ -135,22 +160,103 @@ const fragmentLink = (quote) => {
 
 // --- Rendering --------------------------------------------------------------
 
+// Passages whose text overlaps are merged into one run: readers seldom
+// select exactly the same words, so the run is the unit a count is shown
+// for. A run's count is the number of distinct people (the server's
+// per-response `people` numbers) who marked any part of it.
+const mergeRuns = (index, highlights) => {
+  const spans = [];
+  for (const h of highlights) {
+    const span = findSpan(index, h);
+    if (span) spans.push({ start: span.start, end: span.end, people: h.people ?? [], mine: h.mine });
+  }
+  spans.sort((x, y) => x.start - y.start || x.end - y.end);
+  const runs = [];
+  for (const span of spans) {
+    const last = runs[runs.length - 1];
+    if (last && span.start < last.end) {
+      last.end = Math.max(last.end, span.end);
+      for (const p of span.people) last.people.add(p);
+      last.mine ||= span.mine;
+    } else {
+      runs.push({ start: span.start, end: span.end, people: new Set(span.people), mine: span.mine });
+    }
+  }
+  return runs;
+};
+
+const countLabel = (count, mine) => {
+  const people = count === 1 ? "1 person" : `${count} people`;
+  return mine && count > 1 ? `${people} highlighted this, including you` : `${people} highlighted this`;
+};
+
+// Called before the text index is built: removing a count and re-joining
+// the text nodes its insert split changes the nodes the index points at.
+const removeCounts = () => {
+  for (const old of content.querySelectorAll(".reader-hl-count")) {
+    const parent = old.parentNode;
+    old.remove();
+    parent?.normalize();
+  }
+};
+
+// A small count after each run. It is a real element in the article (the
+// Custom Highlight API cannot draw text), marked data-reader-ui so the text
+// index, quote capture and margin notes skip it.
+const renderCounts = (index, runs) => {
+  // Resolve every position before inserting anything: an insert splits a
+  // text node, which would shift the offsets of the index. Inserting from
+  // the last run backwards keeps the earlier positions valid.
+  const points = runs
+    .filter((run) => run.people.size > 0)
+    .map((run) => ({ run, point: locateEnd(index, run.end) }));
+  for (const { run, point } of points.reverse()) {
+    const count = run.people.size;
+    const badge = document.createElement("span");
+    badge.className = "reader-hl-count";
+    badge.dataset.readerUi = "";
+    badge.title = countLabel(count, run.mine);
+    const visible = document.createElement("span");
+    visible.setAttribute("aria-hidden", "true");
+    visible.textContent = String(count);
+    const label = document.createElement("span");
+    label.className = "visually-hidden";
+    label.textContent = ` (${badge.title})`;
+    badge.append(visible, label);
+    const at = document.createRange();
+    at.setStart(point.node, point.offset);
+    at.insertNode(badge);
+  }
+};
+
 const applyHighlights = () => {
-  if (!supportsHighlights || !state) return;
+  if (!state) return;
+  removeCounts();
   const index = buildTextIndex();
+  const runs = mergeRuns(index, state.highlights);
   const tiers = { "reader-shared-1": [], "reader-shared-2": [], "reader-shared-3": [], "reader-mine": [], "reader-note": [] };
-  for (const h of state.highlights) {
-    const range = findRange(index, h);
-    if (!range) continue;
-    if (h.mine) tiers["reader-mine"].push(range);
-    if (h.count >= 5) tiers["reader-shared-3"].push(range);
-    else if (h.count >= 2) tiers["reader-shared-2"].push(range);
-    else if (h.count >= 1 && !h.mine) tiers["reader-shared-1"].push(range);
+  if (supportsHighlights) {
+    // Your own passages keep their own shading inside a merged run.
+    for (const h of state.highlights) {
+      if (!h.mine) continue;
+      const range = findRange(index, h);
+      if (range) tiers["reader-mine"].push(range);
+    }
+    for (const run of runs) {
+      const count = run.people.size;
+      const range = rangeFor(index, run);
+      if (count >= 5) tiers["reader-shared-3"].push(range);
+      else if (count >= 2) tiers["reader-shared-2"].push(range);
+      else if (count >= 1 && !run.mine) tiers["reader-shared-1"].push(range);
+    }
+    for (const note of state.notes) {
+      const range = note.quote && findRange(index, note.quote);
+      if (range) tiers["reader-note"].push(range);
+    }
   }
-  for (const note of state.notes) {
-    const range = note.quote && findRange(index, note.quote);
-    if (range) tiers["reader-note"].push(range);
-  }
+  // Ranges are live, so they follow the text nodes the count inserts split.
+  renderCounts(index, runs);
+  if (!supportsHighlights) return;
   for (const [name, ranges] of Object.entries(tiers)) {
     CSS.highlights.set(name, new Highlight(...ranges));
   }
@@ -214,9 +320,60 @@ const renderAccount = () => {
   }
 };
 
-const renderItem = (item) => {
+// One inline reply form at a time, opened under the comment being answered.
+let openReplyForm = null;
+
+const closeReplyForm = () => {
+  openReplyForm?.remove();
+  openReplyForm = null;
+};
+
+const renderReplyForm = (item, li) => {
+  const form = document.createElement("form");
+  form.className = "reader-form reader-reply-form";
+  const label = document.createElement("label");
+  label.append(`Reply to ${item.name || "this comment"}`);
+  const textarea = document.createElement("textarea");
+  textarea.name = "body";
+  textarea.rows = 3;
+  textarea.maxLength = 2000;
+  textarea.required = true;
+  label.append(textarea);
+  const actions = document.createElement("div");
+  actions.className = "reader-dialog-actions";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "Cancel";
+  cancel.addEventListener("click", () => {
+    closeReplyForm();
+    li.querySelector(":scope > .reader-meta [data-reply]")?.focus();
+  });
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.textContent = "Post reply";
+  actions.append(cancel, submit);
+  form.append(label, actions);
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    submit.disabled = true;
+    try {
+      const saved = await createAnnotation({ type: "comment", parentId: item.id, body: textarea.value });
+      closeReplyForm();
+      setStatus(saved?.status === "approved"
+        ? "Reply posted."
+        : "Reply saved. Other readers will see it once it is approved.");
+    } catch (err) {
+      submit.disabled = false;
+      setStatus(err.message);
+    }
+  });
+  return form;
+};
+
+const renderItem = (item, depth = 0) => {
   const li = document.createElement("li");
   li.className = "reader-item";
+  li.dataset.id = item.id;
   if (item.quote) {
     const quote = document.createElement("blockquote");
     const link = document.createElement("a");
@@ -236,12 +393,36 @@ const renderItem = (item) => {
   const when = document.createElement("time");
   when.dateTime = new Date(item.createdAt).toISOString();
   when.textContent = new Date(item.createdAt).toLocaleDateString();
-  meta.append(who, when);
+  meta.append(who);
+  if (item.isAuthor) {
+    const author = document.createElement("span");
+    author.className = "reader-badge reader-badge-author";
+    author.textContent = "Author";
+    meta.append(author);
+  }
+  meta.append(when);
   if (item.mine && STATUS_LABELS[item.status]) {
     const badge = document.createElement("span");
     badge.className = "reader-badge";
     badge.textContent = STATUS_LABELS[item.status];
     meta.append(badge);
+  }
+  // Comments (not notes) can be replied to by any signed-in reader, at any
+  // depth. Replies are moderated like comments.
+  if (item.type === "comment" && state.viewer) {
+    const reply = document.createElement("button");
+    reply.type = "button";
+    reply.dataset.reply = "";
+    reply.textContent = "Reply";
+    reply.addEventListener("click", () => {
+      const existing = openReplyForm?.parentElement === li;
+      closeReplyForm();
+      if (existing) return;
+      openReplyForm = renderReplyForm(item, li);
+      meta.after(openReplyForm);
+      openReplyForm.querySelector("textarea").focus();
+    });
+    meta.append(reply);
   }
   if (item.mine) {
     const del = document.createElement("button");
@@ -251,6 +432,16 @@ const renderItem = (item) => {
     meta.append(del);
   }
   li.append(meta);
+  if (item.replies?.length) {
+    const list = document.createElement("ol");
+    list.className = "reader-list reader-replies";
+    // Indent stops growing after a few levels so deep threads stay readable
+    // on narrow screens; the tree itself has no depth limit.
+    if (depth >= 3) list.classList.add("reader-replies-flat");
+    list.setAttribute("aria-label", item.replies.length === 1 ? "1 reply" : `${item.replies.length} replies`);
+    list.append(...item.replies.map((reply) => renderItem(reply, depth + 1)));
+    li.append(list);
+  }
   return li;
 };
 
@@ -363,8 +554,10 @@ const render = () => {
   }
   const notesWrap = section.querySelector(".reader-notes");
   notesWrap.hidden = state.notes.length === 0;
-  section.querySelector('[data-list="notes"]').replaceChildren(...state.notes.map(renderItem));
-  section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map(renderItem));
+  section.querySelector('[data-list="notes"]').replaceChildren(...state.notes.map((n) => renderItem(n)));
+  // A refresh rebuilds the list; an open reply form is dropped with it.
+  openReplyForm = null;
+  section.querySelector('[data-list="comments"]').replaceChildren(...state.comments.map((c) => renderItem(c)));
   renderAccount();
   applyHighlights();
   renderMarginNotes();

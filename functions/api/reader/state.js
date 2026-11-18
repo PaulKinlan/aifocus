@@ -4,6 +4,10 @@
 // the reader's own reactions, approved highlights grouped by passage, and
 // notes and comments. Approved rows are visible to everyone; the reader's own
 // rows are included whatever their moderation status.
+//
+// Comments come back as a tree: each comment has a `replies` array of the
+// same shape. A reply is included only when the comment it answers is
+// included, so a rejected or deleted comment hides the replies under it.
 
 import {
   REACTION_KINDS,
@@ -18,6 +22,7 @@ import {
 } from "../../_lib/reader.js";
 import { getSessionUser, publicUser } from "../../_lib/auth.js";
 import { configuredProviders } from "../../_lib/providers/index.js";
+import { siteAuthorUsersStmt } from "../../_lib/site-author.js";
 
 export async function onRequestGet({ request, env }) {
   const db = env?.READER_DB;
@@ -51,7 +56,8 @@ export async function onRequestGet({ request, env }) {
   const reader = cookie && /^[0-9a-f]{32}$/.test(cookie) ? cookie : null;
   const user = await getSessionUser(request, db);
 
-  const [counts, mine, rows] = await db.batch([
+  const authorsStmt = siteAuthorUsersStmt(env, db);
+  const [counts, mine, rows, authors] = await db.batch([
     db.prepare("SELECT kind, COUNT(*) AS n FROM reactions WHERE post = ? GROUP BY kind").bind(post),
     db.prepare("SELECT kind FROM reactions WHERE post = ? AND reader = ?").bind(post, reader ?? ""),
     db
@@ -68,7 +74,9 @@ export async function onRequestGet({ request, env }) {
          LIMIT 500`,
       )
       .bind(post, reader ?? "", user?.id ?? ""),
+    ...(authorsStmt ? [authorsStmt] : []),
   ]);
+  const authorIds = new Set((authors?.results ?? []).map((r) => r.user_id));
 
   const reactions = Object.fromEntries(REACTION_KINDS.map((k) => [k, 0]));
   for (const row of counts.results ?? []) {
@@ -76,11 +84,26 @@ export async function onRequestGet({ request, env }) {
   }
 
   // Group approved quotes (highlights and notes) by passage so the page can
-  // shade a passage by how many readers marked it.
+  // shade a passage by how many readers marked it. `count` is the number of
+  // distinct people (account, or reader cookie when signed out) with an
+  // approved highlight or note on the passage, so one person who both
+  // highlights and annotates a passage counts once.
+  //
+  // `people` lists those people as small numbers that are only meaningful
+  // inside this response. The page merges overlapping passages into one run
+  // and needs to count each person once across them; it never needs, and
+  // never gets, the reader ids or account ids themselves.
   const passages = new Map();
+  const personNumbers = new Map();
+  const personNumber = (row) => {
+    const key = row.user_id ? `u:${row.user_id}` : `r:${row.reader}`;
+    if (!personNumbers.has(key)) personNumbers.set(key, personNumbers.size + 1);
+    return personNumbers.get(key);
+  };
   const notes = [];
-  const comments = [];
+  const commentRows = [];
   for (const row of rows.results ?? []) {
+    row.is_site_author = row.user_id !== null && authorIds.has(row.user_id);
     const isMine = (reader !== null && row.reader === reader) || (user !== null && row.user_id === user.id);
     if (row.quote_exact && (row.status === "approved" || isMine)) {
       const key = looseText(row.quote_exact);
@@ -88,15 +111,25 @@ export async function onRequestGet({ request, env }) {
         exact: row.quote_exact,
         prefix: row.quote_prefix || "",
         suffix: row.quote_suffix || "",
-        count: 0,
+        people: new Set(),
         mine: false,
       };
-      if (row.status === "approved") entry.count += 1;
+      if (row.status === "approved") entry.people.add(personNumber(row));
       if (isMine) entry.mine = true;
       passages.set(key, entry);
     }
     if (row.type === "note") notes.push(publicAnnotation(row, { mine: isMine }));
-    if (row.type === "comment") comments.push(publicAnnotation(row, { mine: isMine }));
+    if (row.type === "comment") commentRows.push(publicAnnotation(row, { mine: isMine }));
+  }
+
+  // Build the comment tree. A reply whose parent is not in this payload
+  // (hidden by moderation, or deleted) is never reachable from a top-level
+  // comment, so it and everything under it drop out.
+  const byId = new Map(commentRows.map((c) => [c.id, Object.assign(c, { replies: [] })]));
+  const comments = [];
+  for (const comment of commentRows) {
+    if (!comment.parentId) comments.push(comment);
+    else byId.get(comment.parentId)?.replies.push(comment);
   }
 
   // A signed-out request with no reader cookie gets the same payload for every
@@ -119,7 +152,11 @@ export async function onRequestGet({ request, env }) {
     post,
     reactions,
     myReactions: (mine.results ?? []).map((r) => r.kind),
-    highlights: [...passages.values()],
+    highlights: [...passages.values()].map(({ people, ...entry }) => ({
+      ...entry,
+      count: people.size,
+      people: [...people],
+    })),
     notes,
     comments,
     viewer: publicUser(user),
