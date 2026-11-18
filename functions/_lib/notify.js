@@ -28,7 +28,8 @@ export function moderationEmailConfig(env) {
 }
 
 export function buildPendingEmail({ row, origin, postTitle }) {
-  const kind = row.type === "note" ? "note" : "comment";
+  // Replies (PR #43) are comment rows with a parent_id.
+  const kind = row.type === "note" ? "note" : row.parent_id ? "reply" : "comment";
   const who = row.author_name || "a signed-in reader";
   const where = postTitle || row.post;
   const excerpt = (row.body || "").length > EXCERPT ? `${row.body.slice(0, EXCERPT)}…` : row.body || "";

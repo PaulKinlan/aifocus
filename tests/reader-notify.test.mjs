@@ -113,3 +113,8 @@ test("email body includes the passage for notes and truncates long text", () => 
   assert.match(text, /Safety screen: safe/);
   assert.ok(text.length < 1800);
 });
+
+test("a reply is labelled as a reply", () => {
+  const { subject } = buildPendingEmail({ row: { type: "comment", parent_id: "a".repeat(32), post: POST, author_name: "ANA", body: "x" }, origin: ORIGIN });
+  assert.match(subject, /New reply from ANA/);
+});
