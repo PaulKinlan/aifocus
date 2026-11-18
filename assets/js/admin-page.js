@@ -45,7 +45,7 @@ const renderItem = (item) => {
   if (postPath) link.href = postPath;
   link.textContent = typeof item.post === "string" ? item.post : "";
   const type = document.createElement("span");
-  type.textContent = item.type;
+  type.textContent = item.parent_id ? "reply" : item.type;
   // Signed-in writers link to the profile they signed in with.
   const authorHref = safeHref(item.author_profile_url);
   const who = document.createElement(authorHref ? "a" : "span");
@@ -67,6 +67,24 @@ const renderItem = (item) => {
   }
   li.append(meta);
 
+  if (item.parent_id) {
+    // The comment this reply answers, for context. It may itself be pending,
+    // or deleted since the reply was written.
+    const context = document.createElement("blockquote");
+    context.className = "mod-parent";
+    const label = document.createElement("span");
+    label.className = "mod-parent-label";
+    label.textContent = item.parent_body
+      ? `In reply to ${item.parent_author_name || "a reader"}${item.parent_status && item.parent_status !== "approved" ? ` (${item.parent_status})` : ""}:`
+      : "In reply to a comment that has been deleted";
+    context.append(label);
+    if (item.parent_body) {
+      const text = document.createElement("p");
+      text.textContent = item.parent_body;
+      context.append(text);
+    }
+    li.append(context);
+  }
   if (item.quote_exact) {
     const quote = document.createElement("blockquote");
     quote.textContent = item.quote_exact;

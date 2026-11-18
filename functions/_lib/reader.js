@@ -361,6 +361,8 @@ export function publicAnnotation(row, { mine = false } = {}) {
     profileUrl: safeProfileUrl(row.user_profile_url),
     createdAt: row.created_at,
   };
+  if (row.parent_id) out.parentId = row.parent_id;
+  if (row.is_site_author) out.isAuthor = true;
   if (mine) {
     out.mine = true;
     out.status = row.status;

@@ -1,6 +1,8 @@
 // GET /api/admin/queue?status=pending|approved|rejected|spam&before=<ms>
 //
-// Moderation queue for notes and comments. Requires a verified Cloudflare
+// Moderation queue for notes and comments. A reply carries the comment it
+// answers (parent_body, parent_author_name, parent_status) so it can be judged
+// in context. Requires a verified Cloudflare
 // Access identity (see functions/_lib/access.js).
 
 import { json, MODERATION_STATUSES } from "../../_lib/reader.js";
@@ -23,8 +25,12 @@ export async function onRequestGet({ request, env }) {
         `SELECT a.id, a.post, a.type, a.quote_exact, a.body, a.status, a.screen, a.created_at, a.moderated_at,
                 a.moderated_by, COALESCE(u.display_name, a.author_name) AS author_name,
                 u.profile_url AS author_profile_url, u.avatar_url AS author_avatar_url, u.trusted AS author_trusted,
-                a.user_id AS author_id
+                a.user_id AS author_id, a.parent_id,
+                p.body AS parent_body, p.status AS parent_status,
+                COALESCE(pu.display_name, p.author_name) AS parent_author_name
          FROM annotations a LEFT JOIN users u ON u.id = a.user_id
+         LEFT JOIN annotations p ON p.id = a.parent_id
+         LEFT JOIN users pu ON pu.id = p.user_id
          WHERE a.status = ?1 AND a.type != 'highlight' AND a.created_at < ?2
          ORDER BY a.created_at DESC
          LIMIT 50`,
