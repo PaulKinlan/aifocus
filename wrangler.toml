@@ -42,3 +42,9 @@ ACCESS_AUD = "ec612dc0cd7268f2a7a54e660cf1d0308cfc64f5b3077f166c9956b3f88dbc99"
 # GitHub OAuth app for reader sign-in (functions/_lib/providers/github.js).
 # The client id is public; GITHUB_CLIENT_SECRET is a Pages secret.
 GITHUB_CLIENT_ID = "Ov23liGZGUiFun4eOoDD"
+
+# New-comment alerts (functions/_lib/notify.js) via Cloudflare Email Service.
+# aifoc.us must be onboarded under Email Service > Email Sending. The
+# recipient (MODERATION_EMAIL_TO), CF_ACCOUNT_ID and EMAIL_API_TOKEN
+# ("Email Sending: Edit") are Pages secrets, not set here.
+MODERATION_EMAIL_FROM = "comments@aifoc.us"
