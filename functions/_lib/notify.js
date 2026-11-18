@@ -9,7 +9,7 @@
 //   MODERATION_EMAIL_FROM  [vars] in wrangler.toml. Sender on a domain
 //                          onboarded for Email Sending (aifoc.us).
 //   MODERATION_EMAIL_TO    Pages secret. Kept out of the public repo.
-//   CF_ACCOUNT_ID          Pages secret (or var). Account that owns aifoc.us.
+//   CF_ACCOUNT_ID          [vars] in wrangler.toml. Account that owns aifoc.us.
 //   EMAIL_API_TOKEN        Pages secret. API token with "Email Sending: Edit".
 //
 // A failed send is logged and never fails the reader's request: the comment

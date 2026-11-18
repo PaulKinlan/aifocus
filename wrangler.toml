@@ -45,6 +45,7 @@ GITHUB_CLIENT_ID = "Ov23liGZGUiFun4eOoDD"
 
 # New-comment alerts (functions/_lib/notify.js) via Cloudflare Email Service.
 # aifoc.us must be onboarded under Email Service > Email Sending. The
-# recipient (MODERATION_EMAIL_TO), CF_ACCOUNT_ID and EMAIL_API_TOKEN
-# ("Email Sending: Edit") are Pages secrets, not set here.
+# recipient (MODERATION_EMAIL_TO) and EMAIL_API_TOKEN ("Email Sending: Edit")
+# are Pages secrets, not set here. The account id is not secret.
 MODERATION_EMAIL_FROM = "comments@aifoc.us"
+CF_ACCOUNT_ID = "6f9efce6584ce03953e7e3d1f1c364cb"
