@@ -1,0 +1,29 @@
+# Builds the site and fails if any internal link in the output points at nothing.
+# Runs on every push to main (including posts committed straight to main) and on
+# pull requests. Uses the same checker as tools/gate.sh step 4: tools/link-check.mjs.
+name: Link check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: node tools/link-check.mjs
