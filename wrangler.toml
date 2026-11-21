@@ -49,9 +49,11 @@ GITHUB_CLIENT_ID = "Ov23liGZGUiFun4eOoDD"
 # user id of PaulKinlan. Not secret.
 SITE_AUTHOR_IDENTITIES = "github:45510"
 
-# New-comment alerts (functions/_lib/notify.js) via Cloudflare Email Service.
-# aifoc.us must be onboarded under Email Service > Email Sending. The
-# recipient (MODERATION_EMAIL_TO) and EMAIL_API_TOKEN ("Email Sending: Edit")
-# are Pages secrets, not set here. The account id is not secret.
-MODERATION_EMAIL_FROM = "comments@aifoc.us"
-CF_ACCOUNT_ID = "6f9efce6584ce03953e7e3d1f1c364cb"
+
+# New-comment alerts (functions/_lib/notify.js). The aifocus-mailer Worker
+# (workers/mailer) holds the Email Service send_email binding, which Pages
+# Functions cannot use, and the recipient secret. Deploy it before this
+# binding so Pages can resolve it.
+[[services]]
+binding = "MAILER"
+service = "aifocus-mailer"
