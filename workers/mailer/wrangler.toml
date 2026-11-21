@@ -1,0 +1,24 @@
+# aifocus-mailer: sends moderation alert emails for the Pages site.
+#
+# Pages Functions cannot hold a send_email binding, so this Worker holds it
+# and the Pages project calls it through a service binding (MAILER in the
+# root wrangler.toml). It has no public URL: workers_dev and preview_urls are
+# off and there are no routes, so only a service binding can reach it.
+#
+# Deploy once (and after changes) from this directory:
+#   npx wrangler deploy
+# Then set the recipient as a secret so the address stays out of the repo:
+#   npx wrangler secret put MODERATION_EMAIL_TO
+name = "aifocus-mailer"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+preview_urls = false
+
+# Cloudflare Email Service. Only the alert address on aifoc.us may send.
+[[send_email]]
+name = "EMAIL"
+allowed_sender_addresses = ["comments@aifoc.us"]
+
+[vars]
+MODERATION_EMAIL_FROM = "comments@aifoc.us"
