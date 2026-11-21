@@ -6,11 +6,14 @@
 // Highlights are drawn with the CSS Custom Highlight API, so the article text
 // is never modified. Browsers without it still get reactions, notes and
 // comments; only the shading is missing. Notes are also shown beside the
-// block they quote (see renderMarginNotes), and each highlighted run gets a
-// small count of the people who marked it (see renderCounts); those elements
-// are marked data-reader-ui and skipped by the text index.
+// block they quote (see renderMarginNotes). Highlights are snapped to whole
+// words and neighbouring ones merged into runs (highlight-runs.js); each
+// block with highlights gets one count at its end of the people who marked
+// text in it (see renderCounts), so a count never sits inside a word. Those
+// elements are marked data-reader-ui and skipped by the text index.
 
 import { quotePatternFor } from "./quote-pattern.js";
+import { countLabel, mergeRuns, snapToWords } from "./highlight-runs.js";
 import { safeHref, safeImgSrc } from "./safe-href.js";
 import { signInControls, takeSignInResult } from "./signin.js";
 
@@ -48,20 +51,30 @@ const api = async (path, options = {}) => {
 
 // --- Text index over the article -------------------------------------------
 
+const BLOCKS = "p, li, blockquote, pre, figure, h2, h3, h4, h5, h6, table";
+
 // Concatenated text of every text node in the article, with the node and
 // offset where each one starts, so offsets in the string map back to a Range.
+// `block` is the paragraph-level element a node sits in, and `breaks` holds
+// the offsets where the block changes from one node to the next: the text
+// has no separator there, so word snapping needs to be told.
 const buildTextIndex = () => {
   const nodes = [];
+  const breaks = new Set();
   let text = "";
+  let lastBlock;
   const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) =>
       node.parentElement?.closest("[data-reader-ui]") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT,
   });
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    nodes.push({ node, start: text.length });
+    const block = node.parentElement?.closest(BLOCKS) ?? null;
+    if (nodes.length && block !== lastBlock) breaks.add(text.length);
+    lastBlock = block;
+    nodes.push({ node, start: text.length, block });
     text += node.data;
   }
-  return { nodes, text };
+  return { nodes, text, breaks, isBreak: (i) => breaks.has(i) };
 };
 
 const locate = (index, offset) => {
@@ -132,22 +145,6 @@ const findRange = (index, quote) => {
   return span ? rangeFor(index, span) : null;
 };
 
-// The text position just after a span's last character. locate() resolves an
-// offset that falls on a node boundary to the start of the NEXT node, which
-// for a passage ending a paragraph is the start of the following one; this
-// resolves it to the end of the node the span ends in.
-const locateEnd = (index, offset) => {
-  let lo = 0;
-  let hi = index.nodes.length - 1;
-  while (lo < hi) {
-    const mid = (lo + hi + 1) >> 1;
-    if (index.nodes[mid].start < offset) lo = mid;
-    else hi = mid - 1;
-  }
-  const entry = index.nodes[lo];
-  return { node: entry.node, offset: Math.min(Math.max(0, offset - entry.start), entry.node.data.length) };
-};
-
 // A Text Fragment link (#:~:text=) that opens the post scrolled to the quote.
 const fragmentLink = (quote) => {
   const enc = (s) => encodeURIComponent(s).replace(/-/g, "%2D").replace(/,/g, "%2C");
@@ -160,62 +157,58 @@ const fragmentLink = (quote) => {
 
 // --- Rendering --------------------------------------------------------------
 
-// Passages whose text overlaps are merged into one run: readers seldom
-// select exactly the same words, so the run is the unit a count is shown
-// for. A run's count is the number of distinct people (the server's
-// per-response `people` numbers) who marked any part of it.
-const mergeRuns = (index, highlights) => {
+// Passages are snapped to whole words and merged into runs (see
+// highlight-runs.js): readers seldom select exactly the same words, and on a
+// phone a selection often ends part way through a word.
+const runsFor = (index, highlights) => {
   const spans = [];
   for (const h of highlights) {
     const span = findSpan(index, h);
     if (span) spans.push({ start: span.start, end: span.end, people: h.people ?? [], mine: h.mine });
   }
-  spans.sort((x, y) => x.start - y.start || x.end - y.end);
-  const runs = [];
-  for (const span of spans) {
-    const last = runs[runs.length - 1];
-    if (last && span.start < last.end) {
-      last.end = Math.max(last.end, span.end);
-      for (const p of span.people) last.people.add(p);
-      last.mine ||= span.mine;
-    } else {
-      runs.push({ start: span.start, end: span.end, people: new Set(span.people), mine: span.mine });
+  return mergeRuns(index.text, spans, index.isBreak);
+};
+
+// The blocks a run of text touches, ignoring whitespace-only nodes between
+// blocks.
+const blocksOf = (index, run) => {
+  const blocks = new Set();
+  for (const entry of index.nodes) {
+    if (entry.start >= run.end) break;
+    if (entry.start + entry.node.data.length <= run.start || !entry.block) continue;
+    if (!entry.node.data.trim()) continue;
+    blocks.add(entry.block);
+  }
+  return blocks;
+};
+
+const removeCounts = () => {
+  for (const old of content.querySelectorAll(".reader-hl-count")) old.remove();
+};
+
+// One count per block with highlighted text in it: the number of distinct
+// people who marked any part of the block. It goes at the end of the block,
+// after its last word, so it never splits a word or a phrase, however many
+// separate passages the block holds. It is a real element (the Custom
+// Highlight API cannot draw text), marked data-reader-ui so the text index,
+// quote capture and margin notes skip it.
+const renderCounts = (index, runs) => {
+  const perBlock = new Map();
+  for (const run of runs) {
+    if (run.people.size === 0) continue;
+    for (const block of blocksOf(index, run)) {
+      const entry = perBlock.get(block) ?? { people: new Set(), mine: false };
+      for (const p of run.people) entry.people.add(p);
+      entry.mine ||= run.mine;
+      perBlock.set(block, entry);
     }
   }
-  return runs;
-};
-
-const countLabel = (count, mine) => {
-  const people = count === 1 ? "1 person" : `${count} people`;
-  return mine && count > 1 ? `${people} highlighted this, including you` : `${people} highlighted this`;
-};
-
-// Called before the text index is built: removing a count and re-joining
-// the text nodes its insert split changes the nodes the index points at.
-const removeCounts = () => {
-  for (const old of content.querySelectorAll(".reader-hl-count")) {
-    const parent = old.parentNode;
-    old.remove();
-    parent?.normalize();
-  }
-};
-
-// A small count after each run. It is a real element in the article (the
-// Custom Highlight API cannot draw text), marked data-reader-ui so the text
-// index, quote capture and margin notes skip it.
-const renderCounts = (index, runs) => {
-  // Resolve every position before inserting anything: an insert splits a
-  // text node, which would shift the offsets of the index. Inserting from
-  // the last run backwards keeps the earlier positions valid.
-  const points = runs
-    .filter((run) => run.people.size > 0)
-    .map((run) => ({ run, point: locateEnd(index, run.end) }));
-  for (const { run, point } of points.reverse()) {
-    const count = run.people.size;
+  for (const [block, { people, mine }] of perBlock) {
+    const count = people.size;
     const badge = document.createElement("span");
     badge.className = "reader-hl-count";
     badge.dataset.readerUi = "";
-    badge.title = countLabel(count, run.mine);
+    badge.title = countLabel(count, mine);
     const visible = document.createElement("span");
     visible.setAttribute("aria-hidden", "true");
     visible.textContent = String(count);
@@ -223,40 +216,57 @@ const renderCounts = (index, runs) => {
     label.className = "visually-hidden";
     label.textContent = ` (${badge.title})`;
     badge.append(visible, label);
-    const at = document.createRange();
-    at.setStart(point.node, point.offset);
-    at.insertNode(badge);
+    if (block.matches("pre, table, figure")) {
+      // Text added inside these would change what they show; put the count
+      // on its own line after the block instead.
+      const line = document.createElement("p");
+      line.className = "reader-hl-count-line";
+      line.dataset.readerUi = "";
+      line.append(badge);
+      block.after(line);
+    } else {
+      // In a list item, before any nested list, so the count stays with the
+      // item's own text.
+      const nested = block.matches("li") ? block.querySelector(":scope > ul, :scope > ol") : null;
+      if (nested) nested.before(badge);
+      else block.append(badge);
+    }
   }
+};
+
+const snappedRange = (index, quote) => {
+  const span = findSpan(index, quote);
+  return span ? rangeFor(index, snapToWords(index.text, span.start, span.end, index.isBreak)) : null;
 };
 
 const applyHighlights = () => {
   if (!state) return;
   removeCounts();
+  for (const old of content.querySelectorAll(".reader-hl-count-line")) old.remove();
+  // Counts are only ever appended between elements, never inside a text
+  // node, so the index built here stays valid after renderCounts.
   const index = buildTextIndex();
-  const runs = mergeRuns(index, state.highlights);
-  const tiers = { "reader-shared-1": [], "reader-shared-2": [], "reader-shared-3": [], "reader-mine": [], "reader-note": [] };
-  if (supportsHighlights) {
-    // Your own passages keep their own shading inside a merged run.
-    for (const h of state.highlights) {
-      if (!h.mine) continue;
-      const range = findRange(index, h);
-      if (range) tiers["reader-mine"].push(range);
-    }
-    for (const run of runs) {
-      const count = run.people.size;
-      const range = rangeFor(index, run);
-      if (count >= 5) tiers["reader-shared-3"].push(range);
-      else if (count >= 2) tiers["reader-shared-2"].push(range);
-      else if (count >= 1 && !run.mine) tiers["reader-shared-1"].push(range);
-    }
-    for (const note of state.notes) {
-      const range = note.quote && findRange(index, note.quote);
-      if (range) tiers["reader-note"].push(range);
-    }
-  }
-  // Ranges are live, so they follow the text nodes the count inserts split.
+  const runs = runsFor(index, state.highlights);
   renderCounts(index, runs);
   if (!supportsHighlights) return;
+  const tiers = { "reader-shared-1": [], "reader-shared-2": [], "reader-shared-3": [], "reader-mine": [], "reader-note": [] };
+  // Your own passages keep their own shading inside a merged run.
+  for (const h of state.highlights) {
+    if (!h.mine) continue;
+    const range = snappedRange(index, h);
+    if (range) tiers["reader-mine"].push(range);
+  }
+  for (const run of runs) {
+    const count = run.people.size;
+    const range = rangeFor(index, run);
+    if (count >= 5) tiers["reader-shared-3"].push(range);
+    else if (count >= 2) tiers["reader-shared-2"].push(range);
+    else if (count >= 1 && !run.mine) tiers["reader-shared-1"].push(range);
+  }
+  for (const note of state.notes) {
+    const range = note.quote && findRange(index, note.quote);
+    if (range) tiers["reader-note"].push(range);
+  }
   for (const [name, ranges] of Object.entries(tiers)) {
     CSS.highlights.set(name, new Highlight(...ranges));
   }
@@ -447,7 +457,6 @@ const renderItem = (item, depth = 0) => {
 
 // --- Notes beside the passage they quote ---------------------------------------
 
-const BLOCKS = "p, li, blockquote, pre, figure, h2, h3, h4, h5, h6, table";
 // Margin notes need this much room to the right of the article column.
 const MARGIN_NOTE_SPACE = 17 * 16;
 
@@ -628,10 +637,16 @@ const captureRange = (range) => {
   const index = buildTextIndex();
   const { text } = index;
   const rawStart = offsetOf(index, range.startContainer, range.startOffset);
-  const raw = text.slice(rawStart, Math.max(rawStart, offsetOf(index, range.endContainer, range.endOffset)));
-  const exact = raw.trim();
+  const rawEnd = Math.max(rawStart, offsetOf(index, range.endContainer, range.endOffset));
+  const raw = text.slice(rawStart, rawEnd);
+  const trimmedStart = rawStart + raw.length - raw.trimStart().length;
+  const trimmedEnd = rawStart + raw.trimEnd().length;
+  if (trimmedEnd <= trimmedStart) return null;
+  // Store whole words: a selection that stops part way through a word (common
+  // on touch screens) is widened to the word's edges.
+  const { start, end } = snapToWords(text, trimmedStart, trimmedEnd, index.isBreak);
+  const exact = text.slice(start, end);
   if (exact.length < 3) return null;
-  const start = rawStart + raw.length - raw.trimStart().length;
   return {
     range,
     quote: {
